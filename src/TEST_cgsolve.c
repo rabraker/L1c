@@ -26,30 +26,6 @@
    test_data_ss_ff.h
 */
 
-// double *y_vec_tmp, *DC_y_tmp;
-
-// We need this to setup a tempory data vector to use, because subtracting the mean
-// // changes the y_vec_ml.
-// void setup_vectors_SC(void){
-//   /* Allocate memory for gsl vectors and fill with data from
-//      globals defined in test_data_ss_ff.h
-//   */
-//   // double *y_vec_tmp;
-//   int i;
-//   y_vec_tmp = malloc(sizeof(double)*LEN_y_vec_ml);
-//   DC_y_tmp = malloc(sizeof(double)*LEN_y_vec_ml);
-
-//   for(i=0; i < LEN_y_vec_ml; i++){
-//     y_vec_tmp[i] = y_vec_ml[i];
-//     DC_y_tmp[i] = DC_y_vec_offset_ml[i];
-//   }
-
-// }
-
-// /* De-allocate global vectors.  */
-// void teardown_vectors_SC(void){
-//   free(y_vec_tmp);
-// }
 
 int load_small_data(double **A, double **x, double **b, int *N,
                     int *max_iter, double *tol){
@@ -106,7 +82,9 @@ int load_small_data(double **A, double **x, double **b, int *N,
 START_TEST(test_cgsolve)
 {
   double tol =0.0; //= 1e-6;
-  int max_iter, verbose;
+  int max_iter;
+  CgParams cgp;
+  CgResults cgr;
 
   double *A, *x, *x_exp, *b, *Dwork;
   int N, i = 0;
@@ -114,14 +92,15 @@ START_TEST(test_cgsolve)
     ck_abort_msg("Errory Loading test data\n");
   }
 
+  cgp.verbose = 0;
+  cgp.tol = tol;
+  cgp.max_iter = max_iter;
 
   x = calloc(N, sizeof(double));
   Dwork = calloc(N*4, sizeof(double));
 
-  // max_iter = 100;
-  verbose = 0;
-  printf("max-iter = %d, tol=%f\n", max_iter, tol);
-  cgsolve(x, b, N, tol, max_iter, verbose, Dwork, Ax, A);
+ printf("max-iter = %d, tol=%f\n", max_iter, tol);
+  cgsolve(x, b, N, Dwork, Ax, A, &cgr, cgp);
 
   for (i=0; i<N; i++){
     ck_assert_double_eq_tol(x_exp[i], x[i], TOL_DOUBLE);
