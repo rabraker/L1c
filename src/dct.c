@@ -1,6 +1,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <fftw3.h>
+
+#ifdef _USEMKL_
+#include "fftw/fftw3_mkl.h"
+#endif
+
+#ifdef _USETHREADS_
+// #include <omp.h>
+#include <pthread.h>
+#endif
+
 // #include <fftw3_threads.h>
 #include <math.h>
 #include <time.h>
@@ -29,8 +39,12 @@ static double dct_root_1_by_2N;
 void dct_setup(int Nx, int Ny, int *pix_mask_idx){
 
   // local global.
-  // fftw_init_threads();
-  // fftw_plan_with_nthreads(2);
+
+  #ifdef _USETHREADS_
+  fftw_init_threads();
+  fftw_plan_with_nthreads(6);
+  #endif
+
   int i;
   dct_Ety_sparse = fftw_alloc_real(Nx);
   dct_x = fftw_alloc_real(Nx);
@@ -47,7 +61,8 @@ void dct_setup(int Nx, int Ny, int *pix_mask_idx){
 
   dct_root_1_by_2N = sqrt(1.0 / ( (double) dct_Nx * 2)); // Normalization constant.
 
-  unsigned flags = FFTW_PATIENT | FFTW_DESTROY_INPUT;
+  // FFTW_PATIENT | FFTW_DESTROY_INPUT;
+  unsigned flags = FFTW_DESTROY_INPUT;
 
   fftw_r2r_kind dct_kind_MtEty = FFTW_REDFT10; //computes an REDFT10 transform, a DCT-II
   fftw_r2r_kind dct_kind_EMx   = FFTW_REDFT01; //computes an REDFT01 transform, a DCT-III, “the” IDCT
@@ -78,6 +93,23 @@ void dct_load_x(double *x){
 double* dct_x_ptr(){
   // Returns the dct_x pointer.
   return dct_x;
+}
+
+
+double* idct_plain(double *x_fftw){
+  /* Compute y = M *dct_x, where M is the IDCT, and E is the subsampling matrix.
+     This performs the same function as dct_EMx, except that you can provide your own
+     array.
+
+     NOTE: x_fftw MUST have been allocated with fftw_alloc_real;
+
+     On exit, the first N_pix_mask entries of y will contain the result of E * M *x.
+  */
+  /* Will fill y. Plan_AT has saved the pointer to x and y, so we
+     dont have to supply, but should be updated by the caller.*/
+  fftw_execute_r2r(dct_plan_EMx, x_fftw, dct_y);
+
+  return dct_y;
 }
 
 double* dct_EMx_new(double *x_fftw){

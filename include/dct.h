@@ -9,6 +9,6 @@ extern double* dct_EMx();
 extern double* dct_MtEty(double *y);
 extern void dct_load_x(double *x);
 extern double* dct_x_ptr();
-
+extern double* idct_plain(double *x_fftw);
 extern double* dct_MtEt_EMx_new(double *x);
 #endif

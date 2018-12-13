@@ -24,23 +24,66 @@ LD        = gcc
 # check header files are in /usr/local/include
 IFLAGS    = -I/usr/include                \
             -I/usr/local/include          \
-		    -Iinclude
-#-I/usr/local/OpenBlas/include \
+		    -Iinclude                     \
 
+
+#-I/usr/local/OpenBlas/include
 CFLAGS    = -O3 $(IFLAGS)
+
+USE_MKL = false
+USE_THREADS = true
+
+ifeq (${USE_THREADS}, true)
+# THREAD_LINK = -fopenmp -lpthread -lfftw3_omp
+THREAD_LINK = -lpthread -lfftw3_threads
+CC_THREAD= -D_USETHREADS_=1
+else
+THREAD_LINK=
+CC_THREAD =
+endif
+
+
+CFLAGS +=${CC_THREAD}
+
+ifeq (${USE_MKL},true)
+CFLAGS +=  ${CC_THREAD} -D_USEMKL_ -DMKL_ILP64 -m64 -I${MKLROOT}/include
+# FFTW_LINK =   -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed \
+# 	          -lmkl_intel_ilp64 -lmkl_intel_thread  -lmkl_core \
+#              -lgomp -lpthread -lm -ldl
+FFTW_LINK =  -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed \
+			-lmkl_intel_ilp64 -lmkl_tbb_thread -lmkl_core -ltbb -lstdc++ \
+			-lpthread -lm -ldl
+else
+FFTW_LINK = ${THREAD_LINK} -lfftw3
+endif
+
+# $(info thread_link: [${THREAD_LINK}])
+# $(info thread_link: [${USE_THREADS}])
+# $(info thread_link: [${FFTW_LINK}])
+
+
+
+# https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor/
+# -lmkl_core -ltbb -lmkl_gnu_thread -lmkl_tbb_thread -lmkl_intel_ilp64
+# LDFLAGS   +=  -L/opt/intel/compilers_and_libraries_2019.1.144/linux/mkl/lib/intel64 \
+# -L/opt/intel/compilers_and_libraries_2019.1.144/linux/tbb/lib/intel64/gcc4.7
 
 # For fftw: #include <fftw3.h>
 # LDFLAGS   =  -lm -lfftw3
-LDFLAGS   =  -lpthread -lfftw3_threads -lm -lfftw3
-# LDFLAGS    +=  -L/usr/lib/x86_64-linux-gnu
+# MKLROOT   =  /opt/intel/compilers_and_libraries_2019.1.144/linux/mkl
 
-# -Wl,-rpath=/usr/local/lib
+
+
+LDFLAGS   += -Wl,-rpath=/usr/local/lib
+LDFLAGS   +=  -L/usr/local/OpenBlas/lib
+LDFLAGS   += -lopenblas -lm ${FFTW_LINK}
+
 
 #---------------------------------------------------------- Targets
 .PHONY: clean all test
 
-all: src/dct.o
-	$(CC) -o dct $^ ${LDFLAGS}
+all: src/dct.o run_dct.o
+	$(LD) -o run_dct $^ ${LDFLAGS}
 
 src/dct.o:src/dct.c
 	$(CC) ${CFLAGS} -c -o $@ $^
