@@ -5,6 +5,7 @@
 #ifndef _L1QC_NEWTON_
 #define _L1QC_NEWTON_
 
+#include "cgsolve.h"
 
 typedef struct Hess_data_ {
   double one_by_fe;
@@ -14,9 +15,53 @@ typedef struct Hess_data_ {
 
 }Hess_data;
 
+typedef struct LineSearchParams {
+  double s;
+  double alpha;
+  double beta;
+  double epsilon;
+  double tau;
+
+} LSParams;
+
+typedef struct GradData{
+  double *dx;
+  double *du;
+  double *gradf;
+  double *Adx;
+  double *sig11;
+  double *sig12;
+  double *w1p;
+  double *ntgu;
+
+}GradData;
+
+typedef struct NewtParams{
+  double epsilon;
+  double tau;
+  double newton_tol;
+  double newton_max_iter;
+  int verbose;
+  CgParams cg_params;
+
+}NewtParams;
+
 double sum_vec(int N, double *x);
+
 void log_vec(int N, double alpha, double *x, double *logx);
 
+double logsum(int N, double *x, double alpha);
+
+double find_max_step(int N, GradData grad_data, double *fu1,
+                     double *fu2, double *r, double epsilon);
+
+int line_search(int N, int M, double *x, double *u, double *r, double *fu1, double *fu2, GradData gd,
+                LSParams ls_params, double *DWORK_5N, double *fe, double *f);
+
+void get_gradient(int N, double *fu1, double *fu2, double *sigx, double *atr,
+                  double fe,  double tau, GradData gd);
+int compute_descent(int N, double *fu1, double *fu2, double *r, double fe, double tau,
+                    GradData gd, double *Dwork_5N, CgParams cg_params, CgResults *cg_result);
 
 void H11pfun(int N, double *z, double *y,  void *hess_data_in);
 /*
