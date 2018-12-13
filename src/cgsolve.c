@@ -48,9 +48,9 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method
 
 
 
-int cgsolve(double *x, double *b, size_t n_b, double tol,
-            int max_iter, int verbose, double *Dwork,
-            void(*AX_func)(int n, double *x, double *b, void *AX_data), void *AX_data){
+int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
+            void(*AX_func)(int n, double *x, double *b, void *AX_data), void *AX_data,
+            CgResults *cg_result, CgParams cg_params){
 
   /* Dwork should have size 4*n_b */
   // if (verbose < 1){
@@ -58,6 +58,10 @@ int cgsolve(double *x, double *b, size_t n_b, double tol,
   //   return -1;
   // }
 
+  double cgres = cg_params.cgres;
+  double tol = cg_params.tol;
+  int verbose = cg_params.verbose;
+  int max_iter = cg_params.max_iter;
   int iter, i = 0;
 
   double delta = 0.0;
@@ -153,10 +157,11 @@ int cgsolve(double *x, double *b, size_t n_b, double tol,
 
   // x = bestx;
   cblas_dcopy( (int)n_b, bestx, 1, x, 1);
-  res = best_res;
+  cg_result->cgres = best_res;
+  cg_result->cgiter = iter;
 
+  printf("CG-iters = %d\n", iter);
 
-  printf("Total Iters = %d\n", iter);
   return 0;
 
 }
