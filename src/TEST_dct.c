@@ -6,8 +6,6 @@
 
  */
 
-
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h> //Constants
@@ -22,6 +20,7 @@
 /* To read in test data */
 #include "cJSON.h"
 #include "json_utils.h"
+#include "check_utils.h"
 
 /* Global variables which hold data contained in
    test_data_ss_ff.h
@@ -80,7 +79,7 @@ START_TEST(test_dct_MtEt_EMtx_small)
   char fpath[] = "test_data/dct_small_MtEt_EMx.json";
   int *pix_idx;
   double *x_exp, *x0, *x_act;
-  int Nx0, Nx1, Npix, i = 0;
+  int Nx0, Nx1, Npix = 0;
 
   if (load_EMx_data(&Nx0, &x0, &Nx1, &x_exp, &Npix, &pix_idx, fpath)){
     ck_abort_msg("Errory Loading test data\n");
@@ -91,9 +90,7 @@ START_TEST(test_dct_MtEt_EMtx_small)
 
   x_act = dct_MtEt_EMx_new(x0);
 
-  for (i=0; i<Nx0; i++){
-    ck_assert_double_eq_tol(x_exp[i], x_act[i], TOL_DOUBLE);
-  }
+  ck_assert_double_array_eq_tol(Nx0, x_exp, x_act, TOL_DOUBLE);
 
   free(x_exp);
   dct_destroy();
@@ -106,7 +103,7 @@ START_TEST(test_dct_MtEty_small)
   char fpath[] = "test_data/dct_small_MtEty.json";
   int *pix_idx;
   double *x_exp, *y, *x_act;
-  int Nx, Ny, Npix, i = 0;
+  int Nx, Ny, Npix = 0;
 
   if (load_EMx_data(&Nx, &x_exp, &Ny, &y, &Npix, &pix_idx, fpath)){
     ck_abort_msg("Errory Loading test data\n");
@@ -117,9 +114,7 @@ START_TEST(test_dct_MtEty_small)
 
   x_act = dct_MtEty(y);
 
-  for (i=0; i<Nx; i++){
-    ck_assert_double_eq_tol(x_exp[i], x_act[i], TOL_DOUBLE);
-  }
+  ck_assert_double_array_eq_tol(Nx, x_exp, x_act, TOL_DOUBLE);
 
   free(y);
   dct_destroy();
@@ -134,7 +129,7 @@ START_TEST(test_dct_EMx_small)
   int *pix_idx;
 
   double *x, *y_exp, *y_act;
-  int Nx, Ny, Npix, i = 0;
+  int Nx, Ny, Npix = 0;
   if (load_EMx_data(&Nx, &x, &Ny, &y_exp, &Npix, &pix_idx, fpath)){
     ck_abort_msg("Errory Loading test data\n");
   }
@@ -145,9 +140,7 @@ START_TEST(test_dct_EMx_small)
 
   y_act = dct_EMx();
 
-  for (i=0; i<Ny; i++){
-    ck_assert_double_eq_tol(y_exp[i], y_act[i], TOL_DOUBLE);
-  }
+  ck_assert_double_array_eq_tol(Ny, y_exp, y_act, TOL_DOUBLE);
 
   free(y_exp);
   dct_destroy();
@@ -178,9 +171,7 @@ START_TEST(test_dct_EMx_new_small)
 
   y_act = dct_EMx_new(x_new);
 
-  for (i=0; i<Ny; i++){
-    ck_assert_double_eq_tol(y_exp[i], y_act[i], TOL_DOUBLE);
-  }
+  ck_assert_double_array_eq_tol(Ny, y_exp, y_act, TOL_DOUBLE);
 
   free(y_exp);
   dct_destroy();

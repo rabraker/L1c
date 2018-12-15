@@ -156,8 +156,12 @@ double* dct_EMx(){
   return dct_y;
 }
 
-double* dct_MtEty( double *y){
-  /*Apply M^T * E^T * y. */
+double * dct_MtEty( double *y){
+  /*Apply M^T * E^T * y.
+    The results are normalized to matlabs convention. That is, divided by 1/sqrt(2*N) and
+    x[0] <- x[0] * /sqrt(2).
+
+   */
 
   int i;
   // E^T * y --> y_sparse. y_sparse should be set to all zeros, and pix_mask does not change.
@@ -165,9 +169,10 @@ double* dct_MtEty( double *y){
   for (i=0; i<dct_Ny; i++){
     dct_Ety_sparse[dct_pix_mask_idx[i]] = y[i] * dct_root_1_by_2N;
   }
-  fftw_execute(dct_plan_MtEty); // Should be M^T * dct_y_sparse
+  fftw_execute(dct_plan_MtEty); // This is the M^T * dct_y_sparse
 
-  // Result contained in dct_x. Return a pointer to that array.
+  // Result contained in dct_x. Return a pointer to that array. Normalize first coef to matlab convention
+  dct_x[0] = dct_x[0]/sqrt(2);
   return dct_x;
 }
 

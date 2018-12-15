@@ -53,13 +53,14 @@ int main(void)
   Suite *s;
   SRunner *sr;
 
-  s = l1qc_newton_suite();
+  // s = l1qc_newton_suite();
+  s = dct_suite();
   sr = srunner_create(s);
   srunner_set_fork_status(sr, fstat);
 
   // Only need to do this for ADDITIONAL suites. Otherwise it will run twice.
   srunner_add_suite(sr, cgsolve_suite());
-  srunner_add_suite(sr, dct_suite());
+  // srunner_add_suite(sr, dct_suite());
 
   /* Run the tests */
   srunner_run_all(sr, CK_VERBOSE);

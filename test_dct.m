@@ -1,4 +1,5 @@
 % Create a small set of test data
+addpath ../../reconstruction/BP/
 N = 50;
 
 Ts = 1/50;
@@ -18,17 +19,13 @@ pix_mask(pix_idx) = 1;
 
 yy = IDCTfun(x, pix_mask);
 
-% account for scaling difference
-% f_AtA = f_AtA * 2*sqrt(N/2)
-% f_AtA(1) = f_AtA(1) * sqrt(2);
-
 data = struct('x0', x(:)', 'x1', yy(:)', 'pix_idx', pix_idx(:)'-1);
 savejson('', data, 'test_data/dct_small_EMx.json');
 
-%
+
 xx = DCTfun(yy, pix_mask);
 xx_save = xx; 
-xx_save(1) = xx_save(1) * sqrt(2); % matlabs weird normalization.
+% xx_save(1) = xx_save(1) * sqrt(2); % matlabs weird normalization.
 
 data = struct('x0', xx_save(:)', 'x1', yy(:)', 'pix_idx', pix_idx(:)'-1);
 savejson('', data, 'test_data/dct_small_MtEty.json');
