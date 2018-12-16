@@ -52,16 +52,7 @@ int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
             void(*AX_func)(int n, double *x, double *b, void *AX_data), void *AX_data,
             CgResults *cg_result, CgParams cg_params){
 
-  /* Dwork should have size 4*n_b */
-  // if (verbose < 1){
-  //   perror("Error: Must have verbose >=1\n");
-  //   return -1;
-  // }
 
-  double cgres = cg_params.cgres;
-  double tol = cg_params.tol;
-  int verbose = cg_params.verbose;
-  int max_iter = cg_params.max_iter;
   int iter, i = 0;
 
   double delta = 0.0;
@@ -106,7 +97,7 @@ int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
   best_res = sqrt(delta/delta_0);
 
 
-  for (iter=0; iter<max_iter; iter++){
+  for (iter=0; iter<cg_params.max_iter; iter++){
     // void catlas_daxpby(const int __N, const double __alpha, const double *__X, const int __incX,
     // const double __beta, double *__Y, const int __incY);
 
@@ -143,12 +134,12 @@ int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
       best_res = res;
     }
 
-    if ( verbose >0 && (iter % verbose)==0){ // modulo 0 is a floating point exception.
+    if ( cg_params.verbose >0 && (iter % cg_params.verbose)==0){ // modulo 0 is a floating point exception.
       printf("cg: Iter = %d, Best residual = %.3f, Current residual = %.3f\n",
              iter, best_res, res);
     }
 
-    if (delta < pow(tol, 2) * delta_0){
+    if (delta < pow(cg_params.tol, 2) * delta_0){
       break;
     }
 
