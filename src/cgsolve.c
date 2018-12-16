@@ -25,7 +25,7 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method
 
  int verbose : how often to print status updates.
 
- double *Dwork: A work vector of length 4 * n_b.
+ double *Dwork: A work vector of length 5 * n_b.
 
  void(*AX_func)(int n, double *x, double *b, void *AX_data) : Pointer to a function
  which evalutes A * x.
@@ -69,6 +69,7 @@ int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
   d = Dwork + n_b;
   bestx = Dwork + 2 * n_b;
   q = Dwork + 3 * n_b;
+  //d_tmp = Dwork + 4*n_b;
 
   /* Init
   x = zeros(n,1)
@@ -101,8 +102,12 @@ int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
     // void catlas_daxpby(const int __N, const double __alpha, const double *__X, const int __incX,
     // const double __beta, double *__Y, const int __incY);
 
+    // H11p must overwrite d[0]
+    //    cblas_dcopy((int)n_b, d, 1, d_tmp, 1);
+    //d0_tmp = d[0];
     AX_func(n_b, d, q, AX_data);
-
+    //    d[0] = d0_tmp;
+    
     // alpha delta/(d'*q);
     alpha = delta / cblas_ddot(n_b, d, 1, q, 1);
 

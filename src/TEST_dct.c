@@ -26,14 +26,12 @@
    test_data_ss_ff.h
 */
 
-// double *y_vec_tmp, *DC_y_tmp;
+cJSON *test_data_json;
 
 
-START_TEST(test_dct_MtEt_EMx_large)
+START_TEST(test_dct_MtEt_EMx_small_rand)
 {
-  cJSON *test_data_json;
-
-  char fpath[] = "test_data/dct_large.json";
+  char fpath[] = "test_data/dct_small_rand.json";
   int *pix_idx;
   double *MtEt_EMx_exp, *x_in, *MtEt_EMx_act;
   int Nx, Npix, status = 0;
@@ -43,7 +41,7 @@ START_TEST(test_dct_MtEt_EMx_large)
     ck_abort();
   }
 
-  status +=extract_json_double_array(test_data_json, "x_in", &x_in, &Nx);
+  status +=extract_json_double_array_fftw(test_data_json, "x_in", &x_in, &Nx);
   status +=extract_json_double_array(test_data_json, "MtEt_EMx", &MtEt_EMx_exp, &Nx);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &Npix);
 
@@ -52,15 +50,13 @@ START_TEST(test_dct_MtEt_EMx_large)
     ck_abort();
   }
 
-
-
   dct_setup(Nx, Npix, pix_idx);
 
   MtEt_EMx_act = dct_MtEt_EMx_new(x_in);
 
   ck_assert_double_array_eq_tol(Nx, MtEt_EMx_exp, MtEt_EMx_act, TOL_DOUBLE);
 
-  free(x_in);
+  fftw_free(x_in);
   free(MtEt_EMx_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
@@ -68,11 +64,10 @@ START_TEST(test_dct_MtEt_EMx_large)
 END_TEST
 
 
-START_TEST(test_dct_MtEty_large)
+START_TEST(test_dct_MtEty_small_rand)
 {
-  cJSON *test_data_json;
 
-  char fpath[] = "test_data/dct_large.json";
+  char fpath[] = "test_data/dct_small_rand.json";
   int *pix_idx;
   double *MtEty_exp, *y_in, *MtEty_act;
   int Nx, Ny, Npix, status = 0;
@@ -82,7 +77,7 @@ START_TEST(test_dct_MtEty_large)
     ck_abort();
   }
 
-  status +=extract_json_double_array(test_data_json, "y_in", &y_in, &Ny);
+  status +=extract_json_double_array_fftw(test_data_json, "y_in", &y_in, &Ny);
   status +=extract_json_double_array(test_data_json, "MtEty", &MtEty_exp, &Nx);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &Npix);
 
@@ -99,20 +94,19 @@ START_TEST(test_dct_MtEty_large)
 
   ck_assert_double_array_eq_tol(Nx, MtEty_exp, MtEty_act, TOL_DOUBLE);
 
-  free(y_in);
+  fftw_free(y_in);
   free(MtEty_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
 }
 END_TEST
 
-START_TEST(test_dct_EMx_large)
+START_TEST(test_dct_EMx_small_rand)
 {
-  cJSON *test_data_json;
 
-  char fpath[] = "test_data/dct_large.json";
+  char fpath[] = "test_data/dct_small_rand.json";
   int *pix_idx;
-  double *EMx_exp, *x_in, *EMx_act;
+  double *EMx_exp, *x_in, *x_in_aligned, *EMx_act;
   int Nx, Ny, Npix, status = 0;
 
   if (load_file_to_json(fpath, &test_data_json)){
@@ -120,8 +114,85 @@ START_TEST(test_dct_EMx_large)
     ck_abort();
   }
 
-  status +=extract_json_double_array(test_data_json, "x_in", &x_in, &Nx);
+  status +=extract_json_double_array_fftw(test_data_json, "x_in", &x_in, &Nx);
   status +=extract_json_double_array(test_data_json, "EMx", &EMx_exp, &Ny);
+  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &Npix);
+
+  if (status){
+    perror("Error Loading json into program data in 'test_MtEty_large()'. Aborting\n");
+    ck_abort();
+  }
+  ck_assert_int_eq(Ny, Npix);
+
+  dct_setup(Nx, Ny, pix_idx);
+
+  x_in_aligned = fftw_alloc_real(Nx);
+  for (int i=0; i<Nx; i++){
+    x_in_aligned[i] = x_in[i];
+  }
+
+  EMx_act = dct_EMx_new(x_in_aligned);
+
+  ck_assert_double_array_eq_tol(Ny, EMx_exp, EMx_act, TOL_DOUBLE);
+
+  fftw_free(x_in);
+  free(EMx_exp);
+  free(pix_idx);
+  dct_destroy(); //will free MtEty_act.
+}
+END_TEST
+
+/* ---------------------------------------------------- */
+START_TEST(test_dct_MtEt_EMx_large)
+{
+  char fpath[] = "test_data/dct_large.json";
+  int *pix_idx;
+  double *MtEt_EMx_exp, *x_in, *MtEt_EMx_act;
+  int Nx, Npix, status = 0;
+
+  if (load_file_to_json(fpath, &test_data_json)){
+    perror("Error loading data in test_dct_MtEt_large\n");
+    ck_abort();
+  }
+
+  status +=extract_json_double_array_fftw(test_data_json, "x_in", &x_in, &Nx);
+  status +=extract_json_double_array(test_data_json, "MtEt_EMx", &MtEt_EMx_exp, &Nx);
+  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &Npix);
+
+  if (status){
+    perror("Error Loading json into program data in 'test_MtEty_large()'. Aborting\n");
+    ck_abort();
+  }
+
+  dct_setup(Nx, Npix, pix_idx);
+
+  MtEt_EMx_act = dct_MtEt_EMx_new(x_in);
+
+  ck_assert_double_array_eq_tol(Nx, MtEt_EMx_exp, MtEt_EMx_act, TOL_DOUBLE);
+
+  fftw_free(x_in);
+  free(MtEt_EMx_exp);
+  free(pix_idx);
+  dct_destroy(); //will free MtEty_act.
+}
+END_TEST
+
+
+START_TEST(test_dct_MtEty_large)
+{
+
+  char fpath[] = "test_data/dct_large.json";
+  int *pix_idx;
+  double *MtEty_exp, *y_in, *MtEty_act;
+  int Nx, Ny, Npix, status = 0;
+
+  if (load_file_to_json(fpath, &test_data_json)){
+    perror("Error loading data in test_dct_MtEt_large\n");
+    ck_abort();
+  }
+
+  status +=extract_json_double_array_fftw(test_data_json, "y_in", &y_in, &Ny);
+  status +=extract_json_double_array(test_data_json, "MtEty", &MtEty_exp, &Nx);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &Npix);
 
   if (status){
@@ -133,11 +204,47 @@ START_TEST(test_dct_EMx_large)
 
   dct_setup(Nx, Ny, pix_idx);
 
+  MtEty_act = dct_MtEty(y_in);
+
+  ck_assert_double_array_eq_tol(Nx, MtEty_exp, MtEty_act, TOL_DOUBLE);
+
+  fftw_free(y_in);
+  free(MtEty_exp);
+  free(pix_idx);
+  dct_destroy(); //will free MtEty_act.
+}
+END_TEST
+
+START_TEST(test_dct_EMx_large)
+{
+
+  char fpath[] = "test_data/dct_large.json";
+  int *pix_idx;
+  double *EMx_exp, *x_in, *EMx_act;
+  int Nx, Ny, Npix, status = 0;
+
+  if (load_file_to_json(fpath, &test_data_json)){
+    perror("Error loading data in test_dct_MtEt_large\n");
+    ck_abort();
+  }
+
+  status +=extract_json_double_array_fftw(test_data_json, "x_in", &x_in, &Nx);
+  status +=extract_json_double_array(test_data_json, "EMx", &EMx_exp, &Ny);
+  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &Npix);
+
+  if (status){
+    perror("Error Loading json into program data in 'test_MtEty_large()'. Aborting\n");
+    ck_abort();
+  }
+  ck_assert_int_eq(Ny, Npix);
+
+  dct_setup(Nx, Ny, pix_idx);
+
   EMx_act = dct_EMx_new(x_in);
 
   ck_assert_double_array_eq_tol(Ny, EMx_exp, EMx_act, TOL_DOUBLE);
 
-  free(x_in);
+  fftw_free(x_in);
   free(EMx_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
@@ -149,26 +256,22 @@ END_TEST
 static int load_EMx_data(int *Nx0, double **x0, int *Nx1, double **x1, int *Nidx,
                          int **pix_idx, char *fpath){
 
-  cJSON *test_data_json;
-
   if (load_file_to_json(fpath, &test_data_json) ){
     return 1;
   }
-
-
-  if (extract_json_double_array(test_data_json, "x0", x0, Nx0) ){
+  if (extract_json_double_array_fftw(test_data_json, "x0", x0, Nx0) ){
     perror("Error Loading x\n");
     return 1;
   }
-  if (extract_json_double_array(test_data_json, "x1", x1, Nx1) ){
+  if (extract_json_double_array_fftw(test_data_json, "x1", x1, Nx1) ){
     perror("Error Loading y_exp\n");
     return 1;
   }
-
   if (extract_json_int_array(test_data_json, "pix_idx", pix_idx, Nidx) ){
     perror("Error Loading pix_idx \n");
     goto end1;
   }
+
   /* Sanity check */
   if ( (*Nx1 != *Nidx) && (*Nx0 != *Nx1)){
     perror("Error: Array size mismatch. Aborting\n");
@@ -187,10 +290,7 @@ static int load_EMx_data(int *Nx0, double **x0, int *Nx1, double **x1, int *Nidx
   free(*x0);
   return 1;
 
- // end:
- //  return 1;
 }
-
 
 
 START_TEST(test_dct_MtEt_EMx_small)
@@ -212,7 +312,8 @@ START_TEST(test_dct_MtEt_EMx_small)
 
   ck_assert_double_array_eq_tol(Nx0, x_exp, x_act, TOL_DOUBLE);
 
-  free(x_exp);
+  fftw_free(x_exp);
+  fftw_free(x0);
   dct_destroy();
 }
 END_TEST
@@ -236,7 +337,8 @@ START_TEST(test_dct_MtEty_small)
 
   ck_assert_double_array_eq_tol(Nx, x_exp, x_act, TOL_DOUBLE);
 
-  free(y);
+  fftw_free(y);
+  fftw_free(x_exp);
   dct_destroy();
 }
 END_TEST
@@ -262,7 +364,8 @@ START_TEST(test_dct_EMx_small)
 
   ck_assert_double_array_eq_tol(Ny, y_exp, y_act, TOL_DOUBLE);
 
-  free(y_exp);
+  fftw_free(y_exp);
+  fftw_free(x);
   dct_destroy();
 }
 END_TEST
@@ -287,13 +390,13 @@ START_TEST(test_dct_EMx_new_small)
 
   printf("Nx = %d, Ny=%d\n", Nx, Ny);
   dct_setup(Nx, Ny, pix_idx);
-  //dct_load_x(x);
 
   y_act = dct_EMx_new(x_new);
 
   ck_assert_double_array_eq_tol(Ny, y_exp, y_act, TOL_DOUBLE);
 
-  free(y_exp);
+  fftw_free(y_exp);
+  fftw_free(x_new);
   dct_destroy();
 }
 END_TEST
@@ -310,12 +413,16 @@ Suite *dct_suite(void)
   s = suite_create("dct");
   tc_core = tcase_create("Core");
 
+  tcase_add_test(tc_core,test_dct_MtEt_EMx_small_rand);
+  tcase_add_test(tc_core, test_dct_EMx_small_rand);
+  tcase_add_test(tc_core, test_dct_MtEty_small_rand);
+
   tcase_add_test(tc_core,test_dct_MtEt_EMx_large);
   tcase_add_test(tc_core, test_dct_EMx_large);
   tcase_add_test(tc_core, test_dct_MtEty_large);
+
   tcase_add_test(tc_core, test_dct_EMx_small);
   tcase_add_test(tc_core, test_dct_EMx_new_small);
-
   tcase_add_test(tc_core, test_dct_MtEt_EMx_small);
   tcase_add_test(tc_core, test_dct_MtEty_small);
 

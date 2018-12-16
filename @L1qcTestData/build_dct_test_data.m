@@ -36,7 +36,37 @@ function build_dct_test_data(test_data_root)
   savejson('', data, MtEt_Emx_path);
   
   %%
+  % Now, the real deal:
+
+  Nx = 50;
+      
+  pix_mask_vec = rand(Nx,1)*0+1;
+  idx_keep = pix_mask_vec>0.5;
+  pix_mask_vec(idx_keep) = 1;
+  pix_mask_vec(~idx_keep) = 0;
   
+  pix_idx = find(pix_mask_vec > 0.5);
+  Ny = length(pix_idx);
+  
+  % y = E*M*x
+  img_vec = randn(Nx, 1);
+  % y, set of measurements. have to remove all the spots we didn't sample.
+  y_vec = img_vec(pix_idx);
+  A = @(x) IDCTfun(x, pix_mask_vec); % E*M
+  At = @(y) DCTfun(y, pix_mask_vec); %E^T*M^T
+  A = @(x)idct(x);
+  At = @(x)dct(x);
+  
+  EMx = A(img_vec);
+  MtEty = At(y_vec);
+  MtEt_EMx = At(A(img_vec));
+  
+  jopts.FloatFormat = '%.20f';
+  jopts.FileName = fullfile(test_data_root, 'dct_small_rand.json');
+  savejson('', struct('x_in', img_vec(:)', 'y_in', y_vec(:)',...
+    'EMx', EMx(:)', 'MtEty', MtEty(:)', 'MtEt_EMx', MtEt_EMx(:)', 'pix_idx', pix_idx(:)'-1), jopts);
+  
+  %%  
   % Now, the real deal:
   fpath = '/home/arnold/matlab/afm-cs/matlab-code/notes/data/cs_sim_CS20NG.mat';
   addpath ~/matlab/afm-cs/reconstruction/BP

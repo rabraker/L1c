@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include<stdio.h>
 #include <math.h>
+#include <fftw3.h>
 #include "cblas.h"
 #include "l1qc_newton.h"
 #include "dct.h"
@@ -94,9 +95,9 @@ void f_eval(int N, double *r, double *x, double *u, double tau, double epsilon,
 
 }
 
-// globals sigx, w1p,  atr, fe
-// Compute hessian * z
 
+/* Computes the H11 part of the hessian. Used to call cgsolve.
+ */
 void H11pfun(int N, double *z, double *y,  void *hess_data_in){
   /*
     -- !! Need to have z allocated by fftw_alloc_real(N) !!
@@ -115,21 +116,20 @@ void H11pfun(int N, double *z, double *y,  void *hess_data_in){
 
   // y = sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
   // y_ = sigx.*z
-  // for (i=0; i<N; i++){
-  //   y[i] = h11p_data.sigx[i] * z[i];
-  // }
+  for (i=0; i<N; i++){
+    y[i] = h11p_data.sigx[i] * z[i];
+  }
   // ...+ (1/fe)*At*A*z
   ATA_z = dct_MtEt_EMx_new(z);
   for (i=0; i<N; i++){
-    y[i] = ATA_z[i]; //y[i] - h11p_data.one_by_fe * ATA_z[i];
+    y[i] = y[i] - h11p_data.one_by_fe * ATA_z[i];
   }
-  // //...+ 1/fe^2*(atr'*z)*atr;
-  // for (i=0; i<N; i++){
-  //   y[i] +=  atr_dot_z_fe * h11p_data.atr[i];
-  // }
+  // ...+ 1/fe^2*(atr'*z)*atr;
+  for (i=0; i<N; i++){
+    y[i] +=  atr_dot_z_fe * h11p_data.atr[i];
+  }
 
 }
-
 
 
 void get_gradient(int N, double *fu1, double *fu2, double *sigx, double *atr,
@@ -165,20 +165,36 @@ void get_gradient(int N, double *fu1, double *fu2, double *sigx, double *atr,
   }
 }
 
-int compute_descent(int N, double *fu1, double *fu2, double *r, double fe,  double tau,
+int compute_descent(int N, double *fu1, double *fu2, double *atr, double fe,  double tau,
                     GradData gd, double *Dwork_5N, CgParams cg_params, CgResults *cg_result){
+  /* inputs
+   --------
+   *fu1, *fu2, *r, fe, tau
+
+   cg_params
+
+   outputs
+   -------
+     dx
+     du
+     cg_results
+     gd.*
+
+  work
+  ----
+    *Dwork_5N
+
+  */
   int i=0;
   Hess_data h11p_data;
-  double *sigx, *Dwork_4N, *atr;
-  Dwork_4N = Dwork_5N;
-  sigx =  Dwork_5N + 4*N;
+  double *sigx, *Dwork_4N;
+  sigx =  Dwork_5N;
+  Dwork_4N = Dwork_5N + N;
 
-
-  atr = dct_MtEty(r);
   get_gradient(N, fu1, fu2, sigx, atr, fe, tau, gd);
 
   h11p_data.one_by_fe = 1.0/fe;
-  h11p_data.one_by_fe_sqrd = (1.0/fe) * (1.0/fe);
+  h11p_data.one_by_fe_sqrd = 1.0 / (fe * fe);
   h11p_data.atr = atr;
   h11p_data.sigx = sigx;
 
@@ -186,9 +202,9 @@ int compute_descent(int N, double *fu1, double *fu2, double *r, double fe,  doub
           H11pfun, &h11p_data, cg_result, cg_params);
 
   for (i=0; i<N; i++){
-  gd.du[i] = (1.0/gd.sig11[i]) * gd.ntgu[i] - (gd.sig12[i] / gd.sig11[i])  * gd.dx[i];
-
+    gd.du[i] = (1.0/gd.sig11[i]) * gd.ntgu[i] - (gd.sig12[i] / gd.sig11[i])  * gd.dx[i];
   }
+
   return 0;
 }
 
@@ -296,7 +312,7 @@ void l1qc_newton(int N, int M, double *x, double *u,
   // double cgres = 0.0;
   // x0 = x, u0 = u
 
-  double *r, *fu1, *fu2, *DWORK_5N;
+  double *atr, *r, *fu1, *fu2, *DWORK_5N;
   double fe, f, lambda2, stepsize = 0.0;
 
   GradData gd;
@@ -305,6 +321,7 @@ void l1qc_newton(int N, int M, double *x, double *u,
 
   DWORK_5N = calloc(5*N, sizeof(double));
   r = calloc(N, sizeof(double));
+  atr = fftw_alloc_real(N);
   fu1 = calloc(N, sizeof(double));
   fu2 = calloc(N, sizeof(double));
 
@@ -328,7 +345,8 @@ void l1qc_newton(int N, int M, double *x, double *u,
   for (iter=0; iter<params.newton_max_iter; iter++){
 
     /* compute descent direction. returns dx, du, gradf, cgres */
-    if(!compute_descent(N, fu1, fu2, r, fe,  params.tau, gd, DWORK_5N, cg_params, &cg_results)){
+    atr = dct_MtEty(r);
+    if(!compute_descent(N, fu1, fu2, atr, fe,  params.tau, gd, DWORK_5N, cg_params, &cg_results)){
       return;
     }
 

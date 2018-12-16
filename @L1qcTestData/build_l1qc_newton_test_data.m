@@ -15,6 +15,8 @@ function build_l1qc_newton_test_data(test_data_root)
   A = @(x) IDCTfun(x,pix_mask_vec); % E*M
   At = @(x) DCTfun(x,pix_mask_vec); %E^T*M^T
 
+  
+  
   x0 = At(y_vec);
   b= y_vec;
   x = x0;
@@ -102,7 +104,7 @@ cgmaxiter = opts.cgmaxiter;
 
   jopts.FloatFormat ='%.20g';
   for niter=1:newtonmaxiter
-    if niter==5
+    if niter==1
       save_on = true;
     else
       save_on = false;
@@ -247,18 +249,18 @@ function [dx, du, gradf, cgres, cgiter] = compute_descent(fu1, fu2, r, fe, ...
 %    
    if save_on
      jopts.FileName = path_spec{1};
-     savejson('', struct('dx', dx(:)', 'du', du(:)', 'gradf', gradf(:)', 'cgres', cgres, 'fu1', ...
+     savejson('', struct('dx', dx(:)', 'du', du(:)', 'gradf', gradf(:)', 'fu1', ...
                         fu1(:)', 'fu2', fu2(:)', 'r', r(:)', 'atr', atr(:)',...
                         'ntgu', ntgu(:)', 'sig11', sig11(:)', 'sig12', sig12(:)',...
                         'w1p', w1p(:)', 'sigx', sigx(:)', 'pix_idx', pix_idx(:)'-1,...
-                        'fe', fe, 'tau', tau, 'cgtol', cgtol, 'cgmaxiter', ...
-                        cgmaxiter), jopts);
+                        'fe', fe, 'tau', tau, 'cgtol', cgtol, 'cgmaxiter', cgmaxiter,...
+                        'cgres', cgres, 'cgiter', cgiter), jopts);
                       
      % hp11_fun data
      jopts.FileName = path_spec{2};
      z_typ = w1p; % From line 36 & 28 of cgsolve
-     h11p = @(z) At(A(z));% sigx.*z - (1/fe)*+ 1/fe^2*(atr'*z)*atr;
-     y_exp = h11p(z_typ);
+%      h11p = @(z) At(A(z));% sigx.*z - (1/fe)*+ 1/fe^2*(atr'*z)*atr;
+     y_exp = h11pfun(z_typ);
      savejson('', struct('z', z_typ(:)', 'atr', atr(:)', 'fe', fe, 'sigx',...
        sigx(:)', 'y_exp', y_exp(:)', 'pix_idx', pix_idx(:)'-1), jopts);
     end

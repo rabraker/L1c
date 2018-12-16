@@ -21,6 +21,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 #include <stdio.h>
 #include <math.h> //Constants
 #include <check.h>
+#include <fftw3.h>
 
 #include "cJSON.h"
 #include "json_utils.h"
@@ -33,6 +34,149 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 // #include "test_data_ss_ff.h"
 
 static cJSON *test_data_json;
+
+
+START_TEST(test_compute_descent)
+{
+  char fpath[] = "test_data/descent_data.json";
+
+  GradData gd;
+  CgParams cgp;
+  CgResults cgr;
+
+  double *fu1, *fu2, *atr, *dx_exp, *du_exp;
+  double *sig11_exp, *sig12_exp, *w1p_exp;
+
+  double *DWORK_5N;
+  double  fe,tau,cgres_exp,cgtol = 0;
+
+  int cg_maxiter, cgiter_exp, N, Npix, status=0;
+  int *pix_idx;
+
+  if (load_file_to_json(fpath, &test_data_json)){
+    perror("Error loading data in test_get_gradient\n");
+    ck_abort();
+  }
+
+  // Inputs to get_gradient
+  status +=extract_json_double_array(test_data_json, "fu1", &fu1, &N);
+  status +=extract_json_double_array(test_data_json, "fu2", &fu2, &N);
+  status +=extract_json_double_array(test_data_json, "atr", &atr, &N);
+
+  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &Npix);
+
+  status +=extract_json_double(test_data_json, "fe", &fe);
+  status +=extract_json_double(test_data_json, "cgtol", &cgtol);
+  status +=extract_json_double(test_data_json, "tau", &tau);
+  status +=extract_json_int(test_data_json, "cgmaxiter", &cg_maxiter);
+
+  // Expected outputs
+  status +=extract_json_double_array(test_data_json, "dx", &dx_exp, &N);
+  status +=extract_json_double_array(test_data_json, "du", &du_exp, &N);
+  status +=extract_json_double_array(test_data_json, "sig11", &sig11_exp, &N);
+  status +=extract_json_double_array(test_data_json, "sig12", &sig12_exp, &N);
+  status +=extract_json_double_array(test_data_json, "w1p", &w1p_exp, &N);
+
+  status +=extract_json_double(test_data_json, "cgres", &cgres_exp);
+  status +=extract_json_int(test_data_json, "cgiter", &cgiter_exp);
+  if (status){
+    perror("Error Loading json data in 'test_compute_descent()'. Aborting\n");
+    ck_abort();
+  }
+
+  printf("N = %d, Npix=%d\n", N, Npix);
+  DWORK_5N = calloc(5*N, sizeof(double));
+  if (!DWORK_5N){
+    perror("error allocating memory\n");
+  }
+  gd.w1p = calloc(N, sizeof(double));
+  if (!gd.w1p ){
+    perror("error allocating memory\n");
+  }
+  gd.dx = calloc(N, sizeof(double));
+  if (!gd.dx){
+    perror("error allocating memory\n");
+  }
+  gd.du = calloc(N, sizeof(double));
+  if (!gd.du ){
+    perror("error allocating memory\n");
+  }
+  gd.gradf = calloc(2*N, sizeof(double));
+  if (!gd.gradf){
+    perror("error allocating memory\n");
+  }
+  gd.Adx = calloc(2*N, sizeof(double));
+  if (!gd.Adx){
+    perror("error allocating memory\n");
+  }
+  gd.sig11 = calloc(N, sizeof(double));
+  if (!gd.sig11){
+    perror("error allocating memory\n");
+  }
+  gd.sig12 = calloc(N, sizeof(double));
+  if (!gd.sig12 ){
+    perror("error allocating memory\n");
+  }
+  //  gd.w1p = calloc(N, sizeof(double));
+  gd.ntgu = calloc(N, sizeof(double));
+  if (!gd.ntgu ){
+    perror("error allocating memory\n");
+  }
+
+
+  cgr.cgres = 0.0;
+  cgr.cgiter = 0;
+  cgp.verbose = 0;
+  cgp.max_iter = cg_maxiter;
+  cgp.tol = cgtol;
+
+  /* Setup the DCT */
+  dct_setup(N, Npix, pix_idx);
+
+  compute_descent(N, fu1, fu2, atr, fe, tau, gd, DWORK_5N, cgp, &cgr);
+  //get_gradient(N, fu1, fu2, DWORK_5N, atr, fe, tau, gd);
+  /* ----- Now check: if this fails, look at *relative* tolerance. Here, we check
+     absolute tolerance, but for real data,  y_exp is huge 1e22. Should probably normalize
+     inputs to 1??
+  */
+
+  /*The next three should already be checked by test_get_gradient, but we can
+   do it here to, to make sure things are staying sane.*/
+  ck_assert_double_array_eq_tol(N, sig11_exp, gd.sig11, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(N, sig12_exp, gd.sig12, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(N, w1p_exp, gd.w1p, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(N, dx_exp, gd.dx, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(N, du_exp, gd.du, TOL_DOUBLE*100);
+
+  ck_assert_int_eq(cgr.cgiter+1, cgiter_exp);
+  ck_assert_double_eq_tol(cgr.cgres, cgres_exp, TOL_DOUBLE*100);
+
+  /* /\* ----------------- Cleanup --------------- *\/ */
+  free(fu1);
+  free(fu2);
+  free(atr);
+  free(dx_exp);
+  free(du_exp);
+  free(sig11_exp);
+  free(sig12_exp);
+  free(w1p_exp);
+  free(DWORK_5N);
+  free(gd.w1p);
+  free(gd.dx);
+  free(gd.du);
+  free(gd.gradf);
+  free(gd.Adx);
+  free(gd.sig11);
+  free(gd.sig12);
+  free(gd.ntgu);
+  free(pix_idx);
+
+  dct_destroy();
+}
+END_TEST
+
+
+
 
 
 START_TEST(test_H11pfun)
@@ -54,7 +198,7 @@ START_TEST(test_H11pfun)
   // Inputs to get_gradient
   status +=extract_json_double_array(test_data_json, "atr", &atr, &N);
   status +=extract_json_double_array(test_data_json, "sigx", &sigx, &N);
-  status +=extract_json_double_array(test_data_json, "z", &z, &N);
+  status +=extract_json_double_array_fftw(test_data_json, "z", &z, &N);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
 
   status +=extract_json_double(test_data_json, "fe", &fe);
@@ -81,23 +225,23 @@ START_TEST(test_H11pfun)
 
   H11pfun(N, z, y, &h11p_data);
 
-  /* ----- Now check -------*/
+  /* ----- Now check: if this fails, look at *relative* tolerance. Here, we check
+     absolute tolerance, but for real data,  y_exp is huge 1e22. Should probably normalize
+     inputs to 1??
+  */
   ck_assert_double_array_eq_tol(N, y_exp, y, TOL_DOUBLE*100);
 
-  printf("------------HP11-fun Passes-------------- !!!\n");
   /* ----------------- Cleanup --------------- */
-
-  free(sigx);
   free(atr);
-  free(z);
+  free(sigx);
+  fftw_free(z);
   free(y_exp);
   free(y);
 
   free(pix_idx);
+  dct_destroy();
 }
 END_TEST
-
-
 
 
 START_TEST(test_get_gradient)
@@ -345,22 +489,18 @@ END_TEST
 
 START_TEST(test_sum_vec)
 {
-  // setup_vectors_SC();
-  // setup_params_SC();
   int N = 6;
   double x[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
   double sum_exp = 21.0;
   double sum_x = sum_vec(N, x);
 
   ck_assert_double_eq_tol(sum_exp, sum_x, TOL_DOUBLE);
-  // setup_vectors_SC();
 }
 END_TEST
 
 START_TEST(test_log_vec)
 {
-  // setup_vectors_SC();
-  // setup_params_SC();
+
   int i, N = 6;
   double x[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
   double alpha = 3.0;
@@ -401,13 +541,14 @@ Suite *l1qc_newton_suite(void)
   s = suite_create("l1qc_newton");
   tc_core = tcase_create("Core");
 
+  tcase_add_test(tc_core, test_compute_descent);
   tcase_add_test(tc_core, test_H11pfun);
-  // tcase_add_test(tc_core, test_get_gradient);
-  // tcase_add_test(tc_core, test_line_search);
-  // tcase_add_test(tc_core, test_sum_vec);
-  // tcase_add_test(tc_core, test_logsum);
-  // tcase_add_test(tc_core, test_log_vec);
-  // tcase_add_test(tc_core, test_f_eval);
+  tcase_add_test(tc_core, test_get_gradient);
+  tcase_add_test(tc_core, test_line_search);
+  tcase_add_test(tc_core, test_sum_vec);
+  tcase_add_test(tc_core, test_logsum);
+  tcase_add_test(tc_core, test_log_vec);
+  tcase_add_test(tc_core, test_f_eval);
 
 
 

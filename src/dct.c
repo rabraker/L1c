@@ -61,8 +61,8 @@ void dct_setup(int Nx, int Ny, int *pix_mask_idx){
 
   dct_root_1_by_2N = sqrt(1.0 / ( (double) dct_Nx * 2)); // Normalization constant.
 
-  // FFTW_PATIENT | FFTW_DESTROY_INPUT;
-  unsigned flags = FFTW_DESTROY_INPUT;
+  // FFTW_PATIENT | FFTW_DESTROY_INPUT| FFTW_PRESERVE_INPUT;
+  unsigned flags = FFTW_PATIENT;
 
   fftw_r2r_kind dct_kind_MtEty = FFTW_REDFT10; //computes an REDFT10 transform, a DCT-II
   fftw_r2r_kind dct_kind_EMx   = FFTW_REDFT01; //computes an REDFT01 transform, a DCT-III, “the” IDCT
@@ -124,6 +124,11 @@ double* dct_EMx_new(double *x_fftw){
   int i;
   /* Will fill y. Plan_AT has saved the pointer to x and y, so we
      dont have to supply, but should be updated by the caller.*/
+
+  // Leave the input vector unchanged.
+  double x0_tmp = x_fftw[0];
+
+  x_fftw[0] = x_fftw[0] * sqrt(2.0);
   fftw_execute_r2r(dct_plan_EMx, x_fftw, dct_y);
 
   // Apply the subsampling operation. Assume that the indexes are ordered, and
@@ -131,6 +136,7 @@ double* dct_EMx_new(double *x_fftw){
   for (i=0; i<dct_Ny; i++){
     dct_y[i] = dct_y[ dct_pix_mask_idx[i]] * dct_root_1_by_2N;
   }
+  x_fftw[0] = x0_tmp;
   return dct_y;
 }
 
@@ -146,6 +152,7 @@ double* dct_EMx(){
 
   /* Will fill y. Plan_AT has saved the pointer to x and y, so we
    dont have to supply, but should be updated by the caller.*/
+  dct_x[0] = dct_x[0]*sqrt(2.0);
   fftw_execute(dct_plan_EMx);
 
   // Apply the subsampling operation. Assume that the indexes are ordered, and
@@ -173,9 +180,7 @@ double * dct_MtEty( double *y){
 
   // Result contained in dct_x. Return a pointer to that array. Normalize first coef to matlab convention
   dct_x[0] = dct_x[0]/sqrt(2.0);
-  // for (i=0; i<dct_Nx; i++){
-  //   dct_x[i] = dct_x[i] * dct_root_1_by_2N;
-  // }
+
   return dct_x;
 }
 
