@@ -31,15 +31,15 @@ function build_l1qc_newton_test_data(test_data_root)
   opts.newtonmaxiter = 50;
   opts.verbose = 1;
 
-  vp = {'AbsTol', 1e-14};
+  
+  pix_idx = find(pix_mask_vec > 0.5); % for saving, not computation.
 
-
-  [xp2, up2, ntiter2] = l1qc_newton_local(x, u, A, At, b, opts, test_data_root);
+  [xp2, up2, ntiter2] = l1qc_newton_local(x, u, A, At, b, opts, test_data_root, pix_idx);
   
 end
 
 
-function [x, u, niter] = l1qc_newton_local(x0, u0, A, At, b, opts, data_root) 
+function [x, u, niter] = l1qc_newton_local(x0, u0, A, At, b, opts, data_root, pix_mask) 
   % l1qc_newton.m
 %
 % Newton algorithm for log-barrier subproblems for l1 minimization
@@ -100,27 +100,25 @@ cgmaxiter = opts.cgmaxiter;
   fe = 1/2*(r'*r - epsilon^2);
   f = sum(u) - (1/tau)*(sum(log(-fu1)) + sum(log(-fu2)) + log(-fe));
 
-  jopts.FloatFormat ='%.15g';
+  jopts.FloatFormat ='%.20g';
   for niter=1:newtonmaxiter
-    [dx, du, gradf, cgres, cgiter, gd] = compute_descent(fu1, fu2, r, fe, tau, ...
-                                             cgtol, cgmaxiter, A, At);
-
-    if niter == 5
-      jopts.FileName = fullfile(data_root, 'descent_data.json');
-    savejson('', struct('dx', dx(:)', 'du', du(:)', 'gradf', gradf(:)', 'cgres', cgres, 'fu1', ...
-                        fu1(:)', 'fu2', fu2(:)', 'r', r(:)', 'atr', gd.atr(:)',...
-                        'ntgu', gd.ntgu(:)', 'sig11', gd.sig11(:)', 'sig12', gd.sig12(:)',...
-                        'w1p', gd.w1p(:)', 'sigx', gd.sigx(:)', 'fe', fe, 'tau', ...
-                        tau, 'cgtol', cgtol, 'cgmaxiter', ...
-                        cgmaxiter), jopts);
+    if niter==5
+      save_on = true;
+    else
+      save_on = false;
     end
+    jopts.FileName = fullfile(data_root);
+    descent_files = {fullfile(data_root, 'descent_data.json'),...
+                     fullfile(data_root, 'hp11_fun_data.json')};
+                   
+    [dx, du, gradf, cgres, cgiter] = compute_descent(fu1, fu2, r, fe, tau,...
+                                 cgtol, cgmaxiter, A, At, save_on, jopts, descent_files, pix_mask);
    
     if (cgres > 1/2)
       disp('Cannot solve system.  Returning previous iterate.  (See Section 4 of notes for more information.)');
       xp = x;  up = u;
       return
     end
-    
     
     Adx = A(dx);
     
@@ -216,8 +214,8 @@ end
 
 
 
-function [dx, du, gradf, cgres, cgiter, gd] = compute_descent(fu1, fu2, r, fe, ...
-                                                  tau,cgtol, cgmaxiter,A, At)
+function [dx, du, gradf, cgres, cgiter] = compute_descent(fu1, fu2, r, fe, ...
+                         tau,cgtol, cgmaxiter,A, At, save_on, jopts, path_spec, pix_idx)
  
   % This is solving a sytem of (block)equations before passing to
   % cgsolve. Ie, the entire H_z of eq. (8) does not go in there:
@@ -239,11 +237,30 @@ function [dx, du, gradf, cgres, cgiter, gd] = compute_descent(fu1, fu2, r, fe, .
   sigx = sig11 - sig12.^2./sig11;
     
   w1p = ntgz - sig12./sig11.*ntgu;
-%   if (largescale)
-    h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
-    [dx, cgres, cgiter] = L1qcTestData.cgsolve(h11pfun, w1p, cgtol, cgmaxiter, 0);
-    du = (1./sig11).*ntgu - (sig12./sig11).*dx;    
   
-   gd = struct('atr', atr, 'ntgu', ntgu, 'sig11', sig11, 'sig12', sig12,...
-     'w1p', w1p, 'sigx', sigx); 
+  h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
+  [dx, cgres, cgiter] = L1qcTestData.cgsolve(h11pfun, w1p, cgtol, cgmaxiter, 0);
+  du = (1./sig11).*ntgu - (sig12./sig11).*dx;
+
+%    gd = struct('atr', atr, 'ntgu', ntgu, 'sig11', sig11, 'sig12', sig12,...
+%      'w1p', w1p, 'sigx', sigx); 
+%    
+   if save_on
+     jopts.FileName = path_spec{1};
+     savejson('', struct('dx', dx(:)', 'du', du(:)', 'gradf', gradf(:)', 'cgres', cgres, 'fu1', ...
+                        fu1(:)', 'fu2', fu2(:)', 'r', r(:)', 'atr', atr(:)',...
+                        'ntgu', ntgu(:)', 'sig11', sig11(:)', 'sig12', sig12(:)',...
+                        'w1p', w1p(:)', 'sigx', sigx(:)', 'pix_idx', pix_idx(:)'-1,...
+                        'fe', fe, 'tau', tau, 'cgtol', cgtol, 'cgmaxiter', ...
+                        cgmaxiter), jopts);
+                      
+     % hp11_fun data
+     jopts.FileName = path_spec{2};
+     z_typ = w1p; % From line 36 & 28 of cgsolve
+     h11p = @(z) At(A(z));% sigx.*z - (1/fe)*+ 1/fe^2*(atr'*z)*atr;
+     y_exp = h11p(z_typ);
+     savejson('', struct('z', z_typ(:)', 'atr', atr(:)', 'fe', fe, 'sigx',...
+       sigx(:)', 'y_exp', y_exp(:)', 'pix_idx', pix_idx(:)'-1), jopts);
+    end
+   
 end

@@ -25,17 +25,79 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 #include "cJSON.h"
 #include "json_utils.h"
 #include "l1qc_newton.h"
-
+#include "dct.h"
 
 /* Tolerances and things */
 #include "test_constants.h"
 #include "check_utils.h"
 // #include "test_data_ss_ff.h"
 
-
-
-
 static cJSON *test_data_json;
+
+
+START_TEST(test_H11pfun)
+{
+  char fpath[] = "test_data/hp11_fun_data.json";
+
+  Hess_data h11p_data;
+  double *atr, *sigx, *z, *y_exp, *y;
+  double  fe = 0;
+
+  int N, M, status=0;
+  int *pix_idx;
+
+  if (load_file_to_json(fpath, &test_data_json)){
+    perror("Error loading data in test_get_gradient\n");
+    ck_abort();
+  }
+
+  // Inputs to get_gradient
+  status +=extract_json_double_array(test_data_json, "atr", &atr, &N);
+  status +=extract_json_double_array(test_data_json, "sigx", &sigx, &N);
+  status +=extract_json_double_array(test_data_json, "z", &z, &N);
+  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
+
+  status +=extract_json_double(test_data_json, "fe", &fe);
+
+  // Expected outputs
+  status +=extract_json_double_array(test_data_json, "y_exp", &y_exp, &N);
+
+  if (status){
+    perror("Error Loading json data in 'test_get_gradient()'. Aborting\n");
+    ck_abort();
+  }
+  y = calloc(N, sizeof(double));
+  if (!y){
+    perror("Unable to allocate memory\n");
+  }
+
+  h11p_data.one_by_fe = 1.0/fe;
+  h11p_data.one_by_fe_sqrd = 1.0/(fe * fe);
+  h11p_data.atr = atr;
+  h11p_data.sigx = sigx;
+
+  /* Setup the DCT */
+  dct_setup(N, M, pix_idx);
+
+  H11pfun(N, z, y, &h11p_data);
+
+  /* ----- Now check -------*/
+  ck_assert_double_array_eq_tol(N, y_exp, y, TOL_DOUBLE*100);
+
+  printf("------------HP11-fun Passes-------------- !!!\n");
+  /* ----------------- Cleanup --------------- */
+
+  free(sigx);
+  free(atr);
+  free(z);
+  free(y_exp);
+  free(y);
+
+  free(pix_idx);
+}
+END_TEST
+
+
 
 
 START_TEST(test_get_gradient)
@@ -339,12 +401,13 @@ Suite *l1qc_newton_suite(void)
   s = suite_create("l1qc_newton");
   tc_core = tcase_create("Core");
 
-  tcase_add_test(tc_core, test_get_gradient);
-  tcase_add_test(tc_core, test_line_search);
-  tcase_add_test(tc_core, test_sum_vec);
-  tcase_add_test(tc_core, test_logsum);
-  tcase_add_test(tc_core, test_log_vec);
-  tcase_add_test(tc_core, test_f_eval);
+  tcase_add_test(tc_core, test_H11pfun);
+  // tcase_add_test(tc_core, test_get_gradient);
+  // tcase_add_test(tc_core, test_line_search);
+  // tcase_add_test(tc_core, test_sum_vec);
+  // tcase_add_test(tc_core, test_logsum);
+  // tcase_add_test(tc_core, test_log_vec);
+  // tcase_add_test(tc_core, test_f_eval);
 
 
 

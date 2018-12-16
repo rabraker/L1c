@@ -35,4 +35,68 @@ function build_dct_test_data(test_data_root)
   data = struct('x0', x(:)', 'x1', xx_save(:)', 'pix_idx', pix_idx(:)'-1);
   savejson('', data, MtEt_Emx_path);
   
+  %%
+  
+  % Now, the real deal:
+  fpath = '/home/arnold/matlab/afm-cs/matlab-code/notes/data/cs_sim_CS20NG.mat';
+  addpath ~/matlab/afm-cs/reconstruction/BP
+
+  dat = load(fpath);
+  cs_sim = dat.cs_sim;
+
+  pix_mask_vec = PixelMatrixToVector(cs_sim.pix_mask);
+  
+  
+  
+  pix_idx = find(pix_mask_vec > 0.5);
+  
+  % y = E*M*x
+  img_vec = PixelMatrixToVector(cs_sim.Img_sub_sampled);
+  % y, set of measurements. have to remove all the spots we didn't sample.
+  y_vec = img_vec(pix_idx);
+  A = @(x) IDCTfun(x, pix_mask_vec); % E*M
+  At = @(y) DCTfun(y, pix_mask_vec); %E^T*M^T
+
+  EMx = A(img_vec);
+  MtEty = At(y_vec);
+  
+  MtEt_EMx = At(A(img_vec));
+  
+  jopts.FloatFormat = '%.15f';
+  jopts.FileName = fullfile(test_data_root, 'dct_large.json');
+  savejson('', struct('x_in', img_vec(:)', 'y_in', y_vec(:)',...
+    'EMx', EMx(:)', 'MtEty', MtEty(:)', 'MtEt_EMx', MtEt_EMx(:)', 'pix_idx', pix_idx(:)'-1), jopts);
+  
+  
+  
+  
+  
+% For debugging, just the dct part. 
+%   fpath = '/home/arnold/matlab/afm-cs/matlab-code/notes/data/cs_sim_CS20NG.mat';
+%   addpath ~/matlab/afm-cs/reconstruction/BP
+% 
+%   dat = load(fpath);
+%   cs_sim = dat.cs_sim;
+% 
+%   img_vec = PixelMatrixToVector(cs_sim.Img_sub_sampled);
+% %   img_vec = img_vec(1:2048);
+%   pix_idx = [1:length(img_vec)];
+%   
+%   % y, set of measurements. have to remove all the spots we didn't sample.
+%   y_vec = img_vec;
+%   A = @(x) idct(x);
+%   At = @(y) dct(y);
+% 
+%   EMx = A(img_vec);
+%   MtEty = At(y_vec);
+%   
+%   MtEt_EMx = At(A(img_vec));
+%   
+%   jopts.FloatFormat = '%.20f';
+%   jopts.FileName = fullfile(test_data_root, 'dct_large.json');
+%   savejson('', struct('x_in', img_vec(:)', 'y_in', y_vec(:)',...
+%     'EMx', EMx(:)', 'MtEty', MtEty(:)', 'MtEt_EMx', MtEt_EMx(:)', 'pix_idx', pix_idx(:)'-1), jopts);
+%     
+  
+
 end

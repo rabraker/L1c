@@ -104,46 +104,32 @@ void H11pfun(int N, double *z, double *y,  void *hess_data_in){
     -- Assumes the DCT stuff has been setup already.
    */
 
-  Hess_data hp11_data = *((Hess_data *) hess_data_in);
+  Hess_data h11p_data = *((Hess_data *) hess_data_in);
   // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
   int i = 0;
   double *ATA_z;
   double atr_dot_z_fe;
 
-  atr_dot_z_fe = cblas_ddot(N, hp11_data.atr, 1, z, 1);
-  atr_dot_z_fe = atr_dot_z_fe * hp11_data.one_by_fe_sqrd;
+  atr_dot_z_fe = cblas_ddot(N, h11p_data.atr, 1, z, 1);
+  atr_dot_z_fe = atr_dot_z_fe * h11p_data.one_by_fe_sqrd; //1/fe^2*(atr'*z)
 
   // y = sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
   // y_ = sigx.*z
-  for (i=0; i<N; i++){
-    y[i] = hp11_data.sigx[i] * z[i];
-  }
+  // for (i=0; i<N; i++){
+  //   y[i] = h11p_data.sigx[i] * z[i];
+  // }
   // ...+ (1/fe)*At*A*z
   ATA_z = dct_MtEt_EMx_new(z);
   for (i=0; i<N; i++){
-    y[i] +=  -hp11_data.one_by_fe * ATA_z[i];
+    y[i] = ATA_z[i]; //y[i] - h11p_data.one_by_fe * ATA_z[i];
   }
-  //...+ 1/fe^2*(atr'*z)*atr;
-  for (i=0; i<N; i++){
-    y[i] +=  atr_dot_z_fe* hp11_data.atr[i];
-  }
+  // //...+ 1/fe^2*(atr'*z)*atr;
+  // for (i=0; i<N; i++){
+  //   y[i] +=  atr_dot_z_fe * h11p_data.atr[i];
+  // }
 
 }
 
-
-// double flin(double f, double alpha, double s, int N, double *gradf, double *dx, double *du){
-//   // For the true linear approximation, alpha = 1.0.
-//   // flin = f + alpha*s*(gradf'*[dx; du]);
-//   // gradf has length 2*N. dx and du have length N.
-
-//   double delF_z1 = alpha * s * cblas_ddot(N, gradf, 1, dx, 1);
-//   double delF_z2 = alpha * s * cblas_ddot(N, gradf+N, 1, du, 1);
-
-//   return f + delF_z1 + delF_z2;
-// }
-
-
-// /*
 
 
 void get_gradient(int N, double *fu1, double *fu2, double *sigx, double *atr,

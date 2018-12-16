@@ -172,7 +172,10 @@ double * dct_MtEty( double *y){
   fftw_execute(dct_plan_MtEty); // This is the M^T * dct_y_sparse
 
   // Result contained in dct_x. Return a pointer to that array. Normalize first coef to matlab convention
-  dct_x[0] = dct_x[0]/sqrt(2);
+  dct_x[0] = dct_x[0]/sqrt(2.0);
+  // for (i=0; i<dct_Nx; i++){
+  //   dct_x[i] = dct_x[i] * dct_root_1_by_2N;
+  // }
   return dct_x;
 }
 
