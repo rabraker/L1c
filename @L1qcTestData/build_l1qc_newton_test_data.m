@@ -1,47 +1,45 @@
 function build_l1qc_newton_test_data(test_data_root)
-clear
-clc
-fpath = '/home/arnold/matlab/afm-cs/matlab-code/notes/data/cs_sim_CS20NG.mat';
-addpath ~/matlab/afm-cs/reconstruction/BP
-addpath(genpath('~/matlab/dependencies/SparseLab2.1-Core/Utilities/'))
-dat = load(fpath);
-cs_sim = dat.cs_sim;
+  fpath = '/home/arnold/matlab/afm-cs/matlab-code/notes/data/cs_sim_CS20NG.mat';
+  addpath ~/matlab/afm-cs/reconstruction/BP
+  addpath(genpath('~/matlab/dependencies/SparseLab2.1-Core/Utilities/'))
+  dat = load(fpath);
+  cs_sim = dat.cs_sim;
 
 
-pix_mask_vec = PixelMatrixToVector(cs_sim.pix_mask);
+  pix_mask_vec = PixelMatrixToVector(cs_sim.pix_mask);
 
-% y = E*M*x
-y_vec = PixelMatrixToVector(cs_sim.Img_sub_sampled);
-% y, set of measurements. have to remove all the spots we didn't sample.
-y_vec = y_vec(find(pix_mask_vec>0.5));
-A = @(x) IDCTfun(x,pix_mask_vec); % E*M
-At = @(x) DCTfun(x,pix_mask_vec); %E^T*M^T
+  % y = E*M*x
+  y_vec = PixelMatrixToVector(cs_sim.Img_sub_sampled);
+  % y, set of measurements. have to remove all the spots we didn't sample.
+  y_vec = y_vec(find(pix_mask_vec>0.5));
+  A = @(x) IDCTfun(x,pix_mask_vec); % E*M
+  At = @(x) DCTfun(x,pix_mask_vec); %E^T*M^T
 
-x0 = At(y_vec);
-b= y_vec;
-x = x0;
-opts.epsilon = 0.1;
-u = (0.95)*abs(x0) + (0.10)*max(abs(x0));
-N = length(x0);
-% choose initial value of tau so that the duality gap after the first
-% step will be about the origial norm
-opts.tau = max((2*N+1)/sum(abs(x0)), 1);
-opts.cgtol = 1e-8;
-opts.cgmaxiter = 200;
-opts.lbtol = 1e-3;
-opts.newtontol = lbtol;
-opts.newtonmaxiter = 50;
+  x0 = At(y_vec);
+  b= y_vec;
+  x = x0;
+  opts.epsilon = 0.1;
+  u = (0.95)*abs(x0) + (0.10)*max(abs(x0));
+  N = length(x0);
+  % choose initial value of tau so that the duality gap after the first
+  % step will be about the origial norm
+  opts.tau = max((2*N+1)/sum(abs(x0)), 1);
+  opts.cgtol = 1e-8;
+  opts.cgmaxiter = 200;
+  opts.lbtol = 1e-3;
+  opts.newtontol = opts.lbtol;
+  opts.newtonmaxiter = 50;
+  opts.verbose = 1;
+
+  vp = {'AbsTol', 1e-14};
 
 
-vp = {'AbsTol', 1e-14};
-
-
-[xp2, up2, ntiter2] = l1qc_newton_local(x, u, A, At, b, opts, test_data_root);
+  [xp2, up2, ntiter2] = l1qc_newton_local(x, u, A, At, b, opts, test_data_root);
   
 end
 
 
-function [x, u, niter] = l1qc_newton_fcns(x0, u0, A, At, b, opts, data_root) 
+function [x, u, niter] = l1qc_newton_local(x0, u0, A, At, b, opts, data_root) 
   % l1qc_newton.m
 %
 % Newton algorithm for log-barrier subproblems for l1 minimization
@@ -104,7 +102,7 @@ cgmaxiter = opts.cgmaxiter;
 
   jopts.FloatFormat ='%.15g';
   for niter=1:newtonmaxiter
-    [dx, du, gradf, cgres, gd] = compute_descent(fu1, fu2, r, fe, tau, ...
+    [dx, du, gradf, cgres, cgiter, gd] = compute_descent(fu1, fu2, r, fe, tau, ...
                                              cgtol, cgmaxiter, A, At);
 
     if niter == 5
@@ -154,11 +152,11 @@ cgmaxiter = opts.cgmaxiter;
     stepsize = s*norm([dx; du]);
     
     if opts.verbose
-      fprintf(['Newton iter = %d, Functional = %8.3f, '
-                    'Newton decrement = %8.3f, Stepsize = %8.3e'], ...
+      fprintf(['Newton iter = %d, Functional = %8.3f, ',...
+                    'Newton decrement = %8.3f, Stepsize = %8.3e\n'],...
                    niter, f, lambda2/2, stepsize);
       
-      fprintf('                CG Res = %8.3e, CG Iter = %d', cgres, cgiter);
+      fprintf('                CG Res = %8.3e, CG Iter = %d\n', cgres, cgiter);
     end
     
     if (lambda2/2 < newtontol)
@@ -218,7 +216,7 @@ end
 
 
 
-function [dx, du, gradf, cgres, gd] = compute_descent(fu1, fu2, r, fe, ...
+function [dx, du, gradf, cgres, cgiter, gd] = compute_descent(fu1, fu2, r, fe, ...
                                                   tau,cgtol, cgmaxiter,A, At)
  
   % This is solving a sytem of (block)equations before passing to
@@ -243,7 +241,7 @@ function [dx, du, gradf, cgres, gd] = compute_descent(fu1, fu2, r, fe, ...
   w1p = ntgz - sig12./sig11.*ntgu;
 %   if (largescale)
     h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
-    [dx, cgres, cgiter] = cgsolve(h11pfun, w1p, cgtol, cgmaxiter, 0);
+    [dx, cgres, cgiter] = L1qcTestData.cgsolve(h11pfun, w1p, cgtol, cgmaxiter, 0);
     du = (1./sig11).*ntgu - (sig12./sig11).*dx;    
   
    gd = struct('atr', atr, 'ntgu', ntgu, 'sig11', sig11, 'sig12', sig12,...

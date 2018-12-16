@@ -2,7 +2,7 @@ function build_dct_test_data(test_data_root)
   % Create a small set of test data
 
   EMx_path = fullfile(test_data_root, 'dct_small_EMx.json');
-  MtEt_path = fullfile(test_data_root, 'dct_small_MtEt_EMx.json');
+  MtEty_path = fullfile(test_data_root, 'dct_small_MtEty.json');
   MtEt_Emx_path = fullfile(test_data_root, 'dct_small_MtEt_EMx.json');
   N = 50;
   Ts = 1/50;
@@ -30,7 +30,7 @@ function build_dct_test_data(test_data_root)
   xx_save = xx;
    
   data = struct('x0', xx_save(:)', 'x1', yy(:)', 'pix_idx', pix_idx(:)'-1);
-  savejson('', data, MtEt_path);
+  savejson('', data, MtEty_path);
   %
   data = struct('x0', x(:)', 'x1', xx_save(:)', 'pix_idx', pix_idx(:)'-1);
   savejson('', data, MtEt_Emx_path);

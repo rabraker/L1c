@@ -1,87 +1,56 @@
-# export LD_LIBRARY_PATH=/opt/python-versions/python3.4.2/lib/
-#******************************************************************************
-# gcc -o fgmpy.o fgm_python_interface.c -c -Wall -fPIC -I/usr/include -I/home/arnold/matlab/mex_sandbox  -I/usr/include/python3.4m
+# Unit-test Makefile
 
-# gcc -shared -o fgmpy.so fgmpy.o
+# Libraries have been installed in:
+# /usr/local/lib
+# If you ever happen to want to link against installed libraries
+# in a given directory, LIBDIR, you must either use libtool, and
+# specify the full pathname of the library, or use the `-LLIBDIR'
+# flag during linking and do at least one of the following:
+#    - add LIBDIR to the `LD_LIBRARY_PATH' environment variable
+#      during execution
+#    - add LIBDIR to the `LD_RUN_PATH' environment variable
+#      during linking
+#    - use the `-Wl,-rpath -Wl,LIBDIR' linker flag
+#    - have your system administrator add LIBDIR to `/etc/ld.so.conf'
 
-# Locating the root directory
-# -g, debug
-#CFLAGS = -Wall -I/usr/include -lgsl -lgslcblas -lm
+APP_NAME      = test_l1magic
 
-ROOT=/home/arnold/matlab/afm-cs/c-src/l1magic
-LIB_DIR = ${ROOT}
-I_DIR = ${ROOT}
+SRC_DIR   = src
+BUILD_DIR = build
 
-CC  = gcc -g
-# CFLAGS = -c -Wall -fPIC -O -fexceptions
-CFLAGS = -c
-LFLAGS =  -L/usr/local/OpenBlas/lib  -lopenblas -lm
-IFLAGS = -I/usr/local/OpenBlas/include -I${I_DIR}
-
-
-COMMON_SRC = cgsolve.c
-APP_NAME = cgsolve
-
-# Rules for building the application and library
+SRC       = $(wildcard $(SRC_DIR)/*.c)
+OBJ       = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRC) )
 
 
+DEBUG     = -DDBUG -ggdb
+CC        = gcc
+LD        = gcc
+# check header files are in /usr/local/include
+IFLAGS    = -I/usr/local/OpenBlas/include \
+            -I/usr/include                \
+            -I/usr/local/include          \
+		    -Iinclude                     \
 
-all: ${COMMON_SRC:.c=.o}
-	$(CC)  ${COMMON_SRC:.c=.o} -o ${APP_NAME} ${LFLAGS}
+
+CFLAGS    = $(IFLAGS) $(DEBUG) -fPIC -msse3 -Wall
+
+# For fftw: -lfftw3, #include <fftw3.h>
+LDFLAGS   = -lfftw3 -lopenblas -lm -lcheck
+LDFLAGS   += -Wl,-rpath=/usr/local/lib
+LDFLAGS   +=  -L/usr/local/OpenBlas/lib
+
+
+#---------------------------------------------------------- Targets
+.PHONY: clean all test
+
+all:$(OBJ)
+	$(LD) -o ${APP_NAME} $^  ${LDFLAGS}
 
 # $@ is to left side and $^ to the right of :
-${COMMON_SRC:.c=.o}:
-	${CC} -o $@ ${@:.o=.c}  ${CFLAGS} ${IFLAGS}
+$(BUILD_DIR)/%.o : $(SRC_DIR)/%.c
+	${CC} -g ${CFLAGS} -c -o $@ $<
 
 
-
-debug:
-	gdb $(APP_NAME)
 clean:
-	@rm -f *.o *.so *.mexa64
-
-
-
-# ########################################################
-# ROOT=/home/arnold/matlab/mex_sandbox
-# # PY_ROOT = /home/arnold/.virtualenvs/rabraker-com-342/lib/python3.4
-
-# CC  = gcc
-# #CFLAGS = -Wall -I/usr/include -lgsl -lgslcblas -lm
-# IFLAGS = -I/usr/include -I${ROOT}
-# IFLAGS_MATLAB = ${IFLAGS} -I/usr/local/MATLAB/R2016b/extern/include
-
-# CFLAGS = -c -Wall -fPIC
-# EXTRAFLAGS_MATLAB = -O -D__MATLAB__ -fexceptions
-
-# LFLAGS =  -lblas -lm
-
-# LDIRS_MATLAB = -L/usr/local/MATLAB/R2016b/bin/glnxa64
-# LFLAGS_MATLAB = ${LDIRS_MATLAB} ${LFLAGS} -lmex -lmat -lmx
-
-# # APP_SRC  = fgm.c
-# # APP_NAME = fgm
-# APP_SRC = fgm_python_interface
-# SRCS = fgm_python_interface utils
-# APP_NAME = fgmpy
-# MAT_EXT = mexa64
-
-# # Rules for building the application and library
-# #
-# all: build
-# matlab: build_matlab
-
-# python: build_python
-
-# build_matlab: toobj_matlab
-# 	$(CC) -O2 -shared -o $(APP_NAME).${MAT_EXT} ${APP_SRC}.o ${LFLAGS_MATLAB}
-
-# toobj_matlab:
-# 	${CC} -O2 -o ${APP_NAME}.o ${APP_SRC} ${CFLAGS} ${IFLAGS_MATLAB} ${EXTRAFLAGS_MATLAB}
-
-# run:
-# 	./$(APP_NAME)
-# debug:
-# 	gdb $(APP_NAME)
-# clean:
-# 	@rm ${APP_NAME}.${EXT} ${APP_NAME}.o
+	rm -f $(APP_NAME)
+	rm -f build/*.o
