@@ -33,7 +33,9 @@ static int load_EMx_data(int *Nx0, double **x0, int *Nx1, double **x1, int *Nidx
 
   cJSON *test_data_json;
 
-  load_file_to_json(fpath, &test_data_json);
+  if (load_file_to_json(fpath, &test_data_json) ){
+    return 1;
+  }
 
 
   if (extract_json_double_array(test_data_json, "x0", x0, Nx0) ){
@@ -73,7 +75,7 @@ static int load_EMx_data(int *Nx0, double **x0, int *Nx1, double **x1, int *Nidx
 
 
 
-START_TEST(test_dct_MtEt_EMtx_small)
+START_TEST(test_dct_MtEt_EMx_small)
 {
   /* Test the multiplication (EM)^T * (E*M) * x */
   char fpath[] = "test_data/dct_small_MtEt_EMx.json";
@@ -82,7 +84,7 @@ START_TEST(test_dct_MtEt_EMtx_small)
   int Nx0, Nx1, Npix = 0;
 
   if (load_EMx_data(&Nx0, &x0, &Nx1, &x_exp, &Npix, &pix_idx, fpath)){
-    ck_abort_msg("Errory Loading test data\n");
+    ck_abort_msg("Errory Loading test data (in test_dct_MtEt_EMx\n");
   }
 
   printf("Nx0 = %d, Nx1=%d\n", Nx0, Nx1);
@@ -106,7 +108,7 @@ START_TEST(test_dct_MtEty_small)
   int Nx, Ny, Npix = 0;
 
   if (load_EMx_data(&Nx, &x_exp, &Ny, &y, &Npix, &pix_idx, fpath)){
-    ck_abort_msg("Errory Loading test data\n");
+    ck_abort_msg("Errory Loading test data (in test_dct_MtEty) \n");
   }
 
   printf("Nx = %d, Ny=%d\n", Nx, Ny);
@@ -193,7 +195,7 @@ Suite *dct_suite(void)
   tcase_add_test(tc_core, test_dct_EMx_small);
   tcase_add_test(tc_core, test_dct_EMx_new_small);
 
-  tcase_add_test(tc_core, test_dct_MtEt_EMtx_small);
+  tcase_add_test(tc_core, test_dct_MtEt_EMx_small);
   tcase_add_test(tc_core, test_dct_MtEty_small);
 
 

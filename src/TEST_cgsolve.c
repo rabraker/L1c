@@ -32,7 +32,9 @@ int load_small_data(double **A, double **x, double **b, int *N,
 
   cJSON *test_data_json;
 
-  load_file_to_json("test_data/cgsolve_small01.json", &test_data_json);
+  if(load_file_to_json("test_data/cgsolve_small01.json", &test_data_json) ){
+    return 1;
+  }
 
   if( extract_json_int(test_data_json, "max_iter", max_iter) )
     return 1;

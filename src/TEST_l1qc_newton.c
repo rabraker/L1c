@@ -49,7 +49,10 @@ START_TEST(test_get_gradient)
   int N,N2, M, status=0;
   char fpath[] = "test_data/descent_data.json";
 
-  load_file_to_json(fpath, &test_data_json);
+  if (load_file_to_json(fpath, &test_data_json)){
+    perror("Error loading data in test_get_gradient\n");
+    ck_abort();
+  }
 
   // Inputs to get_gradient
   status +=extract_json_double_array(test_data_json, "fu1", &fu1, &N);
@@ -129,7 +132,12 @@ START_TEST(test_line_search)
   //double sm;
   int N,N2, M, status=0;
   char fpath[] = "test_data/line_search_data.json";
-  load_file_to_json(fpath, &test_data_json);
+
+  if (load_file_to_json(fpath, &test_data_json)){
+    perror("Error loading data in test_get_gradient\n");
+    ck_abort();
+  }
+
   // Inputs to f_eval
   status +=extract_json_double_array(test_data_json, "x", &x, &N);
   status +=extract_json_double_array(test_data_json, "u", &u, &N);
@@ -226,7 +234,10 @@ START_TEST(test_f_eval)
 
   int N, status=0;
   char fpath[] = "test_data/f_eval_data.json";
-  load_file_to_json(fpath, &test_data_json);
+  if (  load_file_to_json(fpath, &test_data_json) ){
+    perror("Error loading data for test_f_eval\n");
+    ck_abort();
+  }
   // Inputs to f_eval
   status +=extract_json_double_array(test_data_json, "x", &x, &N);
   status +=extract_json_double_array(test_data_json, "u", &u, &N);
