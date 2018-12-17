@@ -231,7 +231,6 @@ double find_max_step(int N, GradData gd, double *fu1,
 
   /* Find indexes, i.e.,  ifu1 = find((dx-du) > 0);  ifu2 = find((-dx-du) > 0);
    */
-
   for (i=0; i<N; i++){
     if (gd.dx[i] - gd.du[i] > 0){
       idx_fu1[n_idx1] = i;
@@ -379,7 +378,7 @@ void l1qc_newton(int N, int M, double *x, double *u,
   gd.dx = calloc(N, sizeof(double));
   gd.du = calloc(N, sizeof(double));
   gd.gradf = calloc(2*N, sizeof(double));
-  gd.Adx = calloc(2*N, sizeof(double));
+  // gd.Adx = calloc(2*N, sizeof(double)); //why 2*N?? should only be M
   gd.sig11 = calloc(N, sizeof(double));
   gd.sig12 = calloc(N, sizeof(double));
   gd.w1p = calloc(N, sizeof(double));
@@ -400,6 +399,7 @@ void l1qc_newton(int N, int M, double *x, double *u,
       return;
     }
 
+    gd.Adx = dct_EMx_new(gd.dx);
 
     ls_params.s = find_max_step(N, gd, fu1, fu2, M, r, params.epsilon, Iwork_2N);
 
