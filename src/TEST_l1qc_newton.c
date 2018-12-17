@@ -36,6 +36,51 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 static cJSON *test_data_json;
 
 
+
+START_TEST (test_find_max_step)
+{
+  GradData gd;
+  char fpath[] = "test_data/find_max_step_data.json";
+  double *dx, *du, *Adx, *fu1, *fu2, *r;
+  double epsilon, smax, smax_exp = 0.0;
+  int N, M, status=0;
+  int *Iwork_2N;
+  if (load_file_to_json(fpath, &test_data_json)){
+    perror("Error loading data in test_get_gradient\n");
+    ck_abort();
+  }
+  status +=extract_json_double_array(test_data_json, "dx", &dx, &N);
+  status +=extract_json_double_array(test_data_json, "du", &du, &N);
+  status +=extract_json_double_array(test_data_json, "Adx", &Adx, &N);
+  status +=extract_json_double_array(test_data_json, "fu1", &fu1, &N);
+  status +=extract_json_double_array(test_data_json, "fu2", &fu2, &N);
+  status +=extract_json_double_array(test_data_json, "r", &r, &M);
+  status +=extract_json_double(test_data_json, "smax", &smax_exp);
+  status +=extract_json_double(test_data_json, "epsilon", &epsilon);
+
+  if (status){
+    perror("Error Loading json data in 'test_find_max_step()'. Aborting\n");
+    ck_abort();
+  }
+  //s = find_max_step(dx, du, Adx, fu1, fu2, r, epsilon, save_on, jopts);
+  gd.dx = dx;
+  gd.du = du;
+  gd.Adx = Adx;
+  Iwork_2N = calloc(2*N, sizeof(int));
+  smax = find_max_step(N, gd, fu1, fu2, M, r, epsilon, Iwork_2N);
+
+  ck_assert_double_eq_tol(smax_exp, smax,  TOL_DOUBLE*100);
+
+  free(dx);
+  free(du);
+  free(Adx);
+  free(fu1);
+  free(fu2);
+  free(r);
+  free(Iwork_2N);
+}
+END_TEST
+
 START_TEST(test_compute_descent)
 {
   char fpath[] = "test_data/descent_data.json";
@@ -541,6 +586,7 @@ Suite *l1qc_newton_suite(void)
   s = suite_create("l1qc_newton");
   tc_core = tcase_create("Core");
 
+  tcase_add_test(tc_core, test_find_max_step);
   tcase_add_test(tc_core, test_compute_descent);
   tcase_add_test(tc_core, test_H11pfun);
   tcase_add_test(tc_core, test_get_gradient);

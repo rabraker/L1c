@@ -124,29 +124,19 @@ cgmaxiter = opts.cgmaxiter;
     
     Adx = A(dx);
     
-    % get the maximum step size.
-    s = find_max_step(dx, du, Adx, fu1, fu2, r, epsilon);
-    if niter == 5
-      jopts.FileName = fullfile(data_root,'max_stepsize_data.json');
-      savejson('', struct('s', s, 'dx', dx(:)', 'Adx', Adx(:)', 'fu1', fu1(:)', ...
-                          'fu2', fu2(:)', 'r', r(:)', 'epsilon', epsilon), jopts);
-    end
+    % ------------- get the maximum step size.------------------
+    jopts.FileName = fullfile(data_root,'find_max_step_data.json');
+    s = find_max_step(dx, du, Adx, fu1, fu2, r, epsilon, save_on, jopts);
     
-    
-    [xp, up, rp, fu1p, fu2p, fep, fp, BI] = line_search(x, u, r, dx, du, Adx, gradf, f, tau, ...
-                                    epsilon, alpha, beta, s);
-    if niter == 5
-      jopts.FileName = fullfile(data_root, 'line_search_data.json');
-      savejson('', struct('xp', xp(:)', 'up', up(:)', 'rp', rp(:)', 'fu1p', fu1p(:)', ...
-                          'fu2p', fu2p(:)', 'fep', fep(:)', 'fp', fp(:)', 'x', ...
-                          x(:)', 'u', u(:)', 'r', r(:)', 'dx', dx(:)', 'du', du(:)', ...
-                          'Adx', Adx(:)', 'gradf', gradf(:)', 'f', f, 'tau', ...
-                          tau, 'epsilon', epsilon, 'alpha', alpha, ...
-                          'beta', beta, 's', s, 'backiter', BI), jopts);
-    end
+    % ------------- Line search -------------------------------
+     jopts.FileName = fullfile(data_root, 'line_search_data.json');
+    % [xp, up, rp, fu1p, fu2p, fep, fp, BI]
+    [x, u, r, fu1, fu2, fe, f, BI] = line_search(x, u, r, dx, du, Adx, gradf, f, tau, ...
+                                    epsilon, alpha, beta, s, save_on, ...
+                                                      jopts);
     
     % set up for next iteration
-    x = xp; u = up; r = rp; fu1 = fu1p; fu2 = fu2p; fe = fep; f = fp;
+    % x = xp; u = up; r = rp; fu1 = fu1p; fu2 = fu2p; fe = fep; f = fp;
     
     lambda2 = -(gradf'*[dx; du]);
     stepsize = s*norm([dx; du]);
@@ -167,7 +157,8 @@ cgmaxiter = opts.cgmaxiter;
 end
 
 function [xp, up, rp, fu1p, fu2p, fep, fp, backiter] = line_search(x, u, r, dx, du, Adx, gradf, f, tau, ...
-                                    epsilon, alpha, beta, s)
+                                    epsilon, alpha, beta, s, save_on, ...
+                                                    jopts)
 % backtracking line search
   for backiter=1:32
     xp = x + s*dx;  
@@ -195,9 +186,19 @@ function [xp, up, rp, fu1p, fu2p, fep, fp, backiter] = line_search(x, u, r, dx, 
   up = u;
   rp = r;
   
+  if save_on
+    savejson('', struct('xp', xp(:)', 'up', up(:)', 'rp', rp(:)', 'fu1p', fu1p(:)', ...
+                        'fu2p', fu2p(:)', 'fep', fep(:)', 'fp', fp(:)', 'x', ...
+                        x(:)', 'u', u(:)', 'r', r(:)', 'dx', dx(:)', 'du', du(:)', ...
+                        'Adx', Adx(:)', 'gradf', gradf(:)', 'f', f, 'tau', ...
+                        tau, 'epsilon', epsilon, 'alpha', alpha, ...
+                        'beta', beta, 's', s, 'backiter', BI), jopts);
+  end
+  
+  
 end
 
-function s = find_max_step(dx, du, Adx, fu1, fu2, r, epsilon)
+function s = find_max_step(dx, du, Adx, fu1, fu2, r, epsilon, save_on, jopts)
 
 % maximum step size that stays in the interior
   ifu1 = find((dx-du) > 0); 
@@ -211,6 +212,12 @@ function s = find_max_step(dx, du, Adx, fu1, fu2, r, epsilon)
     (-bqe+sqrt(bqe^2-4*aqe*cqe))/(2*aqe)
                    ]));
   s = (0.99)*smax;
+  
+  if save_on
+    savejson('', struct('dx', dx(:)', 'du', du(:)', 'Adx', Adx(:)', 'fu1', fu1(:)', ...
+                        'fu2', fu2(:)', 'r', r(:)', 'epsilon', epsilon, ...
+                        'smax', s), jopts);
+  end
   
 end
 

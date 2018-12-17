@@ -13,8 +13,13 @@
 
 // double fe = 0;
 // double *atr, *sigx, *w1p;
-
-
+#ifndef _MIN_L1QC_
+#define _MIN_L1QC_
+#define min(a,b)                                \
+  ({ __typeof__ (a) _a = (a);                   \
+    __typeof__ (b) _b = (b);                    \
+    _a < _b ? _a : _b; })
+#endif
 
 double sum_vec(int N, double *x){
   int i;
@@ -208,10 +213,54 @@ int compute_descent(int N, double *fu1, double *fu2, double *atr, double fe,  do
   return 0;
 }
 
-double find_max_step(int N, GradData grad_data, double *fu1,
-                     double *fu2, double *r, double epsilon){
+double find_max_step(int N, GradData gd, double *fu1,
+                     double *fu2, int M, double *r, double epsilon, int *Iwork_2N){
+  double aqe, bqe, cqe, smax, root;
+  int *idx_fu1, *idx_fu2;
+  int n_idx1 = 0, n_idx2 = 0, idx_i = 0, i=0;
+  double min_u1, min_u2;
 
-  return 1.0;
+  idx_fu1 = Iwork_2N;
+  idx_fu2 = Iwork_2N + N;
+
+  aqe = cblas_ddot(M, gd.Adx, 1, gd.Adx, 1);
+  bqe = 2.0 * cblas_ddot(M, r, 1, gd.Adx, 1);
+  cqe = cblas_ddot(M, r, 1, r, 1) - epsilon * epsilon;
+
+  root = (-bqe + sqrt( bqe*bqe - 4 * aqe * cqe)) / ( 2* aqe);
+
+  /* Find indexes, i.e.,  ifu1 = find((dx-du) > 0);  ifu2 = find((-dx-du) > 0);
+   */
+
+  for (i=0; i<N; i++){
+    if (gd.dx[i] - gd.du[i] > 0){
+      idx_fu1[n_idx1] = i;
+      n_idx1++;
+    }
+  }
+
+  for (i=0; i<N; i++){
+    if (-gd.dx[i] - gd.du[i] > 0){
+      idx_fu2[n_idx2] = i;
+      n_idx2++;
+    }
+  }
+
+
+  min_u1 = INFINITY;
+  for (i=0; i<n_idx1; i++){
+    idx_i = idx_fu1[i];
+      min_u1 = min(min_u1, -fu1[idx_i] / (gd.dx[idx_i] - gd.du[idx_i]) );
+  }
+  min_u2 = INFINITY;
+  for (i=0; i<n_idx2; i++){
+    idx_i = idx_fu2[i];
+      min_u2 = min(min_u2, -fu2[idx_i] / (-gd.dx[idx_i] - gd.du[idx_i]));
+  }
+
+  smax = min(min_u1, min_u2);
+  smax = min(smax, root);
+  return min(1.0, smax) * 0.99;
 }
 
 
@@ -299,7 +348,8 @@ void l1qc_newton(int N, int M, double *x, double *u,
                  double *b, NewtParams params){
   // double epsilon, double tau, double newtontol,
   // int newtonmaxiter, double cgtol, int cgmax_iter, int verbose
-  int iter;
+  int iter=0;
+  int *Iwork_2N;
 
   // Line search parameters.
   LSParams ls_params;
@@ -335,7 +385,7 @@ void l1qc_newton(int N, int M, double *x, double *u,
   gd.w1p = calloc(N, sizeof(double));
   gd.ntgu = calloc(N, sizeof(double));
 
-
+  Iwork_2N = calloc(2*N, sizeof(int));
 
 
   /* Compute the initial point. Dwork needs size 2*N */
@@ -351,7 +401,7 @@ void l1qc_newton(int N, int M, double *x, double *u,
     }
 
 
-    ls_params.s = find_max_step(N, gd, fu1, fu2, r, params.epsilon);
+    ls_params.s = find_max_step(N, gd, fu1, fu2, M, r, params.epsilon, Iwork_2N);
 
     /* -------------- Line Search --------------------------- */
     line_search(N, M, x, u,r, fu1, fu2, gd, ls_params, DWORK_5N, &fe, &f);
