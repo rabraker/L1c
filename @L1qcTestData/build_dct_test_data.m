@@ -20,13 +20,13 @@ function build_dct_test_data(test_data_root)
   pix_mask = zeros(N,1);
   pix_mask(pix_idx) = 1;
   
-  yy = IDCTfun(x, pix_mask);
+  yy = L1qcTestData.IDCTfun(x, pix_mask);
   
   data = struct('x0', x(:)', 'x1', yy(:)', 'pix_idx', pix_idx(:)'-1);
   savejson('', data, EMx_path);
   
   
-  xx = DCTfun(yy, pix_mask);
+  xx = L1qcTestData.DCTfun(yy, pix_mask);
   xx_save = xx;
    
   data = struct('x0', xx_save(:)', 'x1', yy(:)', 'pix_idx', pix_idx(:)'-1);
@@ -52,8 +52,8 @@ function build_dct_test_data(test_data_root)
   img_vec = randn(Nx, 1);
   % y, set of measurements. have to remove all the spots we didn't sample.
   y_vec = img_vec(pix_idx);
-  A = @(x) IDCTfun(x, pix_mask_vec); % E*M
-  At = @(y) DCTfun(y, pix_mask_vec); %E^T*M^T
+  A = @(x) L1qcTestData.IDCTfun(x, pix_mask_vec); % E*M
+  At = @(y) L1qcTestData.DCTfun(y, pix_mask_vec); %E^T*M^T
   A = @(x)idct(x);
   At = @(x)dct(x);
   
@@ -84,8 +84,8 @@ function build_dct_test_data(test_data_root)
   img_vec = PixelMatrixToVector(cs_sim.Img_sub_sampled);
   % y, set of measurements. have to remove all the spots we didn't sample.
   y_vec = img_vec(pix_idx);
-  A = @(x) IDCTfun(x, pix_mask_vec); % E*M
-  At = @(y) DCTfun(y, pix_mask_vec); %E^T*M^T
+  A = @(x) L1qcTestData.IDCTfun(x, pix_mask_vec); % E*M
+  At = @(y) L1qcTestData.DCTfun(y, pix_mask_vec); %E^T*M^T
 
   EMx = A(img_vec);
   MtEty = At(y_vec);

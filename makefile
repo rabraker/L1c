@@ -13,44 +13,62 @@
 #    - use the `-Wl,-rpath -Wl,LIBDIR' linker flag
 #    - have your system administrator add LIBDIR to `/etc/ld.so.conf'
 
-APP_NAME      = test_l1magic
+MATLAB         = matlab -nodesktop -nosplash -r
+TEST_DATA_ROOT = $(CURDIR)/test_data
+ML_BUILD_FCN   = L1qcTestData.build_all_test_data
 
-SRC_DIR   = src
-BUILD_DIR = build
+ML_CMD         = "try;                                   \
+                    ${ML_BUILD_FCN}('${TEST_DATA_ROOT}');\
+                  catch E;                               \
+                    fprintf('%s', E.message);            \
+                    exit(1);                             \
+                  end;                                   \
+                 exit(0);"
 
-SRC       = $(wildcard $(SRC_DIR)/*.c)
-OBJ       = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRC) )
+APP_NAME       = test_l1magic
+
+SRC_DIR        = src
+BUILD_DIR      = build
+
+SRC            = $(wildcard $(SRC_DIR)/*.c)
+OBJ            = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRC) )
 
 
-DEBUG     = -DDBUG -ggdb
-CC        = gcc
-LD        = gcc
+DEBUG          = -DDBUG -ggdb
+CC             = gcc
+LD             = gcc
 # check header files are in /usr/local/include
-IFLAGS    = -I/usr/local/OpenBlas/include \
-            -I/usr/include                \
-            -I/usr/local/include          \
-		    -Iinclude                     \
+IFLAGS         = -I/usr/local/OpenBlas/include \
+                 -I/usr/include                \
+                 -I/usr/local/include          \
+		          -Iinclude                     \
 
 
-CFLAGS    = $(IFLAGS) $(DEBUG) -fPIC -msse3 -Wall
+CFLAGS         = $(IFLAGS) $(DEBUG) -fPIC -msse3 -Wall
 
 # For fftw: -lfftw3, #include <fftw3.h>
-LDFLAGS   = -lfftw3 -lopenblas -lm -lcheck
-LDFLAGS   += -Wl,-rpath=/usr/local/lib
-LDFLAGS   +=  -L/usr/local/OpenBlas/lib
+LDFLAGS        = -lfftw3 -lopenblas -lm -lcheck
+LDFLAGS       += -Wl,-rpath=/usr/local/lib
+LDFLAGS       +=  -L/usr/local/OpenBlas/lib
 
 
-#---------------------------------------------------------- Targets
-.PHONY: clean all test
+#-----------------------Targets ----------------------
+.PHONY: clean all test_data clean_all
 
-all:$(OBJ)
+test:$(OBJ)
 	$(LD) -o ${APP_NAME} $^  ${LDFLAGS}
 
+all: test test_data
 # $@ is to left side and $^ to the right of :
 $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c
 	${CC} -g ${CFLAGS} -c -o $@ $<
 
+test_data:
+	${MATLAB} ${ML_CMD}
 
 clean:
 	rm -f $(APP_NAME)
 	rm -f build/*.o
+
+clean_all:clean
+	rm -f ${TEST_DATA_ROOT}/*.json

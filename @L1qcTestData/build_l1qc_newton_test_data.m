@@ -1,7 +1,7 @@
 function build_l1qc_newton_test_data(test_data_root)
   fpath = '/home/arnold/matlab/afm-cs/matlab-code/notes/data/cs_sim_CS20NG.mat';
-  addpath ~/matlab/afm-cs/reconstruction/BP
-  addpath(genpath('~/matlab/dependencies/SparseLab2.1-Core/Utilities/'))
+  addpath ~/matlab/afm-cs/matlab-code/functions
+
   dat = load(fpath);
   cs_sim = dat.cs_sim;
 
@@ -11,9 +11,9 @@ function build_l1qc_newton_test_data(test_data_root)
   % y = E*M*x
   y_vec = PixelMatrixToVector(cs_sim.Img_sub_sampled);
   % y, set of measurements. have to remove all the spots we didn't sample.
-  y_vec = y_vec(find(pix_mask_vec>0.5));
-  A = @(x) IDCTfun(x,pix_mask_vec); % E*M
-  At = @(x) DCTfun(x,pix_mask_vec); %E^T*M^T
+  y_vec = y_vec(pix_mask_vec>0.5);
+  A = @(x) L1qcTestData.IDCTfun(x,pix_mask_vec); % E*M
+  At = @(x) L1qcTestData.DCTfun(x,pix_mask_vec); %E^T*M^T
 
   
   
