@@ -21,8 +21,26 @@
     _a < _b ? _a : _b; })
 #endif
 
+#ifndef _MAX_L1QC_
+#define _MAX_L1QC_
+#define max(a,b)                                \
+  ({ __typeof__ (a) _a = (a);                   \
+    __typeof__ (b) _b = (b);                    \
+    _a > _b ? _a : _b; })
+#endif
+
+double sum_abs_vec(int N, double *x){
+  int i = 0;
+  double sum = 0.0;
+  for (i=0; i<N; i++){
+    sum = sum + fabs(x[i]);
+  }
+  return sum;
+}
+
+
 double sum_vec(int N, double *x){
-  int i;
+  int i = 0;
   double sum = 0.0;
   for (i=0; i<N; i++){
     sum = sum + x[i];
@@ -33,7 +51,7 @@ double sum_vec(int N, double *x){
 void log_vec(int N, double alpha, double *x, double *logx){
   // Computes alpha*log(x), where x is an array of length N
 
-  int i;
+  int i = 0;
   for (i=0; i<N; i++) {
     logx[i] = log(alpha * x[i] );
   }
@@ -42,7 +60,7 @@ void log_vec(int N, double alpha, double *x, double *logx){
 
 double logsum(int N, double *x, double alpha) {
   /* Computes sum(log( alpha *x)) */
-  int i=0;
+  int i = 0;
   double total = 0.0;
   for (i=0; i<N; i++){
     total += log(alpha * x[i]);
@@ -114,7 +132,7 @@ void H11pfun(int N, double *z, double *y,  void *hess_data_in){
   // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
   int i = 0;
   double *ATA_z;
-  double atr_dot_z_fe;
+  double atr_dot_z_fe = 0.0;
 
   atr_dot_z_fe = cblas_ddot(N, h11p_data.atr, 1, z, 1);
   atr_dot_z_fe = atr_dot_z_fe * h11p_data.one_by_fe_sqrd; //1/fe^2*(atr'*z)
@@ -141,8 +159,10 @@ void get_gradient(int N, double *fu1, double *fu2, double *sigx, double *atr,
                   double fe,  double tau, GradData gd){
 
   int i = 0;
-  double one_by_fu1, one_by_fu2, one_by_fe_Atr;
-  double ntgu, ntgz, sig11, sig12;
+  double one_by_fu1 = 0.0, one_by_fu2 = 0.0;
+  double one_by_fe_Atr = 0.0;
+  double ntgu = 0.0, ntgz = 0.0, sig11 = 0.0, sig12 = 0.0;
+
   for (i=0; i<N; i++){
 
     one_by_fu1 = 1.0 / fu1[i];
@@ -215,10 +235,11 @@ int compute_descent(int N, double *fu1, double *fu2, double *atr, double fe,  do
 
 double find_max_step(int N, GradData gd, double *fu1,
                      double *fu2, int M, double *r, double epsilon, int *Iwork_2N){
-  double aqe, bqe, cqe, smax, root;
+  double aqe = 0.0, bqe = 0.0, cqe=0.0;
+  double smax = 0.0, root = 0.0;
   int *idx_fu1, *idx_fu2;
   int n_idx1 = 0, n_idx2 = 0, idx_i = 0, i=0;
-  double min_u1, min_u2;
+  double min_u1 = 0.0, min_u2=0.0;
 
   idx_fu1 = Iwork_2N;
   idx_fu2 = Iwork_2N + N;
@@ -266,19 +287,18 @@ double find_max_step(int N, GradData gd, double *fu1,
 int line_search(int N, int M, double *x, double *u, double *r, double *fu1, double *fu2, GradData gd,
                 LSParams ls_params, double *DWORK_5N, double *fe, double *f){
   int iter=0;
-  double *xp, *up, *rp, *fu1p, *fu2p;
-  double flin, fp, fep;
+  double flin = 0.0, fp = 0.0, fep = 0.0;
   double eps2 = ls_params.epsilon * ls_params.epsilon;
-  double a1, a2, a3;
+  double a1=0.0, a2 = 0.0, a3 = 0.0;
   double one_by_tau = 1.0/ls_params.tau;
   double step = ls_params.s;
-  double rdot;
+  double rdot = 0.0;
   /* Divy up our work array */
-  xp = DWORK_5N;
-  up = DWORK_5N + N;
-  rp = DWORK_5N + 2*N;
-  fu1p = DWORK_5N + 3*N;
-  fu2p = DWORK_5N + 4*N;
+  double *xp = DWORK_5N;
+  double *up = DWORK_5N + N;
+  double *rp = DWORK_5N + 2*N;
+  double *fu1p = DWORK_5N + 3*N;
+  double *fu2p = DWORK_5N + 4*N;
 
   for (iter=0; iter<32; iter++){
     // /* xp = x + s*dx etc*/
@@ -339,88 +359,147 @@ int line_search(int N, int M, double *x, double *u, double *r, double *fu1, doub
   return 1;
 }
 
+int newton_init(int N, double *x, double *u,  NewtParams *params,
+                double *Dwork,  int M, double *b, int *pix_idx){
+  int i = 0;
+  double x_max = 0.0, tmp = 0.0;
+  double *Ax = Dwork;
+  dct_setup(N, M, pix_idx);
 
+  Ax = dct_EMx_new(x);
 
-void l1qc_newton(int N, int M, double *x, double *u,
-                 void A(int N, int m, double *x, double * y),
-                 void At(int N, int m, double *y, double * x),
-                 double *b, NewtParams params){
-  // double epsilon, double tau, double newtontol,
-  // int newtonmaxiter, double cgtol, int cgmax_iter, int verbose
-  int iter=0;
-  int *Iwork_2N;
+  cblas_daxpy(M, -1.0, b, 1, Ax, 1); //-b + Ax -->ax
+  tmp = cblas_dnrm2(M, Ax, 1)  - params->epsilon;
+  if (tmp > 0){
+    // Using minimum-2 norm  x0 = At*inv(AAt)*y.') as they
+    // will require updates to cgsolve.
+    printf("Starting point is infeasible, exiting\n");
+    return 1;
+  }
 
+  /* Initialize u */
+  x_max = -INFINITY;
+  for (i=0; i<N; i++){
+    x_max = max(x_max, fabs(x[0]));
+  }
+  for (i=0; i<N; i++){
+    u[i] = 0.95 * fabs(x[i]) + 0.10 *x_max;
+  }
+
+  /* choose initial value of tau so that the duality gap after the first
+     step will be about the original norm */
+  //tau = max((2*N+1)/sum(abs(x0)), 1);
+  tmp = (double)(2*N+1) / sum_abs_vec(N, x);
+  params->tau = max(tmp, 1);
+
+  tmp = log (2 * (double)N +1) - log(params->lbtol) - log(params->tau);
+  params->lbiter = ceil (tmp / log(params->mu));
+
+  return 0;
+}
+
+int l1qc_newton(int N, double *x, double *u, double *b,
+                int M, int *pix_idx, NewtParams params){
+  int iter=0, total_newt_iter = 0, tau_iter = 0;
+  int status = 0;
   // Line search parameters.
-  LSParams ls_params;
-  ls_params.alpha = 0.01;
-  ls_params.beta = 0.5;
-  ls_params.tau = params.tau;
-  ls_params.epsilon = params.epsilon;
-  ls_params.s = 1.0;
+  LSParams ls_params = { .alpha = 0.01,
+                         .beta = 0.5,
+                         .tau = params.tau,
+                         .epsilon = params.epsilon,
+                         .s = 1.0};
 
-  // double cgres = 0.0;
-  // x0 = x, u0 = u
+  double *DWORK_16N = NULL, *DWORK_fftw_2N = NULL;
+  int *IWORK_2N = NULL;
 
-  double *atr, *r, *fu1, *fu2, *DWORK_5N;
-  double fe, f, lambda2, stepsize = 0.0;
+  DWORK_16N = calloc(16*N, sizeof(double));
+  DWORK_fftw_2N = fftw_alloc_real(2*N);
+  IWORK_2N = calloc(2*N, sizeof(int));
+  if ( !DWORK_16N | !DWORK_fftw_2N | !IWORK_2N){
+    status = 1;
+    goto exit;
+  }
 
-  GradData gd;
-  CgParams cg_params;
+  double *atr;
+  double fe = 0.0, f = 0.0, lambda2 = 0.0, stepsize = 0.0;
+
+  CgParams cg_params = params.cg_params;
+
   CgResults cg_results;
 
-  DWORK_5N = calloc(5*N, sizeof(double));
-  r = calloc(N, sizeof(double));
-  atr = fftw_alloc_real(N);
-  fu1 = calloc(N, sizeof(double));
-  fu2 = calloc(N, sizeof(double));
 
-  gd.w1p = calloc(N, sizeof(double));
-  gd.dx = calloc(N, sizeof(double));
-  gd.du = calloc(N, sizeof(double));
-  gd.gradf = calloc(2*N, sizeof(double));
-  // gd.Adx = calloc(2*N, sizeof(double)); //why 2*N?? should only be M
-  gd.sig11 = calloc(N, sizeof(double));
-  gd.sig12 = calloc(N, sizeof(double));
-  gd.w1p = calloc(N, sizeof(double));
-  gd.ntgu = calloc(N, sizeof(double));
+  double *DWORK_5N = DWORK_16N;
+  double *r = DWORK_16N + 5*N;
+  double *fu1 = DWORK_16N + 6*N;
+  double *fu2 = DWORK_16N + 7*N;
 
-  Iwork_2N = calloc(2*N, sizeof(int));
+  GradData gd = {.w1p = DWORK_16N   + 8*N,
+                 .dx = DWORK_16N    + 9*N,
+                 .du = DWORK_16N    + 10*N,
+                 .sig11 = DWORK_16N + 11*N,
+                 .sig12 = DWORK_16N + 12*N,
+                 .ntgu = DWORK_16N  + 13*N,
+                 .gradf = DWORK_16N + 14*N,
+                 .Adx=NULL}; //gradf needs 2N
 
+  atr = DWORK_fftw_2N;
 
   /* Compute the initial point. Dwork needs size 2*N */
   f_eval(N, r, x, u, params.tau, params.epsilon, fu1, fu2, &fe, &f, DWORK_5N);
 
- /* ---------------- MAIN ITERATION --------------------- */
-  for (iter=0; iter<params.newton_max_iter; iter++){
+  for (tau_iter=0; tau_iter<params.lbiter; tau_iter++){
+    /* ---------------- MAIN ITERATION --------------------- */
+    for (iter=0; iter<params.newton_max_iter; iter++){
 
-    /* compute descent direction. returns dx, du, gradf, cgres */
-    atr = dct_MtEty(r);
-    if(!compute_descent(N, fu1, fu2, atr, fe,  params.tau, gd, DWORK_5N, cg_params, &cg_results)){
-      return;
-    }
+      /* compute descent direction. returns dx, du, gradf, cgres */
+      atr = dct_MtEty(r);
+      if(!compute_descent(N, fu1, fu2, atr, fe,  params.tau, gd, DWORK_5N, cg_params, &cg_results)){
+        break;
+      }
 
-    gd.Adx = dct_EMx_new(gd.dx);
+      gd.Adx = dct_EMx_new(gd.dx);
 
-    ls_params.s = find_max_step(N, gd, fu1, fu2, M, r, params.epsilon, Iwork_2N);
+      /* -------------- Line Search --------------------------- */
+      ls_params.s = find_max_step(N, gd, fu1, fu2, M, r, params.epsilon, IWORK_2N);
 
-    /* -------------- Line Search --------------------------- */
-    line_search(N, M, x, u,r, fu1, fu2, gd, ls_params, DWORK_5N, &fe, &f);
+      line_search(N, M, x, u,r, fu1, fu2, gd, ls_params, DWORK_5N, &fe, &f);
 
-    lambda2 = cblas_ddot(N, gd.gradf, 1, gd.dx, 1);
-    lambda2 += cblas_ddot(N, gd.gradf+N, 1, gd.du, 1);
-    /* want norm [dx; du] */
-    stepsize = cblas_ddot(N, gd.dx, 1, gd.dx, 1);
-    stepsize += cblas_ddot(N, gd.du, 1, gd.du, 1);
-    stepsize = sqrt(stepsize) * 1.0; //* (ls_params.s);
+      /*Following is for printing only, not calculation. */
+      lambda2 = cblas_ddot(N, gd.gradf, 1, gd.dx, 1);
+      lambda2 += cblas_ddot(N, gd.gradf+N, 1, gd.du, 1);
 
-    if (params.verbose >0){
-      printf("Newton iter = %d, Functional = %8.3f, Stepsize = %8.3f",
-             iter, -lambda2/2.0, stepsize);
-      printf("                  CG RES = %8.3f, CG iter = %d\n",
-             cg_results.cgres, cg_results.cgiter);
+      /* want norm [dx; du] */
+      stepsize = cblas_ddot(N, gd.dx, 1, gd.dx, 1);
+      stepsize += cblas_ddot(N, gd.du, 1, gd.du, 1);
+      stepsize = sqrt(stepsize) * 1.0; //* (ls_params.s);
 
-    }
+      if (params.verbose >0){
+        printf("Newton iter = %d, Functional = %8.3f, Stepsize = %8.3f",
+               iter, -lambda2/2.0, stepsize);
+        printf("                  CG RES = %8.3f, CG iter = %d\n",
+               cg_results.cgres, cg_results.cgiter);
+      }
+    }/* main iter*/
 
-  }/* main iter*/
+
+
+    /* ----- Update tau or exit ------ */
+    total_newt_iter += iter;
+    printf("Log barrier iter = %d, l1 = %.3f, functional = %8.3e, tau = %8.3e, total newton-iter =%d\n",
+           tau_iter, sum_abs_vec(N, x), sum_vec(N, u), params.tau, total_newt_iter);
+    params.tau = params.tau * params.mu;
+  }
+
+  goto exit;
+
+  /* ----- Cleanup -------------------- */
+
+ exit:
+  free(DWORK_16N);
+  fftw_free(DWORK_fftw_2N);
+  free(IWORK_2N);
+  dct_destroy();
+
+  return status;
 
 }/* MAIN ENDS HERE*/

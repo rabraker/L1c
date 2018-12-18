@@ -10,12 +10,15 @@ classdef L1qcTestData
     function build_all_test_data(test_data_root)
     % Main method to build all of the test data.
      addpath ~/matlab/afm-cs/matlab-code/functions
+      L1qcTestData.build_newton_init_data(test_data_root);
       L1qcTestData.build_feval_test_data(test_data_root);
       L1qcTestData.build_cgsolve_test_data(test_data_root);
       L1qcTestData.build_dct_test_data(test_data_root);
       L1qcTestData.build_l1qc_newton_test_data(test_data_root);
     end
     
+    build_newton_init_data(test_data_root);
+     
     build_l1qc_newton_test_data(test_data_root);
     
     build_cgsolve_test_data(test_data_root);

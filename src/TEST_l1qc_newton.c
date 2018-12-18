@@ -36,6 +36,66 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 static cJSON *test_data_json;
 
 
+START_TEST (test_newton_init)
+{
+  printf("inside\n");
+  NewtParams params;
+  char fpath[] = "test_data/newton_init_data.json";
+  double *x=NULL, *u=NULL, *u_exp=NULL, *b=NULL, *Dwork=NULL;
+  double epsilon = 0., tau_exp=0., lbtol=0.;
+  double mu = 0.0;
+  int N=0, M=0, status=0, ret=0, lbiter_exp=0;
+  int *pix_idx=NULL;
+
+  if (load_file_to_json(fpath, &test_data_json)){
+    perror("Error loading data in test_get_gradient\n");
+    ck_abort();
+  }
+  status +=extract_json_double_array(test_data_json, "x", &x, &N);
+  status +=extract_json_double_array(test_data_json, "u", &u_exp, &N);
+  status +=extract_json_double_array(test_data_json, "b", &b, &M);
+
+  status +=extract_json_double(test_data_json, "epsilon", &epsilon);
+  status +=extract_json_double(test_data_json, "mu", &mu);
+  status +=extract_json_double(test_data_json, "lbtol", &lbtol);
+  status +=extract_json_double(test_data_json, "tau", &tau_exp);
+
+  status +=extract_json_int(test_data_json, "lbiter", &lbiter_exp);
+  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
+  u = calloc(N, sizeof(double));
+  Dwork = calloc(N, sizeof(double));
+  if (status | !u | !Dwork){
+    goto exit1;
+  }
+
+  params.mu = mu;
+  params.lbtol = lbtol;
+  params.epsilon = epsilon;
+
+  ret= newton_init(N, x, u, &params, Dwork, M, b, pix_idx);
+
+  ck_assert_double_array_eq_tol(N, u_exp, u,  TOL_DOUBLE);
+  ck_assert_double_eq_tol(tau_exp, params.tau,  TOL_DOUBLE);
+  ck_assert_int_eq(lbiter_exp, params.lbiter);
+  ck_assert_int_eq(0, ret);
+
+ exit1:
+  free(x);
+  free(u);
+  free(u_exp);
+  free(b);
+  free(pix_idx);
+
+  if (! status){
+    goto exit2;
+  }else{
+    perror("Error Loading json data in 'test_find_max_step()'. Aborting\n");
+    ck_abort();
+  }
+ exit2:
+  dct_destroy();
+}
+END_TEST
 
 START_TEST (test_find_max_step)
 {
@@ -582,8 +642,12 @@ Suite *l1qc_newton_suite(void)
 {
   Suite *s;
 
-  TCase *tc_core;
+  TCase *tc_core, *tc_newton_init;
   s = suite_create("l1qc_newton");
+
+  tc_newton_init = tcase_create("newton_init");
+  tcase_add_test(tc_newton_init, test_newton_init);
+
   tc_core = tcase_create("Core");
 
   tcase_add_test(tc_core, test_find_max_step);
@@ -599,6 +663,7 @@ Suite *l1qc_newton_suite(void)
 
 
   suite_add_tcase(s, tc_core);
+  suite_add_tcase(s, tc_newton_init);
 
   return s;
 

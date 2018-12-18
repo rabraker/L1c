@@ -25,26 +25,32 @@ typedef struct LineSearchParams {
 } LSParams;
 
 typedef struct GradData{
+  double *w1p;
   double *dx;
   double *du;
-  double *gradf;
-  double *Adx;
   double *sig11;
   double *sig12;
-  double *w1p;
   double *ntgu;
+  double *gradf;
+  double *Adx;
+
 
 }GradData;
 
 typedef struct NewtParams{
   double epsilon;
   double tau;
+  double mu;
   double newton_tol;
   double newton_max_iter;
+  double lbiter;
+  double lbtol;
   int verbose;
   CgParams cg_params;
 
 }NewtParams;
+
+double sum_abs_vec(int N, double *x);
 
 double sum_vec(int N, double *x);
 
@@ -64,6 +70,9 @@ int compute_descent(int N, double *fu1, double *fu2, double *r, double fe, doubl
                     GradData gd, double *Dwork_5N, CgParams cg_params, CgResults *cg_result);
 
 void H11pfun(int N, double *z, double *y,  void *hess_data_in);
+
+int newton_init(int N, double *x, double *u,  NewtParams *params,
+                double *Dwork,  int M, double *b, int *pix_idx);
 /*
 int get_gradient(int N, double *fu1, double *fu2, double fe,  double tau, double *gradf);
 */
