@@ -1,9 +1,5 @@
 /*
-This is a test suite for the fourier integration functions contained in
-../src/ss_fourier_functions.c. The data used to test these functions is
-contained in the header file test_data_ss_ff.h, which defines several global
-variables. The header file is generated from the matlab script called
-generate_test_data.m
+This is a test suite for the
 
 This test suite uses the libcheck framework. On my computer, this got installed
 into /usr/local/lib, which was not by default found by the system. Thus, I have
@@ -19,31 +15,14 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
   2. in command line, run
       #: export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/arnold/gradschool/sysID/sweptSines_lib"
   3. use gdb as normal
-
-
-TODO:
-  1. Write test for intFourierInterface. This amounts to an integration I suppose.
-
-  2. better names for all these files.
-
  */
-
 
 
 #include <stdlib.h>
 #include<stdio.h>
 #include <check.h>
 
-
-// #include "swept_sines_lib.h"
-
-
-Suite * l1qc_newton_suite(void);
-
-Suite * cgsolve_suite(void);
-
-Suite * dct_suite(void);
-
+#include "TEST.h"
 
 int main(void)
 {

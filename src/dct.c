@@ -45,7 +45,7 @@ void dct_setup(int Nx, int Ny, int *pix_mask_idx){
   fftw_plan_with_nthreads(6);
   #endif
 
-  int i;
+  int i=0;
   dct_Ety_sparse = fftw_alloc_real(Nx);
   dct_x = fftw_alloc_real(Nx);
   dct_y = fftw_alloc_real(Nx);
@@ -121,7 +121,7 @@ double* dct_EMx_new(double *x_fftw){
 
      On exit, the first N_pix_mask entries of y will contain the result of E * M *x.
   */
-  int i;
+  int i=0;
   /* Will fill y. Plan_AT has saved the pointer to x and y, so we
      dont have to supply, but should be updated by the caller.*/
 
@@ -148,7 +148,7 @@ double* dct_EMx(){
 
      On exit, the first N_pix_mask entries of y will contain the result of E * M *x.
    */
-  int i;
+  int i=0;
 
   /* Will fill y. Plan_AT has saved the pointer to x and y, so we
    dont have to supply, but should be updated by the caller.*/
@@ -170,7 +170,7 @@ double * dct_MtEty( double *y){
 
    */
 
-  int i;
+  int i=0;
   // E^T * y --> y_sparse. y_sparse should be set to all zeros, and pix_mask does not change.
   // Returns a pointer to the array containing the result, which has length N.
   for (i=0; i<dct_Ny; i++){
