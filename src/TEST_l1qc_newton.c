@@ -36,9 +36,76 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 static cJSON *test_data_json;
 
 
+START_TEST (test_l1qc_newton_1iter)
+{
+  CgParams cgp = {.verbose=0, .max_iter=200, .tol=1e-3};
+  NewtParams params;
+  char fpath[] = "test_data/newton_1iter_data.json";
+  double *x0=NULL, *u=NULL, *b=NULL, *Dwork=NULL;
+  double *x1_exp=NULL, *u1_exp=NULL;
+
+  double epsilon = 0., tau_exp=0., lbtol=0.;
+  double mu = 0.0;
+  int N=0, M=0, status=0, ret=0, lbiter_exp=0;
+  int *pix_idx=NULL;
+
+  if (load_file_to_json(fpath, &test_data_json)){
+    perror("Error loading data in test_l1qc_newton_1iter\n");
+    ck_abort();
+  }
+  status +=extract_json_double_array(test_data_json, "x0", &x0, &N);
+  status +=extract_json_double_array(test_data_json, "x1", &x1_exp, &N);
+  status +=extract_json_double_array(test_data_json, "u1", &u1_exp, &N);
+  status +=extract_json_double_array(test_data_json, "b", &b, &M);
+
+  status +=extract_json_double(test_data_json, "epsilon", &epsilon);
+  status +=extract_json_double(test_data_json, "mu", &mu);
+  status +=extract_json_double(test_data_json, "lbtol", &lbtol);
+  status +=extract_json_double(test_data_json, "tau", &tau_exp);
+
+  status +=extract_json_int(test_data_json, "lbiter", &lbiter_exp);
+  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
+  u = calloc(N, sizeof(double));
+
+  if (status | !u | !Dwork){
+    goto exit1;
+  }
+
+  params.verbose = 1;
+  params.mu = mu;
+  params.lbtol = lbtol;
+  params.epsilon = epsilon;
+  params.lbiter = 1;
+  params.cg_params = cgp;
+
+  ret= l1qc_newton(N, x0, u, b, M, pix_idx,params);
+
+  ck_assert_double_array_eq_tol(N, x1_exp, x0,  TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(N, u1_exp, u,  TOL_DOUBLE);
+
+  ck_assert_int_eq(0, ret);
+
+ exit1:
+  free(x0);
+  free(x1_exp);
+  free(u1_exp);
+  free(u);
+  free(b);
+  free(pix_idx);
+
+  if (! status){
+    goto exit2;
+  }else{
+    perror("Error Loading json data in 'test_find_max_step()'. Aborting\n");
+    ck_abort();
+  }
+ exit2:
+  dct_destroy();
+}
+END_TEST
+
 START_TEST (test_newton_init)
 {
-  printf("inside\n");
   NewtParams params;
   char fpath[] = "test_data/newton_init_data.json";
   double *x=NULL, *u=NULL, *u_exp=NULL, *b=NULL, *Dwork=NULL;
@@ -48,7 +115,7 @@ START_TEST (test_newton_init)
   int *pix_idx=NULL;
 
   if (load_file_to_json(fpath, &test_data_json)){
-    perror("Error loading data in test_get_gradient\n");
+    perror("Error loading data in test_newton_init\n");
     ck_abort();
   }
   status +=extract_json_double_array(test_data_json, "x", &x, &N);
@@ -65,13 +132,14 @@ START_TEST (test_newton_init)
   u = calloc(N, sizeof(double));
   Dwork = calloc(N, sizeof(double));
   if (status | !u | !Dwork){
+    perror("Error Loading json data in 'test_newton_init()'. Aborting\n");
     goto exit1;
   }
 
   params.mu = mu;
   params.lbtol = lbtol;
   params.epsilon = epsilon;
-
+  params.lbiter = 0;
   ret= newton_init(N, x, u, &params, Dwork, M, b, pix_idx);
 
   ck_assert_double_array_eq_tol(N, u_exp, u,  TOL_DOUBLE);
@@ -79,17 +147,21 @@ START_TEST (test_newton_init)
   ck_assert_int_eq(lbiter_exp, params.lbiter);
   ck_assert_int_eq(0, ret);
 
+  params.lbiter = 1;
+  ret= newton_init(N, x, u, &params, Dwork, M, b, pix_idx);
+  ck_assert_int_eq(1, params.lbiter);
+
  exit1:
   free(x);
   free(u);
   free(u_exp);
   free(b);
   free(pix_idx);
+  free(Dwork);
 
   if (! status){
     goto exit2;
   }else{
-    perror("Error Loading json data in 'test_find_max_step()'. Aborting\n");
     ck_abort();
   }
  exit2:
@@ -106,7 +178,7 @@ START_TEST (test_find_max_step)
   int N, M, status=0;
   int *Iwork_2N;
   if (load_file_to_json(fpath, &test_data_json)){
-    perror("Error loading data in test_get_gradient\n");
+    perror("Error loading data in test_find_max_stept\n");
     ck_abort();
   }
   status +=extract_json_double_array(test_data_json, "dx", &dx, &N);
@@ -159,7 +231,7 @@ START_TEST(test_compute_descent)
   int *pix_idx;
 
   if (load_file_to_json(fpath, &test_data_json)){
-    perror("Error loading data in test_get_gradient\n");
+    perror("Error loading data in test_compute_descent\n");
     ck_abort();
   }
 
@@ -189,7 +261,6 @@ START_TEST(test_compute_descent)
     ck_abort();
   }
 
-  printf("N = %d, Npix=%d\n", N, Npix);
   DWORK_5N = calloc(5*N, sizeof(double));
   if (!DWORK_5N){
     perror("error allocating memory\n");
@@ -296,7 +367,7 @@ START_TEST(test_H11pfun)
   int *pix_idx;
 
   if (load_file_to_json(fpath, &test_data_json)){
-    perror("Error loading data in test_get_gradient\n");
+    perror("Error loading data in test_H11pfun\n");
     ck_abort();
   }
 
@@ -312,7 +383,7 @@ START_TEST(test_H11pfun)
   status +=extract_json_double_array(test_data_json, "y_exp", &y_exp, &N);
 
   if (status){
-    perror("Error Loading json data in 'test_get_gradient()'. Aborting\n");
+    perror("Error Loading json data in 'test_H11pfun()'. Aborting\n");
     ck_abort();
   }
   y = calloc(N, sizeof(double));
@@ -392,8 +463,7 @@ START_TEST(test_get_gradient)
   gd.ntgu = calloc(N, sizeof(double));
   sigx = calloc(N, sizeof(double));
 
-  printf("N = %d, N2=%d \n", N, N2);
-
+  /*-------------------------------------------- */
   get_gradient(N, fu1, fu2, sigx, atr, fe, tau, gd);
 
   ck_assert_int_eq(2*N, N2);
@@ -445,7 +515,7 @@ START_TEST(test_line_search)
   char fpath[] = "test_data/line_search_data.json";
 
   if (load_file_to_json(fpath, &test_data_json)){
-    perror("Error loading data in test_get_gradient\n");
+    perror("Error loading data in test_line_search\n");
     ck_abort();
   }
 
@@ -453,7 +523,7 @@ START_TEST(test_line_search)
   status +=extract_json_double_array(test_data_json, "x", &x, &N);
   status +=extract_json_double_array(test_data_json, "u", &u, &N);
   status +=extract_json_double_array(test_data_json, "r", &r, &M);
-  printf("---- M-rp = %d\n", M);
+
   status +=extract_json_double_array(test_data_json, "dx", &dx, &N);
   status +=extract_json_double_array(test_data_json, "du", &du, &N);
   status +=extract_json_double_array(test_data_json, "Adx", &Adx, &M);
@@ -480,17 +550,14 @@ START_TEST(test_line_search)
     ck_abort();
   }
 
-  ls_params.alpha = alpha;
-  ls_params.beta = beta;
-  ls_params.tau = tau;
-  ls_params.s = s;
-  ls_params.epsilon = epsilon;
+  ls_params = (LSParams){.alpha = alpha, .beta = beta,
+               .tau = tau, .s = s, .epsilon = epsilon};
 
   gd.dx = dx;
   gd.du = du;
   gd.gradf = gradf;
   gd.Adx = Adx;
-  printf("N = %d, N2=%d \n", N, N2);
+
   DWORK_5N = calloc(5*N, sizeof(double));
   if(!DWORK_5N){
     printf("Allocation failed\n");
@@ -642,28 +709,41 @@ Suite *l1qc_newton_suite(void)
 {
   Suite *s;
 
-  TCase *tc_core, *tc_newton_init;
+  TCase *tc_linesearch, *tc_newton_init, *tc_feval, *tc_mathfuns, *tc_gradient;
+  TCase *tc_l1qc_newton;
+
   s = suite_create("l1qc_newton");
+
+  tc_l1qc_newton = tcase_create("l1qc_newton");
+  tcase_add_test(tc_l1qc_newton, test_l1qc_newton_1iter);
 
   tc_newton_init = tcase_create("newton_init");
   tcase_add_test(tc_newton_init, test_newton_init);
 
-  tc_core = tcase_create("Core");
+  tc_feval = tcase_create("f_eval");
+  tcase_add_test(tc_feval, test_f_eval);
 
-  tcase_add_test(tc_core, test_find_max_step);
-  tcase_add_test(tc_core, test_compute_descent);
-  tcase_add_test(tc_core, test_H11pfun);
-  tcase_add_test(tc_core, test_get_gradient);
-  tcase_add_test(tc_core, test_line_search);
-  tcase_add_test(tc_core, test_sum_vec);
-  tcase_add_test(tc_core, test_logsum);
-  tcase_add_test(tc_core, test_log_vec);
-  tcase_add_test(tc_core, test_f_eval);
+  tc_linesearch = tcase_create("l1qc_linesearch");
+  tcase_add_test(tc_linesearch, test_find_max_step);
+  tcase_add_test(tc_linesearch, test_compute_descent);
+  tcase_add_test(tc_linesearch, test_line_search);
 
+  tc_gradient = tcase_create("l1qc_gradient");
+  tcase_add_test(tc_gradient, test_H11pfun);
+  tcase_add_test(tc_gradient, test_get_gradient);
 
+  tc_mathfuns = tcase_create("l1qc_math_funs");
+  tcase_add_test(tc_mathfuns, test_sum_vec);
+  tcase_add_test(tc_mathfuns, test_logsum);
+  tcase_add_test(tc_mathfuns, test_log_vec);
 
-  suite_add_tcase(s, tc_core);
+  /*Add test cases to the suite */
+  suite_add_tcase(s, tc_l1qc_newton);
   suite_add_tcase(s, tc_newton_init);
+  suite_add_tcase(s, tc_feval);
+  suite_add_tcase(s, tc_linesearch);
+  suite_add_tcase(s, tc_gradient);
+  suite_add_tcase(s, tc_mathfuns);
 
   return s;
 

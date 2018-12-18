@@ -393,23 +393,24 @@ int newton_init(int N, double *x, double *u,  NewtParams *params,
   params->tau = max(tmp, 1);
 
   tmp = log (2 * (double)N +1) - log(params->lbtol) - log(params->tau);
-  params->lbiter = ceil (tmp / log(params->mu));
+  if (params->lbiter ==0) // If already set, use that instead.
+    params->lbiter = ceil (tmp / log(params->mu));
 
   return 0;
 }
 
 int l1qc_newton(int N, double *x, double *u, double *b,
                 int M, int *pix_idx, NewtParams params){
+
+  CgParams cg_params = params.cg_params;
+  CgResults cg_results;
+
   int iter=0, total_newt_iter = 0, tau_iter = 0;
   int status = 0;
-  // Line search parameters.
-  LSParams ls_params = { .alpha = 0.01,
-                         .beta = 0.5,
-                         .tau = params.tau,
-                         .epsilon = params.epsilon,
-                         .s = 1.0};
 
-  double *DWORK_16N = NULL, *DWORK_fftw_2N = NULL;
+  double fe = 0.0, f = 0.0, lambda2 = 0.0, stepsize = 0.0;
+
+  double *atr=NULL, *DWORK_16N = NULL, *DWORK_fftw_2N = NULL;
   int *IWORK_2N = NULL;
 
   DWORK_16N = calloc(16*N, sizeof(double));
@@ -419,14 +420,6 @@ int l1qc_newton(int N, double *x, double *u, double *b,
     status = 1;
     goto exit;
   }
-
-  double *atr;
-  double fe = 0.0, f = 0.0, lambda2 = 0.0, stepsize = 0.0;
-
-  CgParams cg_params = params.cg_params;
-
-  CgResults cg_results;
-
 
   double *DWORK_5N = DWORK_16N;
   double *r = DWORK_16N + 5*N;
@@ -444,11 +437,23 @@ int l1qc_newton(int N, double *x, double *u, double *b,
 
   atr = DWORK_fftw_2N;
 
-  /* Compute the initial point. Dwork needs size 2*N */
-  f_eval(N, r, x, u, params.tau, params.epsilon, fu1, fu2, &fe, &f, DWORK_5N);
+  newton_init(N, x, u, &params, DWORK_5N,  M, b, pix_idx);
 
+  // Line search parameters.
+  LSParams ls_params = { .alpha = 0.01,
+                         .beta = 0.5,
+                         .tau = params.tau,
+                         .epsilon = params.epsilon,
+                         .s = 1.0};
+
+
+
+  /* ---------------- MAIN **TAU** ITERATION --------------------- */
   for (tau_iter=0; tau_iter<params.lbiter; tau_iter++){
-    /* ---------------- MAIN ITERATION --------------------- */
+
+    /* Compute the initial point. Dwork needs size 2*N */
+    f_eval(N, r, x, u, params.tau, params.epsilon, fu1, fu2, &fe, &f, DWORK_5N);
+    /* ---------------- MAIN Newton ITERATION --------------------- */
     for (iter=0; iter<params.newton_max_iter; iter++){
 
       /* compute descent direction. returns dx, du, gradf, cgres */

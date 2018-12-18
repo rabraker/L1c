@@ -80,10 +80,8 @@ int get_gradient(int N, double *fu1, double *fu2, double fe,  double tau, double
 /* Evalutes the value function */
 extern void f_eval(int N, double *r, double *x, double *u, double tau, double epsilon,
                    double *fu1, double *fu2, double *fe, double *f, double *Dwork);
-// void l1qc_newton(int N, double *x, double u,
-//                  void A(int N, int m, double *x, double * y),
-//                  void At(int N, int m, double *y, double * x),
-//                  double *b, double epsilon, double tau, double newtontol,
-//                  int newtonmaxiter, double cgtol, int cgmaxiter, inter verbose)
+
+int l1qc_newton(int N, double *x, double *u, double *b,
+                int M, int *pix_idx, NewtParams params);
 
 #endif
