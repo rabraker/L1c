@@ -305,7 +305,6 @@ START_TEST(test_dct_MtEt_EMx_small)
     ck_abort_msg("Errory Loading test data (in test_dct_MtEt_EMx\n");
   }
 
-  printf("Nx0 = %d, Nx1=%d\n", Nx0, Nx1);
   dct_setup(Nx0, Npix, pix_idx);
 
   x_act = dct_MtEt_EMx_new(x0);
@@ -330,7 +329,6 @@ START_TEST(test_dct_MtEty_small)
     ck_abort_msg("Errory Loading test data (in test_dct_MtEty) \n");
   }
 
-  printf("Nx = %d, Ny=%d\n", Nx, Ny);
   dct_setup(Nx, Ny, pix_idx);
 
   x_act = dct_MtEty(y);
@@ -356,7 +354,6 @@ START_TEST(test_dct_EMx_small)
     ck_abort_msg("Errory Loading test data\n");
   }
 
-  printf("Nx = %d, Ny=%d\n", Nx, Ny);
   dct_setup(Nx, Ny, pix_idx);
   dct_load_x(x);
 
@@ -388,7 +385,6 @@ START_TEST(test_dct_EMx_new_small)
     x_new[i] = x[i];
   }
 
-  printf("Nx = %d, Ny=%d\n", Nx, Ny);
   dct_setup(Nx, Ny, pix_idx);
 
   y_act = dct_EMx_new(x_new);

@@ -10,7 +10,6 @@ typedef struct CgResults_{
 typedef struct CgParams_{
   int verbose;
   int max_iter;
-  double cgres;
   double tol;
 } CgParams;
 

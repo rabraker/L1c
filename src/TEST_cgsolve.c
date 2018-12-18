@@ -59,8 +59,6 @@ int load_small_data(double **A, double **x, double **b, int *N,
   }
 
   *N = Nx;
-  printf("Nx = %d\n", *N);
-  // print_vec(*N, *x, "x");
 
   if ( (Nx != Nb) || (Nb*Nb != Na) ){
     perror("Error: Array size mismatch. Aborting\n");
@@ -102,7 +100,6 @@ START_TEST(test_cgsolve)
   x = calloc(N, sizeof(double));
   Dwork = calloc(N*4, sizeof(double));
 
- printf("max-iter = %d, tol=%f\n", max_iter, tol);
   cgsolve(x, b, N, Dwork, Ax, A, &cgr, cgp);
 
   for (i=0; i<N; i++){
@@ -168,7 +165,6 @@ START_TEST(test_cgsolve_h11p){
   cgp.max_iter = cg_maxiter;
   cgp.tol = cgtol;
   cgsolve(dx, w1p, N, DWORK_4N, H11pfun, &h11p_data, &cgr, cgp);
-  printf("cgres = %f, cgiter = %d\n", cgr.cgres, cgr.cgiter);
 
   ck_assert_double_array_eq_tol(N, dx_exp, dx, TOL_DOUBLE*100);
 
