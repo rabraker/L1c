@@ -11,10 +11,10 @@ function build_newton_init_data(data_root)
   
   b = PixelMatrixToVector(cs_sim.Img_original);
   b = b(pix_idx); 
+  b = b/max(b);
   
-  
-  A = @(x) IDCTfun(x,pix_mask_vec);
-  At = @(x) DCTfun(x,pix_mask_vec);
+  A = @(x) L1qcTestData.IDCTfun(x,pix_mask_vec);
+  At = @(x) L1qcTestData.DCTfun(x,pix_mask_vec);
   x0 = At(b);
   
   epsilon = 0.1;

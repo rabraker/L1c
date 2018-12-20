@@ -16,7 +16,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
  */
 
 
-#define CK_FLOATING_DIG 15
+#define CK_FLOATING_DIG 20
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h> //Constants
@@ -38,10 +38,10 @@ static cJSON *test_data_json;
 
 START_TEST (test_l1qc_newton_1iter)
 {
-  CgParams cgp = {.verbose=0, .max_iter=200, .tol=1e-3};
+  CgParams cgp = {.verbose=0, .max_iter=400, .tol=1e-9};
   NewtParams params;
-  char fpath[] = "test_data/newton_1iter_data.json";
-  double *x0=NULL, *u=NULL, *b=NULL, *Dwork=NULL;
+  char fpath[] = "test_data/lb_test_data_iter_1.json";
+  double *x0=NULL, *u=NULL, *b=NULL;
   double *x1_exp=NULL, *u1_exp=NULL;
 
   double epsilon = 0., tau_exp=0., lbtol=0.;
@@ -54,20 +54,27 @@ START_TEST (test_l1qc_newton_1iter)
     ck_abort();
   }
   status +=extract_json_double_array(test_data_json, "x0", &x0, &N);
-  status +=extract_json_double_array(test_data_json, "x1", &x1_exp, &N);
-  status +=extract_json_double_array(test_data_json, "u1", &u1_exp, &N);
+  status +=extract_json_double_array(test_data_json, "xp", &x1_exp, &N);
+  status +=extract_json_double_array(test_data_json, "up", &u1_exp, &N);
   status +=extract_json_double_array(test_data_json, "b", &b, &M);
 
   status +=extract_json_double(test_data_json, "epsilon", &epsilon);
   status +=extract_json_double(test_data_json, "mu", &mu);
   status +=extract_json_double(test_data_json, "lbtol", &lbtol);
+  status +=extract_json_double(test_data_json, "newtontol", &params.newton_tol);
+  status +=extract_json_int(test_data_json, "newtonmaxiter", &params.newton_max_iter);
+  // status +=extract_json_double(test_data_json, "cgtol", &cgp.tol);
+  status +=extract_json_int(test_data_json, "cgmaxiter", &cgp.max_iter);
+  status +=extract_json_double(test_data_json, "epsilon", &epsilon);
+
   status +=extract_json_double(test_data_json, "tau", &tau_exp);
 
   status +=extract_json_int(test_data_json, "lbiter", &lbiter_exp);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
   u = calloc(N, sizeof(double));
 
-  if (status | !u | !Dwork){
+  if (status | !u){
+    status += 1;
     goto exit1;
   }
 
@@ -75,15 +82,18 @@ START_TEST (test_l1qc_newton_1iter)
   params.mu = mu;
   params.lbtol = lbtol;
   params.epsilon = epsilon;
-  params.lbiter = 1;
+  params.lbiter = 0;
   params.cg_params = cgp;
 
   ret= l1qc_newton(N, x0, u, b, M, pix_idx,params);
 
-  ck_assert_double_array_eq_tol(N, x1_exp, x0,  TOL_DOUBLE);
-  ck_assert_double_array_eq_tol(N, u1_exp, u,  TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(N, x1_exp, x0,  0.00001);
+  ck_assert_double_array_eq_tol(N, u1_exp, u,   0.00001);
 
   ck_assert_int_eq(0, ret);
+
+
+  goto exit1;
 
  exit1:
   free(x0);
@@ -93,14 +103,11 @@ START_TEST (test_l1qc_newton_1iter)
   free(b);
   free(pix_idx);
 
-  if (! status){
-    goto exit2;
-  }else{
-    perror("Error Loading json data in 'test_find_max_step()'. Aborting\n");
+  if (status){
+    perror("Error Loading json data in 'test_l1qc_newton_1ter()'. Aborting\n");
     ck_abort();
   }
- exit2:
-  dct_destroy();
+
 }
 END_TEST
 
@@ -140,15 +147,15 @@ START_TEST (test_newton_init)
   params.lbtol = lbtol;
   params.epsilon = epsilon;
   params.lbiter = 0;
-  ret= newton_init(N, x, u, &params, Dwork, M, b, pix_idx);
+  ret= newton_init(N, x, u, &params, M, pix_idx);
 
-  ck_assert_double_array_eq_tol(N, u_exp, u,  TOL_DOUBLE);
-  ck_assert_double_eq_tol(tau_exp, params.tau,  TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(N, u_exp, u,  TOL_DOUBLE_SUPER);
+  ck_assert_double_eq_tol(tau_exp, params.tau,  TOL_DOUBLE_SUPER);
   ck_assert_int_eq(lbiter_exp, params.lbiter);
   ck_assert_int_eq(0, ret);
 
   params.lbiter = 1;
-  ret= newton_init(N, x, u, &params, Dwork, M, b, pix_idx);
+  ret= newton_init(N, x, u, &params,  M, pix_idx);
   ck_assert_int_eq(1, params.lbiter);
 
  exit1:
@@ -468,12 +475,12 @@ START_TEST(test_get_gradient)
 
   ck_assert_int_eq(2*N, N2);
   /* ----- Now check -------*/
-  ck_assert_double_array_eq_tol(N, sig11_exp, gd.sig11,TOL_DOUBLE*100);
-  ck_assert_double_array_eq_tol(N, sig12_exp, gd.sig12,TOL_DOUBLE*100);
-  ck_assert_double_array_eq_tol(N, w1p_exp, gd.w1p,TOL_DOUBLE*100);
-  ck_assert_double_array_eq_tol(N, sigx_exp, sigx,TOL_DOUBLE*100);
-  ck_assert_double_array_eq_tol(N, ntgu_exp, gd.ntgu,TOL_DOUBLE*100);
-  ck_assert_double_array_eq_tol(N2, gradf_exp, gd.gradf,TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(N, sig11_exp, gd.sig11,TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(N, sig12_exp, gd.sig12,TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(N, w1p_exp, gd.w1p,TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(N, sigx_exp, sigx,TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(N, ntgu_exp, gd.ntgu,TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(N2, gradf_exp, gd.gradf,TOL_DOUBLE_SUPER*100);
 
   /* ----------------- Cleanup --------------- */
 
@@ -502,14 +509,17 @@ END_TEST
 
 START_TEST(test_line_search)
 {
+  LSStat ls_stat = {.flx=0, .flu = 0, .flin=0, .step=0, .status=0};
   LSParams ls_params;
   GradData gd;
   double *x, *u, *r, *dx, *du, *Adx, *gradf;
-  double tau, epsilon, alpha, beta, s; //loaded
+  double tau, epsilon, alpha, beta, s_init; //loaded
 
   double *fu1p, *fu2p, fe, f, *DWORK_5N;
   double *xp_exp, *up_exp, *rp_exp;
   double *fu1p_exp, *fu2p_exp, fep_exp, fp_exp;
+  double flx_exp=0, flu_exp=0, flin_exp=0;
+
   //double sm;
   int N,N2, M, status=0;
   char fpath[] = "test_data/line_search_data.json";
@@ -534,7 +544,7 @@ START_TEST(test_line_search)
   status +=extract_json_double(test_data_json, "epsilon", &epsilon);
   status +=extract_json_double(test_data_json, "alpha", &alpha);
   status +=extract_json_double(test_data_json, "beta", &beta);
-  status +=extract_json_double(test_data_json, "s", &s);
+  status +=extract_json_double(test_data_json, "s_init", &s_init);
 
   // Expected outputs
   status +=extract_json_double_array(test_data_json, "xp", &xp_exp, &N);
@@ -545,13 +555,17 @@ START_TEST(test_line_search)
   status +=extract_json_double(test_data_json, "fep", &fep_exp);
   status +=extract_json_double(test_data_json, "fp", &fp_exp);
 
+  status +=extract_json_double(test_data_json, "flin", &flin_exp);
+  status +=extract_json_double(test_data_json, "flx", &flx_exp);
+  status +=extract_json_double(test_data_json, "flu", &flu_exp);
+
   if (status){
     perror("Error Loading json data in 'test_line_search()'. Aborting\n");
     ck_abort();
   }
 
   ls_params = (LSParams){.alpha = alpha, .beta = beta,
-               .tau = tau, .s = s, .epsilon = epsilon};
+               .tau = tau, .s = s_init, .epsilon = epsilon};
 
   gd.dx = dx;
   gd.du = du;
@@ -565,11 +579,15 @@ START_TEST(test_line_search)
   fu1p = calloc(N, sizeof(double));
   fu2p = calloc(N, sizeof(double));
 
-  line_search(N, M, x, u, r, fu1p, fu2p, gd, ls_params, DWORK_5N, &fe, &f);
+  ls_stat = line_search(N, M, x, u, r, fu1p, fu2p, gd, ls_params, DWORK_5N, &fe, &f);
 
   // /* ----- Now check -------*/
   ck_assert_double_eq_tol(fep_exp, fe, TOL_DOUBLE);
   ck_assert_double_eq_tol(fp_exp, f, TOL_DOUBLE);
+
+  ck_assert_double_eq_tol(flx_exp, ls_stat.flx, TOL_DOUBLE);
+  ck_assert_double_eq_tol(flu_exp, ls_stat.flu, TOL_DOUBLE);
+  ck_assert_double_eq_tol(flin_exp, ls_stat.flin, TOL_DOUBLE);
 
   ck_assert_double_array_eq_tol(N, xp_exp, x, TOL_DOUBLE);
   ck_assert_double_array_eq_tol(N, up_exp, u, TOL_DOUBLE);
@@ -610,7 +628,7 @@ START_TEST(test_f_eval)
   double *fu1, *fu2, fe, f, *Dwork;
   double *fu1_exp, *fu2_exp, fe_exp, f_exp;
 
-  int N, status=0;
+  int N=0, M=0, status=0;
   char fpath[] = "test_data/f_eval_data.json";
   if (  load_file_to_json(fpath, &test_data_json) ){
     perror("Error loading data for test_f_eval\n");
@@ -619,7 +637,7 @@ START_TEST(test_f_eval)
   // Inputs to f_eval
   status +=extract_json_double_array(test_data_json, "x", &x, &N);
   status +=extract_json_double_array(test_data_json, "u", &u, &N);
-  status +=extract_json_double_array(test_data_json, "r", &r, &N);
+  status +=extract_json_double_array(test_data_json, "r", &r, &M);
   status +=extract_json_double(test_data_json, "tau", &tau);
   status +=extract_json_double(test_data_json, "epsilon", &epsilon);
 
@@ -636,7 +654,7 @@ START_TEST(test_f_eval)
   fu1 = calloc(N, sizeof(double));
   fu2 = calloc(N, sizeof(double));
 
-  f_eval(N, r, x, u, tau, epsilon, fu1, fu2, &fe, &f, Dwork);
+  f_eval(N,  x, u, M, r, tau, epsilon, fu1, fu2, &fe, &f, Dwork);
 
   /* ----- Now check -------*/
   ck_assert_double_eq_tol(fe_exp, fe, TOL_DOUBLE);
@@ -725,12 +743,12 @@ Suite *l1qc_newton_suite(void)
 
   tc_linesearch = tcase_create("l1qc_linesearch");
   tcase_add_test(tc_linesearch, test_find_max_step);
-  tcase_add_test(tc_linesearch, test_compute_descent);
   tcase_add_test(tc_linesearch, test_line_search);
 
   tc_gradient = tcase_create("l1qc_gradient");
   tcase_add_test(tc_gradient, test_H11pfun);
   tcase_add_test(tc_gradient, test_get_gradient);
+  tcase_add_test(tc_gradient, test_compute_descent);
 
   tc_mathfuns = tcase_create("l1qc_math_funs");
   tcase_add_test(tc_mathfuns, test_sum_vec);
@@ -738,7 +756,7 @@ Suite *l1qc_newton_suite(void)
   tcase_add_test(tc_mathfuns, test_log_vec);
 
   /*Add test cases to the suite */
-  suite_add_tcase(s, tc_l1qc_newton);
+  // suite_add_tcase(s, tc_l1qc_newton);
   suite_add_tcase(s, tc_newton_init);
   suite_add_tcase(s, tc_feval);
   suite_add_tcase(s, tc_linesearch);

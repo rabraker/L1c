@@ -70,8 +70,8 @@ double logsum(int N, double *x, double alpha) {
 
 
 /* Evalutes the value function */
-void f_eval(int N, double *r, double *x, double *u, double tau, double epsilon,
-            double *fu1, double *fu2, double *fe, double *f, double *Dwork){
+void f_eval(int N, double *x, double *u, int M, double *r, double tau, double epsilon,
+            double *fu1, double *fu2, double *fe, double *f, double *Dwork_2N){
   /*
     inputs
     ------
@@ -94,8 +94,8 @@ void f_eval(int N, double *r, double *x, double *u, double tau, double epsilon,
    */
 
 
-  double *log_fu1 = Dwork;
-  double *log_fu2 = Dwork+N;
+  double *log_fu1 = Dwork_2N;
+  double *log_fu2 = Dwork_2N + N;
 
   // fu1 = x - u
   cblas_dcopy(N, x, 1, fu1, 1);
@@ -105,7 +105,7 @@ void f_eval(int N, double *r, double *x, double *u, double tau, double epsilon,
   cblas_dcopy(N, x, 1, fu2, 1);
   cblas_daxpby(N, -1.0, u, 1, -1.0, fu2, 1);
 
-  *fe = 0.5 * (cblas_ddot(N, r, 1, r, 1) - epsilon * epsilon);
+  *fe = 0.5 * (cblas_ddot(M, r, 1, r, 1) - epsilon * epsilon);
 
   log_vec(N, -1.0, fu1, log_fu1);
   log_vec(N, -1.0, fu2, log_fu2);
@@ -284,10 +284,11 @@ double find_max_step(int N, GradData gd, double *fu1,
 }
 
 
-int line_search(int N, int M, double *x, double *u, double *r, double *fu1, double *fu2, GradData gd,
+LSStat line_search(int N, int M, double *x, double *u, double *r, double *fu1, double *fu2, GradData gd,
                 LSParams ls_params, double *DWORK_5N, double *fe, double *f){
+  LSStat ls_stat = {.flx=0, .flu = 0, .flin=0, .step=0, .status=0};
   int iter=0;
-  double flin = 0.0, fp = 0.0, fep = 0.0;
+  double flx=0, flu=0, flin = 0.0, fp = 0.0, fep = 0.0;
   double eps2 = ls_params.epsilon * ls_params.epsilon;
   double a1=0.0, a2 = 0.0, a3 = 0.0;
   double one_by_tau = 1.0/ls_params.tau;
@@ -329,13 +330,14 @@ int line_search(int N, int M, double *x, double *u, double *r, double *fu1, doub
     /* need gradf'*[dx; du], but dx and du stored separately.
        Use pointer arithmetic with gradf*/
 
-    flin = cblas_ddot(N, gd.gradf, 1, gd.dx, 1);
-    flin += cblas_ddot(N, gd.gradf+N, 1, gd.dx, 1);
-    flin += *f + ls_params.alpha * step *flin;
+    flx = cblas_ddot(N, gd.gradf, 1, gd.dx, 1);
+    flu = cblas_ddot(N, gd.gradf+N, 1, gd.du, 1);
+    //printf("f = %.4f,   fl=%.6f,    step = %.4e\n", *f, flin, step);
+    flin = *f + ls_params.alpha * step * (flx + flu);
 
     step = ls_params.beta* step;
 
-    printf("iter = %d, fp = %f, flin = %f\n", iter, fp, flin);
+    //printf("iter = %d, fp = %f, flin = %f\n", iter, fp, flin);
     if (fp <= flin){ /* Sufficient decrease test */
 
       cblas_dcopy(N, xp, 1, x, 1);
@@ -345,7 +347,13 @@ int line_search(int N, int M, double *x, double *u, double *r, double *fu1, doub
       cblas_dcopy(N, fu2p, 1, fu2, 1);
       *f = fp;
       *fe = fep;
-      return 0;
+      ls_stat.flx = flx;
+      ls_stat.flu = flu;
+      ls_stat.flin = flin;
+      ls_stat.step = step;
+      ls_stat.iter = iter;
+      ls_stat.status = 0;
+      return ls_stat;
     }
   }
 
@@ -356,26 +364,21 @@ int line_search(int N, int M, double *x, double *u, double *r, double *fu1, doub
   cblas_dcopy(N, u, 1, up, 1);
   cblas_dcopy(M, r, 1, rp, 1);
 
-  return 1;
+  ls_stat.flx = flx;
+  ls_stat.flu = flu;
+  ls_stat.flin = flin;
+  ls_stat.step = step;
+  ls_stat.iter = iter;
+  ls_stat.status = 1;
+  return ls_stat;
 }
 
 int newton_init(int N, double *x, double *u,  NewtParams *params,
-                double *Dwork,  int M, double *b, int *pix_idx){
+                int M, int *pix_idx){
   int i = 0;
   double x_max = 0.0, tmp = 0.0;
-  double *Ax = Dwork;
+
   dct_setup(N, M, pix_idx);
-
-  Ax = dct_EMx_new(x);
-
-  cblas_daxpy(M, -1.0, b, 1, Ax, 1); //-b + Ax -->ax
-  tmp = cblas_dnrm2(M, Ax, 1)  - params->epsilon;
-  if (tmp > 0){
-    // Using minimum-2 norm  x0 = At*inv(AAt)*y.') as they
-    // will require updates to cgsolve.
-    printf("Starting point is infeasible, exiting\n");
-    return 1;
-  }
 
   /* Initialize u */
   x_max = -INFINITY;
@@ -394,14 +397,39 @@ int newton_init(int N, double *x, double *u,  NewtParams *params,
 
   tmp = log (2 * (double)N +1) - log(params->lbtol) - log(params->tau);
   if (params->lbiter ==0) // If already set, use that instead.
-    params->lbiter = ceil (tmp / log(params->mu));
+    params->lbiter =(int) ceil (tmp / log(params->mu));
 
+  return 0;
+}
+
+int check_feasible_start(int M, double *r, double epsilon){
+  double tmp = cblas_dnrm2(M, r, 1)  - epsilon;
+  if (tmp > 0){
+    // Using minimum-2 norm  x0 = At*inv(AAt)*y.') as they
+    // will require updates to cgsolve.
+    return 1;
+  }else
+    return 0;
+}
+
+
+int save_x(int N, double *x, char *fname){
+  FILE *fid = fopen(fname, "w");
+  if (fid == NULL){
+    printf("Error opening %s\n", fname);
+    return 1;
+  }
+
+  for (int i=0; i<N-1; i++){
+    fprintf(fid, "%.15f, ", x[i]);
+  }
+  fprintf(fid, "%.15f ", x[N-1]);
   return 0;
 }
 
 int l1qc_newton(int N, double *x, double *u, double *b,
                 int M, int *pix_idx, NewtParams params){
-
+  LSStat ls_stat;// = {.flx=0, .flu = 0, .flin=0, .step=0, .status=0};
   CgParams cg_params = params.cg_params;
   CgResults cg_results;
 
@@ -412,7 +440,7 @@ int l1qc_newton(int N, double *x, double *u, double *b,
 
   double *atr=NULL, *DWORK_16N = NULL, *DWORK_fftw_2N = NULL;
   int *IWORK_2N = NULL;
-
+  double *fftw_tmp;
   DWORK_16N = calloc(16*N, sizeof(double));
   DWORK_fftw_2N = fftw_alloc_real(2*N);
   IWORK_2N = calloc(2*N, sizeof(int));
@@ -434,10 +462,11 @@ int l1qc_newton(int N, double *x, double *u, double *b,
                  .ntgu = DWORK_16N  + 13*N,
                  .gradf = DWORK_16N + 14*N,
                  .Adx=NULL}; //gradf needs 2N
+  gd.Adx = calloc(M, sizeof(double));
 
-  atr = DWORK_fftw_2N;
+  atr = DWORK_fftw_2N+N;
 
-  newton_init(N, x, u, &params, DWORK_5N,  M, b, pix_idx);
+  newton_init(N, x, u, &params, M, pix_idx);
 
   // Line search parameters.
   LSParams ls_params = { .alpha = 0.01,
@@ -447,61 +476,103 @@ int l1qc_newton(int N, double *x, double *u, double *b,
                          .s = 1.0};
 
 
-
+  printf("--------lbiter = %d ---------\n", params.lbiter);
   /* ---------------- MAIN **TAU** ITERATION --------------------- */
   for (tau_iter=0; tau_iter<params.lbiter; tau_iter++){
+    if (params.verbose){
+      printf("Newton-iter | Functional | Newton decrement |  Stepsize  |  cg-res | cg-iter | backiter |    s    | \n");
+      printf("----------------------------------------------------------------------------------------------------\n");
+    }
+    /* Compute Ax - b = r */
+    fftw_tmp = dct_EMx_new(x);
+    cblas_dcopy(M, fftw_tmp, 1, r, 1);
 
-    /* Compute the initial point. Dwork needs size 2*N */
-    f_eval(N, r, x, u, params.tau, params.epsilon, fu1, fu2, &fe, &f, DWORK_5N);
+    cblas_daxpy(M, -1.0, b, 1, r, 1); //-b + Ax -->ax
+    if ( (tau_iter==0) & check_feasible_start(M, r, params.epsilon) ){
+        printf("Starting point is infeasible, exiting\n");
+        status = 1;
+        goto exit;
+      }
+
+    //f_eval(N, x, u, M, r, params.tau, params.epsilon, fu1, fu2, &fe, &f, DWORK_5N);
+
     /* ---------------- MAIN Newton ITERATION --------------------- */
     for (iter=0; iter<params.newton_max_iter; iter++){
 
+      /* ----------------------------------------------------------------------------
+         Try computing r and f each iteration: dont rely on x + s*dx etc------------ */
+      fftw_tmp = dct_EMx_new(x);
+      cblas_dcopy(M, fftw_tmp, 1, r, 1);
+
+      cblas_daxpy(M, -1.0, b, 1, r, 1); //-b + Ax -->ax
+      f_eval(N, x, u, M, r, params.tau, params.epsilon, fu1, fu2, &fe, &f, DWORK_5N);
+      /* ---------------------------------------------------------------------------- */
+
       /* compute descent direction. returns dx, du, gradf, cgres */
-      atr = dct_MtEty(r);
-      if(!compute_descent(N, fu1, fu2, atr, fe,  params.tau, gd, DWORK_5N, cg_params, &cg_results)){
+      fftw_tmp = dct_MtEty(r);
+      cblas_dcopy(N, fftw_tmp, 1, atr, 1);
+
+      if(compute_descent(N, fu1, fu2, atr, fe,  params.tau, gd, DWORK_5N, cg_params, &cg_results)){
         break;
       }
 
-      gd.Adx = dct_EMx_new(gd.dx);
-
+      fftw_tmp= dct_EMx_new(gd.dx);
+      cblas_dcopy(M, fftw_tmp, 1, gd.Adx, 1);
       /* -------------- Line Search --------------------------- */
       ls_params.s = find_max_step(N, gd, fu1, fu2, M, r, params.epsilon, IWORK_2N);
 
-      line_search(N, M, x, u,r, fu1, fu2, gd, ls_params, DWORK_5N, &fe, &f);
+      ls_stat = line_search(N, M, x, u,r, fu1, fu2, gd, ls_params, DWORK_5N, &fe, &f);
+      if (ls_stat.status > 0)
+        break;
 
-      /*Following is for printing only, not calculation. */
-      lambda2 = cblas_ddot(N, gd.gradf, 1, gd.dx, 1);
-      lambda2 += cblas_ddot(N, gd.gradf+N, 1, gd.du, 1);
 
-      /* want norm [dx; du] */
-      stepsize = cblas_ddot(N, gd.dx, 1, gd.dx, 1);
-      stepsize += cblas_ddot(N, gd.du, 1, gd.du, 1);
-      stepsize = sqrt(stepsize) * 1.0; //* (ls_params.s);
+      /* Check for exit */
+      lambda2 = -(cblas_ddot(N, gd.gradf, 1, gd.dx, 1) + cblas_ddot(N, gd.gradf+N, 1, gd.du, 1) );
 
       if (params.verbose >0){
-        printf("Newton iter = %d, Functional = %8.3f, Stepsize = %8.3f",
-               iter, -lambda2/2.0, stepsize);
-        printf("                  CG RES = %8.3f, CG iter = %d\n",
-               cg_results.cgres, cg_results.cgiter);
+        /*Following is for printing only, not calculation. */
+
+        /* want norm [dx; du] */
+        stepsize = cblas_ddot(N, gd.dx, 1, gd.dx, 1);
+        stepsize += cblas_ddot(N, gd.du, 1, gd.du, 1);
+        stepsize = sqrt(stepsize) * 1.0; //* (ls_params.s);
+        /*            NI         fcnl         dec         sz     cgr       cgI        BI       s  */
+        printf("     %3d       %8.3e       %08.3e    % 8.3e   %08.3e     %3d       %2d      %.3g \n",
+                     iter+1, f, lambda2/2, stepsize, cg_results.cgres, cg_results.cgiter+1, ls_stat.iter,
+               ls_stat.step);
       }
+
+
+      if (lambda2/2 < params.newton_tol){
+        break;
+      }
+
+
     }/* main iter*/
 
 
 
     /* ----- Update tau or exit ------ */
     total_newt_iter += iter;
+    printf("\n********************************************************************************************\n");
     printf("Log barrier iter = %d, l1 = %.3f, functional = %8.3e, tau = %8.3e, total newton-iter =%d\n",
            tau_iter, sum_abs_vec(N, x), sum_vec(N, u), params.tau, total_newt_iter);
-    params.tau = params.tau * params.mu;
-  }
+    printf("********************************************************************************************\n\n");
 
-  goto exit;
+    params.tau = params.tau * params.mu;
+    ls_params.tau = params.tau;
+  }
 
   /* ----- Cleanup -------------------- */
 
+  char fname[] = "c_result.csv";
+  save_x(N, x, fname);
+
+  goto exit;
+
  exit:
   free(DWORK_16N);
-  fftw_free(DWORK_fftw_2N);
+  // fftw_free(DWORK_fftw_2N);
   free(IWORK_2N);
   dct_destroy();
 

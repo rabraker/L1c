@@ -24,6 +24,15 @@ typedef struct LineSearchParams {
 
 } LSParams;
 
+typedef struct LSStat {
+  double flx;
+  double flu;
+  double flin;
+  double step;
+  int iter;
+  int status;
+}LSStat;
+
 typedef struct GradData{
   double *w1p;
   double *dx;
@@ -42,8 +51,8 @@ typedef struct NewtParams{
   double tau;
   double mu;
   double newton_tol;
-  double newton_max_iter;
-  double lbiter;
+  int newton_max_iter;
+  int lbiter;
   double lbtol;
   int verbose;
   CgParams cg_params;
@@ -61,7 +70,7 @@ double logsum(int N, double *x, double alpha);
 double find_max_step(int N, GradData gd, double *fu1,
                      double *fu2, int M, double *r, double epsilon, int *Iwork_2N);
 
-int line_search(int N, int M, double *x, double *u, double *r, double *fu1, double *fu2, GradData gd,
+LSStat line_search(int N, int M, double *x, double *u, double *r, double *fu1, double *fu2, GradData gd,
                 LSParams ls_params, double *DWORK_5N, double *fe, double *f);
 
 void get_gradient(int N, double *fu1, double *fu2, double *sigx, double *atr,
@@ -72,15 +81,14 @@ int compute_descent(int N, double *fu1, double *fu2, double *r, double fe, doubl
 void H11pfun(int N, double *z, double *y,  void *hess_data_in);
 
 int newton_init(int N, double *x, double *u,  NewtParams *params,
-                double *Dwork,  int M, double *b, int *pix_idx);
+                int M, int *pix_idx);
 /*
 int get_gradient(int N, double *fu1, double *fu2, double fe,  double tau, double *gradf);
 */
 
 /* Evalutes the value function */
-extern void f_eval(int N, double *r, double *x, double *u, double tau, double epsilon,
-                   double *fu1, double *fu2, double *fe, double *f, double *Dwork);
-
+extern void f_eval(int N, double *x, double *u, int M, double *r, double tau, double epsilon,
+                   double *fu1, double *fu2, double *fe, double *f, double *Dwork_2N);
 int l1qc_newton(int N, double *x, double *u, double *b,
                 int M, int *pix_idx, NewtParams params);
 

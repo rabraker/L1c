@@ -12,6 +12,7 @@ function build_l1qc_newton_test_data(test_data_root)
   y_vec = PixelMatrixToVector(cs_sim.Img_sub_sampled);
   % y, set of measurements. have to remove all the spots we didn't sample.
   y_vec = y_vec(pix_mask_vec>0.5);
+  y_vec = y_vec/max(y_vec); % normalize to 1
   A = @(x) L1qcTestData.IDCTfun(x,pix_mask_vec); % E*M
   At = @(x) L1qcTestData.DCTfun(x,pix_mask_vec); %E^T*M^T
 
@@ -157,9 +158,11 @@ cgmaxiter = opts.cgmaxiter;
 end
 
 function [xp, up, rp, fu1p, fu2p, fep, fp, backiter] = line_search(x, u, r, dx, du, Adx, gradf, f, tau, ...
-                                    epsilon, alpha, beta, s, save_on, ...
+                                    epsilon, alpha, beta, s_init, save_on, ...
                                                     jopts)
 % backtracking line search
+  n = length(x);
+  s = s_init;
   for backiter=1:32
     xp = x + s*dx;  
     up = u + s*du;
@@ -172,19 +175,16 @@ function [xp, up, rp, fu1p, fu2p, fep, fp, backiter] = line_search(x, u, r, dx, 
     fp = sum(up) - (1/tau)*(sum(log(-fu1p)) + sum(log(-fu2p)) + log(-fep));
     flin = f + alpha*s*(gradf'*[dx; du]);
     
+    flx = gradf(1:n)'*dx;
+    flu = gradf(n+1:end)'*du;
+    
     s = beta*s;
     suffdec = (fp <= flin);
     if suffdec
-      return
+      break
     end
   end
-  fprintf(['Backtracking line search failed, returning previous ' ...
-           'iterate.  (See Section 4 of notes for more information.)\n']);
-  fprintf('fp = %f, flin = %f\n', fp, flin)
-  keyboard
-  xp = x;  
-  up = u;
-  rp = r;
+  
   
   if save_on
     savejson('', struct('xp', xp(:)', 'up', up(:)', 'rp', rp(:)', 'fu1p', fu1p(:)', ...
@@ -192,9 +192,20 @@ function [xp, up, rp, fu1p, fu2p, fep, fp, backiter] = line_search(x, u, r, dx, 
                         x(:)', 'u', u(:)', 'r', r(:)', 'dx', dx(:)', 'du', du(:)', ...
                         'Adx', Adx(:)', 'gradf', gradf(:)', 'f', f, 'tau', ...
                         tau, 'epsilon', epsilon, 'alpha', alpha, ...
-                        'beta', beta, 's', s, 'backiter', BI), jopts);
+                        'beta', beta, 's', s, 's_init', s_init, 'backiter', backiter,...
+                        'flx', flx, 'flu', flu, 'flin', flin), jopts);
   end
-  
+if suffdec
+  return
+else
+    fprintf(['Backtracking line search failed, returning previous ' ...
+           'iterate.  (See Section 4 of notes for more information.)\n']);
+  fprintf('fp = %f, flin = %f\n', fp, flin)
+  keyboard
+  xp = x;  
+  up = u;
+  rp = r;  
+end
   
 end
 
