@@ -1,6 +1,7 @@
 function build_dct_test_data(test_data_root)
   % Create a small set of test data
-
+  jopts.FloatFormat = '%.20f';
+  
   EMx_path = fullfile(test_data_root, 'dct_small_EMx.json');
   MtEty_path = fullfile(test_data_root, 'dct_small_MtEty.json');
   MtEt_Emx_path = fullfile(test_data_root, 'dct_small_MtEt_EMx.json');
@@ -22,18 +23,21 @@ function build_dct_test_data(test_data_root)
   
   yy = L1qcTestData.IDCTfun(x, pix_mask);
   
+  jopts.FileName = EMx_path;
   data = struct('x0', x(:)', 'x1', yy(:)', 'pix_idx', pix_idx(:)'-1);
-  savejson('', data, EMx_path);
+  savejson('', data, jopts);
   
   
   xx = L1qcTestData.DCTfun(yy, pix_mask);
   xx_save = xx;
-   
+  
+  jopts.FileName = MtEty_path;
   data = struct('x0', xx_save(:)', 'x1', yy(:)', 'pix_idx', pix_idx(:)'-1);
-  savejson('', data, MtEty_path);
-  %
+  savejson('', data, jopts);
+  
+  jopts.FileName = MtEt_Emx_path;
   data = struct('x0', x(:)', 'x1', xx_save(:)', 'pix_idx', pix_idx(:)'-1);
-  savejson('', data, MtEt_Emx_path);
+  savejson('', data, jopts);
   
   %%
   % Now, the real deal:
@@ -92,7 +96,7 @@ function build_dct_test_data(test_data_root)
   
   MtEt_EMx = At(A(img_vec));
   
-  jopts.FloatFormat = '%.15f';
+  jopts.FloatFormat = '%.20f';
   jopts.FileName = fullfile(test_data_root, 'dct_large.json');
   savejson('', struct('x_in', img_vec(:)', 'y_in', y_vec(:)',...
     'EMx', EMx(:)', 'MtEty', MtEty(:)', 'MtEt_EMx', MtEt_EMx(:)', 'pix_idx', pix_idx(:)'-1), jopts);

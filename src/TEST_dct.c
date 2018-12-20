@@ -5,7 +5,7 @@
   https://libcheck.github.io/
 
  */
-
+#define CK_FLOATING_DIG 20
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h> //Constants
@@ -54,7 +54,7 @@ START_TEST(test_dct_MtEt_EMx_small_rand)
 
   MtEt_EMx_act = dct_MtEt_EMx_new(x_in);
 
-  ck_assert_double_array_eq_tol(Nx, MtEt_EMx_exp, MtEt_EMx_act, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Nx, MtEt_EMx_exp, MtEt_EMx_act, TOL_DOUBLE_SUPER);
 
   fftw_free(x_in);
   free(MtEt_EMx_exp);
@@ -92,7 +92,7 @@ START_TEST(test_dct_MtEty_small_rand)
 
   MtEty_act = dct_MtEty(y_in);
 
-  ck_assert_double_array_eq_tol(Nx, MtEty_exp, MtEty_act, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Nx, MtEty_exp, MtEty_act, TOL_DOUBLE_SUPER);
 
   fftw_free(y_in);
   free(MtEty_exp);
@@ -133,7 +133,7 @@ START_TEST(test_dct_EMx_small_rand)
 
   EMx_act = dct_EMx_new(x_in_aligned);
 
-  ck_assert_double_array_eq_tol(Ny, EMx_exp, EMx_act, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Ny, EMx_exp, EMx_act, TOL_DOUBLE_SUPER);
 
   fftw_free(x_in);
   free(EMx_exp);
@@ -168,7 +168,7 @@ START_TEST(test_dct_MtEt_EMx_large)
 
   MtEt_EMx_act = dct_MtEt_EMx_new(x_in);
 
-  ck_assert_double_array_eq_tol(Nx, MtEt_EMx_exp, MtEt_EMx_act, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Nx, MtEt_EMx_exp, MtEt_EMx_act, TOL_DOUBLE_SUPER);
 
   fftw_free(x_in);
   free(MtEt_EMx_exp);
@@ -206,7 +206,7 @@ START_TEST(test_dct_MtEty_large)
 
   MtEty_act = dct_MtEty(y_in);
 
-  ck_assert_double_array_eq_tol(Nx, MtEty_exp, MtEty_act, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Nx, MtEty_exp, MtEty_act, TOL_DOUBLE_SUPER);
 
   fftw_free(y_in);
   free(MtEty_exp);
@@ -242,7 +242,7 @@ START_TEST(test_dct_EMx_large)
 
   EMx_act = dct_EMx_new(x_in);
 
-  ck_assert_double_array_eq_tol(Ny, EMx_exp, EMx_act, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Ny, EMx_exp, EMx_act, TOL_DOUBLE_SUPER);
 
   fftw_free(x_in);
   free(EMx_exp);
@@ -309,7 +309,7 @@ START_TEST(test_dct_MtEt_EMx_small)
 
   x_act = dct_MtEt_EMx_new(x0);
 
-  ck_assert_double_array_eq_tol(Nx0, x_exp, x_act, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Nx0, x_exp, x_act, TOL_DOUBLE_SUPER);
 
   fftw_free(x_exp);
   fftw_free(x0);
@@ -333,7 +333,7 @@ START_TEST(test_dct_MtEty_small)
 
   x_act = dct_MtEty(y);
 
-  ck_assert_double_array_eq_tol(Nx, x_exp, x_act, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Nx, x_exp, x_act, TOL_DOUBLE_SUPER);
 
   fftw_free(y);
   fftw_free(x_exp);
@@ -359,7 +359,7 @@ START_TEST(test_dct_EMx_small)
 
   y_act = dct_EMx();
 
-  ck_assert_double_array_eq_tol(Ny, y_exp, y_act, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Ny, y_exp, y_act, TOL_DOUBLE_SUPER);
 
   fftw_free(y_exp);
   fftw_free(x);
@@ -389,7 +389,7 @@ START_TEST(test_dct_EMx_new_small)
 
   y_act = dct_EMx_new(x_new);
 
-  ck_assert_double_array_eq_tol(Ny, y_exp, y_act, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Ny, y_exp, y_act, TOL_DOUBLE_SUPER);
 
   fftw_free(y_exp);
   fftw_free(x_new);
