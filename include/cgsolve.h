@@ -22,6 +22,6 @@ void dgemv_RowOrder(double *A, int m_A, int n_A, double *x, double *b);
 
 void Ax(int n, double *x, double *b, void *AX_data);
 
-
+void Ax_sym(int n, double *x, double *b, void *AX_data);
 
 #endif

@@ -29,15 +29,17 @@ function [x, res, iter] = cgsolve(A, b, tol, maxiter, verbose)
   delta = r'*r;
   delta_init = b'*b;
   
-  numiter = 0;
+%   numiter = 0;
   bestx = x;
   bestres = sqrt(delta/delta_init);
-  while ((numiter < maxiter) && (delta > tol^2*delta_init))
+  fprintf('cg: |Iter| Best resid | Current resid| alpha | beta   |   delta  |\n');
+        
+ for iter = 1:maxiter
     q = A(d);
     alpha = delta/(d'*q);
     x = x + alpha*d;
     
-    if (mod(numiter+1,50) == 0)
+    if (mod(iter+1,50) == 0)
       r = b - A(x);
     else
       r = r - alpha*q;
@@ -47,23 +49,27 @@ function [x, res, iter] = cgsolve(A, b, tol, maxiter, verbose)
     delta = r'*r;
     beta = delta/deltaold;
     d = r + beta*d;
-    numiter = numiter + 1;
+
     if (sqrt(delta/delta_init) < bestres)
       bestx = x;
       bestres = sqrt(delta/delta_init);
     end
     
-    if ((verbose) && (mod(numiter,verbose)==0))
-      fprintf('cg: Iter = %d, Best residual = %8.3e, Current residual = %8.3e\n', ...
-        numiter, bestres, sqrt(delta/delta_init));
+    if ((verbose) && (mod(iter,verbose)==0))
+      %         iter              br             cr    alpha beta delta
+      fprintf('  %d,   %.16e, %.16e, %.16e, %.16e, %.16e  \n', ...
+        iter, bestres, sqrt(delta/delta_init), alpha, beta, delta);
+    end
+    if (delta < tol^2*delta_init)
+      break;
     end
     
   end
   
   if (verbose)
-    fprintf('cg: Iterations = %d, best residual = %14.8e\n', numiter, bestres);
+    fprintf('cg: Iterations = %d, best residual = %14.8e\n', iter, bestres);
   end
   x = bestx;
   res = bestres;
-  iter = numiter;
+  iter = iter;
 end

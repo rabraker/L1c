@@ -69,7 +69,6 @@ int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
   d = Dwork + n_b;
   bestx = Dwork + 2 * n_b;
   q = Dwork + 3 * n_b;
-  //d_tmp = Dwork + 4*n_b;
 
   /* Init
   x = zeros(n,1)
@@ -85,52 +84,37 @@ int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
     x[i] = 0.0;
     bestx[i] = 0.0;
   }
-  //r=b
-  cblas_dcopy((int)n_b, b, 1, r, 1);    /* copy b (ie, z_i_1) to r */
-  //d=r
-  cblas_dcopy((int)n_b, r, 1, d, 1);    /* copy r (ie, z_i_1) to d */
-  // cblas_dcopy((int)n_b, r, 1, q, 1);    /* copy r (ie, z_i_1) to d */
-  //delta = r'*r
-  delta = cblas_ddot(n_b, r, 1, r, 1);
 
-  //delta_0 = b'*b
-  delta_0 = cblas_ddot(n_b, b, 1, b, 1);
+  cblas_dcopy((int)n_b, b, 1, r, 1);       /*r=b: copy b (ie, z_i_1) to r */
+  cblas_dcopy((int)n_b, r, 1, d, 1);       /*d=r: copy r (ie, z_i_1) to d */
+  delta = cblas_ddot(n_b, r, 1, r, 1);     /*delta = r'*r                 */
+
+  delta_0 = cblas_ddot(n_b, b, 1, b, 1);  /*delta_0 = b'*b                */
   best_res = sqrt(delta/delta_0);
 
+  if (cg_params.verbose > 0){
+    printf("cg: |Iter| Best resid | Current resid| alpha | beta   |   delta  |\n");
+  }
+  for (iter=1; iter<=cg_params.max_iter; iter++){
 
-  for (iter=0; iter<cg_params.max_iter; iter++){
-    // void catlas_daxpby(const int __N, const double __alpha, const double *__X, const int __incX,
-    // const double __beta, double *__Y, const int __incY);
+    AX_func(n_b, d, q, AX_data);                 /* q = A * d */
 
-    // H11p must overwrite d[0]
-    //    cblas_dcopy((int)n_b, d, 1, d_tmp, 1);
-    //d0_tmp = d[0];
-    AX_func(n_b, d, q, AX_data);
-    //    d[0] = d0_tmp;
-    
-    // alpha delta/(d'*q);
-    alpha = delta / cblas_ddot(n_b, d, 1, q, 1);
+    alpha = delta / cblas_ddot(n_b, d, 1, q, 1); /* alpha delta/(d'*q) */
 
-    // x = alpha*d + x;
-    cblas_daxpy(n_b, alpha, d, 1, x, 1);
+    cblas_daxpy(n_b, alpha, d, 1, x, 1);         /* x = alpha*d + x    */
 
     if ( (iter+1 %50 ) == 0){
-      // r = b - A(x);
-      AX_func(n_b, x, r, AX_data);
-      // r = b - A*x
-      cblas_daxpby(n_b, 1.0, b, 1, -1.0, r, 1);
+      AX_func(n_b, x, r, AX_data);               /* r = b - A(x);      */
+      cblas_daxpby(n_b, 1.0, b, 1, -1.0, r, 1);  /* r = b - A*x        */
     }else{
-      // r = - alpha*q + r;
-      cblas_daxpy(n_b, -alpha, q, 1, r, 1);
+      cblas_daxpy(n_b, -alpha, q, 1, r, 1);      /* r = - alpha*q + r; */
     }
 
     delta_old = delta;
-    //delta = r'*r;
-    delta = cblas_ddot(n_b, r, 1, r, 1);
+    delta = cblas_ddot(n_b, r, 1, r, 1);         /* delta = r'*r; */
 
     beta = delta/delta_old;
-    // d = r + beta*d;
-    cblas_daxpby(n_b, 1.0, r, 1, beta, d, 1);
+    cblas_daxpby(n_b, 1.0, r, 1, beta, d, 1);    /* d = r + beta*d; */
 
     res = sqrt(delta/delta_0);
     if (res < best_res) {
@@ -140,11 +124,11 @@ int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
     }
 
     if ( cg_params.verbose >0 && (iter % cg_params.verbose)==0){ // modulo 0 is a floating point exception.
-      printf("cg: Iter = %d, Best residual = %.3f, Current residual = %.3f\n",
-             iter, best_res, res);
+      // printf("cg: Iter = %d, Best residual = %.3e, Current residual = %.3e\n", iter, best_res, res);
+      printf("  %d,   %.16e, %.16e, %.16e, %.16e, %.16e  \n", iter, best_res, res, alpha, beta, delta);
     }
 
-    if (delta < pow(cg_params.tol, 2) * delta_0){
+    if (delta < (cg_params.tol * cg_params.tol) * delta_0){
       break;
     }
 
@@ -156,7 +140,6 @@ int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
   cg_result->cgres = best_res;
   cg_result->cgiter = iter;
 
-  printf("CG-iters = %d\n", iter);
 
   return 0;
 
@@ -178,6 +161,16 @@ void dgemv_RowOrder(double *A, int m_A, int n_A, double *x, double *b){
   cblas_dgemv(MatOrder, NoTrans, m_A, n_A, 1.0, A, n_A, x, 1, 0.0, b, 1);
 }
 
+
+
+void Ax_sym(int n, double *x, double *b, void *AX_data){
+  double *A = (double *) AX_data;
+  enum CBLAS_ORDER Layout = CblasRowMajor;
+  enum CBLAS_UPLO uplo = CblasUpper;
+
+  cblas_dspmv (Layout, uplo, n, 1.0, A, x, 1, 0.0, b, 1);
+
+}
 
 
 void Ax(int n, double *x, double *b, void *AX_data){
