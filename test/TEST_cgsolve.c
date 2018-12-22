@@ -24,7 +24,7 @@
 #include "l1qc_newton.h"
 #include "dct.h"
 
-
+#include "l1qc_common.h"
 #include "check_utils.h"
 
 
@@ -68,13 +68,13 @@ int load_small_data(double **A, double **x, double **b, int *N, int *na,
   return 0;
 
  end2:
-  free(*A);
+  free_double(*A);
   goto end1;
  end1:
-  free(*b);
+  free_double(*b);
   goto end0;
  end0:
-  free(*x);
+  free_double(*x);
   return 1;
 
 }
@@ -97,18 +97,18 @@ START_TEST(test_cgsolve)
   cgp.tol = tol;
   cgp.max_iter = max_iter;
 
-  x = calloc(N, sizeof(double));
-  Dwork = calloc(N*4, sizeof(double));
+  x = malloc_double(N);
+  Dwork = malloc_double(N*4);
 
   cgsolve(x, b, N, Dwork, Ax_sym, A, &cgr, cgp);
 
   ck_assert_double_array_eq_tol(N, x_exp, x, TOL_DOUBLE_SUPER*10);
 
-  free(A);
-  free(x);
-  free(x_exp);
-  free(b);
-  free(Dwork);
+  free_double(A);
+  free_double(x);
+  free_double(x_exp);
+  free_double(b);
+  free_double(Dwork);
 
 }
 END_TEST
@@ -150,11 +150,11 @@ START_TEST(test_cgsolve_h11p){
   h11p_data.atr = atr;
   h11p_data.sigx = sigx;
 
-  dx = calloc(N, sizeof(double));
+  dx = malloc_double(N);
   if (!dx){
     perror("error allocating memory\n");
   }
-  DWORK_4N = calloc(4*N, sizeof(double));
+  DWORK_4N = malloc_double(4*N);
   if (!DWORK_4N){
     perror("error allocating memory\n");
   }
@@ -191,7 +191,7 @@ START_TEST(test_cgsolve_Ax_sym){
   status +=extract_json_double_array(test_data_json, "x", &x, &N);
   status +=extract_json_double_array(test_data_json, "y", &y_exp, &N);
 
-  y = calloc(N, sizeof(double));
+  y = malloc_double(N);
   if ( (!y) | status){
     perror("error allocating memory\n");
   }

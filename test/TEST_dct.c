@@ -21,6 +21,13 @@
 #include "cJSON.h"
 #include "json_utils.h"
 #include "check_utils.h"
+#include "l1qc_common.h"
+
+#ifdef _USEMKL_
+#define TOL_LARGE_DCT 1e-10
+#else
+#define TOL_LARGE_DCT TOL_DOUBLE_SUPER
+#endif
 
 /* Global variables which hold data contained in
    test_data_ss_ff.h
@@ -57,7 +64,7 @@ START_TEST(test_dct_MtEt_EMx_small_rand)
   ck_assert_double_array_eq_tol(Nx, MtEt_EMx_exp, MtEt_EMx_act, TOL_DOUBLE_SUPER);
 
   fftw_free(x_in);
-  free(MtEt_EMx_exp);
+  free_double(MtEt_EMx_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
 }
@@ -95,7 +102,7 @@ START_TEST(test_dct_MtEty_small_rand)
   ck_assert_double_array_eq_tol(Nx, MtEty_exp, MtEty_act, TOL_DOUBLE_SUPER);
 
   fftw_free(y_in);
-  free(MtEty_exp);
+  free_double(MtEty_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
 }
@@ -136,7 +143,7 @@ START_TEST(test_dct_EMx_small_rand)
   ck_assert_double_array_eq_tol(Ny, EMx_exp, EMx_act, TOL_DOUBLE_SUPER);
 
   fftw_free(x_in);
-  free(EMx_exp);
+  free_double(EMx_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
 }
@@ -168,10 +175,10 @@ START_TEST(test_dct_MtEt_EMx_large)
 
   MtEt_EMx_act = dct_MtEt_EMx_new(x_in);
 
-  ck_assert_double_array_eq_tol(Nx, MtEt_EMx_exp, MtEt_EMx_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(Nx, MtEt_EMx_exp, MtEt_EMx_act,  TOL_LARGE_DCT);
 
   fftw_free(x_in);
-  free(MtEt_EMx_exp);
+  free_double(MtEt_EMx_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
 }
@@ -206,10 +213,10 @@ START_TEST(test_dct_MtEty_large)
 
   MtEty_act = dct_MtEty(y_in);
 
-  ck_assert_double_array_eq_tol(Nx, MtEty_exp, MtEty_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(Nx, MtEty_exp, MtEty_act, TOL_LARGE_DCT);
 
   fftw_free(y_in);
-  free(MtEty_exp);
+  free_double(MtEty_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
 }
@@ -242,10 +249,10 @@ START_TEST(test_dct_EMx_large)
 
   EMx_act = dct_EMx_new(x_in);
 
-  ck_assert_double_array_eq_tol(Ny, EMx_exp, EMx_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(Ny, EMx_exp, EMx_act, TOL_LARGE_DCT);
 
   fftw_free(x_in);
-  free(EMx_exp);
+  free_double(EMx_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
 }

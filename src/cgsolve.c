@@ -38,14 +38,17 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method
  }
 */
 
-
+#ifdef _USEMKL_
+#include "mkl.h"
+#else
 #include "cblas.h"
+#endif
 // #include "clapack.h"
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
 #include "cgsolve.h"
-
+#include "l1qc_common.h"
 
 
 int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
@@ -138,7 +141,7 @@ int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
   // x = bestx;
   cblas_dcopy( (int)n_b, bestx, 1, x, 1);
   cg_result->cgres = best_res;
-  cg_result->cgiter = iter;
+  cg_result->cgiter = min(iter, cg_params.max_iter); //Loops increment before exiting.
 
 
   return 0;
@@ -156,19 +159,17 @@ int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
 // }
 
 void dgemv_RowOrder(double *A, int m_A, int n_A, double *x, double *b){
-  enum CBLAS_ORDER MatOrder = CblasRowMajor;
-  enum CBLAS_TRANSPOSE NoTrans = CblasNoTrans;
-  cblas_dgemv(MatOrder, NoTrans, m_A, n_A, 1.0, A, n_A, x, 1, 0.0, b, 1);
+
+  cblas_dgemv(CblasRowMajor, CblasNoTrans, m_A, n_A, 1.0, A, n_A, x, 1, 0.0, b, 1);
 }
 
 
 
 void Ax_sym(int n, double *x, double *b, void *AX_data){
-  double *A = (double *) AX_data;
-  enum CBLAS_ORDER Layout = CblasRowMajor;
-  enum CBLAS_UPLO uplo = CblasUpper;
 
-  cblas_dspmv (Layout, uplo, n, 1.0, A, x, 1, 0.0, b, 1);
+  double *A = (double *) AX_data;
+
+  cblas_dspmv (CblasRowMajor, CblasUpper, n, 1.0, A, x, 1, 0.0, b, 1);
 
 }
 

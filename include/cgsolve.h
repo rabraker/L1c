@@ -1,6 +1,7 @@
 #ifndef _CGSOLVE_
 #define _CGSOLVE_
 
+#include <stddef.h>
 
 typedef struct CgResults_{
   double cgres;
@@ -14,14 +15,14 @@ typedef struct CgParams_{
 } CgParams;
 
 
-int cgsolve(double *x, double *b, size_t n_b,  double *Dwork,
+extern int cgsolve(double *x, double *b, size_t n_b,  double *Dwork,
             void(*AX_func)(int n, double *x, double *b, void *AX_data),
             void *AX_data, CgResults *cg_result, CgParams cg_params);
 
-void dgemv_RowOrder(double *A, int m_A, int n_A, double *x, double *b);
+extern void dgemv_RowOrder(double *A, int m_A, int n_A, double *x, double *b);
 
-void Ax(int n, double *x, double *b, void *AX_data);
+extern void Ax(int n, double *x, double *b, void *AX_data);
 
-void Ax_sym(int n, double *x, double *b, void *AX_data);
+extern void Ax_sym(int n, double *x, double *b, void *AX_data);
 
 #endif

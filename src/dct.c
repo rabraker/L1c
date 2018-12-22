@@ -17,10 +17,7 @@
 #include "dct.h"
 
 #define PI  3.141592653589793
-#define min(a,b)                                \
-  ({ __typeof__ (a) _a = (a);                   \
-    __typeof__ (b) _b = (b);                    \
-    _a < _b ? _a : _b; })
+#include "l1qc_common.h"
 
 
 static fftw_plan dct_plan_MtEty;

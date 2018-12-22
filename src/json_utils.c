@@ -7,8 +7,9 @@
 
 #include "json_utils.h"
 #include <fftw3.h>
-
+#include "l1qc_common.h"
 /* Utility functions */
+
 
 
 void print_vec(int N, double *x, char *name){
@@ -94,7 +95,9 @@ int extract_json_double_array(cJSON *data_json, char *name, double **x, int *N){
       goto end;
     }
   *N = cJSON_GetArraySize(x_json);
-  *x = calloc(*N, sizeof(double));
+  // *x = calloc(*N, sizeof(double));
+  *x = malloc_double(*N);
+
   if (!*x){
     status =1;
     perror("error allocating memory\n");

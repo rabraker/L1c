@@ -42,7 +42,7 @@ function build_l1qc_newton_test_data(test_data_root)
 end
 
 
-function [x, u, niter] = l1qc_newton_local(x0, u0, A, At, b, opts, data_root, pix_mask) 
+function [x, u, niter] = l1qc_newton_local(x0, u0, A, At, b, opts, data_root, pix_idx) 
   % l1qc_newton.m
 %
 % Newton algorithm for log-barrier subproblems for l1 minimization
@@ -103,7 +103,7 @@ cgmaxiter = opts.cgmaxiter;
   fe = 1/2*(r'*r - epsilon^2);
   f = sum(u) - (1/tau)*(sum(log(-fu1)) + sum(log(-fu2)) + log(-fe));
 
-  jopts.FloatFormat ='%.20g';
+  jopts.FloatFormat ='%.20e';
   for niter=1:newtonmaxiter
     if niter==1
       save_on = true;
@@ -115,7 +115,7 @@ cgmaxiter = opts.cgmaxiter;
                      fullfile(data_root, 'hp11_fun_data.json')};
                    
     [dx, du, gradf, cgres, cgiter] = compute_descent(fu1, fu2, r, fe, tau,...
-                                 cgtol, cgmaxiter, A, At, save_on, jopts, descent_files, pix_mask);
+                                 cgtol, cgmaxiter, A, At, save_on, jopts, descent_files, pix_idx);
    
     if (cgres > 1/2)
       disp('Cannot solve system.  Returning previous iterate.  (See Section 4 of notes for more information.)');
@@ -132,8 +132,8 @@ cgmaxiter = opts.cgmaxiter;
     % ------------- Line search -------------------------------
      jopts.FileName = fullfile(data_root, 'line_search_data.json');
     % [xp, up, rp, fu1p, fu2p, fep, fp, BI]
-    [x, u, r, fu1, fu2, fe, f, BI] = line_search(x, u, r, dx, du, Adx, gradf, f, tau, ...
-                                    epsilon, alpha, beta, s, save_on, ...
+    [x, u, r, fu1, fu2, fe, f, BI] = line_search(x, u, r, b, dx, du, A, gradf, f, tau, ...
+                                    pix_idx, epsilon, alpha, beta, s, save_on, ...
                                                       jopts);
     
     % set up for next iteration
@@ -157,8 +157,8 @@ cgmaxiter = opts.cgmaxiter;
   end
 end
 
-function [xp, up, rp, fu1p, fu2p, fep, fp, backiter] = line_search(x, u, r, dx, du, Adx, gradf, f, tau, ...
-                                    epsilon, alpha, beta, s_init, save_on, ...
+function [xp, up, rp, fu1p, fu2p, fep, fp, backiter] = line_search(x, u, r, b, dx, du, A, gradf, f, tau, ...
+                                    pix_idx, epsilon, alpha, beta, s_init, save_on, ...
                                                     jopts)
 % backtracking line search
   n = length(x);
@@ -166,8 +166,8 @@ function [xp, up, rp, fu1p, fu2p, fep, fp, backiter] = line_search(x, u, r, dx, 
   for backiter=1:32
     xp = x + s*dx;  
     up = u + s*du;
-    rp = r + s*Adx;
-    
+    %rp = r + s*Adx;
+    rp = A(xp) - b;
     fu1p = xp - up;  
     fu2p = -xp - up;  
     fep = 1/2*(rp'*rp - epsilon^2);
@@ -187,11 +187,12 @@ function [xp, up, rp, fu1p, fu2p, fep, fp, backiter] = line_search(x, u, r, dx, 
   
   
   if save_on
+
     savejson('', struct('xp', xp(:)', 'up', up(:)', 'rp', rp(:)', 'fu1p', fu1p(:)', ...
                         'fu2p', fu2p(:)', 'fep', fep(:)', 'fp', fp(:)', 'x', ...
-                        x(:)', 'u', u(:)', 'r', r(:)', 'dx', dx(:)', 'du', du(:)', ...
-                        'Adx', Adx(:)', 'gradf', gradf(:)', 'f', f, 'tau', ...
-                        tau, 'epsilon', epsilon, 'alpha', alpha, ...
+                        x(:)', 'u', u(:)', 'r', r(:)', 'b', b(:)', 'dx', dx(:)', 'du', du(:)', ...
+                        'gradf', gradf(:)', 'f', f, 'tau', tau,...
+                         'pix_idx', pix_idx(:)'-1,'epsilon', epsilon, 'alpha', alpha, ...
                         'beta', beta, 's', s, 's_init', s_init, 'backiter', backiter,...
                         'flx', flx, 'flu', flu, 'flin', flin), jopts);
   end
