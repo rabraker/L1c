@@ -48,16 +48,17 @@ figure(1)
 subplot(2,2, [1,3])
 imagesc(X);
 colormap('gray')
- %%
- tic
- ximg_ml = l1qc_logbarrier_tmp(x0, A, At, b, opts.epsilon, opts.lbtol, opts.mu,...
-   opts.cgtol, opts.cgmaxiter, opts.verbose);
- tml = toc;
- %%
- fprintf('matlab l1qc-time: %f\n', tml);
-  fprintf('mexl1qc-time:     %f\n', tm_c);
-  
- subplot(2,2, [2,4])
- X_ml = PixelVectorToMatrix(idct(ximg_ml), [512, 512]);
- 
+%%
+tic
+ximg_ml = l1qc_logbarrier_tmp(x0, A, At, b, opts.epsilon, opts.lbtol, opts.mu,...
+  opts.cgtol, opts.cgmaxiter, opts.verbose);
+tml = toc;
+%%
+fprintf('matlab l1qc-time: %f\n', tml);
+fprintf('mexl1qc-time:     %f\n', tm_c);
+
+subplot(2,2, [2,4])
+X_ml = PixelVectorToMatrix(idct(ximg_ml), [512, 512]);
+imagesc(X_ml);
+colormap('gray')
  
