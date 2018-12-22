@@ -23,6 +23,8 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 #include <check.h>
 #include <fftw3.h>
 
+#include "l1qc_common.h"
+
 #include "cJSON.h"
 #include "json_utils.h"
 #include "l1qc_newton.h"
@@ -31,7 +33,8 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 /* Tolerances and things */
 #include "test_constants.h"
 #include "check_utils.h"
-// #include "test_data_ss_ff.h"
+
+
 
 static cJSON *test_data_json;
 
@@ -71,7 +74,7 @@ START_TEST (test_l1qc_newton_1iter)
 
   status +=extract_json_int(test_data_json, "lbiter", &lbiter_exp);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
-  u = calloc(N, sizeof(double));
+  u = malloc_double(N);
 
   if (status | !u){
     status += 1;
@@ -136,8 +139,8 @@ START_TEST (test_newton_init)
 
   status +=extract_json_int(test_data_json, "lbiter", &lbiter_exp);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
-  u = calloc(N, sizeof(double));
-  Dwork = calloc(N, sizeof(double));
+  u = malloc_double(N);
+    Dwork = malloc_double(N);
   if (status | !u | !Dwork){
     perror("Error Loading json data in 'test_newton_init()'. Aborting\n");
     goto exit1;
@@ -150,7 +153,7 @@ START_TEST (test_newton_init)
   ret= newton_init(N, x, u, &params, M, pix_idx);
 
   ck_assert_double_array_eq_tol(N, u_exp, u,  TOL_DOUBLE_SUPER);
-  ck_assert_double_eq_tol(tau_exp, params.tau,  TOL_DOUBLE_SUPER);
+  ck_assert_double_eq_tol(tau_exp, params.tau,  TOL_DOUBLE_SUPER*10);
   ck_assert_int_eq(lbiter_exp, params.lbiter);
   ck_assert_int_eq(0, ret);
 
@@ -159,12 +162,12 @@ START_TEST (test_newton_init)
   ck_assert_int_eq(1, params.lbiter);
 
  exit1:
-  free(x);
-  free(u);
-  free(u_exp);
-  free(b);
-  free(pix_idx);
-  free(Dwork);
+  free_double(x);
+  free_double(u);
+  free_double(u_exp);
+  free_double(b);
+  free_double(pix_idx);
+  free_double(Dwork);
 
   if (! status){
     goto exit2;
@@ -210,12 +213,12 @@ START_TEST (test_find_max_step)
 
   ck_assert_double_eq_tol(smax_exp, smax,  TOL_DOUBLE*100);
 
-  free(dx);
-  free(du);
-  free(Adx);
-  free(fu1);
-  free(fu2);
-  free(r);
+  free_double(dx);
+  free_double(du);
+  free_double(Adx);
+  free_double(fu1);
+  free_double(fu2);
+  free_double(r);
   free(Iwork_2N);
 }
 END_TEST
@@ -268,42 +271,18 @@ START_TEST(test_compute_descent)
     ck_abort();
   }
 
-  DWORK_5N = calloc(5*N, sizeof(double));
-  if (!DWORK_5N){
-    perror("error allocating memory\n");
-  }
-  gd.w1p = calloc(N, sizeof(double));
-  if (!gd.w1p ){
-    perror("error allocating memory\n");
-  }
-  gd.dx = calloc(N, sizeof(double));
-  if (!gd.dx){
-    perror("error allocating memory\n");
-  }
-  gd.du = calloc(N, sizeof(double));
-  if (!gd.du ){
-    perror("error allocating memory\n");
-  }
-  gd.gradf = calloc(2*N, sizeof(double));
-  if (!gd.gradf){
-    perror("error allocating memory\n");
-  }
-  gd.Adx = calloc(2*N, sizeof(double));
-  if (!gd.Adx){
-    perror("error allocating memory\n");
-  }
-  gd.sig11 = calloc(N, sizeof(double));
-  if (!gd.sig11){
-    perror("error allocating memory\n");
-  }
-  gd.sig12 = calloc(N, sizeof(double));
-  if (!gd.sig12 ){
-    perror("error allocating memory\n");
-  }
-  //  gd.w1p = calloc(N, sizeof(double));
-  gd.ntgu = calloc(N, sizeof(double));
-  if (!gd.ntgu ){
-    perror("error allocating memory\n");
+  DWORK_5N = malloc_double(5*N);
+  gd.w1p = malloc_double(N);
+  gd.dx = malloc_double(N);
+  gd.du = malloc_double(N);
+  gd.gradf = malloc_double(2*N);
+  gd.Adx = malloc_double(2*N);
+  gd.sig11 = malloc_double(N);
+  gd.sig12 = malloc_double(N);
+  gd.ntgu = malloc_double(N);
+  if ( (!DWORK_5N) | (!gd.w1p) | (!gd.dx) | (!gd.du) | (!gd.gradf) | (!gd.Adx)
+       |(!gd.sig11)| (!gd.sig12) |(!gd.ntgu) ){
+    perror("Error allocating memory\n");
   }
 
 
@@ -331,27 +310,27 @@ START_TEST(test_compute_descent)
   ck_assert_double_array_eq_tol(N, dx_exp, gd.dx, TOL_DOUBLE*100);
   ck_assert_double_array_eq_tol(N, du_exp, gd.du, TOL_DOUBLE*100);
 
-  ck_assert_int_eq(cgr.cgiter+1, cgiter_exp);
+  ck_assert_int_eq(cgr.cgiter, cgiter_exp);
   ck_assert_double_eq_tol(cgr.cgres, cgres_exp, TOL_DOUBLE*100);
 
   /* /\* ----------------- Cleanup --------------- *\/ */
-  free(fu1);
-  free(fu2);
-  free(atr);
-  free(dx_exp);
-  free(du_exp);
-  free(sig11_exp);
-  free(sig12_exp);
-  free(w1p_exp);
-  free(DWORK_5N);
-  free(gd.w1p);
-  free(gd.dx);
-  free(gd.du);
-  free(gd.gradf);
-  free(gd.Adx);
-  free(gd.sig11);
-  free(gd.sig12);
-  free(gd.ntgu);
+  free_double(fu1);
+  free_double(fu2);
+  free_double(atr);
+  free_double(dx_exp);
+  free_double(du_exp);
+  free_double(sig11_exp);
+  free_double(sig12_exp);
+  free_double(w1p_exp);
+  free_double(DWORK_5N);
+  free_double(gd.w1p);
+  free_double(gd.dx);
+  free_double(gd.du);
+  free_double(gd.gradf);
+  free_double(gd.Adx);
+  free_double(gd.sig11);
+  free_double(gd.sig12);
+  free_double(gd.ntgu);
   free(pix_idx);
 
   dct_destroy();
@@ -393,7 +372,7 @@ START_TEST(test_H11pfun)
     perror("Error Loading json data in 'test_H11pfun()'. Aborting\n");
     ck_abort();
   }
-  y = calloc(N, sizeof(double));
+  y = malloc_double(N);
   if (!y){
     perror("Unable to allocate memory\n");
   }
@@ -415,11 +394,11 @@ START_TEST(test_H11pfun)
   ck_assert_double_array_eq_tol(N, y_exp, y, TOL_DOUBLE*100);
 
   /* ----------------- Cleanup --------------- */
-  free(atr);
-  free(sigx);
+  free_double(atr);
+  free_double(sigx);
   fftw_free(z);
-  free(y_exp);
-  free(y);
+  free_double(y_exp);
+  free_double(y);
 
   free(pix_idx);
   dct_destroy();
@@ -463,12 +442,12 @@ START_TEST(test_get_gradient)
     ck_abort();
   }
 
-  gd.sig11 = calloc(N, sizeof(double));
-  gd.sig12 = calloc(N, sizeof(double));
-  gd.gradf = calloc(2*N, sizeof(double));
-  gd.w1p = calloc(N, sizeof(double));
-  gd.ntgu = calloc(N, sizeof(double));
-  sigx = calloc(N, sizeof(double));
+  gd.sig11 = malloc_double(N);
+  gd.sig12 = malloc_double(N);
+  gd.gradf = malloc_double(2*N);
+  gd.w1p = malloc_double(N);
+  gd.ntgu = malloc_double(N);
+  sigx = malloc_double(N);
 
   /*-------------------------------------------- */
   get_gradient(N, fu1, fu2, sigx, atr, fe, tau, gd);
@@ -484,22 +463,22 @@ START_TEST(test_get_gradient)
 
   /* ----------------- Cleanup --------------- */
 
-  free(fu1);
-  free(fu2);
-  free(sigx);
-  free(sigx_exp);
-  free(atr);
+  free_double(fu1);
+  free_double(fu2);
+  free_double(sigx);
+  free_double(sigx_exp);
+  free_double(atr);
 
-  free(gd.sig11);
-  free(sig11_exp);
-  free(gd.sig12);
-  free(sig12_exp);
-  free(gd.gradf);
-  free(gradf_exp);
-  free(ntgu_exp);
-  free(gd.ntgu);
-  free(w1p_exp);
-  free(gd.w1p);
+  free_double(gd.sig11);
+  free_double(sig11_exp);
+  free_double(gd.sig12);
+  free_double(sig12_exp);
+  free_double(gd.gradf);
+  free_double(gradf_exp);
+  free_double(ntgu_exp);
+  free_double(gd.ntgu);
+  free_double(w1p_exp);
+  free_double(gd.w1p);
 
 
 }
@@ -512,7 +491,7 @@ START_TEST(test_line_search)
   LSStat ls_stat = {.flx=0, .flu = 0, .flin=0, .step=0, .status=0};
   LSParams ls_params;
   GradData gd;
-  double *x, *u, *r, *dx, *du, *Adx, *gradf;
+  double *x, *u, *r, *b, *dx, *du, *gradf;
   double tau, epsilon, alpha, beta, s_init; //loaded
 
   double *fu1p, *fu2p, fe, f, *DWORK_5N;
@@ -522,6 +501,7 @@ START_TEST(test_line_search)
 
   //double sm;
   int N,N2, M, status=0;
+  int *pix_idx=NULL;
   char fpath[] = "test_data/line_search_data.json";
 
   if (load_file_to_json(fpath, &test_data_json)){
@@ -529,14 +509,16 @@ START_TEST(test_line_search)
     ck_abort();
   }
 
-  // Inputs to f_eval
+  // Inputs to line_search
   status +=extract_json_double_array(test_data_json, "x", &x, &N);
   status +=extract_json_double_array(test_data_json, "u", &u, &N);
   status +=extract_json_double_array(test_data_json, "r", &r, &M);
+  status +=extract_json_double_array(test_data_json, "b", &b, &M);
+  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
 
   status +=extract_json_double_array(test_data_json, "dx", &dx, &N);
   status +=extract_json_double_array(test_data_json, "du", &du, &N);
-  status +=extract_json_double_array(test_data_json, "Adx", &Adx, &M);
+  //status +=extract_json_double_array(test_data_json, "Adx", &Adx, &M);
   status +=extract_json_double_array(test_data_json, "gradf", &gradf, &N2);
 
   status +=extract_json_double(test_data_json, "f", &f);
@@ -570,23 +552,24 @@ START_TEST(test_line_search)
   gd.dx = dx;
   gd.du = du;
   gd.gradf = gradf;
-  gd.Adx = Adx;
+  // gd.Adx = Adx;
 
-  DWORK_5N = calloc(5*N, sizeof(double));
+  DWORK_5N = malloc_double(5*N);
   if(!DWORK_5N){
     printf("Allocation failed\n");
   }
-  fu1p = calloc(N, sizeof(double));
-  fu2p = calloc(N, sizeof(double));
+  fu1p = malloc_double(N);
+  fu2p = malloc_double(N);
+  dct_setup(N, M, pix_idx);
 
-  ls_stat = line_search(N, M, x, u, r, fu1p, fu2p, gd, ls_params, DWORK_5N, &fe, &f);
+  ls_stat = line_search(N, M, x, u, r, b, fu1p, fu2p, gd, ls_params, DWORK_5N, &fe, &f);
 
   // /* ----- Now check -------*/
   ck_assert_double_eq_tol(fep_exp, fe, TOL_DOUBLE);
   ck_assert_double_eq_tol(fp_exp, f, TOL_DOUBLE);
 
   ck_assert_double_eq_tol(flx_exp, ls_stat.flx, TOL_DOUBLE);
-  ck_assert_double_eq_tol(flu_exp, ls_stat.flu, TOL_DOUBLE);
+  ck_assert_double_eq_tol(flu_exp, ls_stat.flu, TOL_DOUBLE*100);
   ck_assert_double_eq_tol(flin_exp, ls_stat.flin, TOL_DOUBLE);
 
   ck_assert_double_array_eq_tol(N, xp_exp, x, TOL_DOUBLE);
@@ -598,24 +581,26 @@ START_TEST(test_line_search)
 
 
   /* ----------------- Cleanup --------------- */
-  free(x);
-  free(u);
-  free(r);
-  free(dx);
-  free(du);
-  free(Adx);
-  free(gradf);
+  free_double(x);
+  free_double(u);
+  free_double(r);
+  free_double(dx);
+  free_double(du);
+  // free_double(Adx);
+  free_double(gradf);
 
-  free(xp_exp);
-  free(up_exp);
-  free(rp_exp);
+  free_double(xp_exp);
+  free_double(up_exp);
+  free_double(rp_exp);
 
-  free(fu1p_exp);
-  free(fu2p_exp);
-  free(fu1p);
-  free(fu2p);
+  free_double(fu1p_exp);
+  free_double(fu2p_exp);
+  free_double(fu1p);
+  free_double(fu2p);
 
-  free(DWORK_5N);
+  free_double(DWORK_5N);
+
+  dct_destroy();
 }
 END_TEST
 
@@ -625,7 +610,7 @@ END_TEST
 START_TEST(test_f_eval)
 {
   double *x, *u, *r, tau, epsilon; //loaded
-  double *fu1, *fu2, fe, f, *Dwork;
+  double *fu1, *fu2, fe, f;
   double *fu1_exp, *fu2_exp, fe_exp, f_exp;
 
   int N=0, M=0, status=0;
@@ -650,11 +635,11 @@ START_TEST(test_f_eval)
     perror("Error Loading json data in 'test_f_eval'. Aborting\n");
     ck_abort();
   }
-  Dwork = calloc(4*N, sizeof(double));
-  fu1 = calloc(N, sizeof(double));
-  fu2 = calloc(N, sizeof(double));
 
-  f_eval(N,  x, u, M, r, tau, epsilon, fu1, fu2, &fe, &f, Dwork);
+  fu1 = malloc_double(N);
+  fu2 = malloc_double(N);
+
+  f_eval(N,  x, u, M, r, tau, epsilon, fu1, fu2, &fe, &f);
 
   /* ----- Now check -------*/
   ck_assert_double_eq_tol(fe_exp, fe, TOL_DOUBLE);
@@ -664,16 +649,16 @@ START_TEST(test_f_eval)
   ck_assert_double_eq_tol(f_exp, f, TOL_DOUBLE);
 
   /* ----------------- Cleanup --------------- */
-  free(x);
-  free(u);
-  free(r);
+  free_double(x);
+  free_double(u);
+  free_double(r);
 
-  free(fu1_exp);
-  free(fu2_exp);
+  free_double(fu1_exp);
+  free_double(fu2_exp);
 
-  free(Dwork);
-  free(fu1);
-  free(fu2);
+  printf("in feval\n");
+  free_double(fu1);
+  free_double(fu2);
 }
 END_TEST
 
@@ -756,7 +741,7 @@ Suite *l1qc_newton_suite(void)
   tcase_add_test(tc_mathfuns, test_log_vec);
 
   /*Add test cases to the suite */
-  // suite_add_tcase(s, tc_l1qc_newton);
+  suite_add_tcase(s, tc_l1qc_newton);
   suite_add_tcase(s, tc_newton_init);
   suite_add_tcase(s, tc_feval);
   suite_add_tcase(s, tc_linesearch);

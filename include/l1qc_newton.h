@@ -70,7 +70,7 @@ double logsum(int N, double *x, double alpha);
 double find_max_step(int N, GradData gd, double *fu1,
                      double *fu2, int M, double *r, double epsilon, int *Iwork_2N);
 
-LSStat line_search(int N, int M, double *x, double *u, double *r, double *fu1, double *fu2, GradData gd,
+LSStat line_search(int N, int M, double *x, double *u, double *r, double *b, double *fu1, double *fu2, GradData gd,
                 LSParams ls_params, double *DWORK_5N, double *fe, double *f);
 
 void get_gradient(int N, double *fu1, double *fu2, double *sigx, double *atr,
@@ -88,8 +88,8 @@ int get_gradient(int N, double *fu1, double *fu2, double fe,  double tau, double
 
 /* Evalutes the value function */
 extern void f_eval(int N, double *x, double *u, int M, double *r, double tau, double epsilon,
-                   double *fu1, double *fu2, double *fe, double *f, double *Dwork_2N);
-int l1qc_newton(int N, double *x, double *u, double *b,
+                   double *fu1, double *fu2, double *fe, double *f);
+extern int l1qc_newton(int N, double *x, double *u, double *b,
                 int M, int *pix_idx, NewtParams params);
 
 #endif
