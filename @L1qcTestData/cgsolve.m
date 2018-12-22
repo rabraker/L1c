@@ -32,8 +32,9 @@ function [x, res, iter] = cgsolve(A, b, tol, maxiter, verbose)
 %   numiter = 0;
   bestx = x;
   bestres = sqrt(delta/delta_init);
-  fprintf('cg: |Iter| Best resid | Current resid| alpha | beta   |   delta  |\n');
-        
+  if verbose
+    fprintf('cg: |Iter| Best resid | Current resid| alpha | beta   |   delta  |\n');
+  end
  for iter = 1:maxiter
     q = A(d);
     alpha = delta/(d'*q);

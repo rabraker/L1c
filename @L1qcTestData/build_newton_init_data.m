@@ -15,7 +15,7 @@ function build_newton_init_data(data_root)
   
   A = @(x) L1qcTestData.IDCTfun(x,pix_mask_vec);
   At = @(x) L1qcTestData.DCTfun(x,pix_mask_vec);
-  x0 = At(b);
+  x0 = round(At(b), 15);
   
   epsilon = 0.1;
       
@@ -32,14 +32,6 @@ function build_newton_init_data(data_root)
       % starting point --- make sure that it is feasible
   if (norm(A(x0)-b) > epsilon)
     error('Starting point infeasible; using x0 = At*inv(AAt)*y.');
-%     AAt = @(z) A(At(z));
-%     [w, cgres] = cgsolve(AAt, b, cgtol, cgmaxiter, 0);
-%     if (cgres > 1/2)
-%       disp('A*At is ill-conditioned: cannot find starting point');
-%       xp = x0;
-%       return;
-%     end
-%     x0 = At(w);
   end
   x = x0;
   u = (0.95)*abs(x0) + (0.10)*max(abs(x0));

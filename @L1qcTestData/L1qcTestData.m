@@ -32,7 +32,7 @@ classdef L1qcTestData
     
     [x, res, iter] = cgsolve(A, b, tol, maxiter, verbose);
     [xp, up, niter] = l1qc_newton(x0, u0, A, At, b, epsilon, tau, newtontol,...
-      newtonmaxiter, cgtol, cgmaxiter, Tii);
+      newtonmaxiter, cgtol, cgmaxiter, Tii, verbose);
 
     function [ output ] = DCTfun( z,E )
       t = zeros(length(E),1);

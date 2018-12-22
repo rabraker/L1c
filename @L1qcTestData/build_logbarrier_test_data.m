@@ -73,7 +73,7 @@ function xp = build_logbarrier_test_data(data_root, lbiter)
 
   newtontol = lbtol;
   newtonmaxiter = 50;
-
+  verbose = 1;
   N = length(x0);
 
   % starting point --- make sure that it is feasible
@@ -108,7 +108,7 @@ function xp = build_logbarrier_test_data(data_root, lbiter)
   for ii = 1:lbiter
    
     [xp, up, ntiter] = L1qcTestData.l1qc_newton(x, u, A, At, b, epsilon, tau,...
-      newtontol, newtonmaxiter, cgtol, cgmaxiter, ii);
+      newtontol, newtonmaxiter, cgtol, cgmaxiter, ii, verbose);
     totaliter = totaliter + ntiter;
     
     fprintf(['\nLog barrier iter = %d, l1 = %.3f, functional = %8.3f, ',...
