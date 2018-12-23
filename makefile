@@ -90,8 +90,8 @@ MATH_INCLUDE   =  -I${MKLROOT}/include
 MATH_CFLAGS    =   -D_USEMKL_ -DMKL_ILP64 -m64
 MATH_LDIR      =
 MATH_ARCHIVE   =  ${MKLROOT}/lib/intel64/libmkl_intel_ilp64.a \
-                  ${MKLROOT}/lib/intel64/libmkl_gnu_thread.a ${MKLROOT}/lib/intel64/libmkl_core.a \
-
+                  ${MKLROOT}/lib/intel64/libmkl_gnu_thread.a  \
+				  ${MKLROOT}/lib/intel64/libmkl_core.a
 MATH_LIBS      = -lgomp -lpthread -lm -ldl
 
 else
