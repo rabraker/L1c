@@ -52,7 +52,13 @@ MEX_NAME       = $(ML_INTERFACE)/l1qc.mexa64
 TEST_APP       = test_l1qc
 ML_MEX         = $(ML_INTERFACE)/l1qc.mexa64
 LIB_NAME       = lib/libl1qc.so
-STATIC_LIB_NAME = lib/libl1qc.a
+APP_ARCHIVE    = lib/libl1qc.a
+ifeq (${MAKECMDGOALS},test)
+TEST_ARCHIVE   = test/lib/libtest_l1qc.a
+else
+TEST_ARCHIVE   =
+endif
+
 
 APP_SRC        = $(wildcard $(SRC_DIR)/*.c)
 TEST_SRC       = $(wildcard $(TEST_SRC_DIR)/*.c)
@@ -71,9 +77,9 @@ INCLUDE         = -I/usr/include                \
 # ---------- If making a mex file, add the needed includes and libs
 ifeq ($(MAKECMDGOALS),mex)
 MATLAB_CFLAGS  = -Wall -fPIC -D__MATLAB__ -fexceptions
-MATLAB_INCLUDE = -I/usr/local/MATLAB/R2018a/extern/include
-MATLAB_LDIR    = -L/usr/local/MATLAB/R2018a/bin/glnxa64 \
-				 ~/matlab/afm-cs/c-src/l1magic/lib/libl1qc.a
+MATLAB_INCLUDE = -I/usr/local/MATLAB/R2018b/extern/include
+MATLAB_LDIR    = -L/usr/local/MATLAB/R2018b/bin/glnxa64 \
+
 MATLAB_LIBS    = -lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
 endif
 
@@ -82,18 +88,15 @@ CFLAGS         =  $(OPT) $(DEBUG) -fPIC -Wall $(MAT_DEF)
 ifeq (${USE_MKL},true)
 MATH_INCLUDE   =  -I${MKLROOT}/include
 MATH_CFLAGS    =   -D_USEMKL_ -DMKL_ILP64 -m64
-
-MATH_LDIR      =  -Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_ilp64.a \
+MATH_LDIR      =
+MATH_ARCHIVE   =  ${MKLROOT}/lib/intel64/libmkl_intel_ilp64.a \
                   ${MKLROOT}/lib/intel64/libmkl_gnu_thread.a ${MKLROOT}/lib/intel64/libmkl_core.a \
-				  -Wl,--end-group
+
 MATH_LIBS      = -lgomp -lpthread -lm -ldl
 
-# MATH_LDIR      =  -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed
-# MATH_LIBS	   =  -lmkl_intel_ilp64 -lmkl_tbb_thread -lmkl_core -ltbb -lstdc++ \
-# 			      -lpthread -lm -ldl
 else
 MATH_INCLUDE   =  -I/usr/local/OpenBlas/include
-MATH_LINK      =  -L/usr/local/OpenBlas/lib
+MATH_LDIR      =  -L/usr/local/OpenBlas/lib
 MATH_LIBS      =  -lfftw3 -lopenblas -lm
 endif
 
@@ -101,43 +104,40 @@ endif
 INCLUDE       +=  $(MATLAB_INCLUDE) $(MATH_INCLUDE)
 CFLAGS        +=  $(MATLAB_CFLAGS) $(MATH_CFLAGS)
 
-LIBDIR         = $(MATH_LDIR) $(MATLAB_LDIR)
+LIBDIR         = $(MATLAB_LDIR) $(MATH_LDIR)
 LIBS           = $(MATH_LIBS)  $(MATLAB_LIBS) -lcheck -Wl,-rpath=/usr/local/lib
-# LDFLAGS      = ${MATH_LINK} -lcheck
-# LDFLAGS      +=
+#N.B. ALL the archive files need to be enclosed in -Wl,--start-group -Wl,--end-group
+# otherwise, linking may fail. See here:
+# https://sourceware.org/binutils/docs/ld/Options.html
+LDFLAGS       += -Wl,--start-group $(MATH_ARCHIVE) $(TEST_ARCHIVE) $(APP_ARCHIVE) -Wl,--end-group \
+				 $(LIBDIR) $(LIBS)
 
-# $(info $$DEF_MAT  [${MATLAB_LIBS}])
-# $(info $$DEF_MAT  [${MATLAB_CFLAGS}])
-# $(info $$DEF_MAT  [${MATLAB_INCLUDE}])
+
 $(info $$DEF_MAT  [${ML_MEX}])
 
 
-
-
 #-----------------------Targets ----------------------
-.PHONY: clean all mex ar test_obj lib test test_data clean_all
+.PHONY: clean all mex app_ar test_ar test_obj lib test test_data clean_all
 
 # test: $(TEST_APP)
 all: test lib
 
-mex:ar
-	${CC} ${INCLUDE} ${CFLAGS} -shared -o $(MEX_NAME) interfaces/l1qc.c ${LIBDIR} ${LIBS}
+mex:app_ar
+	${CC} ${INCLUDE} ${CFLAGS} -shared -o $(MEX_NAME) interfaces/l1qc.c ${LDFLAGS}
 
-ar: $(APP_OBJ)
-	$(AR) -rcs ${STATIC_LIB_NAME} $^
+app_ar: $(APP_OBJ)
+	$(AR) -rcs ${APP_ARCHIVE} $^
 
 lib: $(APP_OBJ)
 	@echo "building lib -------------"
 	@echo "appobj = $(APP_OBJ)"
 	$(LD) -o ${LIB_NAME} -shared $^ ${LIBDIR} $(LIBS)
 
-test:lib/libl1qc.a test/lib/libtest_l1qc.a
-	$(LD) -o ${TEST_APP} $^  ${LIBDIR} lib/libl1qc.a $(LIBS)
+test:test_ar app_ar
+	$(LD) -o ${TEST_APP} $(LDFLAGS)
 
-test/lib/libtest_l1qc.a: $(TEST_OBJ)
+test_ar: $(TEST_OBJ)
 	$(AR) -rcs test/lib/libtest_l1qc.a $^
-# test: $(TEST_OBJ) $(APP_OBJ)
-# 	$(LD) -o ${TEST_APP} $^  ${LIBDIR} $(LIBS)
 
 
 # $@ is to left side and $^ to the right of :
@@ -159,7 +159,7 @@ clean:
 	rm -f $(ML_INTERFACE)/*.o
 	rm -f $(ML_INTERFACE)/*.mexa64
 	rm -f lib/*
-
+	rm -f test/lib/*
 clean_all:clean
 	rm -f ${TEST_DATA_ROOT}/*.json
 
