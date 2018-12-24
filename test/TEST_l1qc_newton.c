@@ -114,6 +114,33 @@ START_TEST (test_l1qc_newton_1iter)
 }
 END_TEST
 
+/*------------------------------------------ */
+START_TEST (test_newton_init_regres1)
+{
+  NewtParams params;
+  int N=4, M=2;
+  int pix_idx[] = {1,2};
+
+  double x[] = {1.0, 2.0, 3.0, 4.0};
+  double u[] = {0,0,0,0};
+  double u_exp[] = {    1.3500,
+                      2.3000,
+                      3.2500,
+                      4.2000};
+
+  params.lbtol = 0.1;
+  params.mu = 0.1;
+
+  newton_init(N, x, u, &params,  M, pix_idx);
+
+  ck_assert_double_array_eq_tol(N, u_exp, u,  TOL_DOUBLE_SUPER);
+
+  dct_destroy();
+}
+END_TEST
+
+
+
 START_TEST (test_newton_init)
 {
   NewtParams params;
@@ -721,6 +748,7 @@ Suite *l1qc_newton_suite(void)
 
   tc_newton_init = tcase_create("newton_init");
   tcase_add_test(tc_newton_init, test_newton_init);
+  tcase_add_test(tc_newton_init, test_newton_init_regres1);
 
   tc_feval = tcase_create("f_eval");
   tcase_add_test(tc_feval, test_f_eval);

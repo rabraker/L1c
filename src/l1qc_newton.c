@@ -357,7 +357,7 @@ int newton_init(int N, double *x, double *u,  NewtParams *params,
   /* Initialize u */
   x_max = -INFINITY;
   for (i=0; i<N; i++){
-    x_max = max(x_max, fabs(x[0]));
+    x_max = max(x_max, fabs(x[i]));
   }
   for (i=0; i<N; i++){
     u[i] = 0.95 * fabs(x[i]) + 0.10 *x_max;
@@ -382,6 +382,7 @@ int check_feasible_start(int M, double *r, double epsilon){
   if (tmp > 0){
     // Using minimum-2 norm  x0 = At*inv(AAt)*y.') as they
     // will require updates to cgsolve.
+    PRINT("epsilon = %f,  ||r|| = %.20f\n", epsilon, cblas_dnrm2(M, r, 1));
     return 1;
   }else
     return 0;
