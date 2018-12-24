@@ -13,20 +13,8 @@
 // extern bool ioFlush(void);
 // #endif
 
-// Need to build these two still
-// void A(N, m, z, y);
-// void AT(N, m, z, y);
-
-// double fe = 0;
-// double *atr, *sigx, *w1p;
 
 double sum_abs_vec(int N, double *x){
-  // int i = 0;
-  // double sum = 0.0;
-  // for (i=0; i<N; i++){
-  //   sum = sum + fabs(x[i]);
-  // }
-  // return sum;
   return cblas_dasum(N, x, 1);
 }
 
@@ -241,8 +229,8 @@ double find_max_step(int N, GradData gd, double *fu1,
   /*Towards the end, the root becomes complex. When that happens, cant take
    the real part, because that is just -bqe which is less than zero.*/
   if ( isnan(root) ){
-    printf("Warning: maximum step which satisfies cone constraints has become complex.\n");
-    printf("Trying smax=1.0 for the cone-constraing portion.\n");
+    PRINT("Warning: maximum step which satisfies cone constraints has become complex.\n");
+    PRINT("Trying smax=1.0 for the cone-constraing portion.\n");
     root = 1.0;
   }
 
@@ -318,10 +306,10 @@ LSStat line_search(int N, int M, double *x, double *u, double *r, double *b, dou
 
     flx = cblas_ddot(N, gd.gradf, 1, gd.dx, 1);
     flu = cblas_ddot(N, gd.gradf+N, 1, gd.du, 1);
-    //printf("f = %.4f,   fl=%.6f,    step = %.4e\n", *f, flin, step);
+    //PRINT("f = %.4f,   fl=%.6f,    step = %.4e\n", *f, flin, step);
     flin = *f + ls_params.alpha * step * (flx + flu);
 
-    //printf("iter = %d, fp = %f, flin = %f\n", iter, fp, flin);
+    //PRINT("iter = %d, fp = %f, flin = %f\n", iter, fp, flin);
     if (fp <= flin){ /* Sufficient decrease test */
 
       cblas_dcopy(N, xp, 1, x, 1);
@@ -343,8 +331,8 @@ LSStat line_search(int N, int M, double *x, double *u, double *r, double *b, dou
     step = ls_params.beta* step;
   }
 
-  printf("Backtracking line search failed, returning previous iterate.\n");
-  printf("Last values: fp = %f, flin =%f\n", fp, flin);
+  PRINT("Backtracking line search failed, returning previous iterate.\n");
+  PRINT("Last values: fp = %f, flin =%f\n", fp, flin);
 
   cblas_dcopy(N, x, 1, xp, 1);
   cblas_dcopy(N, u, 1, up, 1);
@@ -403,7 +391,7 @@ int check_feasible_start(int M, double *r, double epsilon){
 int save_x(int N, double *x, char *fname){
   FILE *fid = fopen(fname, "w");
   if (fid == NULL){
-    printf("Error opening %s\n", fname);
+    PRINT("Error opening %s\n", fname);
     return 1;
   }
 
@@ -463,12 +451,12 @@ int l1qc_newton(int N, double *x, double *u, double *b,
                          .s = 1.0};
 
 
-  printf("--------lbiter = %d ---------\n", params.lbiter);
+  PRINT("--------lbiter = %d ---------\n", params.lbiter);
   /* ---------------- MAIN **TAU** ITERATION --------------------- */
   for (tau_iter=1; tau_iter<=params.lbiter; tau_iter++){
     if (params.verbose){
-      printf("Newton-iter | Functional | Newton decrement |  Stepsize  |  cg-res | cg-iter | backiter |    s    | \n");
-      printf("----------------------------------------------------------------------------------------------------\n");
+      PRINT("Newton-iter | Functional | Newton decrement |  Stepsize  |  cg-res | cg-iter | backiter |    s    | \n");
+      PRINT("----------------------------------------------------------------------------------------------------\n");
     }
     /* Compute Ax - b = r */
     fftw_tmp = dct_EMx_new(x);
@@ -476,7 +464,7 @@ int l1qc_newton(int N, double *x, double *u, double *b,
 
     cblas_daxpy(M, -1.0, b, 1, r, 1); //-b + Ax -->ax
     if ( (tau_iter==1) & check_feasible_start(M, r, params.epsilon) ){
-        printf("Starting point is infeasible, exiting\n");
+        PRINT("Starting point is infeasible, exiting\n");
         status = 1;
         goto exit;
       }
@@ -520,7 +508,7 @@ int l1qc_newton(int N, double *x, double *u, double *b,
         stepsize += cblas_ddot(N, gd.du, 1, gd.du, 1);
         stepsize = sqrt(stepsize) * 1.0; //* (ls_params.s);
         /*            NI         fcnl         dec         sz     cgr       cgI        BI       s  */
-        printf("     %3d       %8.3e       %08.3e    % 8.3e   %08.3e     %3d       %2d      %.3g \n",
+        PRINT("     %3d       %8.3e       %08.3e    % 8.3e   %08.3e     %3d       %2d      %.3g \n",
                      iter, f, lambda2/2, stepsize, cg_results.cgres, cg_results.cgiter, ls_stat.iter,
                ls_stat.step);
 #ifdef __MATLAB__
@@ -529,7 +517,7 @@ int l1qc_newton(int N, double *x, double *u, double *b,
 #endif
       }
 
-
+      /*Check for early exit */
       if (lambda2/2 < params.newton_tol){
         break;
       }
@@ -541,10 +529,10 @@ int l1qc_newton(int N, double *x, double *u, double *b,
 
     /* ----- Update tau or exit ------ */
     total_newt_iter += iter;
-    printf("\n********************************************************************************************\n");
-    printf("Log barrier iter = %d, l1 = %.3f, functional = %8.3e, tau = %8.3e, total newton-iter =%d\n",
+    PRINT("\n********************************************************************************************\n");
+    PRINT("Log barrier iter = %d, l1 = %.3f, functional = %8.3e, tau = %8.3e, total newton-iter =%d\n",
            tau_iter, sum_abs_vec(N, x), sum_vec(N, u), params.tau, total_newt_iter);
-    printf("********************************************************************************************\n\n");
+    PRINT("********************************************************************************************\n\n");
 #ifdef __MATLAB__
     mexEvalString("drawnow('update');");
     //ioFlush();
@@ -554,10 +542,10 @@ int l1qc_newton(int N, double *x, double *u, double *b,
   }
 
   /* ----- Cleanup -------------------- */
-
+#ifndef __MATLAB__
   char fname[] = "c_result.csv";
   save_x(N, x, fname);
-
+#endif
   goto exit;
 
  exit:

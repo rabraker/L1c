@@ -23,13 +23,9 @@ At = @(x) L1qcTestData.DCTfun(x,pix_mask_vec); %E^T*M^T
 x0 = At(y_vec);
 b= y_vec;
 x = x0;
-opts.epsilon = 0.1;
-u = (0.95)*abs(x0) + (0.10)*max(abs(x0));
-N = length(x0);
-% choose initial value of tau so that the duality gap after the first
-% step will be about the origial norm
 
 clear l1qc
+opts.epsilon = 0.1;
 opts.mu = 10;
 opts.cgtol = 1e-8;
 opts.cgmaxiter = 200;
@@ -54,7 +50,7 @@ tic
 ximg_ml = L1qcTestData.l1qc_logbarrier(x0, A, At, y_vec, opts.epsilon, opts.lbtol, opts.mu,...
   opts.cgtol, opts.cgmaxiter, opts.verbose);
 tml = toc;
-%%
+
 fprintf('matlab l1qc-time: %f\n', tml);
 fprintf('mexl1qc-time:     %f\n', tm_c);
 
