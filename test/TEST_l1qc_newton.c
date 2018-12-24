@@ -43,7 +43,7 @@ START_TEST (test_l1qc_newton_1iter)
 {
   CgParams cgp = {.verbose=0, .max_iter=400, .tol=1e-9};
   NewtParams params;
-  char fpath[] = "test_data/lb_test_data_iter_1.json";
+  char fpath[] = "test_data/lb_test_data_iter_2.json";
   double *x0=NULL, *u=NULL, *b=NULL;
   double *x1_exp=NULL, *u1_exp=NULL;
 
@@ -74,8 +74,8 @@ START_TEST (test_l1qc_newton_1iter)
 
   status +=extract_json_int(test_data_json, "lbiter", &lbiter_exp);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
-  u = malloc_double(N);
 
+  u = malloc_double(N);
   if (status | !u){
     status += 1;
     goto exit1;
@@ -85,7 +85,7 @@ START_TEST (test_l1qc_newton_1iter)
   params.mu = mu;
   params.lbtol = lbtol;
   params.epsilon = epsilon;
-  params.lbiter = 0;
+  params.lbiter = 2;
   params.cg_params = cgp;
 
   ret= l1qc_newton(N, x0, u, b, M, pix_idx,params);
@@ -99,11 +99,11 @@ START_TEST (test_l1qc_newton_1iter)
   goto exit1;
 
  exit1:
-  free(x0);
-  free(x1_exp);
-  free(u1_exp);
-  free(u);
-  free(b);
+  free_double(x0);
+  free_double(x1_exp);
+  free_double(u1_exp);
+  free_double(u);
+  free_double(b);
   free(pix_idx);
 
   if (status){
@@ -153,7 +153,7 @@ START_TEST (test_newton_init)
   ret= newton_init(N, x, u, &params, M, pix_idx);
 
   ck_assert_double_array_eq_tol(N, u_exp, u,  TOL_DOUBLE_SUPER);
-  ck_assert_double_eq_tol(tau_exp, params.tau,  TOL_DOUBLE_SUPER*10);
+  ck_assert_double_eq_tol(tau_exp, params.tau,  TOL_DOUBLE_SUPER*100);
   ck_assert_int_eq(lbiter_exp, params.lbiter);
   ck_assert_int_eq(0, ret);
 
@@ -566,7 +566,7 @@ START_TEST(test_line_search)
 
   // /* ----- Now check -------*/
   ck_assert_double_eq_tol(fep_exp, fe, TOL_DOUBLE);
-  ck_assert_double_eq_tol(fp_exp, f, TOL_DOUBLE);
+  ck_assert_double_eq_tol(fp_exp, f, TOL_DOUBLE*5);
 
   ck_assert_double_eq_tol(flx_exp, ls_stat.flx, TOL_DOUBLE);
   ck_assert_double_eq_tol(flu_exp, ls_stat.flu, TOL_DOUBLE*100);
@@ -656,7 +656,6 @@ START_TEST(test_f_eval)
   free_double(fu1_exp);
   free_double(fu2_exp);
 
-  printf("in feval\n");
   free_double(fu1);
   free_double(fu2);
 }

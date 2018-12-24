@@ -6,7 +6,7 @@
 
  */
 
-#define CK_FLOATING_DIG 15
+#define CK_FLOATING_DIG 20
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -102,7 +102,7 @@ START_TEST(test_cgsolve)
 
   cgsolve(x, b, N, Dwork, Ax_sym, A, &cgr, cgp);
 
-  ck_assert_double_array_eq_tol(N, x_exp, x, TOL_DOUBLE_SUPER*10);
+  ck_assert_double_array_eq_tol(N, x_exp, x, TOL_DOUBLE);
 
   free_double(A);
   free_double(x);
@@ -164,7 +164,7 @@ START_TEST(test_cgsolve_h11p){
   cgp.tol = cgtol;
   cgsolve(dx, w1p, N, DWORK_4N, H11pfun, &h11p_data, &cgr, cgp);
 
-  ck_assert_double_array_eq_tol(N, dx_exp, dx, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(N, dx_exp, dx, TOL_DOUBLE*10);
 
   dct_destroy();
 }
@@ -198,12 +198,12 @@ START_TEST(test_cgsolve_Ax_sym){
 
   Ax_sym(N, x, y, A);
 
-  ck_assert_double_array_eq_tol(N, y_exp, y, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(N, y_exp, y, TOL_DOUBLE_SUPER*10);
 
   // Now, y should be non-zero. Should get the same answer. Regression against having beta !=0,
   // because dspmv computes alpha*A*x + b*y
   Ax_sym(N, x, y, A);
-  ck_assert_double_array_eq_tol(N, y_exp, y, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(N, y_exp, y, TOL_DOUBLE_SUPER*10);
 
 }
 END_TEST

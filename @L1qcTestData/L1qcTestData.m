@@ -33,7 +33,8 @@ classdef L1qcTestData
     [x, res, iter] = cgsolve(A, b, tol, maxiter, verbose);
     [xp, up, niter] = l1qc_newton(x0, u0, A, At, b, epsilon, tau, newtontol,...
       newtonmaxiter, cgtol, cgmaxiter, Tii, verbose);
-
+    xp = l1qc_logbarrier(x0, A, At, b, epsilon, lbtol, mu, ...
+                         cgtol, cgmaxiter, lbiter, verbose)  
     function [ output ] = DCTfun( z,E )
       t = zeros(length(E),1);
       t(E>0.5)=z;

@@ -481,19 +481,15 @@ int l1qc_newton(int N, double *x, double *u, double *b,
         goto exit;
       }
 
-    //f_eval(N, x, u, M, r, params.tau, params.epsilon, fu1, fu2, &fe, &f);
+    f_eval(N, x, u, M, r, params.tau, params.epsilon, fu1, fu2, &fe, &f);
 
     /* ---------------- MAIN Newton ITERATION --------------------- */
     for (iter=1; iter<+params.newton_max_iter; iter++){
 
-      /* ----------------------------------------------------------------------------
-         Try computing r and f each iteration: dont rely on x + s*dx etc------------ */
-      fftw_tmp = dct_EMx_new(x);
-      cblas_dcopy(M, fftw_tmp, 1, r, 1);
-
-      cblas_daxpy(M, -1.0, b, 1, r, 1); //-b + Ax -->ax
-      f_eval(N, x, u, M, r, params.tau, params.epsilon, fu1, fu2, &fe, &f);
-      /* ---------------------------------------------------------------------------- */
+     /* Note: we do not need to re-evaluate the functional because we now do
+        that inside the line search. Thus, f, fe, fu1, fu2 and r provided by
+        linesearch should be exact given the current stepsize.
+      */
 
       /* compute descent direction. returns dx, du, gradf, cgres */
       fftw_tmp = dct_MtEty(r);

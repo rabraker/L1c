@@ -31,6 +31,8 @@ else
 DEF_MAT =
 endif
 
+# should check if this is set already
+MKLROOT        = /opt/intel/compilers_and_libraries_2019.1.144/linux/mkl
 MATLAB         = matlab -nodesktop -nosplash -r
 TEST_DATA_ROOT = $(CURDIR)/test_data
 ML_BUILD_FCN   = L1qcTestData.build_all_test_data

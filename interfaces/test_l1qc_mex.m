@@ -37,7 +37,7 @@ opts.lbtol = 1e-3;
 opts.newton_tol = opts.lbtol;
 opts.newton_max_iter = 50;
 opts.verbose = 1;
-
+ 
 tic
 ximg= l1qc(x0, b, pix_idx-1, opts);
 tm_c = toc;
@@ -49,8 +49,9 @@ subplot(2,2, [1,3])
 imagesc(X);
 colormap('gray')
 %%
+x0 = At(y_vec);
 tic
-ximg_ml = l1qc_logbarrier_tmp(x0, A, At, b, opts.epsilon, opts.lbtol, opts.mu,...
+ximg_ml = L1qcTestData.l1qc_logbarrier(x0, A, At, y_vec, opts.epsilon, opts.lbtol, opts.mu,...
   opts.cgtol, opts.cgmaxiter, opts.verbose);
 tml = toc;
 %%
