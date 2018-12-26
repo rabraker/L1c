@@ -3,7 +3,7 @@
 
 #ifdef __MATLAB__
 #include "mex.h"
-#define PRINT(...) mxPrintf(__VA_ARGS__);
+#define PRINT(...) mexPrintf(__VA_ARGS__);
 #else
 #include <stdio.h>
 #define PRINT(...) printf(__VA_ARGS__);

@@ -438,6 +438,7 @@ int l1qc_newton(int N, double *x, double *u, double *b,
                  .ntgu = DWORK_16N  + 13*N,
                  .gradf = DWORK_16N + 14*N,
                  .Adx=NULL}; //gradf needs 2N
+
   gd.Adx = calloc(M, sizeof(double));
 
   atr = DWORK_fftw_2N+N;
@@ -451,11 +452,13 @@ int l1qc_newton(int N, double *x, double *u, double *b,
                          .epsilon = params.epsilon,
                          .s = 1.0};
 
+  if (params.verbose >0) {
+    PRINT("Total Log-Barrier iterations:  %d \n", params.lbiter);
+  }
 
-  PRINT("--------lbiter = %d ---------\n", params.lbiter);
   /* ---------------- MAIN **TAU** ITERATION --------------------- */
   for (tau_iter=1; tau_iter<=params.lbiter; tau_iter++){
-    if (params.verbose){
+    if (params.verbose > 1){
       PRINT("Newton-iter | Functional | Newton decrement |  Stepsize  |  cg-res | cg-iter | backiter |    s    | \n");
       PRINT("----------------------------------------------------------------------------------------------------\n");
     }
@@ -501,7 +504,7 @@ int l1qc_newton(int N, double *x, double *u, double *b,
       /* Check for exit */
       lambda2 = -(cblas_ddot(N, gd.gradf, 1, gd.dx, 1) + cblas_ddot(N, gd.gradf+N, 1, gd.du, 1) );
 
-      if (params.verbose >0){
+      if (params.verbose >1){
         /*Following is for printing only, not calculation. */
 
         /* want norm [dx; du] */
@@ -530,10 +533,12 @@ int l1qc_newton(int N, double *x, double *u, double *b,
 
     /* ----- Update tau or exit ------ */
     total_newt_iter += iter;
-    PRINT("\n********************************************************************************************\n");
-    PRINT("Log barrier iter = %d, l1 = %.3f, functional = %8.3e, tau = %8.3e, total newton-iter =%d\n",
-           tau_iter, sum_abs_vec(N, x), sum_vec(N, u), params.tau, total_newt_iter);
-    PRINT("********************************************************************************************\n\n");
+    if (params.verbose > 0){
+      PRINT("\n********************************************************************************************\n");
+      PRINT("Log barrier iter = %d, l1 = %.3f, functional = %8.3e, tau = %8.3e, total newton-iter =%d\n",
+            tau_iter, sum_abs_vec(N, x), sum_vec(N, u), params.tau, total_newt_iter);
+      PRINT("********************************************************************************************\n\n");
+    }
 #ifdef __MATLAB__
     mexEvalString("drawnow('update');");
     //ioFlush();
