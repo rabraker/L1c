@@ -52,6 +52,7 @@ if (nargin < 6), lbtol = 1e-3; end
 if (nargin < 7), mu = 10; end
 if (nargin < 8), cgtol = 1e-8; end
 if (nargin < 9), cgmaxiter = 200; end
+if (nargin < 10), verbose = 1; end
 
 newtontol = lbtol;
 newtonmaxiter = 50;
