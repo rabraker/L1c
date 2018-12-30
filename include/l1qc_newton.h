@@ -59,11 +59,11 @@ typedef struct NewtParams{
 
 }NewtParams;
 
+void axpy_z(size_t N, double alpha, double *x, double *y, double *z);
+
 double sum_abs_vec(int N, double *x);
 
 double sum_vec(int N, double *x);
-
-void log_vec(int N, double alpha, double *x, double *logx);
 
 double logsum(int N, double *x, double alpha);
 

@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include<stdio.h>
+#include <stdio.h>
 #include <math.h>
 #include <fftw3.h>
 
@@ -8,6 +8,23 @@
 #include "cgsolve.h"
 #include "l1qc_common.h"
 
+
+
+void axpy_z(size_t N, double alpha, double * restrict x, double * restrict y, double * restrict z){
+  /* Computes z = a * x + y. Similary to cblas_axpy, but for when you don't want to overwrite y.
+   This way, we avoid a call to cblas_dcopy().
+
+   May be worth explicitly vectorizing (e.g., ispc??) this function.
+  */
+  double *x_ = __builtin_assume_aligned(x, 64);
+  double *y_ = __builtin_assume_aligned(y, 64);
+  double *z_ = __builtin_assume_aligned(z, 64);
+
+  size_t i;
+  for (i = 0; i<N; i++){
+    z_[i] = alpha * x_[i] + y_[i];
+  }
+}
 
 
 double sum_abs_vec(int N, double *x){
@@ -24,15 +41,6 @@ double sum_vec(int N, double *x){
   return sum;
 }
 
-void log_vec(int N, double alpha, double *x, double *logx){
-  // Computes alpha*log(x), where x is an array of length N
-
-  int i = 0;
-  for (i=0; i<N; i++) {
-    logx[i] = log(alpha * x[i] );
-  }
-
-}
 
 double logsum(int N, double *x, double alpha) {
   /* Computes sum(log( alpha *x)) */
@@ -277,18 +285,12 @@ LSStat line_search(int N, int M, double *x, double *u, double *r, double *b, dou
 
   for (iter=1; iter<=32; iter++){
     // /* xp = x + s*dx etc*/
-    cblas_dcopy(N, x, 1, xp, 1);
-    cblas_dcopy(N, u, 1, up, 1);
-    cblas_daxpy(N, step, gd.dx, 1, xp, 1);
-    cblas_daxpy(N, step, gd.du, 1, up, 1);
+    axpy_z(N, step, gd.dx, x, xp);
+    axpy_z(N, step, gd.du, u, up);
 
     /*Re-evaluate, rather than relying on Adx */
     fftw_tmp = dct_EMx_new(xp);
-    cblas_dcopy(M, fftw_tmp, 1, rp, 1);
-    cblas_daxpy(M, -1.0, b, 1, rp, 1); //-b + Ax -->ax
-
-    //cblas_dcopy(N, r, 1, rp, 1);
-    //cblas_daxpy(M, step, gd.Adx, 1, rp, 1);
+    axpy_z(M, -1.0, b, fftw_tmp, rp); //rp = A*xp - b
 
     f_eval(N, xp, up, M, rp, ls_params.tau, ls_params.epsilon, fu1p, fu2p, &fep, &fp);
 
@@ -297,7 +299,6 @@ LSStat line_search(int N, int M, double *x, double *u, double *r, double *b, dou
 
     flx = cblas_ddot(N, gd.gradf, 1, gd.dx, 1);
     flu = cblas_ddot(N, gd.gradf+N, 1, gd.du, 1);
-    //PRINT("f = %.4f,   fl=%.6f,    step = %.4e\n", *f, flin, step);
     flin = *f + ls_params.alpha * step * (flx + flu);
 
     //PRINT("iter = %d, fp = %f, flin = %f\n", iter, fp, flin);
@@ -319,7 +320,7 @@ LSStat line_search(int N, int M, double *x, double *u, double *r, double *b, dou
       return ls_stat;
     }
 
-    step = ls_params.beta* step;
+    step = ls_params.beta * step;
   }
 
   PRINT("Backtracking line search failed, returning previous iterate.\n");

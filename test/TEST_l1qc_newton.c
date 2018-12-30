@@ -699,24 +699,6 @@ START_TEST(test_sum_vec)
 }
 END_TEST
 
-START_TEST(test_log_vec)
-{
-
-  int i, N = 6;
-  double x[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
-  double alpha = 3.0;
-  double log_alp_x [] = {1.098612288668110,   1.791759469228055,   2.197224577336220,
-                         2.484906649788000,   2.708050201102210,   2.890371757896165};
-  double y[6];
-
-  log_vec(N, alpha, x, y);
-
-  for (i=0; i<N; i++){
-    ck_assert_double_eq_tol(log_alp_x[i], y[i], TOL_DOUBLE);
-  }
-  // setup_vectors_SC();
-}
-END_TEST
 
 START_TEST(test_logsum)
 {
@@ -765,7 +747,6 @@ Suite *l1qc_newton_suite(void)
   tc_mathfuns = tcase_create("l1qc_math_funs");
   tcase_add_test(tc_mathfuns, test_sum_vec);
   tcase_add_test(tc_mathfuns, test_logsum);
-  tcase_add_test(tc_mathfuns, test_log_vec);
 
   /*Add test cases to the suite */
   suite_add_tcase(s, tc_l1qc_newton);
