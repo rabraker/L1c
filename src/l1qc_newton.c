@@ -323,8 +323,13 @@ LSStat line_search(int N, int M, double *x, double *u, double *r, double *b, dou
     step = ls_params.beta * step;
   }
 
-  PRINT("Backtracking line search failed, returning previous iterate.\n");
-  PRINT("Last values: fp = %f, flin =%f\n", fp, flin);
+  char spc[] = "   ";
+  PRINT("%sBacktracking line search failed, returning previous iterate.\n", spc);
+  PRINT("%sLast line-search values:\n", spc);
+  PRINT("%s                        iter = %d\n", spc, iter);
+  PRINT("%s                        fp   = %.10e\n", spc, fp);
+  PRINT("%s                        flin = %.10e\n", spc, flin);
+  PRINT("%s                        fp-flin = %.10f\n", spc, fp - flin);
 
   cblas_dcopy(N, x, 1, xp, 1);
   cblas_dcopy(N, u, 1, up, 1);
@@ -395,14 +400,14 @@ int save_x(int N, double *x, char *fname){
   return 0;
 }
 
-int l1qc_newton(int N, double *x, double *u, double *b,
+LBResult l1qc_newton(int N, double *x, double *u, double *b,
                 int M, int *pix_idx, NewtParams params){
   LSStat ls_stat;// = {.flx=0, .flu = 0, .flin=0, .step=0, .status=0};
   CgParams cg_params = params.cg_params;
   CgResults cg_results;
+  LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
 
   int iter=0, total_newt_iter = 0, tau_iter = 0;
-  int status = 0;
 
   double fe = 0.0, f = 0.0, lambda2 = 0.0, stepsize = 0.0;
 
@@ -412,7 +417,7 @@ int l1qc_newton(int N, double *x, double *u, double *b,
   DWORK_fftw_2N = fftw_alloc_real(2*N);
 
   if ( !DWORK_16N | !DWORK_fftw_2N){
-    status = 1;
+    lb_res.status = 1;
     goto exit;
   }
 
@@ -460,7 +465,7 @@ int l1qc_newton(int N, double *x, double *u, double *b,
 
     if ( (tau_iter==1) & check_feasible_start(M, r, params.epsilon) ){
         PRINT("Starting point is infeasible, exiting\n");
-        status = 1;
+        lb_res.status = 1;
         goto exit;
       }
 
@@ -510,7 +515,7 @@ int l1qc_newton(int N, double *x, double *u, double *b,
         mexEvalString("drawnow('update');");
 #endif
       }
-
+INFINITY;
       /*Check for early exit */
       if (lambda2/2 < params.newton_tol){
         break;
@@ -524,10 +529,10 @@ int l1qc_newton(int N, double *x, double *u, double *b,
     /* ----- Update tau or exit ------ */
     total_newt_iter += iter;
     if (params.verbose > 0){
-      PRINT("\n********************************************************************************************\n");
+      PRINT("\n******************************************************************************************************\n");
       PRINT("Log barrier iter = %d, l1 = %.3f, functional = %8.3e, tau = %8.3e, total newton-iter =%d\n",
             tau_iter, sum_abs_vec(N, x), sum_vec(N, u), params.tau, total_newt_iter);
-      PRINT("********************************************************************************************\n\n");
+      PRINT("******************************************************************************************************\n\n");
     }
 #ifdef __MATLAB__
     mexEvalString("drawnow('update');");
@@ -544,6 +549,8 @@ int l1qc_newton(int N, double *x, double *u, double *b,
   free_double(gd.Adx);
   dct_destroy();
 
-  return status;
+  lb_res.total_newton_iter = total_newt_iter;
+  lb_res.l1 = sum_abs_vec(N, x);
+  return lb_res;
 
 }/* MAIN ENDS HERE*/

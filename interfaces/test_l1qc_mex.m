@@ -32,13 +32,15 @@ opts.cgmaxiter = 200;
 opts.lbtol = 1e-3;
 opts.newton_tol = opts.lbtol;
 opts.newton_max_iter = 50;
-opts.verbose = 1;
+opts.verbose = 2;
  
 tic
-ximg= l1qc(x0, b, pix_idx-1, opts);
+[ximg, LBRes]= l1qc(x0, b, pix_idx-1, opts);
 tm_c = toc;
 
 X = PixelVectorToMatrix(idct(ximg), [512, 512]);
+
+return
 
 figure(1)
 subplot(2,2, [1,3])

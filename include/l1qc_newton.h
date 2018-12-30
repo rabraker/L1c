@@ -59,6 +59,13 @@ typedef struct NewtParams{
 
 }NewtParams;
 
+typedef struct LBResult{
+  double l1;
+  int    total_newton_iter;
+  int    status;
+
+}LBResult;
+
 void axpy_z(size_t N, double alpha, double *x, double *y, double *z);
 
 double sum_abs_vec(int N, double *x);
@@ -89,7 +96,7 @@ int get_gradient(int N, double *fu1, double *fu2, double fe,  double tau, double
 /* Evalutes the value function */
 extern void f_eval(int N, double *x, double *u, int M, double *r, double tau, double epsilon,
                    double *fu1, double *fu2, double *fe, double *f);
-extern int l1qc_newton(int N, double *x, double *u, double *b,
+extern LBResult l1qc_newton(int N, double *x, double *u, double *b,
                 int M, int *pix_idx, NewtParams params);
 
 #endif

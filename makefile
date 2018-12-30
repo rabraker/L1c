@@ -69,7 +69,7 @@ APP_OBJ        = $(addprefix $(BUILD_DIR)/, $(notdir $(APP_SRC:.c=.o)))
 TEST_OBJ       = $(addprefix $(BUILD_DIR)/, $(notdir $(TEST_SRC:.c=.o)))
 OBJ            = $(APP_OBJ) $(TEST_OBJ)
 
-#DEBUG         = -DDBUG -ggdb
+# DEBUG         = -DDBUG -ggdb
 OPT            = -O3 -msse3
 # check header files are in /usr/local/include
 INCLUDE         = -I/usr/include                \

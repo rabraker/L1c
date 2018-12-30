@@ -47,9 +47,10 @@ START_TEST (test_l1qc_newton_1iter)
   double *x0=NULL, *u=NULL, *b=NULL;
   double *x1_exp=NULL, *u1_exp=NULL;
 
+  LBResult lb_res;
   double epsilon = 0., tau_exp=0., lbtol=0.;
   double mu = 0.0;
-  int N=0, M=0, status=0, ret=0, lbiter_exp=0;
+  int N=0, M=0, status=0, lbiter_exp=0;
   int *pix_idx=NULL;
 
   if (load_file_to_json(fpath, &test_data_json)){
@@ -88,12 +89,12 @@ START_TEST (test_l1qc_newton_1iter)
   params.lbiter = 2;
   params.cg_params = cgp;
 
-  ret= l1qc_newton(N, x0, u, b, M, pix_idx,params);
+  lb_res = l1qc_newton(N, x0, u, b, M, pix_idx,params);
 
   ck_assert_double_array_eq_tol(N, x1_exp, x0,  0.00001);
   ck_assert_double_array_eq_tol(N, u1_exp, u,   0.00001);
 
-  ck_assert_int_eq(0, ret);
+  ck_assert_int_eq(0, lb_res.status);
 
 
   goto exit1;

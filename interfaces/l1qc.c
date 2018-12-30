@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include "l1qc_newton.h"
 #include "l1qc_common.h"
+#include <math.h>
+
+#define NUMBER_OF_FIELDS(ST) (sizeof(ST)/sizeof(*ST))
+
 /*
  *	m e x F u n c t i o n
  */
@@ -16,6 +20,8 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   NewtParams params = {.epsilon=0, .tau=0, .mu=0,
                         .newton_tol=0, .newton_max_iter = 0, .lbiter=0,
                         .lbtol=0, .verbose = 0, .cg_params.tol=0};
+  LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
+
   int i=0,N=0, M=0, npix=0;
   double *pix_idx_double=NULL, *x_out=NULL;
   int *pix_idx;
@@ -26,7 +32,7 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
                       "four inputs required.");
   }
 
-  if(nlhs != 1) {
+  if( !(nlhs > 0)) {
     mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:nlhs",
                       "One output required.");
   }
@@ -168,16 +174,38 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   }
 
   /* ---------------------------------------  */
-  l1qc_newton(N, x_ours, u, b, M, pix_idx, params);
+  lb_res = l1qc_newton(N, x_ours, u, b, M, pix_idx, params);
 
   plhs[0] = mxCreateDoubleMatrix((mwSize)N, 1, mxREAL);
+
+
+
   x_out =  mxGetPr(plhs[0]);
 
   for (i=0; i<N; i++){
     x_out[i] = x_ours[i];
   }
 
+  if (nlhs == 2){
+    const char *fnames[] = {"l1", "total_newton_iter", "status"};
+    mxArray *l1_mex_pr, *total_newton_iter_mex_pr, *status_mex_pr;
+    plhs[1] = mxCreateStructMatrix(1, 1, NUMBER_OF_FIELDS(fnames), fnames);
+
+    l1_mex_pr = mxCreateDoubleMatrix(1,1, mxREAL);
+    total_newton_iter_mex_pr = mxCreateDoubleMatrix(1,1, mxREAL);
+    status_mex_pr            = mxCreateDoubleMatrix(1,1, mxREAL);
+
+    *mxGetPr(l1_mex_pr) = lb_res.l1;
+    *mxGetPr(total_newton_iter_mex_pr) = (double)lb_res.total_newton_iter;
+    *mxGetPr(status_mex_pr) = (double)lb_res.status;
+
+    mxSetField(plhs[1], 0, "l1", l1_mex_pr);
+    mxSetField(plhs[1], 0, "total_newton_iter", total_newton_iter_mex_pr);
+    mxSetField(plhs[1], 0, "status", status_mex_pr);
+  }
+
   free_double(u);
   free(pix_idx);
+
 
 } /* ------- mexFunction ends here ----- */
