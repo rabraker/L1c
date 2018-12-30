@@ -68,7 +68,7 @@ void log_vec(int N, double alpha, double *x, double *logx);
 double logsum(int N, double *x, double alpha);
 
 double find_max_step(int N, GradData gd, double *fu1,
-                     double *fu2, int M, double *r, double epsilon, int *Iwork_2N);
+                     double *fu2, int M, double *r, double epsilon);
 
 LSStat line_search(int N, int M, double *x, double *u, double *r, double *b, double *fu1, double *fu2, GradData gd,
                 LSParams ls_params, double *DWORK_5N, double *fe, double *f);

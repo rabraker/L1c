@@ -210,15 +210,11 @@ int compute_descent(int N, double *fu1, double *fu2, double *atr, double fe,  do
 }
 
 double find_max_step(int N, GradData gd, double *fu1,
-                     double *fu2, int M, double *r, double epsilon, int *Iwork_2N){
+                     double *fu2, int M, double *r, double epsilon){
   double aqe = 0.0, bqe = 0.0, cqe=0.0;
   double smax = 0.0, root = 0.0;
-  int *idx_fu1, *idx_fu2;
-  int n_idx1 = 0, n_idx2 = 0, idx_i = 0, i=0;
+  size_t i=0;
   double min_u1 = 0.0, min_u2=0.0;
-
-  idx_fu1 = Iwork_2N;
-  idx_fu2 = Iwork_2N + N;
 
   aqe = cblas_ddot(M, gd.Adx, 1, gd.Adx, 1);
   bqe = 2.0 * cblas_ddot(M, r, 1, gd.Adx, 1);
@@ -234,33 +230,32 @@ double find_max_step(int N, GradData gd, double *fu1,
     root = 1.0;
   }
 
-  /* Find indexes, i.e.,  ifu1 = find((dx-du) > 0);  ifu2 = find((-dx-du) > 0);
-   */
-  for (i=0; i<N; i++){
-    if (gd.dx[i] - gd.du[i] > 0){
-      idx_fu1[n_idx1] = i;
-      n_idx1++;
-    }
-  }
+  /* Implements the matlab code:
+     ifu1 = find((dx-du) > 0);
+     ifu2 = find((-dx-du) > 0);
+     min_u1 =  -fu1(ifu1)./(dx(ifu1)-du(ifu1));
+     min_u2 = -fu2(ifu2)./(-dx(ifu2)-du(ifu2)); ...
 
-  for (i=0; i<N; i++){
-    if (-gd.dx[i] - gd.du[i] > 0){
-      idx_fu2[n_idx2] = i;
-      n_idx2++;
-    }
-  }
-
-
+  */
   min_u1 = INFINITY;
-  for (i=0; i<n_idx1; i++){
-    idx_i = idx_fu1[i];
-      min_u1 = min(min_u1, -fu1[idx_i] / (gd.dx[idx_i] - gd.du[idx_i]) );
+  for (i=0; i<N; i++){
+    if ( !(gd.dx[i] - gd.du[i] > 0) ){
+      continue;
+    }else{
+    min_u1 = min(min_u1, -fu1[i] / (gd.dx[i] - gd.du[i]) );
+    }
   }
+
   min_u2 = INFINITY;
-  for (i=0; i<n_idx2; i++){
-    idx_i = idx_fu2[i];
-      min_u2 = min(min_u2, -fu2[idx_i] / (-gd.dx[idx_i] - gd.du[idx_i]));
+  for (i=0; i<N; i++){
+    if ( !(-gd.dx[i] - gd.du[i] > 0) ){
+      continue;
+    }else{
+      min_u2 = min(min_u2, -fu2[i] / (-gd.dx[i] - gd.du[i]));
+    }
   }
+
+
 
   smax = min(min_u1, min_u2);
   smax = min(smax, root);
@@ -415,12 +410,11 @@ int l1qc_newton(int N, double *x, double *u, double *b,
   double fe = 0.0, f = 0.0, lambda2 = 0.0, stepsize = 0.0;
 
   double *atr=NULL, *DWORK_16N = NULL, *DWORK_fftw_2N = NULL;
-  int *IWORK_2N = NULL;
   double *fftw_tmp;
   DWORK_16N = malloc_double(16*N);
   DWORK_fftw_2N = fftw_alloc_real(2*N);
-  IWORK_2N = calloc(2*N, sizeof(int));
-  if ( !DWORK_16N | !DWORK_fftw_2N | !IWORK_2N){
+
+  if ( !DWORK_16N | !DWORK_fftw_2N){
     status = 1;
     goto exit;
   }
@@ -494,7 +488,7 @@ int l1qc_newton(int N, double *x, double *u, double *b,
       fftw_tmp= dct_EMx_new(gd.dx);
       cblas_dcopy(M, fftw_tmp, 1, gd.Adx, 1);
       /* -------------- Line Search --------------------------- */
-      ls_params.s = find_max_step(N, gd, fu1, fu2, M, r, params.epsilon, IWORK_2N);
+      ls_params.s = find_max_step(N, gd, fu1, fu2, M, r, params.epsilon);
 
       ls_stat = line_search(N, M, x, u,r,b, fu1, fu2, gd, ls_params, DWORK_5N, &fe, &f);
       if (ls_stat.status > 0)
@@ -556,7 +550,6 @@ int l1qc_newton(int N, double *x, double *u, double *b,
 
  exit:
   free_double(DWORK_16N);
-  free(IWORK_2N);
   dct_destroy();
 
   return status;
