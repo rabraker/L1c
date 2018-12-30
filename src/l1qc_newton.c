@@ -8,10 +8,6 @@
 #include "cgsolve.h"
 #include "l1qc_common.h"
 
-// #ifdef __MATLAB__
-// #pragma comment(lib, "libmwservices.lib")
-// extern bool ioFlush(void);
-// #endif
 
 
 double sum_abs_vec(int N, double *x){
@@ -344,7 +340,7 @@ LSStat line_search(int N, int M, double *x, double *u, double *r, double *b, dou
 
 int newton_init(int N, double *x, double *u,  NewtParams *params,
                 int M, int *pix_idx){
-  int i = 0;
+  size_t i = 0;
   double x_max = 0.0, tmp = 0.0;
 
   dct_setup(N, M, pix_idx);
@@ -365,8 +361,8 @@ int newton_init(int N, double *x, double *u,  NewtParams *params,
   tmp = (double)(2*N+1) / tmp;
   params->tau = max(tmp, 1);
 
-  tmp = log (2 * (double)N +1) - log(params->lbtol) - log(params->tau);
-  if (params->lbiter ==0) // If already set, use that instead.
+  tmp = log (2 * (double)N + 1) - log(params->lbtol) - log(params->tau);
+  if (params->lbiter == 0) // If already set, use that instead.
     params->lbiter =(int) ceil (tmp / log(params->mu));
 
   return 0;
@@ -433,7 +429,7 @@ int l1qc_newton(int N, double *x, double *u, double *b,
                  .gradf = DWORK_16N + 14*N,
                  .Adx=NULL}; //gradf needs 2N
 
-  gd.Adx = calloc(M, sizeof(double));
+  gd.Adx = malloc_double(M);
 
   atr = DWORK_fftw_2N+N;
 
@@ -459,8 +455,8 @@ int l1qc_newton(int N, double *x, double *u, double *b,
     /* Compute Ax - b = r */
     fftw_tmp = dct_EMx_new(x);
     cblas_dcopy(M, fftw_tmp, 1, r, 1);
-
     cblas_daxpy(M, -1.0, b, 1, r, 1); //-b + Ax -->ax
+
     if ( (tau_iter==1) & check_feasible_start(M, r, params.epsilon) ){
         PRINT("Starting point is infeasible, exiting\n");
         status = 1;
@@ -502,16 +498,15 @@ int l1qc_newton(int N, double *x, double *u, double *b,
         /*Following is for printing only, not calculation. */
 
         /* want norm [dx; du] */
-        stepsize = cblas_ddot(N, gd.dx, 1, gd.dx, 1);
-        stepsize += cblas_ddot(N, gd.du, 1, gd.du, 1);
-        stepsize = sqrt(stepsize) * 1.0; //* (ls_params.s);
+        stepsize = cblas_ddot(N, gd.dx, 1, gd.dx, 1) + cblas_ddot(N, gd.du, 1, gd.du, 1);
+        stepsize = stepsize * ls_params.s;
+
         /*            NI         fcnl         dec         sz     cgr       cgI        BI       s  */
         PRINT("     %3d       %8.3e       %08.3e    % 8.3e   %08.3e     %3d       %2d      %.3g \n",
                      iter, f, lambda2/2, stepsize, cg_results.cgres, cg_results.cgiter, ls_stat.iter,
                ls_stat.step);
 #ifdef __MATLAB__
         mexEvalString("drawnow('update');");
-        //ioFlush();
 #endif
       }
 
@@ -535,21 +530,17 @@ int l1qc_newton(int N, double *x, double *u, double *b,
     }
 #ifdef __MATLAB__
     mexEvalString("drawnow('update');");
-    //ioFlush();
 #endif
     params.tau = params.tau * params.mu;
     ls_params.tau = params.tau;
-  }
+  } /* LB-iter */
 
   /* ----- Cleanup -------------------- */
-#ifndef __MATLAB__
-  char fname[] = "c_result.csv";
-  save_x(N, x, fname);
-#endif
   goto exit;
 
  exit:
   free_double(DWORK_16N);
+  free_double(gd.Adx);
   dct_destroy();
 
   return status;
