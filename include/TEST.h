@@ -7,4 +7,6 @@ Suite * cgsolve_suite(void);
 
 Suite * dct_suite(void);
 
+Suite *vcl_math_suite(void);
+
 #endif

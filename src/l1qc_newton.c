@@ -7,7 +7,7 @@
 #include "dct.h"
 #include "cgsolve.h"
 #include "l1qc_common.h"
-
+#include "vcl_math.h"
 
 
 void axpy_z(size_t N, double alpha, double * restrict x, double * restrict y, double * restrict z){
@@ -91,10 +91,12 @@ void f_eval(int N, double *x, double *u, int M, double *r, double tau, double ep
 
   *fe = 0.5 * (cblas_ddot(M, r, 1, r, 1) - epsilon * epsilon);
 
-  a1 = logsum(N, fu1, -1.0);
-  a2 = logsum(N, fu2, -1.0);
+  // a1 = logsum(N, fu1, -1.0);
+  // a2 = logsum(N, fu2, -1.0);
+  a1 = vcl_logsum(N, -1.0, fu1);
+  a2 = vcl_logsum(N, -1.0, fu2);
   a3 = log(- (*fe));
-  *f = sum_vec(N, u) - (1.0/tau) * ( a1 + a2 +a3);
+  *f = vcl_sum(N, u) - (1.0/tau) * ( a1 + a2 +a3);
 
 }
 

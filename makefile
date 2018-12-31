@@ -22,6 +22,7 @@
 # USE_MKL = false
 
 CC             = gcc
+CPP            = g++
 LD             = gcc
 AR             = ar
 
@@ -47,6 +48,8 @@ ML_CMD         = "try;                                   \
 
 SRC_DIR        = ./src
 BUILD_DIR      = ./build
+VCL_SRC_DIR    = ./src/vcl
+VCL_BUILD_DIR  = ./build/vcl
 TEST_SRC_DIR   = ./test
 ML_INTERFACE   = ./interfaces
 MEX_NAME       = $(ML_INTERFACE)/l1qc.mexa64
@@ -55,6 +58,7 @@ TEST_APP       = test_l1qc
 ML_MEX         = $(ML_INTERFACE)/l1qc.mexa64
 LIB_NAME       = lib/libl1qc.so
 APP_ARCHIVE    = lib/libl1qc.a
+VCL_ARCHIVE    = lib/libvcl_math.a
 ifeq (${MAKECMDGOALS},test)
 TEST_ARCHIVE   = test/lib/libtest_l1qc.a
 else
@@ -63,9 +67,11 @@ endif
 
 
 APP_SRC        = $(wildcard $(SRC_DIR)/*.c)
+APP_CPP        = $(wildcard $(VCL_SRC_DIR)/*.cpp)
 TEST_SRC       = $(wildcard $(TEST_SRC_DIR)/*.c)
 
 APP_OBJ        = $(addprefix $(BUILD_DIR)/, $(notdir $(APP_SRC:.c=.o)))
+VCL_OBJ        = $(addprefix $(VCL_BUILD_DIR)/, $(notdir $(APP_CPP:.cpp=.o)))
 TEST_OBJ       = $(addprefix $(BUILD_DIR)/, $(notdir $(TEST_SRC:.c=.o)))
 OBJ            = $(APP_OBJ) $(TEST_OBJ)
 
@@ -73,8 +79,8 @@ OBJ            = $(APP_OBJ) $(TEST_OBJ)
 OPT            = -O3 -msse3
 # check header files are in /usr/local/include
 INCLUDE         = -I/usr/include                \
-                 -I/usr/local/include          \
-	          	 -Iinclude                     \
+                  -I/usr/local/include          \
+	           	  -Iinclude
 
 # ---------- If making a mex file, add the needed includes and libs
 ifeq ($(MAKECMDGOALS),mex)
@@ -86,6 +92,7 @@ MATLAB_LIBS    = -lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
 endif
 
 CFLAGS         =  $(OPT) $(DEBUG) -fPIC -Wall $(MAT_DEF)
+CPP_VCL_FLAGS  =  -Iinclude/vcl $(DEBUG) -mavx2 -mfma -fabi-version=0 -O3 -fPIC
 
 ifeq (${USE_MKL},true)
 MATH_INCLUDE   =  -I${MKLROOT}/include
@@ -111,7 +118,8 @@ LIBS           = $(MATH_LIBS)  $(MATLAB_LIBS) -lcheck -Wl,-rpath=/usr/local/lib
 #N.B. ALL the archive files need to be enclosed in -Wl,--start-group -Wl,--end-group
 # otherwise, linking may fail. See here:
 # https://sourceware.org/binutils/docs/ld/Options.html
-LDFLAGS       += -Wl,--start-group $(MATH_ARCHIVE) $(TEST_ARCHIVE) $(APP_ARCHIVE) -Wl,--end-group \
+LDFLAGS       += -Wl,--start-group $(MATH_ARCHIVE) $(TEST_ARCHIVE) \
+				$(APP_ARCHIVE) $(VCL_ARCHIVE) -Wl,--end-group \
 				 $(LIBDIR) $(LIBS)
 
 
@@ -119,13 +127,16 @@ $(info $$DEF_MAT  [${ML_MEX}])
 
 
 #-----------------------Targets ----------------------
-.PHONY: clean all mex app_ar test_ar test_obj lib test test_data clean_all
+.PHONY: clean all mex app_ar vcl_ar test_ar test_obj lib test test_data clean_all
 
 # test: $(TEST_APP)
 all: test lib
 
-mex:app_ar
-	${CC} ${INCLUDE} ${CFLAGS} -shared -o $(MEX_NAME) interfaces/l1qc.c ${LDFLAGS}
+mex: mex_obj
+	${LD} -shared -o $(MEX_NAME) interfaces/l1qc.o ${LDFLAGS}
+
+mex_obj:app_ar vcl_ar
+	${CC} ${INCLUDE} ${CFLAGS} -shared -c -o interfaces/l1qc.o interfaces/l1qc.c
 
 app_ar: $(APP_OBJ)
 	$(AR) -rcs ${APP_ARCHIVE} $^
@@ -135,12 +146,14 @@ lib: $(APP_OBJ)
 	@echo "appobj = $(APP_OBJ)"
 	$(LD) -o ${LIB_NAME} -shared $^ ${LIBDIR} $(LIBS)
 
-test:test_ar app_ar
+test:test_ar app_ar vcl_ar
 	$(LD) -o ${TEST_APP} $(LDFLAGS)
 
 test_ar: $(TEST_OBJ)
 	$(AR) -rcs test/lib/libtest_l1qc.a $^
 
+vcl_ar: $(VCL_OBJ)
+	$(AR) -rcs $(VCL_ARCHIVE) $^
 
 # $@ is to left side and $^ to the right of :
 $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c
@@ -148,6 +161,9 @@ $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c
 
 $(BUILD_DIR)/%.o: $(TEST_SRC_DIR)/%.c
 	${CC} $(INCLUDE) ${CFLAGS} -c -o $@ $<
+
+$(VCL_BUILD_DIR)/%.o: $(VCL_SRC_DIR)/%.cpp
+	${CPP} $(CPP_VCL_FLAGS) -c -o $@ $<
 
 
 test_data:
@@ -158,6 +174,7 @@ clean:
 	rm -f $(BUILD_DIR)/*.o
 	rm -f $(BUILD_DIR)/*.a
 	rm -f $(BUILD_DIR)/*.so
+	rm -f $(VCL_BUILD_DIR)/*.o
 	rm -f $(ML_INTERFACE)/*.o
 	rm -f $(ML_INTERFACE)/*.mexa64
 	rm -f lib/*
