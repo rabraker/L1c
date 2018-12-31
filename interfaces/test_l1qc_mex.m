@@ -34,19 +34,20 @@ opts.newton_tol = opts.lbtol;
 opts.newton_max_iter = 50;
 opts.verbose = 2;
  
+system('export MKL_DYNAMIC=TRUE');
+system('export MKL_NUM_THREADS=2');
 tic
 [ximg, LBRes]= l1qc(x0, b, pix_idx-1, opts);
 tm_c = toc;
+fprintf('mex file time: %.4f\n', tm_c);
 
 X = PixelVectorToMatrix(idct(ximg), [512, 512]);
-
-return
-
+%%
 figure(1)
 subplot(2,2, [1,3])
 imagesc(X);
 colormap('gray')
-%%
+
 x0 = At(y_vec);
 tic
 ximg_ml = L1qcTestData.l1qc_logbarrier(x0, A, At, y_vec, opts.epsilon, opts.lbtol, opts.mu,...

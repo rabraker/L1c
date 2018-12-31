@@ -248,10 +248,9 @@ double find_max_step(int N, GradData gd, double *fu1,
     if ( !(gd.dx[i] - gd.du[i] > 0) ){
       continue;
     }else{
-    min_u1 = min(min_u1, -fu1[i] / (gd.dx[i] - gd.du[i]) );
+      min_u1 = min(min_u1, -fu1[i] / (gd.dx[i] - gd.du[i]) );
     }
   }
-
   min_u2 = INFINITY;
   for (i=0; i<N; i++){
     if ( !(-gd.dx[i] - gd.du[i] > 0) ){
@@ -260,8 +259,6 @@ double find_max_step(int N, GradData gd, double *fu1,
       min_u2 = min(min_u2, -fu2[i] / (-gd.dx[i] - gd.du[i]));
     }
   }
-
-
 
   smax = min(min_u1, min_u2);
   smax = min(smax, root);
@@ -332,6 +329,8 @@ LSStat line_search(int N, int M, double *x, double *u, double *r, double *b, dou
   PRINT("%s                        fp   = %.10e\n", spc, fp);
   PRINT("%s                        flin = %.10e\n", spc, flin);
   PRINT("%s                        fp-flin = %.10f\n", spc, fp - flin);
+  PRINT("%s                        step = %.10f\n", spc, step);
+  PRINT("%s                        ls_params.s = %.10f\n", spc, ls_params.s);
 
   cblas_dcopy(N, x, 1, xp, 1);
   cblas_dcopy(N, u, 1, up, 1);
