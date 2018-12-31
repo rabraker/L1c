@@ -4,11 +4,8 @@
 extern void dct_setup(int Nx, int Ny, int *pix_mask_idx);
 extern void dct_destroy();
 
-extern double* dct_EMx_new(double *x_fftw);
-extern double* dct_EMx();
-extern double* dct_MtEty(double *y);
-extern void dct_load_x(double *x);
-extern double* dct_x_ptr();
+extern void dct_EMx_new(double *x_fftw, double *y);
+extern void dct_MtEty(double *y, double *x);
 extern double* idct_plain(double *x_fftw);
-extern double* dct_MtEt_EMx_new(double *x);
+extern void dct_MtEt_EMx_new(double *x_fftw, double *z);
 #endif

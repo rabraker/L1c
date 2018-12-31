@@ -59,11 +59,13 @@ START_TEST(test_dct_MtEt_EMx_small_rand)
 
   dct_setup(Nx, Npix, pix_idx);
 
-  MtEt_EMx_act = dct_MtEt_EMx_new(x_in);
+  MtEt_EMx_act = fftw_alloc_real(Nx);
+  dct_MtEt_EMx_new(x_in, MtEt_EMx_act);
 
   ck_assert_double_array_eq_tol(Nx, MtEt_EMx_exp, MtEt_EMx_act, TOL_DOUBLE_SUPER);
 
   fftw_free(x_in);
+  fftw_free(MtEt_EMx_act);
   free_double(MtEt_EMx_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
@@ -99,15 +101,17 @@ START_TEST(test_dct_MtEty_small_rand)
     ck_abort();
   }
 
+  MtEty_act = fftw_alloc_real(Nx);
   ck_assert_int_eq(Ny, Npix);
 
   dct_setup(Nx, Ny, pix_idx);
 
-  MtEty_act = dct_MtEty(y_in);
+  dct_MtEty(y_in, MtEty_act);
 
   ck_assert_double_array_eq_tol(Nx, MtEty_exp, MtEty_act, TOL_DOUBLE_SUPER);
 
   fftw_free(y_in);
+  fftw_free(MtEty_act);
   free_double(MtEty_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
@@ -120,7 +124,7 @@ START_TEST(test_dct_MtEty_small_rand)
 }
 END_TEST
 
-START_TEST(test_dct_EMx_small_rand)
+START_TEST(test_dct_EMx_new_small_rand)
 {
 
   char fpath[] = "test_data/dct_small_rand.json";
@@ -146,15 +150,17 @@ START_TEST(test_dct_EMx_small_rand)
   dct_setup(Nx, Ny, pix_idx);
 
   x_in_aligned = fftw_alloc_real(Nx);
+  EMx_act = fftw_alloc_real(Nx);
   for (int i=0; i<Nx; i++){
     x_in_aligned[i] = x_in[i];
   }
 
-  EMx_act = dct_EMx_new(x_in_aligned);
+  dct_EMx_new(x_in_aligned, EMx_act);
 
   ck_assert_double_array_eq_tol(Ny, EMx_exp, EMx_act, TOL_DOUBLE_SUPER);
 
   fftw_free(x_in);
+  fftw_free(EMx_act);
   free_double(EMx_exp);
   free(pix_idx);
   fftw_free(x_in_aligned);
@@ -167,6 +173,8 @@ START_TEST(test_dct_EMx_small_rand)
 #endif
 }
 END_TEST
+
+
 
 /* ---------------------------------------------------- */
 START_TEST(test_dct_MtEt_EMx_large)
@@ -191,14 +199,17 @@ START_TEST(test_dct_MtEt_EMx_large)
   }
 
   dct_setup(Nx, Npix, pix_idx);
+  MtEt_EMx_act = malloc_double(Nx);
 
-  MtEt_EMx_act = dct_MtEt_EMx_new(x_in);
+  dct_MtEt_EMx_new(x_in, MtEt_EMx_act);
 
   ck_assert_double_array_eq_tol(Nx, MtEt_EMx_exp, MtEt_EMx_act,  TOL_LARGE_DCT);
 
   fftw_free(x_in);
   free_double(MtEt_EMx_exp);
   free(pix_idx);
+  free_double(MtEt_EMx_act);
+
   dct_destroy(); //will free MtEty_act.
 
   free_json_text_data();
@@ -235,14 +246,15 @@ START_TEST(test_dct_MtEty_large)
   ck_assert_int_eq(Ny, Npix);
 
   dct_setup(Nx, Ny, pix_idx);
-
-  MtEty_act = dct_MtEty(y_in);
+  MtEty_act = malloc_double(Nx);
+  dct_MtEty(y_in, MtEty_act);
 
   ck_assert_double_array_eq_tol(Nx, MtEty_exp, MtEty_act, TOL_LARGE_DCT);
 
   fftw_free(y_in);
   free_double(MtEty_exp);
   free(pix_idx);
+  free_double(MtEty_act);
   dct_destroy(); //will free MtEty_act.
 
   free_json_text_data();
@@ -277,14 +289,17 @@ START_TEST(test_dct_EMx_large)
   ck_assert_int_eq(Ny, Npix);
 
   dct_setup(Nx, Ny, pix_idx);
+  EMx_act = malloc_double(Ny);
 
-  EMx_act = dct_EMx_new(x_in);
+  dct_EMx_new(x_in, EMx_act);
 
   ck_assert_double_array_eq_tol(Ny, EMx_exp, EMx_act, TOL_LARGE_DCT);
 
   fftw_free(x_in);
   free_double(EMx_exp);
+  free_double(EMx_act);
   free(pix_idx);
+
   dct_destroy(); //will free MtEty_act.
 
   free_json_text_data();
@@ -350,8 +365,9 @@ START_TEST(test_dct_MtEt_EMx_small)
   }
 
   dct_setup(Nx0, Npix, pix_idx);
+  x_act = malloc_double(Nx0);
 
-  x_act = dct_MtEt_EMx_new(x0);
+  dct_MtEt_EMx_new(x0, x_act);
 
   ck_assert_double_array_eq_tol(Nx0, x_exp, x_act, TOL_DOUBLE_SUPER);
 
@@ -359,7 +375,7 @@ START_TEST(test_dct_MtEt_EMx_small)
   fftw_free(x0);
   free(pix_idx);
   dct_destroy();
-
+  free_double(x_act);
   free_json_text_data();
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
@@ -381,14 +397,15 @@ START_TEST(test_dct_MtEty_small)
   }
 
   dct_setup(Nx, Ny, pix_idx);
-
-  x_act = dct_MtEty(y);
+  x_act = malloc_double(Nx);
+  dct_MtEty(y, x_act);
 
   ck_assert_double_array_eq_tol(Nx, x_exp, x_act, TOL_DOUBLE_SUPER);
 
   fftw_free(y);
   fftw_free(x_exp);
   dct_destroy();
+  free_double(x_act);
 
   free_json_text_data();
   cJSON_Delete(test_data_json);
@@ -399,38 +416,6 @@ START_TEST(test_dct_MtEty_small)
 END_TEST
 
 
-
-START_TEST(test_dct_EMx_small)
-{
-  char fpath[] = "test_data/dct_small_EMx.json";
-
-  int *pix_idx;
-
-  double *x, *y_exp, *y_act;
-  int Nx, Ny, Npix = 0;
-  if (load_EMx_data(&Nx, &x, &Ny, &y_exp, &Npix, &pix_idx, fpath)){
-    ck_abort_msg("Errory Loading test data\n");
-  }
-
-  dct_setup(Nx, Ny, pix_idx);
-  dct_load_x(x);
-
-  y_act = dct_EMx();
-
-  ck_assert_double_array_eq_tol(Ny, y_exp, y_act, TOL_DOUBLE_SUPER);
-
-  fftw_free(y_exp);
-  fftw_free(x);
-  free(pix_idx);
-  dct_destroy();
-
-  free_json_text_data();
-  cJSON_Delete(test_data_json);
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
-}
-END_TEST
 
 
 START_TEST(test_dct_EMx_new_small)
@@ -452,8 +437,9 @@ START_TEST(test_dct_EMx_new_small)
   }
 
   dct_setup(Nx, Ny, pix_idx);
+  y_act = malloc_double(Ny);
 
-  y_act = dct_EMx_new(x_new);
+  dct_EMx_new(x_new, y_act);
 
   ck_assert_double_array_eq_tol(Ny, y_exp, y_act, TOL_DOUBLE_SUPER);
 
@@ -462,6 +448,7 @@ START_TEST(test_dct_EMx_new_small)
   fftw_free(x);
   free(pix_idx);
   dct_destroy();
+  free_double(y_act);
 
   free_json_text_data();
   cJSON_Delete(test_data_json);
@@ -470,6 +457,7 @@ START_TEST(test_dct_EMx_new_small)
 #endif
 }
 END_TEST
+
 
 
 
@@ -484,14 +472,13 @@ Suite *dct_suite(void)
   tc_core = tcase_create("Core");
 
   tcase_add_test(tc_core,test_dct_MtEt_EMx_small_rand);
-  tcase_add_test(tc_core, test_dct_EMx_small_rand);
+  tcase_add_test(tc_core, test_dct_EMx_new_small_rand);
   tcase_add_test(tc_core, test_dct_MtEty_small_rand);
 
   tcase_add_test(tc_core,test_dct_MtEt_EMx_large);
   tcase_add_test(tc_core, test_dct_EMx_large);
   tcase_add_test(tc_core, test_dct_MtEty_large);
 
-  tcase_add_test(tc_core, test_dct_EMx_small);
   tcase_add_test(tc_core, test_dct_EMx_new_small);
   tcase_add_test(tc_core, test_dct_MtEt_EMx_small);
   tcase_add_test(tc_core, test_dct_MtEty_small);
