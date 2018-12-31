@@ -67,6 +67,12 @@ START_TEST(test_dct_MtEt_EMx_small_rand)
   free_double(MtEt_EMx_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
 }
 END_TEST
 
@@ -105,6 +111,12 @@ START_TEST(test_dct_MtEty_small_rand)
   free_double(MtEty_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
 }
 END_TEST
 
@@ -145,7 +157,14 @@ START_TEST(test_dct_EMx_small_rand)
   fftw_free(x_in);
   free_double(EMx_exp);
   free(pix_idx);
+  fftw_free(x_in_aligned);
   dct_destroy(); //will free MtEty_act.
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
 }
 END_TEST
 
@@ -181,6 +200,12 @@ START_TEST(test_dct_MtEt_EMx_large)
   free_double(MtEt_EMx_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
 }
 END_TEST
 
@@ -219,6 +244,12 @@ START_TEST(test_dct_MtEty_large)
   free_double(MtEty_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
 }
 END_TEST
 
@@ -255,6 +286,12 @@ START_TEST(test_dct_EMx_large)
   free_double(EMx_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
 }
 END_TEST
 
@@ -320,7 +357,14 @@ START_TEST(test_dct_MtEt_EMx_small)
 
   fftw_free(x_exp);
   fftw_free(x0);
+  free(pix_idx);
   dct_destroy();
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
 }
 END_TEST
 
@@ -345,8 +389,15 @@ START_TEST(test_dct_MtEty_small)
   fftw_free(y);
   fftw_free(x_exp);
   dct_destroy();
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
 }
 END_TEST
+
 
 
 START_TEST(test_dct_EMx_small)
@@ -370,9 +421,17 @@ START_TEST(test_dct_EMx_small)
 
   fftw_free(y_exp);
   fftw_free(x);
+  free(pix_idx);
   dct_destroy();
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
 }
 END_TEST
+
 
 START_TEST(test_dct_EMx_new_small)
 {
@@ -400,7 +459,15 @@ START_TEST(test_dct_EMx_new_small)
 
   fftw_free(y_exp);
   fftw_free(x_new);
+  fftw_free(x);
+  free(pix_idx);
   dct_destroy();
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
 }
 END_TEST
 

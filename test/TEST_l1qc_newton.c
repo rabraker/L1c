@@ -107,6 +107,15 @@ START_TEST (test_l1qc_newton_1iter)
   free_double(b);
   free(pix_idx);
 
+  dct_destroy();
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
+
+
   if (status){
     perror("Error Loading json data in 'test_l1qc_newton_1ter()'. Aborting\n");
     ck_abort();
@@ -137,6 +146,10 @@ START_TEST (test_newton_init_regres1)
   ck_assert_double_array_eq_tol(N, u_exp, u,  TOL_DOUBLE_SUPER);
 
   dct_destroy();
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
+
 }
 END_TEST
 
@@ -189,6 +202,8 @@ START_TEST (test_newton_init)
   ret= newton_init(N, x, u, &params,  M, pix_idx);
   ck_assert_int_eq(1, params.lbiter);
 
+  goto exit1;
+
  exit1:
   free_double(x);
   free_double(u);
@@ -197,13 +212,23 @@ START_TEST (test_newton_init)
   free_double(pix_idx);
   free_double(Dwork);
 
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+
   if (! status){
     goto exit2;
   }else{
+#ifdef _USEMKL_
+    mkl_free_buffers();
+#endif
     ck_abort();
   }
  exit2:
   dct_destroy();
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
+
 }
 END_TEST
 
@@ -238,7 +263,6 @@ START_TEST (test_find_max_step)
   gd.Adx = Adx;
 
   smax = find_max_step(N, gd, fu1, fu2, M, r, epsilon);
-
   ck_assert_double_eq_tol(smax_exp, smax,  TOL_DOUBLE*100);
 
   free_double(dx);
@@ -247,6 +271,13 @@ START_TEST (test_find_max_step)
   free_double(fu1);
   free_double(fu2);
   free_double(r);
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
+
 }
 END_TEST
 
@@ -362,6 +393,13 @@ START_TEST(test_compute_descent)
   free(pix_idx);
 
   dct_destroy();
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
+
 }
 END_TEST
 
@@ -425,11 +463,18 @@ START_TEST(test_H11pfun)
   free_double(atr);
   free_double(sigx);
   fftw_free(z);
+  free(pix_idx);
+
   free_double(y_exp);
   free_double(y);
 
-  free(pix_idx);
   dct_destroy();
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
 }
 END_TEST
 
@@ -453,9 +498,9 @@ START_TEST(test_get_gradient)
   // Inputs to get_gradient
   status +=extract_json_double_array(test_data_json, "fu1", &fu1, &N);
   status +=extract_json_double_array(test_data_json, "fu2", &fu2, &N);
-  status +=extract_json_double_array(test_data_json, "sigx", &sigx_exp, &N);
   status +=extract_json_double_array(test_data_json, "atr", &atr, &N);
   // Expected outputs
+  status +=extract_json_double_array(test_data_json, "sigx", &sigx_exp, &N);
   status +=extract_json_double_array(test_data_json, "sig11", &sig11_exp, &N);
   status +=extract_json_double_array(test_data_json, "sig12", &sig12_exp, &M);
   status +=extract_json_double_array(test_data_json, "gradf", &gradf_exp, &N2);
@@ -478,7 +523,8 @@ START_TEST(test_get_gradient)
   sigx = malloc_double(N);
 
   /*-------------------------------------------- */
-  get_gradient(N, fu1, fu2, sigx, atr, fe, tau, gd);
+    get_gradient(N, fu1, fu2, sigx, atr, fe, tau, gd);
+
 
   ck_assert_int_eq(2*N, N2);
   /* ----- Now check -------*/
@@ -494,21 +540,26 @@ START_TEST(test_get_gradient)
   free_double(fu1);
   free_double(fu2);
   free_double(sigx);
-  free_double(sigx_exp);
   free_double(atr);
 
-  free_double(gd.sig11);
+  free_double(sigx_exp);
   free_double(sig11_exp);
-  free_double(gd.sig12);
   free_double(sig12_exp);
-  free_double(gd.gradf);
   free_double(gradf_exp);
   free_double(ntgu_exp);
-  free_double(gd.ntgu);
   free_double(w1p_exp);
+
+  free_double(gd.sig11);
+  free_double(gd.sig12);
+  free_double(gd.gradf);
+  free_double(gd.ntgu);
   free_double(gd.w1p);
 
-
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
 }
 END_TEST
 
@@ -629,6 +680,12 @@ START_TEST(test_line_search)
   free_double(DWORK_5N);
 
   dct_destroy();
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
 }
 END_TEST
 
@@ -686,6 +743,12 @@ START_TEST(test_f_eval)
 
   free_double(fu1);
   free_double(fu2);
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
 }
 END_TEST
 

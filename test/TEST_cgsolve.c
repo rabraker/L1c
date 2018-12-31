@@ -27,11 +27,10 @@
 #include "l1qc_common.h"
 #include "check_utils.h"
 
+cJSON *test_data_json;
 
 int load_small_data(double **A, double **x, double **b, int *N, int *na,
                     int *max_iter, double *tol){
-
-  cJSON *test_data_json;
 
   if(load_file_to_json("test_data/cgsolve_small01.json", &test_data_json) ){
     return 1;
@@ -110,11 +109,16 @@ START_TEST(test_cgsolve)
   free_double(b);
   free_double(Dwork);
 
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
+
 }
 END_TEST
 
 START_TEST(test_cgsolve_h11p){
-  cJSON *test_data_json;
 
   char fpath[] = "test_data/descent_data.json";
 
@@ -166,14 +170,28 @@ START_TEST(test_cgsolve_h11p){
 
   ck_assert_double_array_eq_tol(N, dx_exp, dx, TOL_DOUBLE*10);
 
+  free_double(atr);
+  free_double(sigx);
+  free_double(w1p);
+  free_double(dx_exp);
+  free(pix_idx);
+  free_double(dx);
+  free_double(DWORK_4N);
+
   dct_destroy();
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
+
 }
 END_TEST
 
 
 
 START_TEST(test_cgsolve_Ax_sym){
-  cJSON *test_data_json;
 
   char fpath[] = "test_data/ax_sym.json";
 
@@ -204,6 +222,17 @@ START_TEST(test_cgsolve_Ax_sym){
   // because dspmv computes alpha*A*x + b*y
   Ax_sym(N, x, y, A);
   ck_assert_double_array_eq_tol(N, y_exp, y, TOL_DOUBLE_SUPER*10);
+
+  free_double(A);
+  free_double(x);
+  free_double(y_exp);
+  free_double(y);
+
+  free_json_text_data();
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
 
 }
 END_TEST

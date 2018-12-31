@@ -207,5 +207,6 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   free_double(u);
   free(pix_idx);
 
+  mkl_free_buffers();
 
 } /* ------- mexFunction ends here ----- */

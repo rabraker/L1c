@@ -1,6 +1,8 @@
 #ifndef _JSON_UTILS_
 #define  _JSON_UTILS_
 
+void free_json_text_data(void);
+
 long get_file_length(FILE *file_ptr);
 
 int extract_json_double_array(cJSON *data_json, char *name, double **x, int *N);
