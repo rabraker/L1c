@@ -13,7 +13,7 @@ extern "C" double vcl_logsum(int N, double alpha, double *x){
   Vec4d xvec, yvec;
   if (N>4){
     for(i=0; i<N-4+1; i+=4){
-      xvec.load(x+i);
+      xvec.load_a(x+i);
       yvec = vcl::log(xvec * alpha);
       total += vcl::horizontal_add(yvec);
     }
@@ -32,7 +32,7 @@ extern "C" double vcl_sum(int N, double *x){
   Vec4d xvec;
   if (N>4){
     for(i=0; i<N-4+1; i+=4){
-      xvec.load(x+i);
+      xvec.load_a(x+i);
       total += vcl::horizontal_add(xvec);
     }
   }

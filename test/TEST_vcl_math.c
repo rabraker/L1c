@@ -31,13 +31,17 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 /* Tolerances and things */
 #include "test_constants.h"
 #include "check_utils.h"
-
+#include "l1qc_common.h"
 
 
 
 START_TEST(test_vcl_sum)
 {
-  double x[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
+  double x_[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
+  double *x = malloc_double(12);
+  for (int i =0; i<12; i++){
+    x[i] = x_[i];
+  }
   double sum_exp1 = 36.0;
   double sum_exp2 = 45.0;
   double sum_exp3 = 55.0;
@@ -60,13 +64,19 @@ START_TEST(test_vcl_sum)
   sum_x = vcl_sum(12, x);
   ck_assert_double_eq_tol(sum_exp5, sum_x, TOL_DOUBLE);
 
+  free_double(x);
 }
 END_TEST
 
 
 START_TEST(test_vcl_logsum)
 {
-  double x[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
+  double x_[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
+  double *x = malloc_double(12);
+  for (int i =0; i<12; i++){
+    x[i] = x_[i];
+  }
+
   double logsum_exp1 = 19.393501212090126;
   double logsum_exp2 = 22.689338078094455;
   double logsum_exp3 = 26.090535459756609;
@@ -92,6 +102,7 @@ START_TEST(test_vcl_logsum)
   logsum_x = vcl_logsum(12, alpha, x);
   ck_assert_double_eq_tol(logsum_exp5, logsum_x, TOL_DOUBLE);
 
+  free_double(x);
 }
 END_TEST
 
