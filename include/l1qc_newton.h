@@ -12,7 +12,7 @@ typedef struct Hess_data_ {
   double one_by_fe_sqrd;
   double *atr;
   double *sigx;
-
+  double *Dwork_1N;
 }Hess_data;
 
 typedef struct LineSearchParams {
@@ -83,7 +83,7 @@ LSStat line_search(int N, int M, double *x, double *u, double *r, double *b, dou
 void get_gradient(int N, double *fu1, double *fu2, double *sigx, double *atr,
                   double fe,  double tau, GradData gd);
 int compute_descent(int N, double *fu1, double *fu2, double *r, double fe, double tau,
-                    GradData gd, double *Dwork_5N, CgParams cg_params, CgResults *cg_result);
+                    GradData gd, double *Dwork_6N, CgParams cg_params, CgResults *cg_result);
 
 void H11pfun(int N, double *z, double *y,  void *hess_data_in);
 

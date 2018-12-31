@@ -153,6 +153,7 @@ START_TEST(test_cgsolve_h11p){
   h11p_data.one_by_fe_sqrd = 1.0 / (fe * fe);
   h11p_data.atr = atr;
   h11p_data.sigx = sigx;
+  h11p_data.Dwork_1N = malloc_double(N);
 
   dx = malloc_double(N);
   if (!dx){
@@ -177,7 +178,7 @@ START_TEST(test_cgsolve_h11p){
   free(pix_idx);
   free_double(dx);
   free_double(DWORK_4N);
-
+  free_double(h11p_data.Dwork_1N);
   dct_destroy();
 
   free_json_text_data();

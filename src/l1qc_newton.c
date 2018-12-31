@@ -113,7 +113,7 @@ void H11pfun(int N, double *z, double *y,  void *hess_data_in){
   Hess_data h11p_data = *((Hess_data *) hess_data_in);
   // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
   int i = 0;
-  double *ATA_z;
+  double *ATA_z = h11p_data.Dwork_1N;
   double atr_dot_z_fe = 0.0;
 
   atr_dot_z_fe = cblas_ddot(N, h11p_data.atr, 1, z, 1);
@@ -125,7 +125,7 @@ void H11pfun(int N, double *z, double *y,  void *hess_data_in){
     y[i] = h11p_data.sigx[i] * z[i];
   }
   // ...+ (1/fe)*At*A*z
-  ATA_z = dct_MtEt_EMx_new(z);
+  dct_MtEt_EMx_new(z, ATA_z);
   for (i=0; i<N; i++){
     y[i] = y[i] - h11p_data.one_by_fe * ATA_z[i];
   }
@@ -173,7 +173,7 @@ void get_gradient(int N, double *fu1, double *fu2, double *sigx, double *atr,
 }
 
 int compute_descent(int N, double *fu1, double *fu2, double *atr, double fe,  double tau,
-                    GradData gd, double *Dwork_5N, CgParams cg_params, CgResults *cg_result){
+                    GradData gd, double *Dwork_6N, CgParams cg_params, CgResults *cg_result){
   /* inputs
    --------
    *fu1, *fu2, *r, fe, tau
@@ -195,8 +195,9 @@ int compute_descent(int N, double *fu1, double *fu2, double *atr, double fe,  do
   int i=0;
   Hess_data h11p_data;
   double *sigx, *Dwork_4N;
-  sigx =  Dwork_5N;
-  Dwork_4N = Dwork_5N + N;
+  sigx =  Dwork_6N;
+  h11p_data.Dwork_1N = Dwork_6N + N;
+  Dwork_4N = Dwork_6N + 2*N;
 
   get_gradient(N, fu1, fu2, sigx, atr, fe, tau, gd);
 
@@ -272,7 +273,6 @@ LSStat line_search(int N, int M, double *x, double *u, double *r, double *b, dou
   int iter=0;
   double flx=0, flu=0, flin = 0.0, fp = 0.0, fep = 0.0;
 
-  double *fftw_tmp;
   double step = ls_params.s;
   //double rdot = 0.0;
   /* Divy up our work array */
@@ -288,8 +288,8 @@ LSStat line_search(int N, int M, double *x, double *u, double *r, double *b, dou
     axpy_z(N, step, gd.du, u, up);
 
     /*Re-evaluate, rather than relying on Adx */
-    fftw_tmp = dct_EMx_new(xp);
-    axpy_z(M, -1.0, b, fftw_tmp, rp); //rp = A*xp - b
+    dct_EMx_new(xp, rp);
+    cblas_daxpy(M, -1.0, b, 1, rp, 1); //rp = A*xp - b
 
     f_eval(N, xp, up, M, rp, ls_params.tau, ls_params.epsilon, fu1p, fu2p, &fep, &fp);
 
@@ -412,28 +412,27 @@ LBResult l1qc_newton(int N, double *x, double *u, double *b,
 
   double fe = 0.0, f = 0.0, lambda2 = 0.0, stepsize = 0.0;
 
-  double *atr=NULL, *DWORK_16N = NULL, *DWORK_fftw_2N = NULL;
-  double *fftw_tmp;
-  DWORK_16N = malloc_double(16*N);
+  double *atr=NULL, *DWORK_17N = NULL, *DWORK_fftw_2N = NULL;
+  DWORK_17N = malloc_double(17*N);
   DWORK_fftw_2N = fftw_alloc_real(2*N);
 
-  if ( !DWORK_16N | !DWORK_fftw_2N){
+  if ( !DWORK_17N | !DWORK_fftw_2N){
     lb_res.status = 1;
     goto exit;
   }
 
-  double *DWORK_5N = DWORK_16N;
-  double *r = DWORK_16N + 5*N;
-  double *fu1 = DWORK_16N + 6*N;
-  double *fu2 = DWORK_16N + 7*N;
+  double *DWORK_6N = DWORK_17N;
+  double *r = DWORK_17N + 6*N;
+  double *fu1 = DWORK_17N + 7*N;
+  double *fu2 = DWORK_17N + 8*N;
 
-  GradData gd = {.w1p = DWORK_16N   + 8*N,
-                 .dx = DWORK_16N    + 9*N,
-                 .du = DWORK_16N    + 10*N,
-                 .sig11 = DWORK_16N + 11*N,
-                 .sig12 = DWORK_16N + 12*N,
-                 .ntgu = DWORK_16N  + 13*N,
-                 .gradf = DWORK_16N + 14*N,
+  GradData gd = {.w1p = DWORK_17N   + 9*N,
+                 .dx = DWORK_17N    + 10*N,
+                 .du = DWORK_17N    + 11*N,
+                 .sig11 = DWORK_17N + 12*N,
+                 .sig12 = DWORK_17N + 13*N,
+                 .ntgu = DWORK_17N  + 14*N,
+                 .gradf = DWORK_17N + 15*N,
                  .Adx=NULL}; //gradf needs 2N
 
   gd.Adx = malloc_double(M);
@@ -460,8 +459,7 @@ LBResult l1qc_newton(int N, double *x, double *u, double *b,
       PRINT("----------------------------------------------------------------------------------------------------\n");
     }
     /* Compute Ax - b = r */
-    fftw_tmp = dct_EMx_new(x);
-    cblas_dcopy(M, fftw_tmp, 1, r, 1);
+    dct_EMx_new(x, r);
     cblas_daxpy(M, -1.0, b, 1, r, 1); //-b + Ax -->ax
 
     if ( (tau_iter==1) & check_feasible_start(M, r, params.epsilon) ){
@@ -481,19 +479,17 @@ LBResult l1qc_newton(int N, double *x, double *u, double *b,
       */
 
       /* compute descent direction. returns dx, du, gradf, cgres */
-      fftw_tmp = dct_MtEty(r);
-      cblas_dcopy(N, fftw_tmp, 1, atr, 1);
+      dct_MtEty(r, atr); //atr = A'*r.
 
-      if(compute_descent(N, fu1, fu2, atr, fe,  params.tau, gd, DWORK_5N, cg_params, &cg_results)){
+      if(compute_descent(N, fu1, fu2, atr, fe,  params.tau, gd, DWORK_6N, cg_params, &cg_results)){
         break;
       }
 
-      fftw_tmp= dct_EMx_new(gd.dx);
-      cblas_dcopy(M, fftw_tmp, 1, gd.Adx, 1);
+      dct_EMx_new(gd.dx, gd.Adx); //Adx = A*dx
       /* -------------- Line Search --------------------------- */
       ls_params.s = find_max_step(N, gd, fu1, fu2, M, r, params.epsilon);
 
-      ls_stat = line_search(N, M, x, u,r,b, fu1, fu2, gd, ls_params, DWORK_5N, &fe, &f);
+      ls_stat = line_search(N, M, x, u,r,b, fu1, fu2, gd, ls_params, DWORK_6N, &fe, &f);
       if (ls_stat.status > 0)
         break;
 
@@ -546,7 +542,7 @@ INFINITY;
   goto exit;
 
  exit:
-  free_double(DWORK_16N);
+  free_double(DWORK_17N);
   free_double(gd.Adx);
   dct_destroy();
 

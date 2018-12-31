@@ -209,7 +209,7 @@ START_TEST (test_newton_init)
   free_double(u);
   free_double(u_exp);
   free_double(b);
-  free_double(pix_idx);
+  free(pix_idx);
   free_double(Dwork);
 
   free_json_text_data();
@@ -293,7 +293,7 @@ START_TEST(test_compute_descent)
   double *fu1, *fu2, *atr, *dx_exp, *du_exp;
   double *sig11_exp, *sig12_exp, *w1p_exp;
 
-  double *DWORK_5N;
+  double *DWORK_6N;
   double  fe,tau,cgres_exp,cgtol = 0;
 
   int cg_maxiter, cgiter_exp, N, Npix, status=0;
@@ -330,7 +330,7 @@ START_TEST(test_compute_descent)
     ck_abort();
   }
 
-  DWORK_5N = malloc_double(5*N);
+  DWORK_6N = malloc_double(6*N);
   gd.w1p = malloc_double(N);
   gd.dx = malloc_double(N);
   gd.du = malloc_double(N);
@@ -339,7 +339,7 @@ START_TEST(test_compute_descent)
   gd.sig11 = malloc_double(N);
   gd.sig12 = malloc_double(N);
   gd.ntgu = malloc_double(N);
-  if ( (!DWORK_5N) | (!gd.w1p) | (!gd.dx) | (!gd.du) | (!gd.gradf) | (!gd.Adx)
+  if ( (!DWORK_6N) | (!gd.w1p) | (!gd.dx) | (!gd.du) | (!gd.gradf) | (!gd.Adx)
        |(!gd.sig11)| (!gd.sig12) |(!gd.ntgu) ){
     perror("Error allocating memory\n");
   }
@@ -354,7 +354,7 @@ START_TEST(test_compute_descent)
   /* Setup the DCT */
   dct_setup(N, Npix, pix_idx);
 
-  compute_descent(N, fu1, fu2, atr, fe, tau, gd, DWORK_5N, cgp, &cgr);
+  compute_descent(N, fu1, fu2, atr, fe, tau, gd, DWORK_6N, cgp, &cgr);
   //get_gradient(N, fu1, fu2, DWORK_5N, atr, fe, tau, gd);
   /* ----- Now check: if this fails, look at *relative* tolerance. Here, we check
      absolute tolerance, but for real data,  y_exp is huge 1e22. Should probably normalize
@@ -381,7 +381,7 @@ START_TEST(test_compute_descent)
   free_double(sig11_exp);
   free_double(sig12_exp);
   free_double(w1p_exp);
-  free_double(DWORK_5N);
+  free_double(DWORK_6N);
   free_double(gd.w1p);
   free_double(gd.dx);
   free_double(gd.du);
@@ -447,6 +447,7 @@ START_TEST(test_H11pfun)
   h11p_data.one_by_fe_sqrd = 1.0/(fe * fe);
   h11p_data.atr = atr;
   h11p_data.sigx = sigx;
+  h11p_data.Dwork_1N = malloc_double(N);
 
   /* Setup the DCT */
   dct_setup(N, M, pix_idx);
@@ -467,7 +468,7 @@ START_TEST(test_H11pfun)
 
   free_double(y_exp);
   free_double(y);
-
+  free_double(h11p_data.Dwork_1N);
   dct_destroy();
 
   free_json_text_data();
@@ -645,7 +646,7 @@ START_TEST(test_line_search)
 
   // /* ----- Now check -------*/
   ck_assert_double_eq_tol(fep_exp, fe, TOL_DOUBLE);
-  ck_assert_double_eq_tol(fp_exp, f, TOL_DOUBLE*5);
+  ck_assert_double_eq_tol(fp_exp, f, 1e-7);
 
   ck_assert_double_eq_tol(flx_exp, ls_stat.flx, TOL_DOUBLE);
   ck_assert_double_eq_tol(flu_exp, ls_stat.flu, TOL_DOUBLE*100);
