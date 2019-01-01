@@ -11,7 +11,8 @@ to do
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
 
-  https://libcheck.github.io/check/doc/check_html/check_4.html#No-Fork-Mode
+  https://libcheck
+  .github.io/check/doc/check_html/check_4.html#No-Fork-Mode
 
  */
 
@@ -52,6 +53,9 @@ START_TEST (test_l1qc_newton_1iter)
   double mu = 0.0;
   int N=0, M=0, status=0, lbiter_exp=0;
   int *pix_idx=NULL;
+  AxFuns ax_funs = {.Ax=dct_EMx_new,
+                    .Aty=dct_MtEty,
+                    .AtAx=dct_MtEt_EMx_new};
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_l1qc_newton_1iter\n");
@@ -76,6 +80,7 @@ START_TEST (test_l1qc_newton_1iter)
   status +=extract_json_int(test_data_json, "lbiter", &lbiter_exp);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
 
+  dct_setup(N, M, pix_idx);
   u = malloc_double(N);
   if (status | !u){
     status += 1;
@@ -89,7 +94,7 @@ START_TEST (test_l1qc_newton_1iter)
   params.lbiter = 2;
   params.cg_params = cgp;
 
-  lb_res = l1qc_newton(N, x0, u, b, M, pix_idx,params);
+  lb_res = l1qc_newton(N, x0, u, b, M, pix_idx,params, ax_funs);
 
   ck_assert_double_array_eq_tol(N, x1_exp, x0,  0.00001);
   ck_assert_double_array_eq_tol(N, u1_exp, u,   0.00001);
@@ -128,8 +133,7 @@ END_TEST
 START_TEST (test_newton_init_regres1)
 {
   NewtParams params;
-  int N=4, M=2;
-  int pix_idx[] = {1,2};
+  int N=4;
 
   double x[] = {1.0, 2.0, 3.0, 4.0};
   double u[] = {0,0,0,0};
@@ -141,11 +145,10 @@ START_TEST (test_newton_init_regres1)
   params.lbtol = 0.1;
   params.mu = 0.1;
 
-  newton_init(N, x, u, &params,  M, pix_idx);
+  newton_init(N, x, u, &params);
 
   ck_assert_double_array_eq_tol(N, u_exp, u,  TOL_DOUBLE_SUPER);
 
-  dct_destroy();
 #ifdef _USEMKL_
   mkl_free_buffers();
 #endif
@@ -191,7 +194,7 @@ START_TEST (test_newton_init)
   params.lbtol = lbtol;
   params.epsilon = epsilon;
   params.lbiter = 0;
-  ret= newton_init(N, x, u, &params, M, pix_idx);
+  ret= newton_init(N, x, u, &params);
 
   ck_assert_double_array_eq_tol(N, u_exp, u,  TOL_DOUBLE_SUPER);
   ck_assert_double_eq_tol(tau_exp, params.tau,  TOL_DOUBLE_SUPER*100);
@@ -199,7 +202,7 @@ START_TEST (test_newton_init)
   ck_assert_int_eq(0, ret);
 
   params.lbiter = 1;
-  ret= newton_init(N, x, u, &params,  M, pix_idx);
+  ret= newton_init(N, x, u, &params);
   ck_assert_int_eq(1, params.lbiter);
 
   goto exit1;
@@ -298,6 +301,9 @@ START_TEST(test_compute_descent)
 
   int cg_maxiter, cgiter_exp, N, Npix, status=0;
   int *pix_idx;
+  AxFuns Ax_funs = {.Ax=dct_EMx_new,
+                    .Aty=dct_MtEty,
+                    .AtAx=dct_MtEt_EMx_new};
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_compute_descent\n");
@@ -354,7 +360,7 @@ START_TEST(test_compute_descent)
   /* Setup the DCT */
   dct_setup(N, Npix, pix_idx);
 
-  compute_descent(N, fu1, fu2, atr, fe, tau, gd, DWORK_6N, cgp, &cgr);
+  compute_descent(N, fu1, fu2, atr, fe, tau, gd, DWORK_6N, cgp, &cgr, Ax_funs);
   //get_gradient(N, fu1, fu2, DWORK_5N, atr, fe, tau, gd);
   /* ----- Now check: if this fails, look at *relative* tolerance. Here, we check
      absolute tolerance, but for real data,  y_exp is huge 1e22. Should probably normalize
@@ -448,6 +454,7 @@ START_TEST(test_H11pfun)
   h11p_data.atr = atr;
   h11p_data.sigx = sigx;
   h11p_data.Dwork_1N = malloc_double(N);
+  h11p_data.AtAx = dct_MtEt_EMx_new;
 
   /* Setup the DCT */
   dct_setup(N, M, pix_idx);
@@ -579,6 +586,10 @@ START_TEST(test_line_search)
   double *fu1p_exp, *fu2p_exp, fep_exp, fp_exp;
   double flx_exp=0, flu_exp=0, flin_exp=0;
 
+  AxFuns Ax_funs = {.Ax=dct_EMx_new,
+                    .Aty=dct_MtEty,
+                    .AtAx=dct_MtEt_EMx_new};
+
   //double sm;
   int N,N2, M, status=0;
   int *pix_idx=NULL;
@@ -642,7 +653,8 @@ START_TEST(test_line_search)
   fu2p = malloc_double(N);
   dct_setup(N, M, pix_idx);
 
-  ls_stat = line_search(N, M, x, u, r, b, fu1p, fu2p, gd, ls_params, DWORK_5N, &fe, &f);
+  ls_stat = line_search(N, M, x, u, r, b, fu1p, fu2p, gd, ls_params,
+                        DWORK_5N, &fe, &f, Ax_funs);
 
   // /* ----- Now check -------*/
   ck_assert_double_eq_tol(fep_exp, fe, TOL_DOUBLE);

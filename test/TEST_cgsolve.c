@@ -149,18 +149,17 @@ START_TEST(test_cgsolve_h11p){
   status +=extract_json_double(test_data_json, "tau", &tau);
   status +=extract_json_int(test_data_json, "cgmaxiter", &cg_maxiter);
 
+
   h11p_data.one_by_fe = 1.0/fe;
   h11p_data.one_by_fe_sqrd = 1.0 / (fe * fe);
   h11p_data.atr = atr;
   h11p_data.sigx = sigx;
   h11p_data.Dwork_1N = malloc_double(N);
+  h11p_data.AtAx = dct_MtEt_EMx_new;
 
   dx = malloc_double(N);
-  if (!dx){
-    perror("error allocating memory\n");
-  }
   DWORK_4N = malloc_double(4*N);
-  if (!DWORK_4N){
+  if (!dx| !DWORK_4N){
     perror("error allocating memory\n");
   }
 
