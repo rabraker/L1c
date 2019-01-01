@@ -52,19 +52,15 @@ TEST_SRC_DIR   = ./test
 ML_INTERFACE   = ./interfaces
 
 MEX_BUILD_DIR      = ./build/mex
-MEX_VCL_BUILD_DIR  = ./build/mex/vcl
 MEX_LIB_DIR        = ./lib/mex
 NATIVE_BUILD_DIR      = ./build
-NATIVE_VCL_BUILD_DIR  = ./build/vcl
 NATIVE_LIB_DIR        = ./lib
 
 ifeq (${MAKECMDGOALS},mex)
 BUILD_DIR      = $(MEX_BUILD_DIR)
-VCL_BUILD_DIR  = $(MEX_VCL_BUILD_DIR)
 LIB_DIR        = $(MEX_LIB_DIR)
 else
 BUILD_DIR      = $(NATIVE_BUILD_DIR)
-VCL_BUILD_DIR  = $(NATIVE_VCL_BUILD_DIR)
 LIB_DIR        = $(NATIVE_LIB_DIR)
 endif
 MEX_NAME       = $(ML_INTERFACE)/l1qc.mexa64
@@ -87,7 +83,7 @@ APP_CPP        = $(wildcard $(VCL_SRC_DIR)/*.cpp)
 TEST_SRC       = $(wildcard $(TEST_SRC_DIR)/*.c)
 
 APP_OBJ        = $(addprefix $(BUILD_DIR)/, $(notdir $(APP_SRC:.c=.o)))
-VCL_OBJ        = $(addprefix $(VCL_BUILD_DIR)/, $(notdir $(APP_CPP:.cpp=.o)))
+VCL_OBJ        = $(addprefix $(BUILD_DIR)/, $(notdir $(APP_CPP:.cpp=.o)))
 TEST_OBJ       = $(addprefix $(BUILD_DIR)/, $(notdir $(TEST_SRC:.c=.o)))
 OBJ            = $(APP_OBJ) $(TEST_OBJ)
 
@@ -199,7 +195,7 @@ $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c
 $(BUILD_DIR)/%.o: $(TEST_SRC_DIR)/%.c
 	${CC} $(INCLUDE) ${CFLAGS} -c -o $@ $<
 
-$(VCL_BUILD_DIR)/%.o: $(VCL_SRC_DIR)/%.cpp
+$(BUILD_DIR)/%.o: $(VCL_SRC_DIR)/%.cpp
 	${CPP} $(CPP_VCL_FLAGS) -c -o $@ $<
 
 
@@ -209,9 +205,7 @@ test_data:
 clean:
 	rm -f $(TEST_APP)
 	rm -f $(MEX_BUILD_DIR)/*.o
-	rm -f $(MEX_VCL_BUILD_DIR)/*.o
 	rm -f $(NATIVE_BUILD_DIR)/*.o
-	rm -f $(NATIVE_VCL_BUILD_DIR)/*.o
 	rm -f $(ML_INTERFACE)/*.o
 	rm -f $(ML_INTERFACE)/*.mexa64
 
