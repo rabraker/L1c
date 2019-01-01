@@ -47,18 +47,34 @@ ML_CMD         = "try;                                   \
                  exit(0);"
 
 SRC_DIR        = ./src
-BUILD_DIR      = ./build
 VCL_SRC_DIR    = ./src/vcl
-VCL_BUILD_DIR  = ./build/vcl
 TEST_SRC_DIR   = ./test
 ML_INTERFACE   = ./interfaces
-MEX_NAME       = $(ML_INTERFACE)/l1qc.mexa64
 
+MEX_BUILD_DIR      = ./build/mex
+MEX_VCL_BUILD_DIR  = ./build/mex/vcl
+MEX_LIB_DIR        = ./lib/mex
+NATIVE_BUILD_DIR      = ./build
+NATIVE_VCL_BUILD_DIR  = ./build/vcl
+NATIVE_LIB_DIR        = ./lib
+
+ifeq (${MAKECMDGOALS},mex)
+BUILD_DIR      = $(MEX_BUILD_DIR)
+VCL_BUILD_DIR  = $(MEX_VCL_BUILD_DIR)
+LIB_DIR        = $(MEX_LIB_DIR)
+else
+BUILD_DIR      = $(NATIVE_BUILD_DIR)
+VCL_BUILD_DIR  = $(NATIVE_VCL_BUILD_DIR)
+LIB_DIR        = $(NATIVE_LIB_DIR)
+endif
+MEX_NAME       = $(ML_INTERFACE)/l1qc.mexa64
 TEST_APP       = test_l1qc
 ML_MEX         = $(ML_INTERFACE)/l1qc.mexa64
-LIB_NAME       = lib/libl1qc.so
-APP_ARCHIVE    = lib/libl1qc.a
-VCL_ARCHIVE    = lib/libvcl_math.a
+
+LIB_NAME       = $(LIB_DIR)/libl1qc.so
+APP_ARCHIVE    = $(LIB_DIR)/libl1qc.a
+VCL_ARCHIVE    = $(LIB_DIR)/libvcl_math.a
+
 ifeq (${MAKECMDGOALS},test)
 TEST_ARCHIVE   = test/lib/libtest_l1qc.a
 else
@@ -75,12 +91,17 @@ VCL_OBJ        = $(addprefix $(VCL_BUILD_DIR)/, $(notdir $(APP_CPP:.cpp=.o)))
 TEST_OBJ       = $(addprefix $(BUILD_DIR)/, $(notdir $(TEST_SRC:.c=.o)))
 OBJ            = $(APP_OBJ) $(TEST_OBJ)
 
-# DEBUG         = -DDBUG -ggdb
+ifeq ($(DEBUG),1)
+DBG          = -DDBUG -ggdb
+OPT            =
+else
+DBG          =
 OPT            = -O3 -msse3 -mavx2
+endif
 # check header files are in /usr/local/include
-INCLUDE         = -I/usr/include                \
-                  -I/usr/local/include          \
-	           	  -Iinclude
+INCLUDE        = -I/usr/include                \
+				 -I/usr/local/include          \
+	           	 -Iinclude
 
 # ---------- If making a mex file, add the needed includes and libs
 ifeq ($(MAKECMDGOALS),mex)
@@ -91,10 +112,10 @@ MATLAB_LDIR    = -L/usr/local/MATLAB/R2018b/bin/glnxa64 \
 MATLAB_LIBS    = -lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
 endif
 
-CFLAGS         =  $(OPT) $(DEBUG) -fPIC -Wall $(MAT_DEF)
-CPP_VCL_FLAGS  =  -Iinclude/vcl $(DEBUG) -mavx2 -mfma -fabi-version=0 -O3 -fPIC
+CFLAGS         =  $(OPT) $(DBG) -fPIC -Wall $(MAT_DEF)
+CPP_VCL_FLAGS  =  -Iinclude/vcl $(DBG) -mavx2 -mfma -fabi-version=0 -O3 -fPIC
 
-ifeq (${USE_MKL},true)
+ifeq (${USE_MKL},1)
 MATH_INCLUDE   =  -I${MKLROOT}/include
 MATH_CFLAGS    =   -D_USEMKL_ -DMKL_ILP64 -m64
 MATH_LDIR      =
@@ -127,10 +148,26 @@ $(info $$DEF_MAT  [${ML_MEX}])
 
 
 #-----------------------Targets ----------------------
-.PHONY: clean all mex app_ar vcl_ar test_ar test_obj lib test test_data clean_all
+.PHONY: clean help mex app_ar vcl_ar test_ar test_obj lib test test_data clean_all
 
 # test: $(TEST_APP)
-all: test lib
+help:
+	@echo "Usage:"
+	@echo ">>> make test [ARGS]"
+	@echo "    Builds the test suite, which can be run by executing ./$(TEST_APP)"
+	@echo ">>> make mex [ARGS]"
+	@echo "    Builds the mex interface, which can be find in $(MEX_NAME)."
+	@echo ">>> make test_data"
+	@echo "    Builds test data required by the test suite. Running this command requires MATLAB."
+	@echo ">>> make clean"
+	@echo "    Removes all build artifacts, but leaves json test data and libraries."
+	@echo ">>> make clean_all"
+	@echo "    Removes all build artifacts including libraries, but leaves json test data."
+	@echo ">>> make clean_pristine"
+	@echo "    Removes all build artifacts including libraries and json test data."
+	@echo "ARGS\n-----"
+	@echo "USE_MKL=1|0 (default 0). If 0, will use open_blas."
+	@echo "DEBUG=1|0    (default 0). If 1, disables optimizations.\n"
 
 mex: mex_obj
 	${LD} -shared -o $(MEX_NAME) interfaces/l1qc.o ${LDFLAGS}
@@ -150,7 +187,7 @@ test:test_ar app_ar vcl_ar
 	$(LD) -o ${TEST_APP} $(LDFLAGS)
 
 test_ar: $(TEST_OBJ)
-	$(AR) -rcs test/lib/libtest_l1qc.a $^
+	$(AR) -rcs $(TEST_ARCHIVE) $^
 
 vcl_ar: $(VCL_OBJ)
 	$(AR) -rcs $(VCL_ARCHIVE) $^
@@ -171,15 +208,19 @@ test_data:
 
 clean:
 	rm -f $(TEST_APP)
-	rm -f $(BUILD_DIR)/*.o
-	rm -f $(BUILD_DIR)/*.a
-	rm -f $(BUILD_DIR)/*.so
-	rm -f $(VCL_BUILD_DIR)/*.o
+	rm -f $(MEX_BUILD_DIR)/*.o
+	rm -f $(MEX_VCL_BUILD_DIR)/*.o
+	rm -f $(NATIVE_BUILD_DIR)/*.o
+	rm -f $(NATIVE_VCL_BUILD_DIR)/*.o
 	rm -f $(ML_INTERFACE)/*.o
 	rm -f $(ML_INTERFACE)/*.mexa64
-	rm -f lib/*
-	rm -f test/lib/*
+
 clean_all:clean
+	rm -f $(MEX_LIB_DIR)/*.*
+	rm -f $(NATIVE_LIB_DIR)/*.*
+	rm -f test/lib/*
+
+clean_pristine:clean_all
 	rm -f ${TEST_DATA_ROOT}/*.json
 
 
