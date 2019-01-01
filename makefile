@@ -89,10 +89,12 @@ OBJ            = $(APP_OBJ) $(TEST_OBJ)
 
 ifeq ($(DEBUG),1)
 DBG          = -DDBUG -ggdb
-OPT            =
+OPT          =
+VCL_OPT      =
 else
 DBG          =
-OPT            = -O3 -msse3 -mavx2
+OPT          = -O3 -msse3 -mavx2
+VCL_OPT      = -O3 -mavx2 -mfma
 endif
 # check header files are in /usr/local/include
 INCLUDE        = -I/usr/include                \
@@ -109,7 +111,7 @@ MATLAB_LIBS    = -lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
 endif
 
 CFLAGS         =  $(OPT) $(DBG) -fPIC -Wall $(MAT_DEF)
-CPP_VCL_FLAGS  =  -Iinclude/vcl $(DBG) -mavx2 -mfma -fabi-version=0 -O3 -fPIC
+CPP_VCL_FLAGS  =  -Iinclude/vcl $(DBG) $(VCL_OPT) -fabi-version=0 -fPIC
 
 ifeq (${USE_MKL},1)
 MATH_INCLUDE   =  -I${MKLROOT}/include

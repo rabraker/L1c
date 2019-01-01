@@ -42,12 +42,17 @@ START_TEST(test_vcl_sum)
   for (int i =0; i<12; i++){
     x[i] = x_[i];
   }
+
+  double sum_exp0 = 6.0;
   double sum_exp1 = 36.0;
   double sum_exp2 = 45.0;
   double sum_exp3 = 55.0;
   double sum_exp4 = 66.0;
   double sum_exp5 = 78.0;
   double sum_x = 0.0;
+
+  sum_x = vcl_sum(3, x);
+  ck_assert_double_eq_tol(sum_exp0, sum_x, TOL_DOUBLE);
 
   sum_x = vcl_sum(8, x);
   ck_assert_double_eq_tol(sum_exp1, sum_x, TOL_DOUBLE);
@@ -76,7 +81,7 @@ START_TEST(test_vcl_logsum)
   for (int i =0; i<12; i++){
     x[i] = x_[i];
   }
-
+  double logsum_exp0 = 5.087596335232384;
   double logsum_exp1 = 19.393501212090126;
   double logsum_exp2 = 22.689338078094455;
   double logsum_exp3 = 26.090535459756609;
@@ -86,6 +91,9 @@ START_TEST(test_vcl_logsum)
   double logsum_x = 0.0;
 
   double alpha = 3.0;
+
+  logsum_x = vcl_logsum(3, alpha, x);
+  ck_assert_double_eq_tol(logsum_exp0, logsum_x, TOL_DOUBLE);
 
   logsum_x = vcl_logsum(8, alpha, x);
   ck_assert_double_eq_tol(logsum_exp1, logsum_x, TOL_DOUBLE);
