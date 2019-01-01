@@ -69,7 +69,7 @@ function xp = build_logbarrier_test_data(data_root, lbiter)
   lbtol = 1e-3;
   mu = 10;
   cgtol = 1e-9;
-  cgmaxiter = 400;
+  cgmaxiter = 200;
 
   newtontol = lbtol;
   newtonmaxiter = 50;

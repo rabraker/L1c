@@ -41,7 +41,7 @@ static cJSON *test_data_json;
 
 START_TEST (test_l1qc_newton_1iter)
 {
-  CgParams cgp = {.verbose=0, .max_iter=400, .tol=1e-9};
+  CgParams cgp = {.verbose=0, .max_iter=0.0, .tol=0.0};
   NewtParams params;
   char fpath[] = "test_data/lb_test_data_iter_2.json";
   double *x0=NULL, *u=NULL, *b=NULL;
@@ -67,7 +67,7 @@ START_TEST (test_l1qc_newton_1iter)
   status +=extract_json_double(test_data_json, "lbtol", &lbtol);
   status +=extract_json_double(test_data_json, "newtontol", &params.newton_tol);
   status +=extract_json_int(test_data_json, "newtonmaxiter", &params.newton_max_iter);
-  // status +=extract_json_double(test_data_json, "cgtol", &cgp.tol);
+  status +=extract_json_double(test_data_json, "cgtol", &cgp.tol);
   status +=extract_json_int(test_data_json, "cgmaxiter", &cgp.max_iter);
   status +=extract_json_double(test_data_json, "epsilon", &epsilon);
 
@@ -771,7 +771,7 @@ START_TEST(test_logsum)
   double x[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
   double alpha = 3.0;
   double logsum_x_exp = 13.170924944018758;
-  double logsum_x = logsum(N, x, alpha);
+  double logsum_x = logsum(N, alpha, x);
 
   ck_assert_double_eq_tol(logsum_x_exp, logsum_x, TOL_DOUBLE);
   // setup_vectors_SC();

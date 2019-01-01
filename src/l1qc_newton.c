@@ -42,7 +42,7 @@ double sum_vec(int N, double *x){
 }
 
 
-double logsum(int N, double *x, double alpha) {
+double logsum(int N,  double alpha, double *x) {
   /* Computes sum(log( alpha *x)) */
   int i = 0;
   double total = 0.0;
@@ -91,8 +91,9 @@ void f_eval(int N, double *x, double *u, int M, double *r, double tau, double ep
 
   *fe = 0.5 * (cblas_ddot(M, r, 1, r, 1) - epsilon * epsilon);
 
-  // a1 = logsum(N, fu1, -1.0);
-  // a2 = logsum(N, fu2, -1.0);
+  // a1 = logsum(N, -1.0, fu1);
+  // a2 = logsum(N, -1.0, fu2);
+  // *f = sum_vec(N, u) - (1.0/tau) * ( a1 + a2 +a3);
   a1 = vcl_logsum(N, -1.0, fu1);
   a2 = vcl_logsum(N, -1.0, fu2);
   a3 = log(- (*fe));
@@ -402,7 +403,7 @@ int save_x(int N, double *x, char *fname){
 }
 
 LBResult l1qc_newton(int N, double *x, double *u, double *b,
-                int M, int *pix_idx, NewtParams params){
+                     int M, int *pix_idx, NewtParams params){
   LSStat ls_stat;// = {.flx=0, .flu = 0, .flin=0, .step=0, .status=0};
   CgParams cg_params = params.cg_params;
   CgResults cg_results;
@@ -412,32 +413,32 @@ LBResult l1qc_newton(int N, double *x, double *u, double *b,
 
   double fe = 0.0, f = 0.0, lambda2 = 0.0, stepsize = 0.0;
 
-  double *atr=NULL, *DWORK_17N = NULL, *DWORK_fftw_2N = NULL;
-  DWORK_17N = malloc_double(17*N);
-  DWORK_fftw_2N = fftw_alloc_real(2*N);
+  GradData gd = {.w1p=NULL, .dx=NULL, .du=NULL, .sig11=NULL,
+                 .sig12=NULL, .ntgu=NULL, .gradf=NULL, .Adx=NULL};
 
-  if ( !DWORK_17N | !DWORK_fftw_2N){
+  double *atr = fftw_alloc_real(N);
+  double *DWORK_6N = malloc_double(6*N);
+  double *r = malloc_double(M);
+  double *fu1 = malloc_double(N);
+  double *fu2 = malloc_double(N);;
+
+  gd.w1p = malloc_double(N);
+  gd.dx  = malloc_double(N);
+  gd.du  = malloc_double(N);
+  gd.sig11  = malloc_double(N);
+  gd.sig12  = malloc_double(N);
+  gd.ntgu   = malloc_double(N);
+  gd.gradf  = malloc_double(2*N);
+  gd.Adx = malloc_double(M);
+
+  if ( !DWORK_6N | !r | !fu1 | !fu2
+       |!gd.w1p| !gd.dx| !gd.du
+       |!gd.sig11 | !gd.sig12 |!gd.ntgu
+       |!gd.gradf|!gd.Adx| !atr){
     lb_res.status = 1;
     goto exit;
   }
 
-  double *DWORK_6N = DWORK_17N;
-  double *r = DWORK_17N + 6*N;
-  double *fu1 = DWORK_17N + 7*N;
-  double *fu2 = DWORK_17N + 8*N;
-
-  GradData gd = {.w1p = DWORK_17N   + 9*N,
-                 .dx = DWORK_17N    + 10*N,
-                 .du = DWORK_17N    + 11*N,
-                 .sig11 = DWORK_17N + 12*N,
-                 .sig12 = DWORK_17N + 13*N,
-                 .ntgu = DWORK_17N  + 14*N,
-                 .gradf = DWORK_17N + 15*N,
-                 .Adx=NULL}; //gradf needs 2N
-
-  gd.Adx = malloc_double(M);
-
-  atr = DWORK_fftw_2N+N;
 
   newton_init(N, x, u, &params, M, pix_idx);
 
@@ -542,8 +543,22 @@ INFINITY;
   goto exit;
 
  exit:
-  free_double(DWORK_17N);
+
+  free_double(DWORK_6N);
+  free_double(r);
+  free_double(fu1);
+  free_double(fu2);
+  free_double(gd.w1p);
+  free_double(gd.dx);
+  free_double(gd.du);
+  free_double(gd.sig11);
+  free_double(gd.sig12);
+  free_double(gd.ntgu);
+  free_double(gd.gradf);
   free_double(gd.Adx);
+
+  fftw_free(atr);
+
   dct_destroy();
 
   lb_res.total_newton_iter = total_newt_iter;
