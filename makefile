@@ -93,8 +93,18 @@ OPT          =
 VCL_OPT      =
 else
 DBG          =
-OPT          = -O3 -msse3 -mavx2
-VCL_OPT      = -O3 -mavx2 -mfma
+# OPT          = -O3 -msse3 -mavx2
+# VCL_OPT      = -O3 -mavx2 -mfma
+
+# N.B. If we compile with unsupported instruction set flags, we will get
+# a SIGILL error at runtime. For example, compiling on my desktop, which does not
+# support avx2, only avx, with -maxv2 will cause a SIGILL. Thus, instead of specifying
+# these flags explicitely, we can use -march=native -mtune=native. The result can be
+# checked with
+# gcc -dM -E -march=native -mtune=native - < /dev/null | egrep "AVX|SSE"
+# which will print out a list of defines for enabled instructions.
+OPT          = -O3 -march=native -mtune=native
+VCL_OPT          = -O3 -march=native -mtune=native
 endif
 # check header files are in /usr/local/include
 INCLUDE        = -I/usr/include                \
