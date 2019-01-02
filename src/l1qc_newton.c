@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
- #include <fftw3.h>
 
 #include "l1qc_newton.h"
 #include "cgsolve.h"
@@ -417,7 +416,7 @@ LBResult l1qc_newton(int N, double *x, double *u, double *b,
   GradData gd = {.w1p=NULL, .dx=NULL, .du=NULL, .sig11=NULL,
                  .sig12=NULL, .ntgu=NULL, .gradf=NULL, .Adx=NULL};
 
-  double *atr = fftw_alloc_real(N);
+  double *atr = malloc_double(N);
   double *DWORK_6N = malloc_double(6*N);
   double *r = malloc_double(M);
   double *fu1 = malloc_double(N);
@@ -549,6 +548,7 @@ INFINITY;
 
  exit:
 
+  free_double(atr);
   free_double(DWORK_6N);
   free_double(r);
   free_double(fu1);
@@ -561,8 +561,6 @@ INFINITY;
   free_double(gd.ntgu);
   free_double(gd.gradf);
   free_double(gd.Adx);
-
-  fftw_free(atr);
 
   lb_res.total_newton_iter = total_newt_iter;
   lb_res.l1 = sum_abs_vec(N, x);

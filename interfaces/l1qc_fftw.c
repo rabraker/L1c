@@ -7,7 +7,7 @@
 #include "l1qc_common.h"
 #include <math.h>
 
-#include "dct_mkl.h" /* Or whatever you want to use for
+#include "dct.h" /* Or whatever you want to use for
                     the Ax Aty transformations */
 
 #define NUMBER_OF_FIELDS(ST) (sizeof(ST)/sizeof(*ST))
@@ -19,9 +19,9 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 {
   // l1qc(x0, b, pix_idx, params);
   /* inputs */
-  AxFuns Ax_funs = {.Ax=dctmkl_EMx_new,
-                    .Aty=dctmkl_MtEty,
-                    .AtAx=dctmkl_MtEt_EMx_new};
+  AxFuns Ax_funs = {.Ax=dct_EMx_new,
+                    .Aty=dct_MtEty,
+                    .AtAx=dct_MtEt_EMx_new};
 
   double *x_theirs=NULL, *x_ours=NULL, *u=NULL, *b=NULL;
   NewtParams params = {.epsilon=0, .tau=0, .mu=0,
@@ -181,9 +181,9 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   }
 
   /* ---------------------------------------  */
-  dctmkl_setup(N, M, pix_idx);
+  dct_setup(N, M, pix_idx);
   lb_res = l1qc_newton(N, x_ours, u, b, M, pix_idx, params, Ax_funs);
-  dctmkl_destroy();
+  dct_destroy();
 
   plhs[0] = mxCreateDoubleMatrix((mwSize)N, 1, mxREAL);
 
