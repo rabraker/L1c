@@ -40,10 +40,10 @@ int main(void)
 
   // Only need to do this for ADDITIONAL suites. Otherwise it will run twice.
 
-  // srunner_add_suite(sr, cgsolve_suite());
+  srunner_add_suite(sr, cgsolve_suite());
   // srunner_add_suite(sr, l1qc_newton_suite());
   // srunner_add_suite(sr, dct_suite());
-  // srunner_add_suite(sr, vcl_math_suite());
+  srunner_add_suite(sr, vcl_math_suite());
 
   /* Run the tests */
   srunner_run_all(sr, CK_VERBOSE);

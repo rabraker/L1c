@@ -171,7 +171,7 @@ END_TEST
 
 
 
-START_TEST(test_dct_MtEt_EMx_large)
+START_TEST(test_dctmkl_MtEt_EMx_large)
 {
   char fpath[] = "test_data/dct_large.json";
   int *pix_idx;
@@ -214,7 +214,7 @@ START_TEST(test_dct_MtEt_EMx_large)
 END_TEST
 
 
-START_TEST(test_dct_MtEty_large)
+START_TEST(test_dctmkl_MtEty_large)
 {
 
   char fpath[] = "test_data/dct_large.json";
@@ -258,7 +258,7 @@ START_TEST(test_dct_MtEty_large)
 END_TEST
 
 
-START_TEST(test_dct_EMx_large)
+START_TEST(test_dctmkl_EMx_large)
 {
 
   char fpath[] = "test_data/dct_large.json";
@@ -309,7 +309,7 @@ END_TEST
 Suite *dct_mkl_suite(void)
 {
   Suite *s;
-  TCase *tc_core;
+  TCase *tc_small, *tc_large;
   s = suite_create("dct_mkl");
   tc_large = tcase_create("dct_mkl_large");
   tc_small = tcase_create("dct_mkl_small");
@@ -318,14 +318,12 @@ Suite *dct_mkl_suite(void)
   tcase_add_test(tc_small, test_dctmkl_EMx_new_small_rand);
   tcase_add_test(tc_small, test_dctmkl_MtEty_small_rand);
 
-  tcase_add_test(tc_large, test_dct_MtEt_EMx_large);
-  tcase_add_test(tc_large, test_dct_EMx_large);
-  tcase_add_test(tc_large, test_dct_MtEty_large);
+  tcase_add_test(tc_large, test_dctmkl_MtEt_EMx_large);
+  tcase_add_test(tc_large, test_dctmkl_EMx_large);
+  tcase_add_test(tc_large, test_dctmkl_MtEty_large);
 
-
-
-
-  suite_add_tcase(s, tc_core);
+  suite_add_tcase(s, tc_small);
+  suite_add_tcase(s, tc_large);
 
   return s;
 
