@@ -182,7 +182,7 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   /* ---------------------------------------  */
   dct_setup(N, M, pix_idx);
-  lb_res = l1qc_newton(N, x_ours, u, b, M, pix_idx, params, Ax_funs);
+  lb_res = l1qc_newton(N, x_ours, u, M, b,  params, Ax_funs);
   dct_destroy();
 
   plhs[0] = mxCreateDoubleMatrix((mwSize)N, 1, mxREAL);

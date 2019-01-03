@@ -94,7 +94,7 @@ START_TEST (test_l1qc_newton_1iter)
   params.lbiter = 2;
   params.cg_params = cgp;
 
-  lb_res = l1qc_newton(N, x0, u, b, M, pix_idx,params, ax_funs);
+  lb_res = l1qc_newton(N, x0, u, M, b, params, ax_funs);
 
   ck_assert_double_array_eq_tol(N, x1_exp, x0,  0.00001);
   ck_assert_double_array_eq_tol(N, u1_exp, u,   0.00001);

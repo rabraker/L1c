@@ -402,8 +402,8 @@ int save_x(int N, double *x, char *fname){
   return 0;
 }
 
-LBResult l1qc_newton(int N, double *x, double *u, double *b,
-                     int M, int *pix_idx, NewtParams params, AxFuns Ax_funs){
+LBResult l1qc_newton(int N, double *x, double *u, int M, double *b,
+                     NewtParams params, AxFuns Ax_funs){
   LSStat ls_stat;// = {.flx=0, .flu = 0, .flin=0, .step=0, .status=0};
   CgParams cg_params = params.cg_params;
   CgResults cg_results;

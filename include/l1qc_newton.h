@@ -104,7 +104,6 @@ int get_gradient(int N, double *fu1, double *fu2, double fe,  double tau, double
 /* Evalutes the value function */
 extern void f_eval(int N, double *x, double *u, int M, double *r, double tau, double epsilon,
                    double *fu1, double *fu2, double *fe, double *f);
-extern LBResult l1qc_newton(int N, double *x, double *u, double *b,
-                            int M, int *pix_idx, NewtParams params, AxFuns Ax_funs);
-
+extern LBResult l1qc_newton(int N, double *x, double *u, int M, double *b,
+                            NewtParams params, AxFuns Ax_funs);
 #endif
