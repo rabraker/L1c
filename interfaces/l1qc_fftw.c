@@ -1,7 +1,6 @@
 #include "mex.h"
 #include "matrix.h"
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include "l1qc_newton.h"
 #include "l1qc_common.h"

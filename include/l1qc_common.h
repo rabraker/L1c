@@ -3,10 +3,8 @@
 
 #ifdef __MATLAB__
 #include "mex.h"
-#define PRINT(...) mexPrintf(__VA_ARGS__);
 #else
 #include <stdio.h>
-#define PRINT(...) printf(__VA_ARGS__);
 #endif
 
 

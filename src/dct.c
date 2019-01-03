@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <fftw3.h>
 
 #ifdef _USEMKL_
@@ -8,12 +7,11 @@
 
 #ifdef _USETHREADS_
 // #include <omp.h>
+// #include <fftw3_threads.h>
 #include <pthread.h>
 #endif
 
-// #include <fftw3_threads.h>
 #include <math.h>
-#include <time.h>
 #include "dct.h"
 
 #define PI  3.141592653589793

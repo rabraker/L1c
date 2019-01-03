@@ -1,41 +1,6 @@
-/* ##############################################################
-This code is a c implementation of the conjugate gradient solver
-in l1magic. It is a direct port of the matlab code, which follows
-closely to the description on wikipedia
+/**  \file
+This contains the conjugate gradient solver, cgsolve. The two small routines Ax and Ax_sym illustrate how the user function AX_func can parse the input void *AX_data.
 
-https://en.wikipedia.org/wiki/Conjugate_gradient_method
-
- Purpose
- -------
- To solve the system of equations
- A x = b
- where A = A^T > 0 via the method of conjugate gradients.
- The advantage to this method is that we do not have to
- store the matrix A, but only need a function which performs
- the linear mapping.
-
-
- double *x : result is stored in this array. Should have length n_b.
-
- double *b : the RHS, should have length n_b.
-
- size_t n_b: length of b
-
- double tol : tolerance.
-
- int verbose : how often to print status updates.
-
- double *Dwork: A work vector of length 5 * n_b.
-
- void(*AX_func)(int n, double *x, double *b, void *AX_data) : Pointer to a function
- which evalutes A * x.
-
- void *AX_data : Data needed by AX_func. For example, if
- you just wanted AX_func to perform a normal matrix multiplication,
- you could do
- AX_func((int n, double *x, double *b, void *AX_data){
- double *A = (double *) AX_data;
- }
 */
 
 #ifdef _USEMKL_
@@ -46,10 +11,48 @@ https://en.wikipedia.org/wiki/Conjugate_gradient_method
 // #include "clapack.h"
 #include <stdlib.h>
 #include <math.h>
-#include <stdio.h>
+// #include <stdio.h>
 #include "cgsolve.h"
 #include "l1qc_common.h"
 
+/**
+
+   Purpose
+   -------
+   To solve the system of equations
+   \f[
+   A x = b
+   \f]
+   where \f$A = A^T > 0\f$ via the method of conjugate gradients.
+   The advantage to this method is that we do not have to
+   store the matrix A, but only need a function which performs
+   the linear mapping.
+
+
+   @param[out] x The result is stored in this array. Should have length n_b.
+   @param[in] b  The RHS, should have length n_b.
+   @param[in] n_b Length of the vector b.
+   @param[in] Dwork Pointer to a work array of length 5 * n_b.
+   @param[in] void(*AX_func) Pointer to a function which evalutes A * x.
+   @param[in] AX_data  Data needed by AX_func. For example, if
+   you just wanted AX_func to perform a normal matrix multiplication,
+   you could do
+   AX_func((int n, double *x, double *b, void *AX_data){
+   double *A = (double *) AX_data;
+   @param[out] cg_result Pointer to a struct containing relevent results from the computation.
+   @param[in] cg_params Struct containing parameters (tolerance and verbosity) for the computation.
+
+
+   Algorithm
+   ---------
+   This code is a c implementation of the conjugate gradient solver
+   in l1magic. It is a direct port of the matlab code, which follows
+   closely to the description on wikipedia
+
+   https://en.wikipedia.org/wiki/Conjugate_gradient_method
+
+ }
+*/
 
 int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
             void(*AX_func)(int n, double *x, double *b, void *AX_data), void *AX_data,
@@ -150,20 +153,10 @@ int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
 
 
 
-/* Simple wrappers around cblas_dgemv to compute b=Ax */
-
-// void dgemv_ColOrder(double *A, int m_A, int n_A, double *x, double *b){
-//   enum CBLAS_ORDER MatOrder = CblasColMajor;
-//   enum CBLAS_TRANSPOSE NoTrans = CblasNoTrans;
-//   cblas_dgemv(MatOrder, NoTrans, m_A, n_A, 1.0, A, m_A, x, 1, 0.0, b, 1);
-// }
-
-void dgemv_RowOrder(double *A, int m_A, int n_A, double *x, double *b){
-
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, m_A, n_A, 1.0, A, n_A, x, 1, 0.0, b, 1);
-}
-
-
+/**
+   Computes the matrix-vector product y = A * b, for a symmetric matrix A.
+   This is a wrapper for cblas_dspmv.
+*/
 
 void Ax_sym(int n, double *x, double *b, void *AX_data){
 
@@ -173,15 +166,12 @@ void Ax_sym(int n, double *x, double *b, void *AX_data){
 
 }
 
-
+/**
+Computes the matrix-vector product y = A * b, for a full matrix A.
+This is a wrapper for cblas_dgemv.
+ */
 void Ax(int n, double *x, double *b, void *AX_data){
   double *A = (double *) AX_data;
-  dgemv_RowOrder(A, n, n, x, b);
+
+  cblas_dgemv(CblasRowMajor, CblasNoTrans, n, n, 1.0, A, n, x, 1, 0.0, b, 1);
 }
-
-
-// if (!r){
-//   perror("Memory Allocation failure\n");
-//   free(r);
-//   return 1;
-//  }

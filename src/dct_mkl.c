@@ -1,12 +1,10 @@
 #ifdef _USEMKL_ //disable the entire file if no mkl.
 
 #include <stdlib.h>
-
-#include "mkl.h"
+#include <math.h>
 
 #include "mkl_service.h"
 #include "mkl_trig_transforms.h"
-#include <math.h>
 #include "l1qc_common.h"
 
 DFTI_DESCRIPTOR_HANDLE mkl_dct_handle=0;
@@ -56,6 +54,7 @@ void dctmkl_destroy(){
 
   free_double(dctmkl_tmp_x);
   free_double(dctmkl_tmp_y);
+  free_double(dctmkl_dpar);
 }
 
 void dctmkl_idct(double * restrict x, double * restrict y){
