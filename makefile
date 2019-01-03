@@ -34,6 +34,8 @@ endif
 
 # should check if this is set already
 MKLROOT        = /opt/intel/compilers_and_libraries_2019.1.144/linux/mkl
+# MKLROOT        = /opt/intel/compilers_and_libraries/linux/mkl
+MATLAB_R    = /usr/local/MATLAB/R2018b
 MATLAB         = matlab -nodesktop -nosplash -r
 TEST_DATA_ROOT = $(CURDIR)/test_data
 ML_BUILD_FCN   = L1qcTestData.build_all_test_data
@@ -114,8 +116,8 @@ INCLUDE        = -I/usr/include                \
 # ---------- If making a mex file, add the needed includes and libs
 ifeq ($(MAKECMDGOALS),mex)
 MATLAB_CFLAGS  = -Wall -fPIC -D__MATLAB__ -fexceptions
-MATLAB_INCLUDE = -I/usr/local/MATLAB/R2018b/extern/include
-MATLAB_LDIR    = -L/usr/local/MATLAB/R2018b/bin/glnxa64 \
+MATLAB_INCLUDE = -I$(MATLAB_R)/extern/include
+MATLAB_LDIR    = -L$(MATLAB_R)/bin/glnxa64 \
 
 MATLAB_LIBS    = -lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
 endif

@@ -22,6 +22,7 @@ static MKL_INT dctmkl_stat;
 
 static int *dctmkl_pix_mask_idx;
 static double dctmkl_root_1_by_2N;
+
 void dctmkl_setup(int Nx, int Ny, int *pix_mask_idx){
 
   // 2287
