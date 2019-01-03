@@ -39,9 +39,9 @@ cJSON *test_data_json;
 START_TEST(test_dctmkl_MtEt_EMx_small_rand)
 {
   char fpath[] = "test_data/dct_small_rand.json";
-  int *pix_idx;
+  l1c_int *pix_idx;
   double *MtEt_EMx_exp, *x_in, *MtEt_EMx_act;
-  int Nx, Npix, status = 0;
+  l1c_int Nx, Npix, status = 0;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_dct_MtEt_large\n");
@@ -57,7 +57,7 @@ START_TEST(test_dctmkl_MtEt_EMx_small_rand)
     ck_abort();
   }
 
-  dctmkl_setup(Nx, Npix, pix_idx);
+  dctmkl_setup(Nx, Npix, (MKL_INT*)pix_idx);
 
   MtEt_EMx_act = malloc_double(Nx);
 
@@ -82,9 +82,9 @@ START_TEST(test_dctmkl_MtEty_small_rand)
 {
 
   char fpath[] = "test_data/dct_small_rand.json";
-  int *pix_idx;
+  l1c_int *pix_idx;
   double *MtEty_exp, *y_in, *MtEty_act;
-  int Nx, Ny, Npix, status = 0;
+  l1c_int Nx, Ny, Npix, status = 0;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_dct_MtEt_large\n");
@@ -125,9 +125,9 @@ START_TEST(test_dctmkl_EMx_new_small_rand)
 {
 
   char fpath[] = "test_data/dct_small_rand.json";
-  int *pix_idx;
+  l1c_int *pix_idx;
   double *EMx_exp, *x_in, *x_in_aligned, *EMx_act;
-  int Nx, Ny, Npix, status = 0;
+  l1c_int Nx, Ny, Npix, status = 0;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_dct_MtEt_large\n");
@@ -148,7 +148,7 @@ START_TEST(test_dctmkl_EMx_new_small_rand)
 
   x_in_aligned = malloc_double(Nx);
   EMx_act = malloc_double(Nx);
-  for (int i=0; i<Nx; i++){
+  for (l1c_int i=0; i<Nx; i++){
     x_in_aligned[i] = x_in[i];
   }
 
@@ -174,9 +174,9 @@ END_TEST
 START_TEST(test_dctmkl_MtEt_EMx_large)
 {
   char fpath[] = "test_data/dct_large.json";
-  int *pix_idx;
+  l1c_int *pix_idx;
   double *MtEt_EMx_exp, *x_in, *MtEt_EMx_act;
-  int Nx, Npix, status = 0;
+  l1c_int Nx, Npix, status = 0;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_dct_MtEt_large\n");
@@ -218,9 +218,9 @@ START_TEST(test_dctmkl_MtEty_large)
 {
 
   char fpath[] = "test_data/dct_large.json";
-  int *pix_idx;
+  l1c_int *pix_idx;
   double *MtEty_exp, *y_in, *MtEty_act;
-  int Nx, Ny, Npix, status = 0;
+  l1c_int Nx, Ny, Npix, status = 0;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_dct_MtEt_large\n");
@@ -262,9 +262,9 @@ START_TEST(test_dctmkl_EMx_large)
 {
 
   char fpath[] = "test_data/dct_large.json";
-  int *pix_idx;
+  l1c_int *pix_idx;
   double *EMx_exp, *x_in, *EMx_act;
-  int Nx, Ny, Npix, status = 0;
+  l1c_int Nx, Ny, Npix, status = 0;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_dct_MtEt_large\n");

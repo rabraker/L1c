@@ -1,7 +1,8 @@
 #ifndef _DCT_
 #define _DCT_
+#include "l1qc_common.h"
 
-extern void dct_setup(int Nx, int Ny, int *pix_mask_idx);
+extern int  dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx);
 extern void dct_destroy();
 
 extern void dct_EMx_new(double *x_fftw, double *y);

@@ -39,9 +39,10 @@ cJSON *test_data_json;
 START_TEST(test_dct_MtEt_EMx_small_rand)
 {
   char fpath[] = "test_data/dct_small_rand.json";
-  int *pix_idx;
+  l1c_int *pix_idx;
   double *MtEt_EMx_exp, *x_in, *MtEt_EMx_act;
-  int Nx, Npix, status = 0;
+  l1c_int Nx, Npix;
+  int status = 0;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_dct_MtEt_large\n");
@@ -83,9 +84,10 @@ START_TEST(test_dct_MtEty_small_rand)
 {
 
   char fpath[] = "test_data/dct_small_rand.json";
-  int *pix_idx;
+  l1c_int *pix_idx;
   double *MtEty_exp, *y_in, *MtEty_act;
-  int Nx, Ny, Npix, status = 0;
+  l1c_int Nx, Ny, Npix;
+  int status = 0;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_dct_MtEt_large\n");
@@ -128,9 +130,10 @@ START_TEST(test_dct_EMx_new_small_rand)
 {
 
   char fpath[] = "test_data/dct_small_rand.json";
-  int *pix_idx;
+  l1c_int *pix_idx;
   double *EMx_exp, *x_in, *x_in_aligned, *EMx_act;
-  int Nx, Ny, Npix, status = 0;
+  l1c_int Nx, Ny, Npix;
+  int status = 0;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_dct_MtEt_large\n");
@@ -151,7 +154,7 @@ START_TEST(test_dct_EMx_new_small_rand)
 
   x_in_aligned = fftw_alloc_real(Nx);
   EMx_act = fftw_alloc_real(Nx);
-  for (int i=0; i<Nx; i++){
+  for (l1c_int i=0; i<Nx; i++){
     x_in_aligned[i] = x_in[i];
   }
 
@@ -180,9 +183,10 @@ END_TEST
 START_TEST(test_dct_MtEt_EMx_large)
 {
   char fpath[] = "test_data/dct_large.json";
-  int *pix_idx;
+  l1c_int *pix_idx;
   double *MtEt_EMx_exp, *x_in, *MtEt_EMx_act;
-  int Nx, Npix, status = 0;
+  l1c_int Nx, Npix;
+  int status = 0;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_dct_MtEt_large\n");
@@ -225,9 +229,10 @@ START_TEST(test_dct_MtEty_large)
 {
 
   char fpath[] = "test_data/dct_large.json";
-  int *pix_idx;
+  l1c_int *pix_idx;
   double *MtEty_exp, *y_in, *MtEty_act;
-  int Nx, Ny, Npix, status = 0;
+  l1c_int Nx, Ny, Npix;
+  int status = 0;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_dct_MtEt_large\n");
@@ -269,9 +274,10 @@ START_TEST(test_dct_EMx_large)
 {
 
   char fpath[] = "test_data/dct_large.json";
-  int *pix_idx;
+  l1c_int *pix_idx;
   double *EMx_exp, *x_in, *EMx_act;
-  int Nx, Ny, Npix, status = 0;
+  l1c_int Nx, Ny, Npix;
+  int status = 0;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_dct_MtEt_large\n");
@@ -312,8 +318,8 @@ END_TEST
 
 
 
-static int load_EMx_data(int *Nx0, double **x0, int *Nx1, double **x1, int *Nidx,
-                         int **pix_idx, char *fpath){
+static int load_EMx_data(l1c_int *Nx0, double **x0, l1c_int *Nx1, double **x1, l1c_int *Nidx,
+                         l1c_int **pix_idx, char *fpath){
 
   if (load_file_to_json(fpath, &test_data_json) ){
     return 1;
@@ -356,9 +362,9 @@ START_TEST(test_dct_MtEt_EMx_small)
 {
   /* Test the multiplication (EM)^T * (E*M) * x */
   char fpath[] = "test_data/dct_small_MtEt_EMx.json";
-  int *pix_idx;
+  l1c_int *pix_idx;
   double *x_exp, *x0, *x_act;
-  int Nx0, Nx1, Npix = 0;
+  l1c_int Nx0, Nx1, Npix = 0;
 
   if (load_EMx_data(&Nx0, &x0, &Nx1, &x_exp, &Npix, &pix_idx, fpath)){
     ck_abort_msg("Errory Loading test data (in test_dct_MtEt_EMx\n");
@@ -388,9 +394,9 @@ END_TEST
 START_TEST(test_dct_MtEty_small)
 {
   char fpath[] = "test_data/dct_small_MtEty.json";
-  int *pix_idx;
+  l1c_int *pix_idx;
   double *x_exp, *y, *x_act;
-  int Nx, Ny, Npix = 0;
+  l1c_int Nx, Ny, Npix = 0;
 
   if (load_EMx_data(&Nx, &x_exp, &Ny, &y, &Npix, &pix_idx, fpath)){
     ck_abort_msg("Errory Loading test data (in test_dct_MtEty) \n");
@@ -422,10 +428,10 @@ START_TEST(test_dct_EMx_new_small)
 {
   char fpath[] = "test_data/dct_small_EMx.json";
 
-  int *pix_idx;
+  l1c_int *pix_idx;
 
   double *x, *x_new, *y_exp, *y_act;
-  int Nx, Ny, Npix, i = 0;
+  l1c_int Nx, Ny, Npix, i = 0;
   if (load_EMx_data(&Nx, &x, &Ny, &y_exp, &Npix, &pix_idx, fpath)){
     ck_abort_msg("Errory Loading test data\n");
   }

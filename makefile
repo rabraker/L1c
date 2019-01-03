@@ -122,7 +122,8 @@ MATLAB_LDIR    = -L$(MATLAB_R)/bin/glnxa64 \
 MATLAB_LIBS    = -lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
 endif
 
-CFLAGS         =  $(OPT) $(DBG) -fPIC -Wall $(MAT_DEF)
+CFLAGS         =  $(OPT) $(DBG) -fPIC -Wall -Wextra -Wunused -Werror\
+                  -std=c11 -pedantic $(MAT_DEF)
 CPP_VCL_FLAGS  =  -Iinclude/vcl $(DBG) $(VCL_OPT) -fabi-version=0 -fPIC
 
 ifeq (${USE_MKL},1)

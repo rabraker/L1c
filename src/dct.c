@@ -14,7 +14,6 @@
 #include <math.h>
 #include "dct.h"
 
-#define PI  3.141592653589793
 #include "l1qc_common.h"
 
 
@@ -25,25 +24,31 @@ static double *dct_Ety_sparse; // Product of E^T*y, input to DCT.
 static double *dct_x;
 static double *dct_y;
 
-static int *dct_pix_mask_idx;
-static int dct_Ny;
-static int dct_Nx;
+static l1c_int *dct_pix_mask_idx;
+static l1c_int dct_Ny;
+static l1c_int dct_Nx;
 static double dct_root_1_by_2N;
 
 
-void dct_setup(int Nx, int Ny, int *pix_mask_idx){
-
-  // local global.
+int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
 
   #ifdef _USETHREADS_
   fftw_init_threads();
   fftw_plan_with_nthreads(6);
   #endif
 
-  int i=0;
-  dct_Ety_sparse = fftw_alloc_real(Nx);
-  dct_x = fftw_alloc_real(Nx);
-  dct_y = fftw_alloc_real(Nx);
+  l1c_int i=0;
+  dct_Ety_sparse = malloc_double(Nx);
+  dct_x = malloc_double(Nx);
+  dct_y = malloc_double(Nx);
+  if (!dct_x | !dct_y | !dct_Ety_sparse){
+    perror("Error allocating memory in dct_setup");
+    free_double(dct_x);
+    free_double(dct_y);
+    free_double(dct_Ety_sparse);
+    return 1;
+  }
+
   for (i=0; i<Nx; i++){
     dct_Ety_sparse[i] = 0;
     dct_x[i] = 0;
@@ -64,6 +69,8 @@ void dct_setup(int Nx, int Ny, int *pix_mask_idx){
 
   dct_plan_MtEty = fftw_plan_r2r_1d(Nx, dct_Ety_sparse, dct_x, dct_kind_MtEty, flags);
   dct_plan_EMx = fftw_plan_r2r_1d(Nx, dct_x, dct_y, dct_kind_EMx, flags);
+
+  return 0;
 }
 
 void dct_destroy(){
@@ -100,7 +107,7 @@ void dct_EMx_new(double *x_fftw, double *y){
      -- y should have size at least dct_Ny.
      On exit, the first dct_Ny entries of y will contain the result of E * M *x.
   */
-  int i=0;
+  l1c_int i=0;
 
   // Leave the input vector unchanged.
   double x0_tmp = x_fftw[0];
@@ -128,7 +135,7 @@ void dct_MtEty( double *y, double *x){
     -- neither x nor y are required to be allocated by fftw.
    */
 
-  int i=0;
+  l1c_int i=0;
   // E^T * y --> y_sparse. y_sparse should be set to all zeros, and pix_mask does not change.
   // Returns a pointer to the array containing the result, which has length N.
   for (i=0; i<dct_Ny; i++){

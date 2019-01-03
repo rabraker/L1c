@@ -54,12 +54,13 @@ This contains the conjugate gradient solver, cgsolve. The two small routines Ax 
  }
 */
 
-int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
-            void(*AX_func)(int n, double *x, double *b, void *AX_data), void *AX_data,
+int cgsolve(double *x, double *b, l1c_int n_b, double *Dwork,
+            void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
             CgResults *cg_result, CgParams cg_params){
 
 
-  int iter, i = 0;
+  int iter;
+  l1c_int i = 0;
 
   double delta = 0.0;
   double delta_0= 0.0;
@@ -158,7 +159,7 @@ int cgsolve(double *x, double *b, size_t n_b, double *Dwork,
    This is a wrapper for cblas_dspmv.
 */
 
-void Ax_sym(int n, double *x, double *b, void *AX_data){
+void Ax_sym(l1c_int n, double *x, double *b, void *AX_data){
 
   double *A = (double *) AX_data;
 
@@ -170,7 +171,7 @@ void Ax_sym(int n, double *x, double *b, void *AX_data){
 Computes the matrix-vector product y = A * b, for a full matrix A.
 This is a wrapper for cblas_dgemv.
  */
-void Ax(int n, double *x, double *b, void *AX_data){
+void Ax(l1c_int n, double *x, double *b, void *AX_data){
   double *A = (double *) AX_data;
 
   cblas_dgemv(CblasRowMajor, CblasNoTrans, n, n, 1.0, A, n, x, 1, 0.0, b, 1);

@@ -1,7 +1,8 @@
 #ifndef _DCTMKL_
 #define _DCTMKL_
+#include "l1qc_common.h"
 
-extern void dctmkl_setup(int Nx, int Ny, int *pix_mask_idx);
+extern int dctmkl_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx);
 extern void dctmkl_destroy();
 
 extern void dctmkl_idct(double * restrict x, double * restrict y);

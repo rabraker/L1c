@@ -18,10 +18,10 @@ void free_json_text_data(void){
   free(file_data);
 }
 
-void print_vec(int N, double *x, char *name){
-  int i = 0;
+void print_vec(l1c_int N, double *x, char *name){
+  l1c_int i = 0;
   for (i=0; i<N; i++){
-    printf("%s[%d] = %f\n", name, i, x[i]);
+    printf("%s[%i] = %f\n", name, (int)i, x[i]);
   }
 }
 
@@ -70,7 +70,7 @@ int load_file_to_json(char *fname, cJSON **data_json){
   return 0;
 }
 
-int extract_json_int(cJSON *data_json, char * name, int *N){
+int extract_json_int(cJSON *data_json, char * name, l1c_int *N){
   cJSON *N_json = cJSON_GetObjectItemCaseSensitive(data_json, name);
   if (!cJSON_IsNumber(N_json) ){
     return 1;
@@ -91,7 +91,7 @@ int extract_json_double(cJSON *data_json, char * name, double *a){
 }
 
 
-int extract_json_double_array(cJSON *data_json, char *name, double **x, int *N){
+int extract_json_double_array(cJSON *data_json, char *name, double **x, l1c_int *N){
   int status = 0;
   cJSON *x_json = cJSON_GetObjectItemCaseSensitive(data_json, name);
   if (!cJSON_IsArray(x_json) ){
@@ -123,7 +123,7 @@ int extract_json_double_array(cJSON *data_json, char *name, double **x, int *N){
 }
 
 
-int extract_json_double_array_fftw(cJSON *data_json, char *name, double **x, int *N){
+int extract_json_double_array_fftw(cJSON *data_json, char *name, double **x, l1c_int *N){
   /*Should update this to just take a function pointer to an arbitrary alloc */
   int status = 0;
   cJSON *x_json = cJSON_GetObjectItemCaseSensitive(data_json, name);
@@ -154,7 +154,7 @@ int extract_json_double_array_fftw(cJSON *data_json, char *name, double **x, int
 }
 
 
-int extract_json_int_array(cJSON *data_json, char *name, int **x, int *N){
+int extract_json_int_array(cJSON *data_json, char *name, l1c_int **x, l1c_int *N){
   int status = 0;
   cJSON *x_json = cJSON_GetObjectItemCaseSensitive(data_json, name);
   if (!cJSON_IsArray(x_json) ){
@@ -163,7 +163,7 @@ int extract_json_int_array(cJSON *data_json, char *name, int **x, int *N){
     goto end;
   }
   *N = cJSON_GetArraySize(x_json);
-  *x = calloc(*N, sizeof(int));
+  *x = calloc(*N, sizeof(l1c_int));
 
   int k=0;
   cJSON *xk_json;

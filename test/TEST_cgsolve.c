@@ -29,8 +29,8 @@
 
 cJSON *test_data_json;
 
-int load_small_data(double **A, double **x, double **b, int *N, int *na,
-                    int *max_iter, double *tol){
+int load_small_data(double **A, double **x, double **b, l1c_int *N, l1c_int *na,
+                    l1c_int *max_iter, double *tol){
 
   if(load_file_to_json("test_data/cgsolve_small01.json", &test_data_json) ){
     return 1;
@@ -41,7 +41,7 @@ int load_small_data(double **A, double **x, double **b, int *N, int *na,
   if ( extract_json_double(test_data_json, "tol", tol) )
     return 1;
 
-  int Nx=0, Nb= 0;
+  l1c_int Nx=0, Nb= 0;
   if (extract_json_double_array(test_data_json, "x", x, &Nx) ){
     perror("Error Loading x\n");
     return 1;
@@ -59,7 +59,7 @@ int load_small_data(double **A, double **x, double **b, int *N, int *na,
 
   *N = Nx;
 
-  if ( (Nx != Nb) || ( (int)(Nb* (Nb +1)/2) != *na) ){
+  if ( (Nx != Nb) || ( (l1c_int)(Nb* (Nb +1)/2) != *na) ){
     perror("Error: Array size mismatch. Aborting\n");
     goto end2; // We allocated all, but their sizes don't match.
   }
@@ -82,12 +82,12 @@ int load_small_data(double **A, double **x, double **b, int *N, int *na,
 START_TEST(test_cgsolve)
 {
   double tol =0.0; //= 1e-6;
-  int max_iter;
+  l1c_int max_iter;
   CgParams cgp;
   CgResults cgr;
 
   double *A, *x, *x_exp, *b, *Dwork;
-  int N=0, na= 0;
+  l1c_int N=0, na= 0;
   if (load_small_data(&A, &x_exp, &b, &N, &na, &max_iter, &tol)){
     ck_abort_msg("Errory Loading test data\n");
   }
@@ -128,8 +128,8 @@ START_TEST(test_cgsolve_h11p){
   CgResults cgr;
   CgParams cgp = {.verbose=0, .max_iter=0, .tol=0};
 
-  int N, M, cg_maxiter, status=0;
-  int *pix_idx;
+  l1c_int N, M, cg_maxiter, status=0;
+  l1c_int *pix_idx;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_get_gradient\n");
@@ -197,7 +197,7 @@ START_TEST(test_cgsolve_Ax_sym){
 
   double *A, *x, *y_exp, *y;
 
-  int N=0, na=0, status=0;
+  l1c_int N=0, na=0, status=0;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_get_gradient\n");

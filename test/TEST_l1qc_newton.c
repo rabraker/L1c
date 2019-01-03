@@ -51,8 +51,9 @@ START_TEST (test_l1qc_newton_1iter)
   LBResult lb_res;
   double epsilon = 0., tau_exp=0., lbtol=0.;
   double mu = 0.0;
-  int N=0, M=0, status=0, lbiter_exp=0;
-  int *pix_idx=NULL;
+  l1c_int N=0, M=0, status=0, lbiter_exp=0;
+  l1c_int *pix_idx=NULL;
+
   AxFuns ax_funs = {.Ax=dct_EMx_new,
                     .Aty=dct_MtEty,
                     .AtAx=dct_MtEt_EMx_new};
@@ -133,7 +134,7 @@ END_TEST
 START_TEST (test_newton_init_regres1)
 {
   NewtParams params;
-  int N=4;
+  l1c_int N=4;
 
   double x[] = {1.0, 2.0, 3.0, 4.0};
   double u[] = {0,0,0,0};
@@ -165,8 +166,8 @@ START_TEST (test_newton_init)
   double *x=NULL, *u=NULL, *u_exp=NULL, *b=NULL, *Dwork=NULL;
   double epsilon = 0., tau_exp=0., lbtol=0.;
   double mu = 0.0;
-  int N=0, M=0, status=0, ret=0, lbiter_exp=0;
-  int *pix_idx=NULL;
+  l1c_int N=0, M=0, status=0, ret=0, lbiter_exp=0;
+  l1c_int *pix_idx=NULL;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_newton_init\n");
@@ -241,7 +242,8 @@ START_TEST (test_find_max_step)
   char fpath[] = "test_data/find_max_step_data.json";
   double *dx, *du, *Adx, *fu1, *fu2, *r;
   double epsilon, smax, smax_exp = 0.0;
-  int N, M, status=0;
+  l1c_int N, M;
+  int status=0;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_find_max_stept\n");
@@ -299,8 +301,9 @@ START_TEST(test_compute_descent)
   double *DWORK_6N;
   double  fe,tau,cgres_exp,cgtol = 0;
 
-  int cg_maxiter, cgiter_exp, N, Npix, status=0;
-  int *pix_idx;
+  int status=0;
+  l1c_int N, Npix, cg_maxiter, cgiter_exp;
+  l1c_int *pix_idx;
   AxFuns Ax_funs = {.Ax=dct_EMx_new,
                     .Aty=dct_MtEty,
                     .AtAx=dct_MtEt_EMx_new};
@@ -421,8 +424,8 @@ START_TEST(test_H11pfun)
   double *atr, *sigx, *z, *y_exp, *y;
   double  fe = 0;
 
-  int N, M, status=0;
-  int *pix_idx;
+  l1c_int N, M, status=0;
+  l1c_int *pix_idx;
 
   if (load_file_to_json(fpath, &test_data_json)){
     perror("Error loading data in test_H11pfun\n");
@@ -495,7 +498,7 @@ START_TEST(test_get_gradient)
   double tau; //loaded
 
   double fe;
-  int N,N2, M, status=0;
+  l1c_int N,N2, M, status=0;
   char fpath[] = "test_data/descent_data.json";
 
   if (load_file_to_json(fpath, &test_data_json)){
@@ -591,8 +594,8 @@ START_TEST(test_line_search)
                     .AtAx=dct_MtEt_EMx_new};
 
   //double sm;
-  int N,N2, M, status=0;
-  int *pix_idx=NULL;
+  l1c_int N,N2, M, status=0;
+  l1c_int *pix_idx=NULL;
   char fpath[] = "test_data/line_search_data.json";
 
   if (load_file_to_json(fpath, &test_data_json)){
@@ -711,7 +714,7 @@ START_TEST(test_f_eval)
   double *fu1, *fu2, fe, f;
   double *fu1_exp, *fu2_exp, fe_exp, f_exp;
 
-  int N=0, M=0, status=0;
+  l1c_int N=0, M=0, status=0;
   char fpath[] = "test_data/f_eval_data.json";
   if (  load_file_to_json(fpath, &test_data_json) ){
     perror("Error loading data for test_f_eval\n");
@@ -767,7 +770,7 @@ END_TEST
 
 START_TEST(test_sum_vec)
 {
-  int N = 6;
+  l1c_int N = 6;
   double x[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
   double sum_exp = 21.0;
   double sum_x = sum_vec(N, x);
@@ -779,7 +782,7 @@ END_TEST
 
 START_TEST(test_logsum)
 {
-  int N = 6;
+  l1c_int N = 6;
   double x[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
   double alpha = 3.0;
   double logsum_x_exp = 13.170924944018758;

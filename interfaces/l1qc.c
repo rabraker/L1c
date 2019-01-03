@@ -28,9 +28,9 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
                         .lbtol=0, .verbose = 0, .cg_params.tol=0};
   LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
 
-  int i=0,N=0, M=0, npix=0;
+  l1c_int i=0,N=0, M=0, npix=0;
   double *pix_idx_double=NULL, *x_out=NULL;
-  int *pix_idx;
+  l1c_int *pix_idx;
   // mwSize *dims;
 
   if(nrhs != 4) {
@@ -55,7 +55,7 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notVector",
                       "First Input must be a vector.");
   }else{
-    N = mxGetM(prhs[0]) *  mxGetN(prhs[0]);
+    N =(l1c_int)( mxGetM(prhs[0]) *  mxGetN(prhs[0]) );
   }
 
   /* -------- Check b -------------*/
@@ -70,7 +70,7 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notVector",
                       "Second Input must be a vector.");
   }else{
-    M = mxGetM(prhs[1]) *  mxGetN(prhs[1]);
+    M = (l1c_int) ( mxGetM(prhs[1]) *  mxGetN(prhs[1]) );
   }
 
 
@@ -86,7 +86,7 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notVector",
                       "Third Input must be a vector.");
   }else{
-    npix = mxGetM(prhs[2]) *  mxGetN(prhs[2]);
+    npix = (l1c_int) ( mxGetM(prhs[2]) *  mxGetN(prhs[2]) );
   }
 
 
@@ -128,9 +128,9 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     }else if ( strcmp(name, "newton_tol") == 0){
       params.newton_tol = mxGetScalar(tmp);
     }else if ( strcmp(name, "newton_max_iter") == 0){
-      params.newton_max_iter = (int) mxGetScalar(tmp);
+      params.newton_max_iter = (l1c_int) mxGetScalar(tmp);
     }else if ( strcmp(name, "lbiter") == 0){
-      params.lbiter = (int)mxGetScalar(tmp);
+      params.lbiter = (l1c_int)mxGetScalar(tmp);
     }else if ( strcmp(name, "lbtol") == 0){
       params.lbtol = mxGetScalar(tmp);
     }else if ( strcmp(name, "cgtol") == 0){
@@ -138,7 +138,7 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     }else if ( strcmp(name, "cgmaxiter") == 0){
       params.cg_params.max_iter = mxGetScalar(tmp);
     }else if ( strcmp(name, "verbose") == 0){
-      params.verbose= (int) mxGetScalar(tmp);
+      params.verbose= (l1c_int) mxGetScalar(tmp);
     }else{
       mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:norverbose",
                         "Unrecognized field '%s' in params struct.", name);
@@ -174,9 +174,9 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     x_ours[i] = x_theirs[i];
   }
 
-  pix_idx = calloc(M, sizeof(int));
+  pix_idx = calloc(M, sizeof(l1c_int));
   for (i=0; i<M; i++){
-    pix_idx[i] = (int) pix_idx_double[i];
+    pix_idx[i] = (l1c_int) pix_idx_double[i];
   }
 
   /* ---------------------------------------  */
