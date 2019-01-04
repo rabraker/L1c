@@ -34,8 +34,8 @@ endif
 
 # should check if this is set already
 MKLROOT        = /opt/intel/compilers_and_libraries_2019.1.144/linux/mkl
-# MKLROOT        = /opt/intel/compilers_and_libraries/linux/mkl
-MATLAB_R    = /usr/local/MATLAB/R2018b
+# MKLROOT      = /opt/intel/compilers_and_libraries/linux/mkl
+MATLAB_R       = /usr/local/MATLAB/R2018b
 MATLAB         = matlab -nodesktop -nosplash -r
 TEST_DATA_ROOT = $(CURDIR)/test_data
 ML_BUILD_FCN   = L1qcTestData.build_all_test_data
@@ -55,8 +55,8 @@ ML_INTERFACE   = ./interfaces
 
 MEX_BUILD_DIR      = ./build/mex
 MEX_LIB_DIR        = ./lib/mex
-NATIVE_BUILD_DIR      = ./build
-NATIVE_LIB_DIR        = ./lib
+NATIVE_BUILD_DIR   = ./build
+NATIVE_LIB_DIR     = ./lib
 
 ifeq (${MAKECMDGOALS},mex)
 BUILD_DIR      = $(MEX_BUILD_DIR)
@@ -90,11 +90,11 @@ TEST_OBJ       = $(addprefix $(BUILD_DIR)/, $(notdir $(TEST_SRC:.c=.o)))
 OBJ            = $(APP_OBJ) $(TEST_OBJ)
 
 ifeq ($(DEBUG),1)
-DBG          = -DDBUG -ggdb
-OPT          =
-VCL_OPT      =
+DBG            = -DDBUG -ggdb
+OPT            =
+VCL_OPT        =
 else
-DBG          =
+DBG            =
 # OPT          = -O3 -msse3 -mavx2
 # VCL_OPT      = -O3 -mavx2 -mfma
 
@@ -105,8 +105,8 @@ DBG          =
 # checked with
 # gcc -dM -E -march=native -mtune=native - < /dev/null | egrep "AVX|SSE"
 # which will print out a list of defines for enabled instructions.
-OPT          = -O3 -march=native -mtune=native
-VCL_OPT          = -O3 -march=native -mtune=native
+OPT            = -O3 -march=native -mtune=native
+VCL_OPT        = -O3 -march=native -mtune=native
 endif
 # check header files are in /usr/local/include
 INCLUDE        = -I/usr/include                \
