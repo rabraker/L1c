@@ -6,4 +6,6 @@ doc/
 *.html
 readme.md
 test_l1qc
+bench
+BregmanData/
 
