@@ -33,7 +33,7 @@ DEF_MAT =
 endif
 
 # should check if this is set already
-MEX_INSTALL_DIR = ../../matlab-code/functions/
+MEX_INSTALL_DIR = ../../matlab-code/functions/\@CsTools/
 MKLROOT        = /opt/intel/compilers_and_libraries_2019.1.144/linux/mkl
 # MKLROOT      = /opt/intel/compilers_and_libraries/linux/mkl
 MATLAB_R       = /usr/local/MATLAB/R2018b
