@@ -11,4 +11,6 @@ Suite * dct_mkl_suite(void);
 
 Suite *vcl_math_suite(void);
 
+Suite *bregman_suite(void);
+
 #endif
