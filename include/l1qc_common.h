@@ -1,7 +1,8 @@
 #ifndef _L1QC_COMMON_
 #define _L1QC_COMMON_
 
-#define ALIGNMENT_DOUBLE 64
+#define DALIGN  64
+#define ALIGNMENT_DOUBLE DALIGN
 
 #ifdef __MATLAB__
 #include "mex.h"
@@ -14,7 +15,7 @@
 #include "mkl.h"
 #define free_double(x) mkl_free(x)
 // parenthesis around N are crucial here.
-#define malloc_double(N) (double*)mkl_malloc((size_t)(N) *sizeof(double), ALIGNMENT_DOUBLE)
+#define malloc_double(N) (double*)mkl_malloc((size_t)(N) *sizeof(double), DALIGN)
 #else
 #include "cblas.h"
 

@@ -33,6 +33,7 @@ DEF_MAT =
 endif
 
 # should check if this is set already
+MEX_INSTALL_DIR = ../../matlab-code/functions/
 MKLROOT        = /opt/intel/compilers_and_libraries_2019.1.144/linux/mkl
 # MKLROOT      = /opt/intel/compilers_and_libraries/linux/mkl
 MATLAB_R       = /usr/local/MATLAB/R2018b
@@ -126,19 +127,20 @@ CFLAGS         =  $(OPT) $(DBG) -fPIC -Wall -Wextra -Wunused -Werror\
                   -std=c11 -pedantic $(MAT_DEF)
 CPP_VCL_FLAGS  =  -Iinclude/vcl $(DBG) $(VCL_OPT) -fabi-version=0 -fPIC
 
-ifeq (${USE_MKL},1)
+ifeq (${USE_OPENBLAS},1)
+MATH_INCLUDE   =  -I/usr/local/OpenBlas/include
+MATH_LDIR      =  -L/usr/local/OpenBlas/lib
+MATH_LIBS      =  -lfftw3 -lopenblas -lm
+
+else
 MATH_INCLUDE   =  -I${MKLROOT}/include
 MATH_CFLAGS    =   -D_USEMKL_ -DMKL_ILP64 -m64
 MATH_LDIR      =
 MATH_ARCHIVE   =  ${MKLROOT}/lib/intel64/libmkl_intel_ilp64.a \
-                  ${MKLROOT}/lib/intel64/libmkl_gnu_thread.a  \
-				  ${MKLROOT}/lib/intel64/libmkl_core.a
+${MKLROOT}/lib/intel64/libmkl_gnu_thread.a  \
+${MKLROOT}/lib/intel64/libmkl_core.a
 MATH_LIBS      = -lgomp -lpthread -lm -ldl
 
-else
-MATH_INCLUDE   =  -I/usr/local/OpenBlas/include
-MATH_LDIR      =  -L/usr/local/OpenBlas/lib
-MATH_LIBS      =  -lfftw3 -lopenblas -lm
 endif
 
 # put them all together
@@ -159,7 +161,8 @@ $(info $$DEF_MAT  [${ML_MEX}])
 
 
 #-----------------------Targets ----------------------
-.PHONY: clean help mex app_ar vcl_ar test_ar test_obj lib test test_data clean_all
+.PHONY: clean help mex app_ar vcl_ar test_ar test_obj \
+		lib test test_data clean_all install_mex
 
 # test: $(TEST_APP)
 help:
@@ -177,7 +180,7 @@ help:
 	@echo ">>> make clean_pristine"
 	@echo "    Removes all build artifacts including libraries and json test data."
 	@echo "ARGS\n-----"
-	@echo "USE_MKL=1|0 (default 0). If 0, will use open_blas."
+	@echo "USE_OPENBLAS=1|0 (default 0). If 1, will use open_blas."
 	@echo "DEBUG=1|0    (default 0). If 1, disables optimizations.\n"
 
 mex: mex_obj
@@ -216,6 +219,10 @@ $(BUILD_DIR)/%.o: $(VCL_SRC_DIR)/%.cpp
 
 test_data:
 	${MATLAB} ${ML_CMD}
+
+install_mex:
+	@cp $(MEX_NAME) $(MEX_INSTALL_DIR)/$(notdir $(MEX_NAME))
+	@cp $(MEX_NAME:.mexa64=.m) $(MEX_INSTALL_DIR)/$(notdir $(MEX_NAME:.mexa64=.m))
 
 clean:
 	rm -f $(TEST_APP)
