@@ -2,7 +2,7 @@
 #define _CGSOLVE_
 
 #include <stddef.h>
-#include "l1qc_common.h"
+#include "l1c_common.h"
 /** Struct containing artifacts of the cgsolve routine. */
 typedef struct CgResults_{
   double cgres; /**< Residual */

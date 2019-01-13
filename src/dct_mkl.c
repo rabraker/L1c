@@ -5,7 +5,7 @@
 
 #include "mkl_service.h"
 #include "mkl_trig_transforms.h"
-#include "l1qc_common.h"
+#include "l1c_common.h"
 
 DFTI_DESCRIPTOR_HANDLE mkl_dct_handle=0;
 
@@ -166,7 +166,7 @@ void dctmkl_MtEt_EMx_new(double *x_fftw, double *z){
 
 #else
 
-#include "l1qc_common.h"
+#include "l1c_common.h"
 void dctmkl_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
   Nx +=0;
   Ny +=0;

@@ -3,7 +3,7 @@
 
 #include "l1qc_newton.h"
 #include "cgsolve.h"
-#include "l1qc_common.h" //includes <stdio.h> or mex.h, as needed.
+#include "l1c_common.h" //includes <stdio.h> or mex.h, as needed.
 #include "vcl_math.h"
 #include "omp.h"
 /**

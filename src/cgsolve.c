@@ -13,7 +13,7 @@ This contains the conjugate gradient solver, cgsolve. The two small routines Ax 
 #include <math.h>
 // #include <stdio.h>
 #include "cgsolve.h"
-#include "l1qc_common.h"
+#include "l1c_common.h"
 
 /**
 

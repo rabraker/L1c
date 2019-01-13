@@ -24,7 +24,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 #include <check.h>
 #include <fftw3.h>
 
-#include "l1qc_common.h"
+#include "l1c_common.h"
 
 #include "cJSON.h"
 #include "json_utils.h"

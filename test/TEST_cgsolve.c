@@ -24,7 +24,7 @@
 #include "l1qc_newton.h"
 #include "dct.h"
 
-#include "l1qc_common.h"
+#include "l1c_common.h"
 #include "check_utils.h"
 
 cJSON *test_data_json;

@@ -22,7 +22,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 #include <math.h> //Constants
 #include <check.h>
 
-#include "l1qc_common.h"
+#include "l1c_common.h"
 
 #include "cJSON.h"
 #include "json_utils.h"
@@ -31,7 +31,6 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 /* Tolerances and things */
 #include "test_constants.h"
 #include "check_utils.h"
-#include "l1qc_common.h"
 
 
 
