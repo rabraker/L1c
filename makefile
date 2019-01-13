@@ -33,7 +33,7 @@ DEF_MAT =
 endif
 
 # should check if this is set already
-MEX_INSTALL_DIR = ../../matlab-code/functions/
+MEX_INSTALL_DIR = ../../matlab-code/functions/\@CsTools
 MKLROOT        = /opt/intel/compilers_and_libraries_2019.1.144/linux/mkl
 # MKLROOT      = /opt/intel/compilers_and_libraries/linux/mkl
 MATLAB_R       = /usr/local/MATLAB/R2018b
@@ -221,7 +221,9 @@ test_data:
 	${MATLAB} ${ML_CMD}
 
 install_mex:
+	$(info cp $(MEX_NAME) $(MEX_INSTALL_DIR)/$(notdir $(MEX_NAME)))
 	@cp $(MEX_NAME) $(MEX_INSTALL_DIR)/$(notdir $(MEX_NAME))
+	$(info cp $(MEX_NAME:.mexa64=.m) $(MEX_INSTALL_DIR)/$(notdir $(MEX_NAME:.mexa64=.m)))
 	@cp $(MEX_NAME:.mexa64=.m) $(MEX_INSTALL_DIR)/$(notdir $(MEX_NAME:.mexa64=.m))
 
 clean:
