@@ -22,7 +22,6 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 #include <stdio.h>
 #include <math.h> //Constants
 #include <check.h>
-#include <fftw3.h>
 
 #include "l1c_common.h"
 
@@ -435,7 +434,7 @@ START_TEST(test_H11pfun)
   // Inputs to get_gradient
   status +=extract_json_double_array(test_data_json, "atr", &atr, &N);
   status +=extract_json_double_array(test_data_json, "sigx", &sigx, &N);
-  status +=extract_json_double_array_fftw(test_data_json, "z", &z, &N);
+  status +=extract_json_double_array(test_data_json, "z", &z, &N);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
 
   status +=extract_json_double(test_data_json, "fe", &fe);
@@ -473,7 +472,7 @@ START_TEST(test_H11pfun)
   /* ----------------- Cleanup --------------- */
   free_double(atr);
   free_double(sigx);
-  fftw_free(z);
+  free_double(z);
   free(pix_idx);
 
   free_double(y_exp);
@@ -768,31 +767,6 @@ START_TEST(test_f_eval)
 }
 END_TEST
 
-START_TEST(test_sum_vec)
-{
-  l1c_int N = 6;
-  double x[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
-  double sum_exp = 21.0;
-  double sum_x = sum_vec(N, x);
-
-  ck_assert_double_eq_tol(sum_exp, sum_x, TOL_DOUBLE);
-}
-END_TEST
-
-
-START_TEST(test_logsum)
-{
-  l1c_int N = 6;
-  double x[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
-  double alpha = 3.0;
-  double logsum_x_exp = 13.170924944018758;
-  double logsum_x = logsum(N, alpha, x);
-
-  ck_assert_double_eq_tol(logsum_x_exp, logsum_x, TOL_DOUBLE);
-  // setup_vectors_SC();
-}
-END_TEST
-
 
 
 
@@ -800,7 +774,7 @@ Suite *l1qc_newton_suite(void)
 {
   Suite *s;
 
-  TCase *tc_linesearch, *tc_newton_init, *tc_feval, *tc_mathfuns, *tc_gradient;
+  TCase *tc_linesearch, *tc_newton_init, *tc_feval, *tc_gradient;
   TCase *tc_l1qc_newton;
 
   s = suite_create("l1qc_newton");
@@ -824,9 +798,6 @@ Suite *l1qc_newton_suite(void)
   tcase_add_test(tc_gradient, test_get_gradient);
   tcase_add_test(tc_gradient, test_compute_descent);
 
-  tc_mathfuns = tcase_create("l1qc_math_funs");
-  tcase_add_test(tc_mathfuns, test_sum_vec);
-  tcase_add_test(tc_mathfuns, test_logsum);
 
   /*Add test cases to the suite */
   suite_add_tcase(s, tc_l1qc_newton);
@@ -834,7 +805,6 @@ Suite *l1qc_newton_suite(void)
   suite_add_tcase(s, tc_feval);
   suite_add_tcase(s, tc_linesearch);
   suite_add_tcase(s, tc_gradient);
-  suite_add_tcase(s, tc_mathfuns);
 
   return s;
 
