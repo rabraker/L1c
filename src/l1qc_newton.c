@@ -7,6 +7,7 @@
 #include "vcl_math.h"
 
 
+
 void axpby_z(l1c_int N, double alpha, double * restrict x, double beta, double * restrict y, double * restrict z){
   /* Computes z = a * x + y. Similary to cblas_axpy, but for when you don't want to overwrite y.
      This way, we avoid a call to cblas_dcopy().
@@ -334,7 +335,7 @@ LSStat line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double
 
     //printf("iter = %d, fp = %f, flin = %f\n", iter, fp, flin);
     if (fp <= flin){ /* Sufficient decrease test */
-      cblas_dscal(N, step, gd.dx, 1); //For cgsolve hotstart.
+      //cblas_dscal(N, step, gd.dx, 1); //For cgsolve hotstart.
       cblas_dcopy(N, xp, 1, x, 1);
       cblas_dcopy(N, up, 1, u, 1);
       cblas_dcopy(M, rp, 1, r, 1);
@@ -482,9 +483,11 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
     printf("Total Log-Barrier iterations:  %d \n", (int)params.lbiter);
   }
 
-  init_vec(N, gd.dx, 0.0);
   /* ---------------- MAIN **TAU** ITERATION --------------------- */
   for (tau_iter=1; tau_iter<=params.lbiter; tau_iter++){
+
+    /*Re-initialize dx to zero every lb-iteration. */
+    init_vec(N, gd.dx, 0.0);
 
     if (params.verbose > 1){
       printf("Newton-iter | Functional | Newton decrement |  Stepsize  |  cg-res | cg-iter | backiter |  s0   |  s    | \n");
