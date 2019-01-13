@@ -328,7 +328,9 @@ LSStat line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double
 
     f_eval(N, xp, up, M, rp, ls_params.tau, ls_params.epsilon, fu1p, fu2p, &fep, &fp);
 
+
     if ( isnan(fp)) {
+      step = ls_params.beta * step;
       continue;
     }
 
