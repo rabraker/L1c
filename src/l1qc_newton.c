@@ -6,6 +6,20 @@
 #include "l1qc_common.h" //includes <stdio.h> or mex.h, as needed.
 #include "vcl_math.h"
 
+/**
+   Compute the vector elementwise product
+   z = x.*y
+*/
+void xmuly_z(l1c_int N, double * restrict x, double * restrict y, double * restrict z){
+  double *x_ = __builtin_assume_aligned(x, 64);
+  double *y_ = __builtin_assume_aligned(y, 64);
+  double *z_ = __builtin_assume_aligned(z, 64);
+
+#pragma omp parallel for
+  for (l1c_int i=0; i<N; i++){
+    z_[i] = x_[i] * y_[i];
+  }
+}
 
 void axpy_z(l1c_int N, double alpha, double * restrict x, double * restrict y, double * restrict z){
   /* Computes z = a * x + y. Similary to cblas_axpy, but for when you don't want to overwrite y.
@@ -18,6 +32,7 @@ void axpy_z(l1c_int N, double alpha, double * restrict x, double * restrict y, d
   double *z_ = __builtin_assume_aligned(z, 64);
 
   l1c_int i;
+#pragma omp parallel for
   for (i = 0; i<N; i++){
     z_[i] = alpha * x_[i] + y_[i];
   }
@@ -43,6 +58,7 @@ double logsum(l1c_int N,  double alpha, double *x) {
   /* Computes sum(log( alpha *x)) */
   l1c_int i = 0;
   double total = 0.0;
+#pragma omp parallel for
   for (i=0; i<N; i++){
     total += log(alpha * x[i]);
   }
@@ -98,7 +114,6 @@ void f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, double tau, d
 
 }
 
-
 /* Computes the H11 part of the hessian. Used to call cgsolve.
  */
 void H11pfun(l1c_int N, double *z, double *y,  void *hess_data_in){
@@ -110,7 +125,7 @@ void H11pfun(l1c_int N, double *z, double *y,  void *hess_data_in){
 
   Hess_data h11p_data = *((Hess_data *) hess_data_in);
   // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
-  l1c_int i = 0;
+  //l1c_int i = 0;
   double *ATA_z = h11p_data.Dwork_1N;
   double atr_dot_z_fe = 0.0;
 
@@ -118,22 +133,13 @@ void H11pfun(l1c_int N, double *z, double *y,  void *hess_data_in){
   atr_dot_z_fe = atr_dot_z_fe * h11p_data.one_by_fe_sqrd; //1/fe^2*(atr'*z)
 
   // y = sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
-  // y_ = sigx.*z
-  for (i=0; i<N; i++){
-    y[i] = h11p_data.sigx[i] * z[i];
-  }
-  // ...+ (1/fe)*At*A*z
-  // dct_MtEt_EMx_new(z, ATA_z);
-  h11p_data.AtAx(z, ATA_z);
-  for (i=0; i<N; i++){
-    y[i] = y[i] - h11p_data.one_by_fe * ATA_z[i];
-  }
-  // ...+ 1/fe^2*(atr'*z)*atr;
-  for (i=0; i<N; i++){
-    y[i] +=  atr_dot_z_fe * h11p_data.atr[i];
-  }
+  h11p_data.AtAx(z, ATA_z);                              // AtA_z
+  xmuly_z(N, h11p_data.sigx, z, y);                      // y = sigx.*z
+  cblas_daxpy(N, -h11p_data.one_by_fe, ATA_z, 1, y, 1);  // y = sigx.*z (1/fe)*ATA_z
+  cblas_daxpy(N, atr_dot_z_fe, h11p_data.atr, 1, y, 1);
 
 }
+
 
 
 void get_gradient(l1c_int N, double *fu1, double *fu2, double *sigx, double *atr,
@@ -211,7 +217,7 @@ int compute_descent(l1c_int N, double *fu1, double *fu2, double *atr, double fe,
           H11pfun, &h11p_data, cg_result, cg_params);
 
   for (i=0; i<N; i++){
-    gd.du[i] = (1.0/gd.sig11[i]) * gd.ntgu[i] - (gd.sig12[i] / gd.sig11[i])  * gd.dx[i];
+    gd.du[i] = (gd.ntgu[i] - gd.sig12[i] * gd.dx[i] ) / gd.sig11[i];
   }
 
   return 0;
@@ -334,10 +340,6 @@ LSStat line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double
   printf("%s                        fp-flin = %.10f\n", spc, fp - flin);
   printf("%s                        step = %.10f\n", spc, step);
   printf("%s                        ls_params.s = %.10f\n", spc, ls_params.s);
-
-  cblas_dcopy(N, x, 1, xp, 1);
-  cblas_dcopy(N, u, 1, up, 1);
-  cblas_dcopy(M, r, 1, rp, 1);
 
   ls_stat.flx = flx;
   ls_stat.flu = flu;
