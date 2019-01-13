@@ -6,7 +6,7 @@
 #define _L1QC_NEWTON_
 
 #include "cgsolve.h"
-#include "l1qc_common.h"
+#include "l1c_common.h"
 
 typedef struct AxFuns {
   void(*Ax)(double *x, double *y);

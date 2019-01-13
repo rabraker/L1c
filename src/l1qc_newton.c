@@ -3,9 +3,9 @@
 
 #include "l1qc_newton.h"
 #include "cgsolve.h"
-#include "l1qc_common.h" //includes <stdio.h> or mex.h, as needed.
+#include "l1c_common.h" //includes <stdio.h> or mex.h, as needed.
 #include "vcl_math.h"
-
+#include "omp.h"
 /**
    Compute the vector elementwise product
    z = x.*y
@@ -176,6 +176,7 @@ void get_gradient(l1c_int N, double *fu1, double *fu2, double *sigx, double *atr
   double one_by_fe_Atr = 0.0;
   double ntgu = 0.0, ntgz = 0.0, sig11 = 0.0, sig12 = 0.0;
 
+#pragma omp parallel for private(one_by_fu1, one_by_fu2, one_by_fe_Atr, ntgz, ntgu, sig11, sig12)
   for (i=0; i<N; i++){
 
     one_by_fu1 = 1.0 / fu1[i];

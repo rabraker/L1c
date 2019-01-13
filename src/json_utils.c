@@ -7,7 +7,7 @@
 
 #include "json_utils.h"
 #include <fftw3.h>
-#include "l1qc_common.h"
+#include "l1c_common.h"
 /* Utility functions */
 
 

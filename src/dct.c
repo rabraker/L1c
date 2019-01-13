@@ -14,7 +14,7 @@
 #include <math.h>
 #include "dct.h"
 
-#include "l1qc_common.h"
+#include "l1c_common.h"
 
 
 static fftw_plan dct_plan_MtEty;

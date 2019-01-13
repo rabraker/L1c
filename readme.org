@@ -82,7 +82,7 @@ LBResult l1qc_newton(int N, double *x, double *u, int M, double *b,
 *Important*: The array inputs of doubles (*x, *u, *b) to ~l1qc_newton~ must be aligned on a 64-byte boundary, otherwise segfaults may occur. To faciliate this, you may use the functions. 
 
 #+BEGIN_SRC c 
-/*l1qc_common.h */
+/*l1c_common.h */
 void* malloc_double(N);
 void* free_double(N);
 #+END_SRC

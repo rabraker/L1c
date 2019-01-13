@@ -1,6 +1,6 @@
 #ifndef _DCTMKL_
 #define _DCTMKL_
-#include "l1qc_common.h"
+#include "l1c_common.h"
 
 extern int dctmkl_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx);
 extern void dctmkl_destroy();
