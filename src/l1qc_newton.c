@@ -1,25 +1,14 @@
 #include <stdlib.h>
 #include <math.h>
+#include "omp.h"
 
 #include "l1qc_newton.h"
 #include "cgsolve.h"
 #include "l1c_common.h" //includes <stdio.h> or mex.h, as needed.
 #include "vcl_math.h"
+#include "l1c_math.h"
 #include "omp.h"
-/**
-   Compute the vector elementwise product
-   z = x.*y
-*/
-void xmuly_z(l1c_int N, double * restrict x, double * restrict y, double * restrict z){
-  double *x_ = __builtin_assume_aligned(x, 64);
-  double *y_ = __builtin_assume_aligned(y, 64);
-  double *z_ = __builtin_assume_aligned(z, 64);
 
-#pragma omp parallel for
-  for (l1c_int i=0; i<N; i++){
-    z_[i] = x_[i] * y_[i];
-  }
-}
 
 
 void axpby_z(l1c_int N, double alpha, double * restrict x, double beta, double * restrict y, double * restrict z){
@@ -39,30 +28,6 @@ void axpby_z(l1c_int N, double alpha, double * restrict x, double beta, double *
 }
 
 
-
-void axpy_z(l1c_int N, double alpha, double * restrict x, double * restrict y, double * restrict z){
-  /* Computes z = a * x + y. Similary to cblas_axpy, but for when you don't want to overwrite y.
-   This way, we avoid a call to cblas_dcopy().
-
-   May be worth explicitly vectorizing (e.g., ispc??) this function.
-  */
-  double *x_ = __builtin_assume_aligned(x, 64);
-  double *y_ = __builtin_assume_aligned(y, 64);
-  double *z_ = __builtin_assume_aligned(z, 64);
-
-  l1c_int i;
-#pragma omp parallel for
-  for (i = 0; i<N; i++){
-    z_[i] = alpha * x_[i] + y_[i];
-  }
-}
-
-
-double sum_abs_vec(l1c_int N, double *x){
-  return cblas_dasum(N, x, 1);
-}
-
-
 /**
    Initialize a vector x of length to alpha in all entries.
  */
@@ -72,29 +37,9 @@ void init_vec(l1c_int N, double *x, double alpha){
   }
 }
 
-double sum_vec(l1c_int N, double *x){
-  l1c_int i = 0;
-  double sum = 0.0;
-  for (i=0; i<N; i++){
-    sum = sum + x[i];
-  }
-  return sum;
-}
 
 
-double logsum(l1c_int N,  double alpha, double *x) {
-  /* Computes sum(log( alpha *x)) */
-  l1c_int i = 0;
-  double total = 0.0;
-#pragma omp parallel for
-  for (i=0; i<N; i++){
-    total += log(alpha * x[i]);
-  }
-  return total;
-}
-
-
-/* Evalutes the value function */
+/* Evalutes the value functional */
 void f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, double tau, double epsilon,
             double *fu1, double *fu2, double *fe, double *f){
   /*
@@ -123,16 +68,15 @@ void f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, double tau, d
   // double *log_fu2 = Dwork_2N + N;
 
   // fu1 = x - u
-  axpy_z(N, -1.0, u, x, fu1);
+  l1c_daxpy_z(N, -1.0, u, x, fu1);
   // fu2 = -x - u
   axpby_z(N, -1.0, x, -1.0, u, fu2);
 
   *fe = 0.5 * (cblas_ddot(M, r, 1, r, 1) - epsilon * epsilon);
 
-   // a1 = logsum(N, -1.0, fu1);
-   // a2 = logsum(N, -1.0, fu2);
-   // a3 = log(- (*fe));
-   // *f = sum_vec(N, u) - (1.0/tau) * ( a1 + a2 +a3);
+  // a1 = l1c_dlogsum(N, -1.0, fu1);
+  // a2 = l1c_dlogsum(N, -1.0, fu2);
+  // *f = l1c_dsum(N, u) - (1.0/tau) * ( a1 + a2 +a3);
   a1 = vcl_logsum(N, -1.0, fu1);
   a2 = vcl_logsum(N, -1.0, fu2);
   a3 = log(- (*fe));
@@ -161,11 +105,12 @@ void H11pfun(l1c_int N, double *z, double *y,  void *hess_data_in){
 
   // y = sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
   h11p_data.AtAx(z, ATA_z);                              // AtA_z
-  xmuly_z(N, h11p_data.sigx, z, y);                      // y = sigx.*z
+  l1c_dxmuly_z(N, h11p_data.sigx, z, y);                      // y = sigx.*z
   cblas_daxpy(N, -h11p_data.one_by_fe, ATA_z, 1, y, 1);  // y = sigx.*z (1/fe)*ATA_z
   cblas_daxpy(N, atr_dot_z_fe, h11p_data.atr, 1, y, 1);
 
 }
+
 
 
 void get_gradient(l1c_int N, double *fu1, double *fu2, double *sigx, double *atr,
@@ -319,8 +264,8 @@ LSStat line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double
 
   for (iter=1; iter<=32; iter++){
     // /* xp = x + s*dx etc*/
-    axpy_z(N, step, gd.dx, x, xp);
-    axpy_z(N, step, gd.du, u, up);
+    l1c_daxpy_z(N, step, gd.dx, x, xp);
+    l1c_daxpy_z(N, step, gd.du, u, up);
 
     /*Re-evaluate, rather than relying on Adx */
     // dct_EMx_new(xp, rp);
@@ -399,7 +344,7 @@ int newton_init(l1c_int N, double *x, double *u,  NewtParams *params){
   /* choose initial value of tau so that the duality gap after the first
      step will be about the original norm */
   //tau = max((2*N+1)/sum(abs(x0)), 1);
-  tmp = sum_abs_vec(N, x);
+  tmp = l1c_dnorm1(N, x);
   tmp = (double)(2*N+1) / tmp;
   params->tau = max(tmp, 1);
 
@@ -572,7 +517,7 @@ INFINITY;
     if (params.verbose > 0){
       printf("\n******************************************************************************************************\n");
       printf("LB iter = %d, l1 = %.3f, functional = %8.3e, tau = %8.3e, total newton-iter =%d, Total CG iter=%d\n",
-             tau_iter, sum_abs_vec(N, x), sum_vec(N, u), params.tau, total_newt_iter, total_cg_iter);
+             tau_iter, l1c_dnorm1(N, x), l1c_dsum(N, u), params.tau, total_newt_iter, total_cg_iter);
       printf("******************************************************************************************************\n\n");
     }
 #ifdef __MATLAB__
@@ -602,7 +547,7 @@ INFINITY;
   free_double(gd.Adx);
 
   lb_res.total_newton_iter = total_newt_iter;
-  lb_res.l1 = sum_abs_vec(N, x);
+  lb_res.l1 = l1c_dnorm1(N, x);
   return lb_res;
 
 }/* MAIN ENDS HERE*/
