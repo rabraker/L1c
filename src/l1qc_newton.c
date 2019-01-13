@@ -107,24 +107,19 @@ void f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, double tau, d
 
   // fu1 = x - u
   axpy_z(N, -1.0, u, x, fu1);
-  // cblas_dcopy(N, x, 1, fu1, 1);
-  // cblas_daxpy(N, -1.0, u, 1, fu1, 1);
-
   // fu2 = -x - u
-  // cblas_dcopy(N, x, 1, fu2, 1);
-  // cblas_daxpby(N, -1.0, u, 1, -1.0, fu2, 1);
   axpby_z(N, -1.0, x, -1.0, u, fu2);
 
   *fe = 0.5 * (cblas_ddot(M, r, 1, r, 1) - epsilon * epsilon);
 
-   a1 = logsum(N, -1.0, fu1);
-   a2 = logsum(N, -1.0, fu2);
-   a3 = log(- (*fe));
-   *f = sum_vec(N, u) - (1.0/tau) * ( a1 + a2 +a3);
-  // a1 = vcl_logsum(N, -1.0, fu1);
-  // a2 = vcl_logsum(N, -1.0, fu2);
-  // a3 = log(- (*fe));
-  // *f = vcl_sum(N, u) - (1.0/tau) * ( a1 + a2 +a3);
+   // a1 = logsum(N, -1.0, fu1);
+   // a2 = logsum(N, -1.0, fu2);
+   // a3 = log(- (*fe));
+   // *f = sum_vec(N, u) - (1.0/tau) * ( a1 + a2 +a3);
+  a1 = vcl_logsum(N, -1.0, fu1);
+  a2 = vcl_logsum(N, -1.0, fu2);
+  a3 = log(- (*fe));
+  *f = vcl_sum(N, u) - (1.0/tau) * ( a1 + a2 +a3);
 
 }
 
@@ -339,7 +334,7 @@ LSStat line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double
 
     //printf("iter = %d, fp = %f, flin = %f\n", iter, fp, flin);
     if (fp <= flin){ /* Sufficient decrease test */
-      //cblas_dscal(N, step, gd.dx, 1); //For cgsolve hotstart.
+      cblas_dscal(N, step, gd.dx, 1); //For cgsolve hotstart.
       cblas_dcopy(N, xp, 1, x, 1);
       cblas_dcopy(N, up, 1, u, 1);
       cblas_dcopy(M, rp, 1, r, 1);
@@ -487,18 +482,17 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
     printf("Total Log-Barrier iterations:  %d \n", (int)params.lbiter);
   }
 
+  init_vec(N, gd.dx, 0.0);
   /* ---------------- MAIN **TAU** ITERATION --------------------- */
   for (tau_iter=1; tau_iter<=params.lbiter; tau_iter++){
-    init_vec(N, gd.dx, 0.0);
 
     if (params.verbose > 1){
       printf("Newton-iter | Functional | Newton decrement |  Stepsize  |  cg-res | cg-iter | backiter |  s0   |  s    | \n");
       printf("----------------------------------------------------------------------------------------------------------\n");
     }
     /* Compute Ax - b = r */
-    // dct_EMx_new(x, r);
     Ax_funs.Ax(x,r);
-    cblas_daxpy(M, -1.0, b, 1, r, 1); //-b + Ax -->ax
+    cblas_daxpy(M, -1.0, b, 1, r, 1); //-b + Ax -->r
 
     if ( (tau_iter==1) & check_feasible_start(M, r, params.epsilon) ){
         printf("Starting point is infeasible, exiting\n");
@@ -516,17 +510,17 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
         linesearch should be exact given the current stepsize.
       */
 
-      /* compute descent direction. returns dx, du, gradf, cgres */
-      // dct_MtEty(r, atr); //atr = A'*r.
-      Ax_funs.Aty(r, atr);
+      Ax_funs.Aty(r, atr); //atr = A'*r.
 
       if(compute_descent(N, fu1, fu2, atr, fe,  params.tau, gd, DWORK_6N, cg_params,
                          &cg_results, Ax_funs)){
         break;
       }
       total_cg_iter +=cg_results.cgiter;
-      // dct_EMx_new(gd.dx, gd.Adx); //Adx = A*dx
-      Ax_funs.Ax(gd.dx, gd.Adx);
+
+
+      Ax_funs.Ax(gd.dx, gd.Adx);  //Adx = A*dx
+
       /* -------------- Line Search --------------------------- */
       ls_params.s = find_max_step(N, gd, fu1, fu2, M, r, params.epsilon);
 
