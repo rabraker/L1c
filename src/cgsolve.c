@@ -29,10 +29,10 @@ This contains the conjugate gradient solver, cgsolve. The two small routines Ax 
    the linear mapping.
 
 
-   @param[out] x The result is stored in this array. Should have length n_b.
-   @param[in] b  The RHS, should have length n_b.
-   @param[in] n_b Length of the vector b.
-   @param[in] Dwork Pointer to a work array of length 5 * n_b.
+   @param[out] x The result is stored in this array. Should have length N.
+   @param[in] b  The RHS, should have length N.
+   @param[in] N Length of the vector b.
+   @param[in] Dwork Pointer to a work array of length 5 * N.
    @param[in] void(*AX_func) Pointer to a function which evalutes A * x.
    @param[in] AX_data  Data needed by AX_func. For example, if
    you just wanted AX_func to perform a normal matrix multiplication,
@@ -54,7 +54,7 @@ This contains the conjugate gradient solver, cgsolve. The two small routines Ax 
  }
 */
 
-int cgsolve(double *x, double *b, l1c_int n_b, double *Dwork,
+int cgsolve(double *x, double *b, l1c_int N, double *Dwork,
             void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
             CgResults *cg_result, CgParams cg_params){
 
@@ -65,77 +65,84 @@ int cgsolve(double *x, double *b, l1c_int n_b, double *Dwork,
   double delta = 0.0;
   double delta_0= 0.0;
   double delta_old = 0.0;
-  double res = 0.0;
-  double best_res = 0.0;
+  double rel_res = 0.0;
+  double best_rel_res = 0.0;
   double beta = 0.0;
   double alpha = 0.0;
-  double *r, *d, *bestx, *q;
+  double *r, *p, *bestx, *q;
 
   /* Divide up Dwork for tempory variables */
   r = Dwork;
-  d = Dwork + n_b;
-  bestx = Dwork + 2 * n_b;
-  q = Dwork + 3 * n_b;
+  p = Dwork + N;
+  bestx = Dwork + 2 * N;
+  q = Dwork + 3 * N;
 
   /* Init
   x = zeros(n,1)
   r = b;
-  d = r;
+  p = r;
   delta = r'*r;
   delta_0 = b'*b;
   numiter = 0;
   bestx = x;
   bestres = sqrt(delta/delta_0);
   */
-  for (i=0; i<n_b; i++){
-    x[i] = 0.0;
-    bestx[i] = 0.0;
+  for (i=0; i<N; i++){
+    // x[i] = 0.0;
+    bestx[i] = x[i];
   }
 
-  cblas_dcopy((int)n_b, b, 1, r, 1);       /*r=b: copy b (ie, z_i_1) to r */
-  cblas_dcopy((int)n_b, r, 1, d, 1);       /*d=r: copy r (ie, z_i_1) to d */
-  delta = cblas_ddot(n_b, r, 1, r, 1);     /*delta = r'*r                 */
 
-  delta_0 = cblas_ddot(n_b, b, 1, b, 1);  /*delta_0 = b'*b                */
-  best_res = sqrt(delta/delta_0);
+  //OLD: cblas_dcopy((int)N, b, 1, r, 1);       /*r=b: copy b (ie, z_i_1) to r */
+  /*Using warmstart: set r = b - A*x  */
+  AX_func(N, x, r, AX_data);                /* r = A * x          */
+  cblas_daxpby(N, 1.0, b, 1, -1.0, r, 1);     /* r = 1*b + (-1)*Ax  */
+
+
+  cblas_dcopy((int)N, r, 1, p, 1);       /*p=r:                         */
+  delta = cblas_ddot(N, r, 1, r, 1);     /*delta = r'*r                 */
+
+  delta_0 = cblas_ddot(N, b, 1, b, 1);  /*delta_0 = b'*b                */
+  best_rel_res = sqrt(delta/delta_0);
 
   if (cg_params.verbose > 0){
     printf("cg: |Iter| Best resid | Current resid| alpha | beta   |   delta  |\n");
   }
   for (iter=1; iter<=cg_params.max_iter; iter++){
 
-    AX_func(n_b, d, q, AX_data);                 /* q = A * d */
+    AX_func(N, p, q, AX_data);                 /* q = A * p */
 
-    alpha = delta / cblas_ddot(n_b, d, 1, q, 1); /* alpha delta/(d'*q) */
+    alpha = delta / cblas_ddot(N, p, 1, q, 1); /* alpha delta/(d'*q) */
 
-    cblas_daxpy(n_b, alpha, d, 1, x, 1);         /* x = alpha*d + x    */
-
+    cblas_daxpy(N, alpha, p, 1, x, 1);         /* x = alpha*d + x    */
     if ( (iter+1 %50 ) == 0){
-      AX_func(n_b, x, r, AX_data);               /* r = b - A(x);      */
-      cblas_daxpby(n_b, 1.0, b, 1, -1.0, r, 1);  /* r = b - A*x        */
-    }else{
-      cblas_daxpy(n_b, -alpha, q, 1, r, 1);      /* r = - alpha*q + r; */
+      AX_func(N, x, r, AX_data);               /* r = b - A(x);      */
+      cblas_daxpby(N, 1.0, b, 1, -1.0, r, 1);  /* r = b - A*x        */
+      cblas_dcopy(N, r, 1, p, 1);
+      delta = cblas_ddot(N, r, 1, r, 1);
+      continue;
     }
 
+    cblas_daxpy(N, -alpha, q, 1, r, 1);      /* r = - alpha*q + r; */
     delta_old = delta;
-    delta = cblas_ddot(n_b, r, 1, r, 1);         /* delta = r'*r; */
+    delta = cblas_ddot(N, r, 1, r, 1);         /* delta = r'*r; */
 
     beta = delta/delta_old;
-    cblas_daxpby(n_b, 1.0, r, 1, beta, d, 1);    /* d = r + beta*d; */
+    cblas_daxpby(N, 1.0, r, 1, beta, p, 1);    /* d = r + beta*p; */
 
-    res = sqrt(delta/delta_0);
-    if (res < best_res) {
+    rel_res = sqrt(delta/delta_0);
+    if (rel_res < best_rel_res) {
       //bestx = x;
-      cblas_dcopy( (int)n_b, x, 1, bestx, 1);
-      best_res = res;
+      cblas_dcopy( (int)N, x, 1, bestx, 1);
+      best_rel_res = rel_res;
     }
 
     if ( cg_params.verbose >0 && (iter % cg_params.verbose)==0){ // modulo 0 is a floating point exception.
       // printf("cg: Iter = %d, Best residual = %.3e, Current residual = %.3e\n", iter, best_res, res);
-      printf("  %d,   %.16e, %.16e, %.16e, %.16e, %.16e  \n", iter, best_res, res, alpha, beta, delta);
+      printf("  %d,   %.16e, %.16e, %.16e, %.16e, %.16e  \n", iter, best_rel_res, rel_res, alpha, beta, delta);
     }
 
-    if (delta < (cg_params.tol * cg_params.tol) * delta_0){
+    if (rel_res < cg_params.tol){
       break;
     }
 
@@ -143,8 +150,8 @@ int cgsolve(double *x, double *b, l1c_int n_b, double *Dwork,
 
 
   // x = bestx;
-  cblas_dcopy( (int)n_b, bestx, 1, x, 1);
-  cg_result->cgres = best_res;
+  cblas_dcopy( (int)N, bestx, 1, x, 1);
+  cg_result->cgres = best_rel_res;
   cg_result->cgiter = min(iter, cg_params.max_iter); //Loops increment before exiting.
 
 

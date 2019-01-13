@@ -32,8 +32,6 @@ int main(void)
   Suite *s;
   SRunner *sr;
 
-  // s = cgsolve_suite();
-  // s = l1qc_newton_suite();
   s = dct_mkl_suite();
   sr = srunner_create(s);
   srunner_set_fork_status(sr, fstat);

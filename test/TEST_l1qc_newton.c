@@ -97,8 +97,8 @@ START_TEST (test_l1qc_newton_1iter)
 
   lb_res = l1qc_newton(N, x0, u, M, b, params, ax_funs);
 
-  ck_assert_double_array_eq_tol(N, x1_exp, x0,  0.00001);
-  ck_assert_double_array_eq_tol(N, u1_exp, u,   0.00001);
+  ck_assert_double_array_eq_reltol(N, x1_exp, x0,  0.00001);
+  ck_assert_double_array_eq_reltol(N, u1_exp, u,   0.00001);
 
   ck_assert_int_eq(0, lb_res.status);
 
@@ -185,7 +185,7 @@ START_TEST (test_newton_init)
   status +=extract_json_int(test_data_json, "lbiter", &lbiter_exp);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
   u = malloc_double(N);
-    Dwork = malloc_double(N);
+  Dwork = malloc_double(N);
   if (status | !u | !Dwork){
     perror("Error Loading json data in 'test_newton_init()'. Aborting\n");
     goto exit1;
@@ -219,19 +219,12 @@ START_TEST (test_newton_init)
   free_json_text_data();
   cJSON_Delete(test_data_json);
 
-  if (! status){
-    goto exit2;
-  }else{
-#ifdef _USEMKL_
-    mkl_free_buffers();
-#endif
-    ck_abort();
-  }
- exit2:
-  dct_destroy();
 #ifdef _USEMKL_
   mkl_free_buffers();
 #endif
+  if (status){
+    ck_abort();
+  }
 
 }
 END_TEST
@@ -325,6 +318,7 @@ START_TEST(test_compute_descent)
   status +=extract_json_double(test_data_json, "tau", &tau);
   status +=extract_json_int(test_data_json, "cgmaxiter", &cg_maxiter);
 
+  status +=extract_json_double_array(test_data_json, "dx0", &gd.dx, &N);
   // Expected outputs
   status +=extract_json_double_array(test_data_json, "dx", &dx_exp, &N);
   status +=extract_json_double_array(test_data_json, "du", &du_exp, &N);
@@ -341,7 +335,7 @@ START_TEST(test_compute_descent)
 
   DWORK_6N = malloc_double(6*N);
   gd.w1p = malloc_double(N);
-  gd.dx = malloc_double(N);
+  // gd.dx = malloc_double(N);
   gd.du = malloc_double(N);
   gd.gradf = malloc_double(2*N);
   gd.Adx = malloc_double(2*N);
@@ -375,10 +369,10 @@ START_TEST(test_compute_descent)
   ck_assert_double_array_eq_tol(N, sig11_exp, gd.sig11, TOL_DOUBLE*100);
   ck_assert_double_array_eq_tol(N, sig12_exp, gd.sig12, TOL_DOUBLE*100);
   ck_assert_double_array_eq_tol(N, w1p_exp, gd.w1p, TOL_DOUBLE*100);
-  ck_assert_double_array_eq_tol(N, dx_exp, gd.dx, TOL_DOUBLE*100);
-  ck_assert_double_array_eq_tol(N, du_exp, gd.du, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_reltol(N, dx_exp, gd.dx, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_reltol(N, du_exp, gd.du, TOL_DOUBLE*100);
 
-  ck_assert_int_eq(cgr.cgiter, cgiter_exp);
+  // ck_assert_int_eq(cgr.cgiter, cgiter_exp);
   ck_assert_double_eq_tol(cgr.cgres, cgres_exp, TOL_DOUBLE*100);
 
   /* /\* ----------------- Cleanup --------------- *\/ */

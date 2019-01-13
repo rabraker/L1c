@@ -42,7 +42,7 @@
 %
 
 
-function [xp, up, niter] = l1qc_newton(x0, u0, A, At, b, epsilon, tau, newtontol, newtonmaxiter, cgtol, cgmaxiter, Tii, verbose) 
+function [xp, up, niter, cgit_tot] = l1qc_newton(x0, u0, A, At, b, epsilon, tau, newtontol, newtonmaxiter, cgtol, cgmaxiter, Tii, verbose) 
 
 
   % line search parameters
@@ -57,9 +57,12 @@ function [xp, up, niter] = l1qc_newton(x0, u0, A, At, b, epsilon, tau, newtontol
   
   
   if verbose
-    fprintf('Newton-iter | Functional | Newton decrement |  Stepsize  |  cg-res | cg-iter | backiter |    s     |\n');
+    fprintf(['Newton-iter | Functional | Newton decrement |  Stepsize  ' ...
+             '|  cg-res | cg-iter | backiter |  s0    |    s     |\n']);
   end
-  
+  dx = 0*x0;
+  cgit_tot = 0;
+  s = 1;  
   for niter=1:newtonmaxiter
     
     % Gradient and Hessian parts.
@@ -74,7 +77,9 @@ function [xp, up, niter] = l1qc_newton(x0, u0, A, At, b, epsilon, tau, newtontol
     
     w1p = ntgz - sig12./sig11.*ntgu;
     h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
-    [dx, cgres, cgiter] = L1qcTestData.cgsolve(h11pfun, w1p, cgtol, cgmaxiter, 0);
+    [dx, cgres, cgiter] = L1qcTestData.cgsolve(h11pfun, w1p, cgtol, cgmaxiter, 0, dx*s);
+    cgit_tot=cgit_tot + cgiter;
+    %[dx, cgres, cgiter] = L1qcTestData.cgsolve(h11pfun, w1p, cgtol, cgmaxiter, 0);
     if (cgres > 1/2)
       disp('Cannot solve system.  Returning previous iterate.  (See Section 4 of notes for more information.)');
       xp = x;  up = u;
@@ -97,10 +102,10 @@ function [xp, up, niter] = l1qc_newton(x0, u0, A, At, b, epsilon, tau, newtontol
     smax = min(1,min([...
       -fu1(ifu1)./(dx(ifu1)-du(ifu1));
       -fu2(ifu2)./(-dx(ifu2)-du(ifu2)); ...
-      root
-      ]));
-    s = (0.99)*real(smax);
+      root ]));
     
+    s = (0.99)*real(smax);
+    s0 = s;
     % backtracking line search
     for backiter=1:32
       xp = x + s*dx;
@@ -136,8 +141,8 @@ function [xp, up, niter] = l1qc_newton(x0, u0, A, At, b, epsilon, tau, newtontol
     if verbose
       % fprintf('Newton iter |  Functional | Newton decrement | Stepsize | cg-res | backiter|  s \n');
       %            NI         fcnl         dec            sz     cgr       cgI        BI       s
-      fprintf('     %3d       %8.3g       %08.3g       % 8.3e   %08.3g     %3d       %2d       %.3g \n',...
-        niter, f, lambda2/2, stepsize, cgres, cgiter, backiter, s);
+      fprintf('     %3d       %8.3g       %08.3g       % 8.3e   %08.3g     %3d       %2d   %.3g    %.3g \n',...
+        niter, f, lambda2/2, stepsize, cgres, cgiter, backiter, s0,  s);
     end
     
     if (lambda2/2 < newtontol)

@@ -7,6 +7,24 @@
 #include "vcl_math.h"
 
 
+void axpby_z(l1c_int N, double alpha, double * restrict x, double beta, double * restrict y, double * restrict z){
+  /* Computes z = a * x + y. Similary to cblas_axpy, but for when you don't want to overwrite y.
+     This way, we avoid a call to cblas_dcopy().
+
+     May be worth explicitly vectorizing (e.g., ispc??) this function.
+  */
+  double *x_ = __builtin_assume_aligned(x, 64);
+  double *y_ = __builtin_assume_aligned(y, 64);
+  double *z_ = __builtin_assume_aligned(z, 64);
+
+  l1c_int i;
+  for (i = 0; i<N; i++){
+    z_[i] = alpha * x_[i] + beta * y_[i];
+  }
+}
+
+
+
 void axpy_z(l1c_int N, double alpha, double * restrict x, double * restrict y, double * restrict z){
   /* Computes z = a * x + y. Similary to cblas_axpy, but for when you don't want to overwrite y.
    This way, we avoid a call to cblas_dcopy().
@@ -28,6 +46,15 @@ double sum_abs_vec(l1c_int N, double *x){
   return cblas_dasum(N, x, 1);
 }
 
+
+/**
+   Initialize a vector x of length to alpha in all entries.
+ */
+void init_vec(l1c_int N, double *x, double alpha){
+  for (int i=1; i<N; i++){
+    x[i] = alpha;
+  }
+}
 
 double sum_vec(l1c_int N, double *x){
   l1c_int i = 0;
@@ -79,22 +106,25 @@ void f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, double tau, d
   // double *log_fu2 = Dwork_2N + N;
 
   // fu1 = x - u
-  cblas_dcopy(N, x, 1, fu1, 1);
-  cblas_daxpy(N, -1.0, u, 1, fu1, 1);
+  axpy_z(N, -1.0, u, x, fu1);
+  // cblas_dcopy(N, x, 1, fu1, 1);
+  // cblas_daxpy(N, -1.0, u, 1, fu1, 1);
 
   // fu2 = -x - u
-  cblas_dcopy(N, x, 1, fu2, 1);
-  cblas_daxpby(N, -1.0, u, 1, -1.0, fu2, 1);
+  // cblas_dcopy(N, x, 1, fu2, 1);
+  // cblas_daxpby(N, -1.0, u, 1, -1.0, fu2, 1);
+  axpby_z(N, -1.0, x, -1.0, u, fu2);
 
   *fe = 0.5 * (cblas_ddot(M, r, 1, r, 1) - epsilon * epsilon);
 
-  // a1 = logsum(N, -1.0, fu1);
-  // a2 = logsum(N, -1.0, fu2);
-  // *f = sum_vec(N, u) - (1.0/tau) * ( a1 + a2 +a3);
-  a1 = vcl_logsum(N, -1.0, fu1);
-  a2 = vcl_logsum(N, -1.0, fu2);
-  a3 = log(- (*fe));
-  *f = vcl_sum(N, u) - (1.0/tau) * ( a1 + a2 +a3);
+   a1 = logsum(N, -1.0, fu1);
+   a2 = logsum(N, -1.0, fu2);
+   a3 = log(- (*fe));
+   *f = sum_vec(N, u) - (1.0/tau) * ( a1 + a2 +a3);
+  // a1 = vcl_logsum(N, -1.0, fu1);
+  // a2 = vcl_logsum(N, -1.0, fu2);
+  // a3 = log(- (*fe));
+  // *f = vcl_sum(N, u) - (1.0/tau) * ( a1 + a2 +a3);
 
 }
 
@@ -296,6 +326,10 @@ LSStat line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double
 
     f_eval(N, xp, up, M, rp, ls_params.tau, ls_params.epsilon, fu1p, fu2p, &fep, &fp);
 
+    if ( isnan(fp)) {
+      continue;
+    }
+
     /* need gradf'*[dx; du], but dx and du stored separately.
        Use pointer arithmetic with gradf*/
 
@@ -305,7 +339,7 @@ LSStat line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double
 
     //printf("iter = %d, fp = %f, flin = %f\n", iter, fp, flin);
     if (fp <= flin){ /* Sufficient decrease test */
-
+      //cblas_dscal(N, step, gd.dx, 1); //For cgsolve hotstart.
       cblas_dcopy(N, xp, 1, x, 1);
       cblas_dcopy(N, up, 1, u, 1);
       cblas_dcopy(M, rp, 1, r, 1);
@@ -334,6 +368,7 @@ LSStat line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double
   printf("%s                        fp-flin = %.10f\n", spc, fp - flin);
   printf("%s                        step = %.10f\n", spc, step);
   printf("%s                        ls_params.s = %.10f\n", spc, ls_params.s);
+
 
   cblas_dcopy(N, x, 1, xp, 1);
   cblas_dcopy(N, u, 1, up, 1);
@@ -408,7 +443,7 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
   CgResults cg_results;
   LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
 
-  int iter=0, total_newt_iter = 0, tau_iter = 0;
+  int iter=0, total_newt_iter = 0, tau_iter = 0, total_cg_iter=0;;
 
   double fe = 0.0, f = 0.0, lambda2 = 0.0, stepsize = 0.0;
 
@@ -454,9 +489,11 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
 
   /* ---------------- MAIN **TAU** ITERATION --------------------- */
   for (tau_iter=1; tau_iter<=params.lbiter; tau_iter++){
+    init_vec(N, gd.dx, 0.0);
+
     if (params.verbose > 1){
-      printf("Newton-iter | Functional | Newton decrement |  Stepsize  |  cg-res | cg-iter | backiter |    s    | \n");
-      printf("----------------------------------------------------------------------------------------------------\n");
+      printf("Newton-iter | Functional | Newton decrement |  Stepsize  |  cg-res | cg-iter | backiter |  s0   |  s    | \n");
+      printf("----------------------------------------------------------------------------------------------------------\n");
     }
     /* Compute Ax - b = r */
     // dct_EMx_new(x, r);
@@ -487,7 +524,7 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
                          &cg_results, Ax_funs)){
         break;
       }
-
+      total_cg_iter +=cg_results.cgiter;
       // dct_EMx_new(gd.dx, gd.Adx); //Adx = A*dx
       Ax_funs.Ax(gd.dx, gd.Adx);
       /* -------------- Line Search --------------------------- */
@@ -507,11 +544,13 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
         /* want norm [dx; du] */
         stepsize = cblas_ddot(N, gd.dx, 1, gd.dx, 1) + cblas_ddot(N, gd.du, 1, gd.du, 1);
         stepsize = stepsize * ls_params.s;
-
-        /*            NI         fcnl         dec         sz     cgr       cgI        BI       s  */
-        printf("     %3d       %8.3e       %08.3e    % 8.3e   %08.3e     %3d       %2d      %.3g \n",
+        if (stepsize <0){
+          printf("stepsize NEGATIVE: sz=%f,  ls_params.c=%f\n", stepsize, ls_params.s);
+        }
+        /*            NI         fcnl         dec         sz     cgr       cgI        BI    s0    s  */
+        printf("     %3d       %8.3e       %08.3e    % 8.3e   %08.3e     %3d       %2d      %3g   %.3g \n",
                (int)iter, f, lambda2/2, stepsize, cg_results.cgres, (int)cg_results.cgiter, (int)ls_stat.iter,
-               ls_stat.step);
+               ls_params.s, ls_stat.step);
 #ifdef __MATLAB__
         mexEvalString("drawnow('update');");
 #endif
@@ -531,8 +570,8 @@ INFINITY;
     total_newt_iter += iter;
     if (params.verbose > 0){
       printf("\n******************************************************************************************************\n");
-      printf("Log barrier iter = %d, l1 = %.3f, functional = %8.3e, tau = %8.3e, total newton-iter =%d\n",
-            tau_iter, sum_abs_vec(N, x), sum_vec(N, u), params.tau, total_newt_iter);
+      printf("LB iter = %d, l1 = %.3f, functional = %8.3e, tau = %8.3e, total newton-iter =%d, Total CG iter=%d\n",
+             tau_iter, sum_abs_vec(N, x), sum_vec(N, u), params.tau, total_newt_iter, total_cg_iter);
       printf("******************************************************************************************************\n\n");
     }
 #ifdef __MATLAB__
