@@ -9,14 +9,13 @@ cs_sim = dat.cs_sim;
 pix_mask_vec = PixelMatrixToVector(cs_sim.pix_mask);
 
 pix_idx = find(pix_mask_vec>0.5);
-
+img_vec = L1qcTestData.pixmat2vec(cs_sim.Img_sub_sampled);
 % y = E*M*x
-y_vec = PixelMatrixToVector(cs_sim.Img_sub_sampled);
+
 % y, set of measurements. have to remove all the spots we didn't sample.
-y_vec = y_vec(pix_mask_vec>0.5);
+y_vec = img_vec(pix_idx);
 y_vec = y_vec/max(y_vec); % normalize to 1
-A = @(x) L1qcTestData.IDCTfun(x,pix_mask_vec); % E*M
-At = @(x) L1qcTestData.DCTfun(x,pix_mask_vec); %E^T*M^T
+At = @(x) L1qcTestData.Atfun_dct(x,pix_idx, length(img_vec)); %E^T*M^T
 
 
 
@@ -33,7 +32,7 @@ opts.lbtol = 1e-3;
 opts.newton_tol = opts.lbtol;
 opts.newton_max_iter = 50;
 opts.verbose = 2;
- 
+opts.warm_start_cg = 0;
 % system('export MKL_DYNAMIC=TRUE');
 % system('export MKL_NUM_THREADS=2');
 tic
@@ -47,7 +46,7 @@ figure(1)
 subplot(2,2, [1,3])
 imagesc(X);
 colormap('gray')
-
+%%
 x0 = At(y_vec);
 tic
 ximg_ml = L1qcTestData.l1qc_logbarrier(x0, A, At, y_vec, opts.epsilon, opts.lbtol, opts.mu,...
