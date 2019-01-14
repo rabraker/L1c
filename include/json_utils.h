@@ -1,6 +1,6 @@
 #ifndef _JSON_UTILS_
 #define  _JSON_UTILS_
-#include "l1qc_common.h"
+#include "l1c_common.h"
 
 void free_json_text_data(void);
 

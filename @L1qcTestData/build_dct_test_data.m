@@ -17,47 +17,39 @@ function build_dct_test_data(test_data_root)
   
   pix_idx = [2, 10, 15, 20, 25, 30, 35, 40, 45, 49];
   
-  Ny = length(pix_idx);
-  pix_mask = zeros(N,1);
-  pix_mask(pix_idx) = 1;
-  
-  yy = L1qcTestData.IDCTfun(x, pix_mask);
+  yy = L1qcTestData.Afun_dct(x, pix_idx);
   
   jopts.FileName = EMx_path;
   data = struct('x0', x(:)', 'x1', yy(:)', 'pix_idx', pix_idx(:)'-1);
   savejson('', data, jopts);
   
+  x_AtA = L1qcTestData.Atfun_dct(yy, pix_idx, N);
+
   
-  xx = L1qcTestData.DCTfun(yy, pix_mask);
-  xx_save = xx;
   
   jopts.FileName = MtEty_path;
-  data = struct('x0', xx_save(:)', 'x1', yy(:)', 'pix_idx', pix_idx(:)'-1);
+  data = struct('x0', x_AtA(:)', 'x1', yy(:)', 'pix_idx', pix_idx(:)'-1);
   savejson('', data, jopts);
   
   jopts.FileName = MtEt_Emx_path;
-  data = struct('x0', x(:)', 'x1', xx_save(:)', 'pix_idx', pix_idx(:)'-1);
+  data = struct('x0', x(:)', 'x1', x_AtA(:)', 'pix_idx', pix_idx(:)'-1);
   savejson('', data, jopts);
   
+  
   %%
-  % Now, the real deal:
+  % Another small example with randomly generated data.
 
   Nx = 50;
       
-  pix_mask_vec = rand(Nx,1)*0+1;
-  idx_keep = pix_mask_vec>0.5;
-  pix_mask_vec(idx_keep) = 1;
-  pix_mask_vec(~idx_keep) = 0;
-  
+  pix_mask_vec = ones(Nx,1);
   pix_idx = find(pix_mask_vec > 0.5);
   Ny = length(pix_idx);
   
   % y = E*M*x
   img_vec = randn(Nx, 1);
+  
   % y, set of measurements. have to remove all the spots we didn't sample.
   y_vec = img_vec(pix_idx);
-  A = @(x) L1qcTestData.IDCTfun(x, pix_mask_vec); % E*M
-  At = @(y) L1qcTestData.DCTfun(y, pix_mask_vec); %E^T*M^T
   A = @(x)idct(x);
   At = @(x)dct(x);
   
@@ -70,67 +62,29 @@ function build_dct_test_data(test_data_root)
   savejson('', struct('x_in', img_vec(:)', 'y_in', y_vec(:)',...
     'EMx', EMx(:)', 'MtEty', MtEty(:)', 'MtEt_EMx', MtEt_EMx(:)', 'pix_idx', pix_idx(:)'-1), jopts);
   
+  
   %%  
-  % Now, the real deal:
-  fpath = '/home/arnold/matlab/afm-cs/matlab-code/notes/data/cs_sim_CS20NG.mat';
-  addpath ~/matlab/afm-cs/reconstruction/BP
-
-  dat = load(fpath);
-  cs_sim = dat.cs_sim;
-
-  pix_mask_vec = PixelMatrixToVector(cs_sim.pix_mask);
+  % Now, Use data from an actual compressed sensing situation. 
   
+  img_dat = load('test_image_data.mat');
+  xorig = img_dat.xorig;
+  pix_idx = img_dat.pix_idx;
+  N = length(xorig);
   
+  A = @(x) L1qcTestData.Afun_dct(x, pix_idx); % E*M
+  At = @(x) L1qcTestData.Atfun_dct(x, pix_idx, N); %E^T*M^T
   
-  pix_idx = find(pix_mask_vec > 0.5);
+  b = xorig(pix_idx);
   
-  % y = E*M*x
-  img_vec = PixelMatrixToVector(cs_sim.Img_sub_sampled);
-  % y, set of measurements. have to remove all the spots we didn't sample.
-  y_vec = img_vec(pix_idx);
-  A = @(x) L1qcTestData.IDCTfun(x, pix_mask_vec); % E*M
-  At = @(y) L1qcTestData.DCTfun(y, pix_mask_vec); %E^T*M^T
-
-  EMx = A(img_vec);
-  MtEty = At(y_vec);
+  EMx = A(xorig);
+  MtEty = At(b);
   
-  MtEt_EMx = At(A(img_vec));
+  MtEt_EMx = At(A(xorig));
   
   jopts.FloatFormat = '%.20f';
   jopts.FileName = fullfile(test_data_root, 'dct_large.json');
-  savejson('', struct('x_in', img_vec(:)', 'y_in', y_vec(:)',...
+  savejson('', struct('x_in', xorig(:)', 'y_in', b(:)',...
     'EMx', EMx(:)', 'MtEty', MtEty(:)', 'MtEt_EMx', MtEt_EMx(:)', 'pix_idx', pix_idx(:)'-1), jopts);
-  
-  
-  
-  
-  
-% For debugging, just the dct part. 
-%   fpath = '/home/arnold/matlab/afm-cs/matlab-code/notes/data/cs_sim_CS20NG.mat';
-%   addpath ~/matlab/afm-cs/reconstruction/BP
-% 
-%   dat = load(fpath);
-%   cs_sim = dat.cs_sim;
-% 
-%   img_vec = PixelMatrixToVector(cs_sim.Img_sub_sampled);
-% %   img_vec = img_vec(1:2048);
-%   pix_idx = [1:length(img_vec)];
-%   
-%   % y, set of measurements. have to remove all the spots we didn't sample.
-%   y_vec = img_vec;
-%   A = @(x) idct(x);
-%   At = @(y) dct(y);
-% 
-%   EMx = A(img_vec);
-%   MtEty = At(y_vec);
-%   
-%   MtEt_EMx = At(A(img_vec));
-%   
-%   jopts.FloatFormat = '%.20f';
-%   jopts.FileName = fullfile(test_data_root, 'dct_large.json');
-%   savejson('', struct('x_in', img_vec(:)', 'y_in', y_vec(:)',...
-%     'EMx', EMx(:)', 'MtEty', MtEty(:)', 'MtEt_EMx', MtEt_EMx(:)', 'pix_idx', pix_idx(:)'-1), jopts);
-%     
   
 
 end

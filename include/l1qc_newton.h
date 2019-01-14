@@ -6,7 +6,7 @@
 #define _L1QC_NEWTON_
 
 #include "cgsolve.h"
-#include "l1qc_common.h"
+#include "l1c_common.h"
 
 typedef struct AxFuns {
   void(*Ax)(double *x, double *y);
@@ -64,6 +64,7 @@ typedef struct NewtParams{
   double lbtol;
   l1c_int verbose;
   CgParams cg_params;
+  int warm_start_cg; /** 0: no WS; 1 use dx; 2: use step*dx */
 
 }NewtParams;
 
@@ -74,13 +75,6 @@ typedef struct LBResult{
 
 }LBResult;
 
-void axpy_z(l1c_int N, double alpha, double *x, double *y, double *z);
-
-double sum_abs_vec(l1c_int N, double *x);
-
-double sum_vec(l1c_int N, double *x);
-
-double logsum(l1c_int N,  double alpha, double *x);
 
 double find_max_step(l1c_int N, GradData gd, double *fu1,
                      double *fu2, int M, double *r, double epsilon);

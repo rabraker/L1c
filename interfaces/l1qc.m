@@ -26,6 +26,10 @@
 %                    (try 10).
 %         .cgtol:    tolerance for the conjugate gradient (CG) solver (try 1e-8).
 %         .cgmaxiter: maximum iterations for the CG solver (try 200).
+%         .warm_start_cg : (0|1|2) Warm start options for CG solver.
+%               -If 0, use dx*0.
+%               -If 1, use use previously computed value of dx as warmstart.
+%               -If 2, use dx*step from previous (newton) iteration.
 %         .lbtol :   Determines the total number of log-barrier iterations
 %                    (try  1e-3).
 %         .newton_tol : newton iterations terminate when the 
