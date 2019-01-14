@@ -35,7 +35,8 @@ classdef TestL1qcMex < matlab.unittest.TestCase
       self.b_small = self.x_orig_small(self.pix_idx_small);
       self.x0_small = self.DCTfun_IDX(self.b_small, self.pix_idx_small, Nsmall);
       self.opts = struct('epsilon', 0.01, 'mu', 10, 'cgtol', 1e-8, 'cgmaxiter', 200,...
-        'lbtol', 1e-3, 'newton_tol', 1e-4, 'newton_max_iter', 50, 'verbose', 0);
+        'lbtol', 1e-3, 'newton_tol', 1e-4, 'newton_max_iter', 50, 'verbose', 0,...
+        'warm_start_cg', 0);
 
     end
     function [ output ] = IDCTfun_IDX(self, z, pix_mask_IDX)

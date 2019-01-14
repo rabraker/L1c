@@ -64,6 +64,7 @@ typedef struct NewtParams{
   double lbtol;
   l1c_int verbose;
   CgParams cg_params;
+  int warm_start_cg; /** 0: no WS; 1 use dx; 2: use step*dx */
 
 }NewtParams;
 

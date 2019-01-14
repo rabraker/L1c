@@ -17,7 +17,7 @@ typedef struct CgParams_{
 } CgParams;
 
 
-extern int cgsolve(double *x, double *b, l1c_int n_b,  double *Dwork,
+extern int cgsolve(double *x, double *b, l1c_int N,  double *Dwork,
             void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data),
             void *AX_data, CgResults *cg_result, CgParams cg_params);
 

@@ -97,6 +97,10 @@ START_TEST(test_cgsolve)
   cgp.max_iter = max_iter;
 
   x = malloc_double(N);
+  /* Must initialize x now, with warm starting. */
+  for(int i=0; i<N; i++){
+    x[i] = 0.0;
+  }
   Dwork = malloc_double(N*4);
 
   cgsolve(x, b, N, Dwork, Ax_sym, A, &cgr, cgp);
@@ -123,7 +127,8 @@ START_TEST(test_cgsolve_h11p){
   char fpath[] = "test_data/descent_data.json";
 
   Hess_data h11p_data;
-  double *atr, *sigx, *dx, *dx_exp, *w1p, *DWORK_4N;
+  double *atr=NULL, *sigx=NULL, *dx0=NULL, *dx_exp=NULL;
+  double *w1p=NULL, *DWORK_4N=NULL;
   double  fe,cgtol,tau = 0;
   CgResults cgr;
   CgParams cgp = {.verbose=0, .max_iter=0, .tol=0};
@@ -141,6 +146,7 @@ START_TEST(test_cgsolve_h11p){
   status +=extract_json_double_array(test_data_json, "sigx", &sigx, &N);
   status +=extract_json_double_array(test_data_json, "w1p", &w1p, &N);
   status +=extract_json_double_array(test_data_json, "dx", &dx_exp, &N);
+  status +=extract_json_double_array(test_data_json, "dx0", &dx0, &N);
 
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
 
@@ -157,25 +163,26 @@ START_TEST(test_cgsolve_h11p){
   h11p_data.Dwork_1N = malloc_double(N);
   h11p_data.AtAx = dct_MtEt_EMx_new;
 
-  dx = malloc_double(N);
   DWORK_4N = malloc_double(4*N);
-  if (!dx| !DWORK_4N){
+  if ( !DWORK_4N){
     perror("error allocating memory\n");
   }
 
   dct_setup(N, M, pix_idx);
   cgp.max_iter = cg_maxiter;
   cgp.tol = cgtol;
-  cgsolve(dx, w1p, N, DWORK_4N, H11pfun, &h11p_data, &cgr, cgp);
+  cgp.verbose = 0;
 
-  ck_assert_double_array_eq_tol(N, dx_exp, dx, TOL_DOUBLE*10);
+  cgsolve(dx0, w1p, N, DWORK_4N, H11pfun, &h11p_data, &cgr, cgp);
+
+  ck_assert_double_array_eq_reltol(N, dx_exp, dx0, TOL_DOUBLE*10);
 
   free_double(atr);
   free_double(sigx);
   free_double(w1p);
   free_double(dx_exp);
   free(pix_idx);
-  free_double(dx);
+  free_double(dx0);
   free_double(DWORK_4N);
   free_double(h11p_data.Dwork_1N);
   dct_destroy();

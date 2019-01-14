@@ -137,6 +137,8 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
       params.cg_params.tol = mxGetScalar(tmp);
     }else if ( strcmp(name, "cgmaxiter") == 0){
       params.cg_params.max_iter = mxGetScalar(tmp);
+    }else if ( strcmp(name, "warm_start_cg") == 0){
+      params.warm_start_cg = (int) mxGetScalar(tmp);
     }else if ( strcmp(name, "verbose") == 0){
       params.verbose= (l1c_int) mxGetScalar(tmp);
     }else{
