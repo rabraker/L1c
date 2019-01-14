@@ -172,6 +172,7 @@ START_TEST(test_cgsolve_h11p){
   cgp.max_iter = cg_maxiter;
   cgp.tol = cgtol;
   cgp.verbose = 0;
+
   cgsolve(dx0, w1p, N, DWORK_4N, H11pfun, &h11p_data, &cgr, cgp);
 
   ck_assert_double_array_eq_reltol(N, dx_exp, dx0, TOL_DOUBLE*10);

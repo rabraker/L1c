@@ -93,11 +93,12 @@ START_TEST (test_l1qc_newton_1iter)
   params.epsilon = epsilon;
   params.lbiter = 2;
   params.cg_params = cgp;
+  params.warm_start_cg = 2;
 
   lb_res = l1qc_newton(N, x0, u, M, b, params, ax_funs);
 
-  ck_assert_double_array_eq_reltol(N, x1_exp, x0,  0.00001);
-  ck_assert_double_array_eq_reltol(N, u1_exp, u,   0.00001);
+  ck_assert_double_array_eq_reltol(N, x1_exp, x0,  0.0001);
+  ck_assert_double_array_eq_reltol(N, u1_exp, u,   0.0001);
 
   ck_assert_int_eq(0, lb_res.status);
 

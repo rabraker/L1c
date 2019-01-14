@@ -289,7 +289,6 @@ LSStat line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double
 
     //printf("iter = %d, fp = %f, flin = %f\n", iter, fp, flin);
     if (fp <= flin){ /* Sufficient decrease test */
-      //cblas_dscal(N, step, gd.dx, 1); //For cgsolve hotstart.
       cblas_dcopy(N, xp, 1, x, 1);
       cblas_dcopy(N, up, 1, u, 1);
       cblas_dcopy(M, rp, 1, r, 1);
@@ -383,7 +382,7 @@ int save_x(l1c_int N, double *x, char *fname){
 
 LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
                      NewtParams params, AxFuns Ax_funs){
-  LSStat ls_stat;// = {.flx=0, .flu = 0, .flin=0, .step=0, .status=0};
+  LSStat ls_stat = {.flx=0, .flu = 0, .flin=0, .step=0, .status=0};
   CgParams cg_params = params.cg_params;
   CgResults cg_results;
   LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
@@ -439,8 +438,8 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
     init_vec(N, gd.dx, 0.0);
 
     if (params.verbose > 1){
-      printf("Newton-iter | Functional | Newton decrement |  Stepsize  |  cg-res | cg-iter | backiter |  s0   |  s    | \n");
-      printf("----------------------------------------------------------------------------------------------------------\n");
+      printf("Newton-iter | Functional | Newton decrement |  Stepsize  |  cg-res | cg-iter | backiter |   s    | \n");
+      printf("---------------------------------------------------------------------------------------------------\n");
     }
     /* Compute Ax - b = r */
     Ax_funs.Ax(x,r);
@@ -457,6 +456,14 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
     /* ---------------- MAIN Newton ITERATION --------------------- */
     for (iter=1; iter<+params.newton_max_iter; iter++){
 
+      /* Setup warm start for CG solver.
+         warm_start_cg ==1 means we use dx itself, ie., a NOP.
+       */
+      if (params.warm_start_cg==0){
+        cblas_dscal(N, 0, gd.dx, 1);
+      }else if (params.warm_start_cg==2){
+        cblas_dscal(N, ls_stat.step, gd.dx, 1);
+      }
      /* Note: we do not need to re-evaluate the functional because we now do
         that inside the line search. Thus, f, fe, fu1, fu2 and r provided by
         linesearch should be exact given the current stepsize.
@@ -490,13 +497,11 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
         /* want norm [dx; du] */
         stepsize = cblas_ddot(N, gd.dx, 1, gd.dx, 1) + cblas_ddot(N, gd.du, 1, gd.du, 1);
         stepsize = stepsize * ls_params.s;
-        if (stepsize <0){
-          printf("stepsize NEGATIVE: sz=%f,  ls_params.c=%f\n", stepsize, ls_params.s);
-        }
-        /*            NI         fcnl         dec         sz     cgr       cgI        BI    s0    s  */
-        printf("     %3d       %8.3e       %08.3e    % 8.3e   %08.3e     %3d       %2d      %3g   %.3g \n",
+
+        /*            NI         fcnl         dec         sz     cgr       cgI        BI     s  */
+        printf("     %3d       %8.3e       %08.3e    % 8.3e   %08.3e     %3d       %2d       %.3g \n",
                (int)iter, f, lambda2/2, stepsize, cg_results.cgres, (int)cg_results.cgiter, (int)ls_stat.iter,
-               ls_params.s, ls_stat.step);
+               ls_stat.step);
 #ifdef __MATLAB__
         mexEvalString("drawnow('update');");
 #endif
@@ -515,10 +520,10 @@ INFINITY;
     /* ----- Update tau or exit ------ */
     total_newt_iter += iter;
     if (params.verbose > 0){
-      printf("\n******************************************************************************************************\n");
-      printf("LB iter = %d, l1 = %.3f, functional = %8.3e, tau = %8.3e, total newton-iter =%d, Total CG iter=%d\n",
+      printf("\n************************************************************************************************\n");
+      printf("LB iter: %d, l1: %.3f, fctl: %8.3e, tau: %8.3e, total newton-iter: %d, Total CG iter=%d\n",
              tau_iter, l1c_dnorm1(N, x), l1c_dsum(N, u), params.tau, total_newt_iter, total_cg_iter);
-      printf("******************************************************************************************************\n\n");
+      printf("*************************************************************************************************\n\n");
     }
 #ifdef __MATLAB__
     mexEvalString("drawnow('update');");

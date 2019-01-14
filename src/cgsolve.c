@@ -87,8 +87,8 @@ int cgsolve(double *x, double *b, l1c_int N, double *Dwork,
   bestx = x;
   bestres = sqrt(delta/delta_0);
   */
+
   for (i=0; i<N; i++){
-    // x[i] = 0.0;
     bestx[i] = x[i];
   }
 
@@ -115,13 +115,13 @@ int cgsolve(double *x, double *b, l1c_int N, double *Dwork,
     alpha = delta / cblas_ddot(N, p, 1, q, 1); /* alpha delta/(d'*q) */
 
     cblas_daxpy(N, alpha, p, 1, x, 1);         /* x = alpha*d + x    */
-    if ( (iter+1 %50 ) == 0){
-      AX_func(N, x, r, AX_data);               /* r = b - A(x);      */
-      cblas_daxpby(N, 1.0, b, 1, -1.0, r, 1);  /* r = b - A*x        */
-      cblas_dcopy(N, r, 1, p, 1);
-      delta = cblas_ddot(N, r, 1, r, 1);
-      continue;
-    }
+    // if ( (iter+1 %50 ) == 0){
+    //   AX_func(N, x, r, AX_data);               /* r = b - A(x);      */
+    //   cblas_daxpby(N, 1.0, b, 1, -1.0, r, 1);  /* r = b - A*x        */
+    //   cblas_dcopy(N, r, 1, p, 1);
+    //   delta = cblas_ddot(N, r, 1, r, 1);
+    //   continue;
+    // }
 
     cblas_daxpy(N, -alpha, q, 1, r, 1);      /* r = - alpha*q + r; */
     delta_old = delta;
