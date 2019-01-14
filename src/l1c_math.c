@@ -63,7 +63,7 @@ double l1c_dlogsum(l1c_int N,  double alpha, double *x) {
   /* Computes sum(log( alpha *x)) */
   l1c_int i = 0;
   double total = 0.0;
-#pragma omp parallel for
+#pragma omp parallel for reduction(+:total)
   for (i=0; i<N; i++){
     total += log(alpha * x[i]);
   }
