@@ -29,7 +29,7 @@ function xp = build_logbarrier_test_data(data_root, lbiter)
   if (norm(A(x0)-b) > epsilon)
     error('Starting point infeasible; using x0 = At*inv(AAt)*y.');
   end
-  x = x0;
+  
   u = (0.95)*abs(x0) + (0.10)*max(abs(x0));
 
   fprintf('Original l1 norm = %.3f, original functional = %.3f\n', sum(abs(x0)), sum(u));
@@ -46,9 +46,10 @@ function xp = build_logbarrier_test_data(data_root, lbiter)
 
   totaliter = 0;
   jopts.FloatFormat = '%.20f';
+  x_k = x0;
   for ii = 1:lbiter
    
-    [xp, up, ntiter] = L1qcTestData.l1qc_newton(x, u, A, At, b, epsilon, tau,...
+    [xp, up, ntiter] = L1qcTestData.l1qc_newton(x_k, u, A, At, b, epsilon, tau,...
       newtontol, newtonmaxiter, cgtol, cgmaxiter, ii, verbose);
     totaliter = totaliter + ntiter;
     
@@ -58,14 +59,14 @@ function xp = build_logbarrier_test_data(data_root, lbiter)
     
     fname_iter = sprintf('lb_test_data_iter_%d.json', ii);
     jopts.FileName = fullfile(data_root, fname_iter);
-    savejson('', struct('x0', x(:)', 'b', b(:)',...
+    savejson('', struct('x0', x0(:)', 'b', b(:)',...
       'epsilon', epsilon, 'tau', tau, 'lbiter', lbiter, 'lbtol', lbtol,...
       'newtontol', newtontol, 'newtonmaxiter', newtonmaxiter,...
       'cgtol', cgtol, 'cgmaxiter', cgmaxiter, 'mu', mu, 'pix_idx', pix_idx(:)'-1,...
       'xp', xp(:)', 'up', up(:)', 'tau_next', mu*tau), jopts);
     
     tau = mu*tau;
-    x = xp;
+    x_k = xp;
     u = up;
     
   end

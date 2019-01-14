@@ -429,6 +429,7 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
 
   if (params.verbose >0) {
     printf("Total Log-Barrier iterations:  %d \n", (int)params.lbiter);
+    printf("Original l1-norm: %f, original functional %f\n", l1c_dnorm1(N, x), l1c_dsum(N, u));
   }
 
   /* ---------------- MAIN **TAU** ITERATION --------------------- */

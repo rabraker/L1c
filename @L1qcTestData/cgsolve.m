@@ -46,12 +46,12 @@ function [x, res, iter] = cgsolve(A, b, tol, maxiter, verbose, x0)
     alpha = delta/(p'*q);
     x = x + alpha*p;
 
-    if (mod(iter+1,50) == 0)
-      r = b - A(x);
-      p = r;
-      delta = r'*r;
-      continue;
-    end
+%     if (mod(iter+1,50) == 0)
+%       r = b - A(x);
+%       p = r;
+%       delta = r'*r;
+%       continue;
+%     end
 
     r = r - alpha*q;
 
