@@ -1,31 +1,14 @@
 #include <stdlib.h>
 #include <math.h>
-#include "omp.h"
 
 #include "l1qc_newton.h"
 #include "cgsolve.h"
 #include "l1c_common.h" //includes <stdio.h> or mex.h, as needed.
 #include "vcl_math.h"
 #include "l1c_math.h"
-#include "omp.h"
+//#include "omp.h"
 
 
-
-void axpby_z(l1c_int N, double alpha, double * restrict x, double beta, double * restrict y, double * restrict z){
-  /* Computes z = a * x + y. Similary to cblas_axpy, but for when you don't want to overwrite y.
-     This way, we avoid a call to cblas_dcopy().
-
-     May be worth explicitly vectorizing (e.g., ispc??) this function.
-  */
-  double *x_ = __builtin_assume_aligned(x, 64);
-  double *y_ = __builtin_assume_aligned(y, 64);
-  double *z_ = __builtin_assume_aligned(z, 64);
-
-  l1c_int i;
-  for (i = 0; i<N; i++){
-    z_[i] = alpha * x_[i] + beta * y_[i];
-  }
-}
 
 
 /**
@@ -96,18 +79,19 @@ void H11pfun(l1c_int N, double *z, double *y,  void *hess_data_in){
 
   Hess_data h11p_data = *((Hess_data *) hess_data_in);
   // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
-  //l1c_int i = 0;
+
   double *ATA_z = h11p_data.Dwork_1N;
   double atr_dot_z_fe = 0.0;
 
   atr_dot_z_fe = cblas_ddot(N, h11p_data.atr, 1, z, 1);
   atr_dot_z_fe = atr_dot_z_fe * h11p_data.one_by_fe_sqrd; //1/fe^2*(atr'*z)
 
-  // y = sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
-  h11p_data.AtAx(z, ATA_z);                              // AtA_z
-  l1c_dxmuly_z(N, h11p_data.sigx, z, y);                      // y = sigx.*z
-  cblas_daxpy(N, -h11p_data.one_by_fe, ATA_z, 1, y, 1);  // y = sigx.*z (1/fe)*ATA_z
+
+  h11p_data.AtAx(z, ATA_z);                               // AtA_z
+  l1c_dxmuly_z(N, h11p_data.sigx, z, y);                  // y = sigx.*z
+  cblas_daxpy(N, -h11p_data.one_by_fe, ATA_z, 1, y, 1);   // y = sigx.*z (1/fe)*ATA_z
   cblas_daxpy(N, atr_dot_z_fe, h11p_data.atr, 1, y, 1);
+
 
 }
 
@@ -120,8 +104,9 @@ void get_gradient(l1c_int N, double *fu1, double *fu2, double *sigx, double *atr
   double one_by_fu1 = 0.0, one_by_fu2 = 0.0;
   double one_by_fe_Atr = 0.0;
   double ntgu = 0.0, ntgz = 0.0, sig11 = 0.0, sig12 = 0.0;
+  double mone_by_tau = -1.0/tau;
 
-#pragma omp parallel for private(one_by_fu1, one_by_fu2, one_by_fe_Atr, ntgz, ntgu, sig11, sig12)
+  #pragma omp parallel for private(one_by_fu1, one_by_fu2, one_by_fe_Atr, ntgz, ntgu, sig11, sig12)
   for (i=0; i<N; i++){
 
     one_by_fu1 = 1.0 / fu1[i];
@@ -132,8 +117,8 @@ void get_gradient(l1c_int N, double *fu1, double *fu2, double *sigx, double *atr
     ntgu = -tau - one_by_fu1 - one_by_fu2;
 
     // gradf = -1/tau*[ntgz; ntgu]
-    gd.gradf[i] = (-1.0/tau) * ntgz;
-    gd.gradf[i+N] = (-1.0/tau) * ntgu;
+    gd.gradf[i] = mone_by_tau * ntgz;
+    gd.gradf[i+N] = mone_by_tau * ntgu;
 
     // Hessian parameters
     sig11 = one_by_fu1 * one_by_fu1 + one_by_fu2 * one_by_fu2;
@@ -188,8 +173,10 @@ int compute_descent(l1c_int N, double *fu1, double *fu2, double *atr, double fe,
   cgsolve(gd.dx, gd.w1p, N, Dwork_4N,
           H11pfun, &h11p_data, cg_result, cg_params);
 
+#pragma omp parallel for
   for (i=0; i<N; i++){
-    gd.du[i] = (gd.ntgu[i] - gd.sig12[i] * gd.dx[i] ) / gd.sig11[i];
+    // gd.du[i] = (gd.ntgu[i] - gd.sig12[i] * gd.dx[i] ) / gd.sig11[i];
+    gd.du[i] = (1.0/gd.sig11[i]) * gd.ntgu[i] - (gd.sig12[i] / gd.sig11[i]) * gd.dx[i];
   }
 
   return 0;
@@ -503,11 +490,7 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
         printf("     %3d       %8.3e       %08.3e    % 8.3e   %08.3e     %3d       %2d       %.3g \n",
                (int)iter, f, lambda2/2, stepsize, cg_results.cgres, (int)cg_results.cgiter, (int)ls_stat.iter,
                ls_stat.step);
-#ifdef __MATLAB__
-        mexEvalString("drawnow('update');");
-#endif
       }
-INFINITY;
       /*Check for early exit */
       if (lambda2/2 < params.newton_tol){
         break;

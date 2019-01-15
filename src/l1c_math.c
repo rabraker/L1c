@@ -17,6 +17,31 @@ void l1c_dxmuly_z(l1c_int N, double * restrict x, double * restrict y, double * 
   }
 }
 
+
+/**
+   Computes vector addition
+
+   z = alpha*x + beta*y. Similar to cblas_daxpy, but for the situation when the result should not overwrite y.
+
+*/
+void axpby_z(l1c_int N, double alpha, double * restrict x, double beta, double * restrict y, double * restrict z){
+  /* Computes z = a * x + y. Similary to cblas_axpy, but for when you don't want to overwrite y.
+     This way, we avoid a call to cblas_dcopy().
+
+     May be worth explicitly vectorizing (e.g., ispc??) this function.
+  */
+  double *x_ = __builtin_assume_aligned(x, 64);
+  double *y_ = __builtin_assume_aligned(y, 64);
+  double *z_ = __builtin_assume_aligned(z, 64);
+
+  l1c_int i;
+#pragma omp parallel for
+  for (i = 0; i<N; i++){
+    z_[i] = alpha * x_[i] + beta * y_[i];
+  }
+}
+
+
 /**
 Computes vector addition
 
