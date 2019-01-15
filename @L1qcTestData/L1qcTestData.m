@@ -34,9 +34,23 @@ classdef L1qcTestData
     [xp, up, niter, cgit_tot] = l1qc_newton(x0, u0, A, At, b, epsilon, tau, newtontol,...
       newtonmaxiter, cgtol, cgmaxiter, Tii, verbose, warm_start_cg);
     xp = l1qc_logbarrier(x0, A, At, b, epsilon, lbtol, mu, ...
-                         cgtol, cgmaxiter, lbiter, verbose)  
-
-                       
+                         cgtol, cgmaxiter, lbiter, verbose);
+    %
+    pixelifsampled = muPathMaskGen(mupathLength,n,m,samplingRatio,RepeatSamplingFlag);
+    
+    function make_test_image(test_data_root)
+      x_start = 13;
+      y_start = 13;
+      npix = 256;
+      nholes = 10;
+      img_mat = make_CS20NG(x_start, y_start, npix, nholes);
+      pix_mask = L1qcTestData.muPathMaskGen(15, npix, npix, 0.15, false);
+      pix_mask = L1qcTestData.pixmat2vec(pix_mask);
+      pix_idx = find(pix_mask > 0.5);
+      
+      xorig = L1qcTestData.pixmat2vec(img_mat);
+      save(fullfile(test_data_root, 'test_image_data.mat'), 'xorig', 'pix_idx');
+    end
     function [ b ] = Afun_dct(eta, pix_idx)
     % Given the CS equation
     % b = E * M * eta
@@ -88,6 +102,60 @@ classdef L1qcTestData
       vpix = vpix(:);
       
       Mpix = reshape(vpix, [], nrows)';
+      
+    end
+    
+    function img_mat = make_CS20NG(x_start, y_start, npix, nholes)
+  
+      % Make these options later
+      if nargin <3
+        npix = 512;
+      end
+      
+      if nargin <4
+        hole_width = npix/20;
+        pitch = npix/10;
+      else
+        pitch = npix/nholes;
+        hole_width = npix/2/nholes;
+      end
+      
+      img_mat = ones(npix, npix);
+      m_pitch = ceil(pitch);
+      n_hole = ceil(hole_width);
+      
+      % First lets, create a prototype hole. Then we will insert it into the master
+      % image periodically.
+      sq = ones(n_hole,n_hole);
+      % circle radius
+      r = n_hole/2;
+      % center
+      xc = n_hole/2;
+      yc = n_hole/2;
+      
+      
+      for x_pt=1:n_hole
+        for y_pt=1:n_hole
+          
+          rad_pt = sqrt( (x_pt - xc)^2 + (y_pt - yc)^2 );
+          
+          if rad_pt <= r
+            sq(y_pt, x_pt) = 0; % make it black
+          end
+        end
+      end
+      
+      x_lft = x_start;
+      while x_lft+n_hole < npix +n_hole
+        y_tp = y_start;
+        while y_tp+n_hole <= npix + n_hole
+          img_mat(y_tp:y_tp+n_hole-1, x_lft:x_lft+n_hole-1) = sq;
+          y_tp = y_tp + m_pitch;
+        end
+        x_lft = x_lft + m_pitch;
+        
+      end
+      img_mat = img_mat(1:npix, 1:npix);
       
     end
   end

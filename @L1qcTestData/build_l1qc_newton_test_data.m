@@ -14,7 +14,7 @@ function build_l1qc_newton_test_data(test_data_root)
 %   y_vec = y_vec(pix_mask_vec>0.5);
 %   y_vec = y_vec/max(y_vec); % normalize to 1
 %   pix_idx = find(pix_mask_vec > 0.5); % for saving, not computation. 
-  img_dat = load('test_image_data.mat');
+  img_dat = load(fullfile(test_data_root, 'test_image_data.mat'));
   xorig = img_dat.xorig;
   pix_idx = img_dat.pix_idx;
   
@@ -126,7 +126,7 @@ cgmaxiter = opts.cgmaxiter;
                    
     [dx, du, gradf, cgres, cgiter] = compute_descent(fu1, fu2, r, fe, tau,...
                                  cgtol, cgmaxiter, A, At, save_on, ...
-                                                     jopts, descent_files, pix_idx, s*dx);
+                                                     jopts, descent_files, pix_idx, 0*dx);
    
     if (cgres > 1/2)
       disp('Cannot solve system.  Returning previous iterate.  (See Section 4 of notes for more information.)');
@@ -277,7 +277,7 @@ function [dx, du, gradf, cgres, cgiter] = compute_descent(fu1, fu2, r, fe, ...
   if save_on
     verbose = 1;
   end
-  h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
+  h11pfun = @(z) sigx.*z +(-(1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr);
   [dx, cgres, cgiter] = L1qcTestData.cgsolve(h11pfun, w1p, cgtol, ...
                                              cgmaxiter, verbose, dx0);
   du = (1./sig11).*ntgu - (sig12./sig11).*dx;

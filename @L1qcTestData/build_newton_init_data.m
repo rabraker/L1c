@@ -1,6 +1,7 @@
 function build_newton_init_data(data_root)
-  
-img_dat = load('test_image_data.mat');
+  img_dat = load(fullfile(test_data_root, 'test_image_data.mat'));
+
+
   xorig = img_dat.xorig;
   pix_idx = img_dat.pix_idx;
   
