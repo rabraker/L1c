@@ -7,9 +7,9 @@
    z = x.*y
 */
 void l1c_dxmuly_z(l1c_int N, double * restrict x, double * restrict y, double * restrict z){
-  double *x_ = __builtin_assume_aligned(x, 64);
-  double *y_ = __builtin_assume_aligned(y, 64);
-  double *z_ = __builtin_assume_aligned(z, 64);
+  double *x_ = __builtin_assume_aligned(x, DALIGN);
+  double *y_ = __builtin_assume_aligned(y, DALIGN);
+  double *z_ = __builtin_assume_aligned(z, DALIGN);
 
 #pragma omp parallel for
   for (l1c_int i=0; i<N; i++){
@@ -30,9 +30,9 @@ void axpby_z(l1c_int N, double alpha, double * restrict x, double beta, double *
 
      May be worth explicitly vectorizing (e.g., ispc??) this function.
   */
-  double *x_ = __builtin_assume_aligned(x, 64);
-  double *y_ = __builtin_assume_aligned(y, 64);
-  double *z_ = __builtin_assume_aligned(z, 64);
+  double *x_ = __builtin_assume_aligned(x, DALIGN);
+  double *y_ = __builtin_assume_aligned(y, DALIGN);
+  double *z_ = __builtin_assume_aligned(z, DALIGN);
 
   l1c_int i;
 #pragma omp parallel for
@@ -54,9 +54,9 @@ void l1c_daxpy_z(l1c_int N, double alpha, double * restrict x, double * restrict
 
    May be worth explicitly vectorizing (e.g., ispc??) this function.
   */
-  double *x_ = __builtin_assume_aligned(x, 64);
-  double *y_ = __builtin_assume_aligned(y, 64);
-  double *z_ = __builtin_assume_aligned(z, 64);
+  double *x_ = __builtin_assume_aligned(x, DALIGN);
+  double *y_ = __builtin_assume_aligned(y, DALIGN);
+  double *z_ = __builtin_assume_aligned(z, DALIGN);
 
   l1c_int i;
 #pragma omp parallel for

@@ -66,8 +66,8 @@ void dctmkl_destroy(){
 }
 
 void dctmkl_idct(double * restrict x, double * restrict y){
-  double *x_ = __builtin_assume_aligned(x, 64);
-  double *y_ = __builtin_assume_aligned(y, 64);
+  double *x_ = __builtin_assume_aligned(x, DALIGN);
+  double *y_ = __builtin_assume_aligned(y, DALIGN);
 
   cblas_dcopy(dctmkl_Nx, x_, 1, y_, 1);
 
@@ -86,10 +86,10 @@ void dctmkl_EMx_new(double * restrict x, double * restrict y){
      On exit, the first dctmkl_Ny entries of y will contain the result of E * M *x.
   */
 
-  double *x_a = __builtin_assume_aligned(x, 64);
-  double *y_a = __builtin_assume_aligned(y, 64);
-  double *tmp_x = __builtin_assume_aligned(dctmkl_tmp_x, 64);
-  // l1c_int idx_ = __builtin_assume_aligned(dctmkl_pix_mask_idx, 64);
+  double *x_a = __builtin_assume_aligned(x, DALIGN);
+  double *y_a = __builtin_assume_aligned(y, DALIGN);
+  double *tmp_x = __builtin_assume_aligned(dctmkl_tmp_x, DALIGN);
+  // l1c_int idx_ = __builtin_assume_aligned(dctmkl_pix_mask_idx, DALIGN);
 
   l1c_int i=0;
 
@@ -117,9 +117,9 @@ void dctmkl_MtEty( double * restrict y, double * restrict x){
   */
 
   l1c_int i=0;
-  double *x_a = __builtin_assume_aligned(x, 64);
-  double *y_a = __builtin_assume_aligned(y, 64);
-  double *tmp_x_a = __builtin_assume_aligned(dctmkl_tmp_x, 64);
+  double *x_a = __builtin_assume_aligned(x, DALIGN);
+  double *y_a = __builtin_assume_aligned(y, DALIGN);
+  double *tmp_x_a = __builtin_assume_aligned(dctmkl_tmp_x, DALIGN);
 
   // E^T * y --> y_sparse. y_sparse should be set to all zeros, and pix_mask does not change.
   // Returns a pointer to the array containing the result, which has length N.
