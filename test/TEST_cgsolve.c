@@ -87,6 +87,7 @@ START_TEST(test_cgsolve)
   CgResults cgr;
 
   double *A, *x, *x_exp, *b, *Dwork;
+  int status = 0;
   l1c_int N=0, na= 0;
   if (load_small_data(&A, &x_exp, &b, &N, &na, &max_iter, &tol)){
     ck_abort_msg("Errory Loading test data\n");
@@ -102,11 +103,16 @@ START_TEST(test_cgsolve)
     x[i] = 0.0;
   }
   Dwork = malloc_double(N*4);
-
+  if (!Dwork){
+    status +=1;
+    goto exit;
+  }
   cgsolve(x, b, N, Dwork, Ax_sym, A, &cgr, cgp);
 
   ck_assert_double_array_eq_tol(N, x_exp, x, TOL_DOUBLE);
+  goto exit;
 
+ exit:
   free_double(A);
   free_double(x);
   free_double(x_exp);
@@ -118,6 +124,9 @@ START_TEST(test_cgsolve)
 #ifdef _USEMKL_
   mkl_free_buffers();
 #endif
+  if (status){
+    ck_abort();
+  }
 
 }
 END_TEST
@@ -164,8 +173,10 @@ START_TEST(test_cgsolve_h11p){
   h11p_data.AtAx = dct_MtEt_EMx_new;
 
   DWORK_4N = malloc_double(4*N);
-  if ( !DWORK_4N){
-    perror("error allocating memory\n");
+  if ( status || !DWORK_4N ){
+    perror("error allocating memory or reading JSON data in test_cgsolve_h11p\n");
+    status +=1;
+    goto exit;
   }
 
   dct_setup(N, M, pix_idx);
@@ -177,6 +188,9 @@ START_TEST(test_cgsolve_h11p){
 
   ck_assert_double_array_eq_reltol(N, dx_exp, dx0, TOL_DOUBLE*10);
 
+  goto exit;
+
+ exit:
   free_double(atr);
   free_double(sigx);
   free_double(w1p);
@@ -192,6 +206,10 @@ START_TEST(test_cgsolve_h11p){
 #ifdef _USEMKL_
   mkl_free_buffers();
 #endif
+
+  if (status){
+    ck_abort();
+  }
 
 }
 END_TEST
@@ -219,6 +237,8 @@ START_TEST(test_cgsolve_Ax_sym){
   y = malloc_double(N);
   if ( (!y) | status){
     perror("error allocating memory\n");
+    status +=1;
+    goto exit;
   }
 
   Ax_sym(N, x, y, A);
@@ -230,6 +250,9 @@ START_TEST(test_cgsolve_Ax_sym){
   Ax_sym(N, x, y, A);
   ck_assert_double_array_eq_tol(N, y_exp, y, TOL_DOUBLE_SUPER*10);
 
+  goto exit;
+
+ exit:
   free_double(A);
   free_double(x);
   free_double(y_exp);
@@ -240,6 +263,9 @@ START_TEST(test_cgsolve_Ax_sym){
 #ifdef _USEMKL_
   mkl_free_buffers();
 #endif
+  if (status){
+    ck_abort();
+  }
 
 }
 END_TEST
