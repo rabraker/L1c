@@ -9,17 +9,13 @@
 %      1/2(||Ax-b||^2 - \epsilon^2) <= 0
 % and use a log barrier algorithm.
 %
-% Usage:  xp = l1qc_logbarrier(x0, A, At, b, epsilon, lbtol, mu, cgtol, cgmaxiter)
+% Usage:  xp = l1qc_logbarrier(x0, A, At, b, opts)
 %
 % x0 - Nx1 vector, initial point.
 %
-% A - Either a handle to a function that takes a N vector and returns a K 
-%     vector , or a KxN matrix.  If A is a function handle, the algorithm
-%     operates in "largescale" mode, solving the Newton systems via the
-%     Conjugate Gradients algorithm.
-%
+% A - a handle to a function that takes a N vector and returns a K 
+%     vector.  
 % At - Handle to a function that takes a K vector and returns an N vector.
-%      If A is a KxN matrix, At is ignored.
 %
 % b - Kx1 vector of observations.
 %
@@ -85,24 +81,24 @@ function xp = l1qc_logbarrier(x0, A, At, b, opts)
   for ii = 1:lbiter
     [xp, up, ntiter, cgiter_ii] = L1qcTestData.l1qc_newton(x, u, A, At, b, opts.epsilon, ...
       tau, opts.newtontol, opts.newtonmaxiter, opts.cgtol, ...
-      opts.cgmaxiter, ii, opts.verbose);
+      opts.cgmaxiter, ii, opts.verbose, opts.warm_start_cg);
     totaliter = totaliter + ntiter;
     total_cg_iter = total_cg_iter + cgiter_ii;
-    fprintf('\nLog barrier iter = %d, l1 = %.3f, functional = %8.3f, tau = %8.3e, total newton iter = %d, total cg ite: %d\n', ...
-      ii, sum(abs(xp)), sum(up), tau, totaliter, cgiter_ii);
+    fprintf('\nLog barrier iter = %d, l1 = %.3f, functional = %8.3f, tau = %8.3e, total newton iter = %d, total cg iter: %d\n', ...
+      ii, sum(abs(xp)), sum(up), tau, totaliter, total_cg_iter);
     
     x = xp;
     u = up;
     
     tau = opts.mu*tau;
   end
-  fprintf('total cg-iter: %d\n', total_cg_iter);
+
 
 end
 
 function opts = parse_opts(opts)
-  flds    = {'lbtol', 'mu', 'cgtol', 'cgmaxiter', 'verbose'};
-  defaults  = [1e-3,    10,    1e-8,    200,        1];
+  flds    = {'lbtol', 'mu', 'cgtol', 'cgmaxiter', 'verbose', 'warm_start_cg'};
+  defaults  = [1e-3,    10,    1e-8,    200,        1, 0];
   
   k=1;
   for fld=flds

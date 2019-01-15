@@ -42,7 +42,8 @@
 %
 
 
-function [xp, up, niter, cgit_tot] = l1qc_newton(x0, u0, A, At, b, epsilon, tau, newtontol, newtonmaxiter, cgtol, cgmaxiter, Tii, verbose) 
+function [xp, up, niter, cgit_tot] = l1qc_newton(x0, u0, A, At, b, epsilon, tau,...
+    newtontol, newtonmaxiter, cgtol, cgmaxiter, Tii, verbose, warm_start_cg) 
 
 
   % line search parameters
@@ -77,7 +78,12 @@ function [xp, up, niter, cgit_tot] = l1qc_newton(x0, u0, A, At, b, epsilon, tau,
     
     w1p = ntgz - sig12./sig11.*ntgu;
     h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
-    [dx, cgres, cgiter] = L1qcTestData.cgsolve(h11pfun, w1p, cgtol, cgmaxiter, 0, dx*s);
+    if warm_start_cg == 0
+      dx = dx*0;
+    elseif warm_start_cg ==2
+      dx = dx*s;
+    end
+    [dx, cgres, cgiter] = L1qcTestData.cgsolve(h11pfun, w1p, cgtol, cgmaxiter, 0, dx);
     cgit_tot=cgit_tot + cgiter;
     %[dx, cgres, cgiter] = L1qcTestData.cgsolve(h11pfun, w1p, cgtol, cgmaxiter, 0);
     if (cgres > 1/2)
