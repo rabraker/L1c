@@ -77,34 +77,35 @@ void H11pfun(l1c_int N, double *z, double *y,  void *hess_data_in){
     -- Assumes the DCT stuff has been setup already.
    */
 
-  Hess_data h11p_data = *((Hess_data *) hess_data_in);
-  // // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
-
-  double *ATA_z = h11p_data.Dwork_1N;
-  double atr_dot_z_fe = 0.0;
-
-  atr_dot_z_fe = cblas_ddot(N, h11p_data.atr, 1, z, 1);
-  atr_dot_z_fe = atr_dot_z_fe * h11p_data.one_by_fe_sqrd; //1/fe^2*(atr'*z)
-
-
-  h11p_data.AtAx(z, ATA_z);                               // AtA_z
-  l1c_dxmuly_z(N, h11p_data.sigx, z, y);                  // y = sigx.*z
-  cblas_daxpy(N, -h11p_data.one_by_fe, ATA_z, 1, y, 1);   // y = sigx.*z (1/fe)*ATA_z
-  cblas_daxpy(N, atr_dot_z_fe, h11p_data.atr, 1, y, 1);
-
   // Hess_data h11p_data = *((Hess_data *) hess_data_in);
-  // // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
+  // // // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
 
-  //   double atr_dot_z_fe = 0.0;
+  // double *ATA_z = h11p_data.Dwork_1N;
+  // double atr_dot_z_fe = 0.0;
 
   // atr_dot_z_fe = cblas_ddot(N, h11p_data.atr, 1, z, 1);
   // atr_dot_z_fe = atr_dot_z_fe * h11p_data.one_by_fe_sqrd; //1/fe^2*(atr'*z)
 
 
-  // // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
-  // h11p_data.AtAx(z, y);                               // y = A^T*A*z
-  // cblas_daxpby(N, atr_dot_z_fe, h11p_data.atr, 1,     // y = - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
-  //              -h11p_data.one_by_fe, y, 1);
+  // h11p_data.AtAx(z, ATA_z);                               // AtA_z
+  // l1c_dxmuly_z(N, h11p_data.sigx, z, y);                  // y = sigx.*z
+  // cblas_daxpy(N, -h11p_data.one_by_fe, ATA_z, 1, y, 1);   // y = sigx.*z (1/fe)*ATA_z
+  // cblas_daxpy(N, atr_dot_z_fe, h11p_data.atr, 1, y, 1);
+
+  Hess_data h11p_data = *((Hess_data *) hess_data_in);
+  // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
+
+    double atr_dot_z_fe = 0.0;
+
+  atr_dot_z_fe = cblas_ddot(N, h11p_data.atr, 1, z, 1);
+  atr_dot_z_fe = atr_dot_z_fe * h11p_data.one_by_fe_sqrd; //1/fe^2*(atr'*z)
+
+
+  // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
+  h11p_data.AtAx(z, y);                               // y = A^T*A*z
+  cblas_daxpby(N, atr_dot_z_fe, h11p_data.atr, 1,     // y = - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
+               -h11p_data.one_by_fe, y, 1);
+  vcl_dxMy_pz(N, h11p_data.sigx, z, y);                // y = sigx.*z + A^T*A*z
 
 
 }

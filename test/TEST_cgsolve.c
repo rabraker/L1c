@@ -173,7 +173,9 @@ START_TEST(test_cgsolve_h11p){
   h11p_data.AtAx = dct_MtEt_EMx_new;
 
   DWORK_4N = malloc_double(4*N);
-  if ( status || !DWORK_4N ){
+  double *dx_by_nrm = malloc_double(4*N);
+  double *dx_by_nrm_exp = malloc_double(4*N);
+  if ( status || !DWORK_4N || !dx_by_nrm || !dx_by_nrm_exp){
     perror("error allocating memory or reading JSON data in test_cgsolve_h11p\n");
     status +=1;
     goto exit;
@@ -185,12 +187,20 @@ START_TEST(test_cgsolve_h11p){
   cgp.verbose = 0;
 
   cgsolve(dx0, w1p, N, DWORK_4N, H11pfun, &h11p_data, &cgr, cgp);
-
-  ck_assert_double_array_eq_reltol(N, dx_exp, dx0, TOL_DOUBLE*10);
+  double nrm_exp = cblas_dnrm2(N, dx_exp, 1);
+  double nrm = cblas_dnrm2(N, dx0, 1);
+  printf("M=%d, norm exp: %.10f, nrm: %.10f\n", (int)M, nrm_exp, nrm);
+  for (int i=0; i<N ; i++){
+    dx_by_nrm_exp[i] = dx_exp[i]/nrm_exp;
+    dx_by_nrm[i] = dx0[i]/nrm;
+  }
+  ck_assert_double_array_eq_tol(N, dx_by_nrm_exp, dx_by_nrm, TOL_DOUBLE*10);
 
   goto exit;
 
  exit:
+  free_double(dx_by_nrm_exp);
+  free_double(dx_by_nrm);
   free_double(atr);
   free_double(sigx);
   free_double(w1p);
