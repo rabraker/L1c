@@ -83,7 +83,7 @@ START_TEST (test_l1qc_newton_1iter)
 
   dct_setup(N, M, pix_idx);
 
-  if (status | !u){
+  if (status){
     status += 1;
     goto exit1;
   }
@@ -96,6 +96,7 @@ START_TEST (test_l1qc_newton_1iter)
   params.tau = tau_exp;
   params.cg_params = cgp;
   params.warm_start_cg = 2;
+  params.l1_tol = -1; //wont be used.
 
   lb_res = l1qc_newton(N, x0, M, b, params, ax_funs);
   double dnrm1_x0 = l1c_dnorm1(N, x0);
@@ -106,7 +107,6 @@ START_TEST (test_l1qc_newton_1iter)
       several iterations. l1-norms has decent agreement, at least in a relative sense.
    */
   ck_assert_double_array_eq_tol(N, x1_exp, x0,  0.5);
-  ck_assert_double_array_eq_tol(N, u1_exp, u,   0.5);
 
   ck_assert_double_eq_tol(dnrm1_x0/abs_norm1_diff, dnrm1_exp/abs_norm1_diff, .00005);
   ck_assert_int_eq(0, lb_res.status);
