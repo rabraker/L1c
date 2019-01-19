@@ -194,6 +194,9 @@ int compute_descent(l1c_int N, double *fu1, double *fu2, double *atr, double fe,
     gd.du[i] = (1.0/gd.sig11[i]) * gd.ntgu[i] - (gd.sig12[i] / gd.sig11[i]) * gd.dx[i];
   }
 
+  if (cg_result->cgres > 0.5){
+    return 1;
+  }
   return 0;
 }
 
@@ -382,7 +385,7 @@ int save_x(l1c_int N, double *x, char *fname){
   return 0;
 }
 
-LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
+LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
                      NewtParams params, AxFuns Ax_funs){
   LSStat ls_stat = {.flx=0, .flu = 0, .flin=0, .step=0, .status=0};
   CgParams cg_params = params.cg_params;
@@ -396,11 +399,12 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
   GradData gd = {.w1p=NULL, .dx=NULL, .du=NULL, .sig11=NULL,
                  .sig12=NULL, .ntgu=NULL, .gradf=NULL, .Adx=NULL};
 
+  double *u   = malloc_double(N);
   double *atr = malloc_double(N);
   double *DWORK_6N = malloc_double(6*N);
   double *r = malloc_double(M);
   double *fu1 = malloc_double(N);
-  double *fu2 = malloc_double(N);;
+  double *fu2 = malloc_double(N);
 
   gd.w1p = malloc_double(N);
   gd.dx  = malloc_double(N);
@@ -476,7 +480,8 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
 
       if(compute_descent(N, fu1, fu2, atr, fe,  params.tau, gd, DWORK_6N, cg_params,
                          &cg_results, Ax_funs)){
-        break;
+        printf("Unable to solve system for Newton descent direction.\n");
+        printf("Returning previous iterate\n");
       }
       total_cg_iter +=cg_results.cgiter;
 
@@ -542,7 +547,7 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
   goto exit;
 
  exit:
-
+  free_double(u);
   free_double(atr);
   free_double(DWORK_6N);
   free_double(r);

@@ -45,7 +45,7 @@ START_TEST (test_l1qc_newton_1iter)
   CgParams cgp = {.verbose=0, .max_iter=0.0, .tol=0.0};
   NewtParams params;
   char fpath[] = "test_data/lb_test_data_iter_2.json";
-  double *x0=NULL, *u=NULL, *b=NULL;
+  double *x0=NULL, *b=NULL;
   double *x1_exp=NULL, *u1_exp=NULL;
 
   LBResult lb_res;
@@ -82,7 +82,7 @@ START_TEST (test_l1qc_newton_1iter)
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
 
   dct_setup(N, M, pix_idx);
-  u = malloc_double(N);
+
   if (status | !u){
     status += 1;
     goto exit1;
@@ -97,7 +97,7 @@ START_TEST (test_l1qc_newton_1iter)
   params.cg_params = cgp;
   params.warm_start_cg = 2;
 
-  lb_res = l1qc_newton(N, x0, u, M, b, params, ax_funs);
+  lb_res = l1qc_newton(N, x0, M, b, params, ax_funs);
   double dnrm1_x0 = l1c_dnorm1(N, x0);
   double dnrm1_exp= l1c_dnorm1(N, x1_exp);
   double abs_norm1_diff = min(dnrm1_x0, dnrm1_exp);
@@ -118,7 +118,6 @@ START_TEST (test_l1qc_newton_1iter)
   free_double(x0);
   free_double(x1_exp);
   free_double(u1_exp);
-  free_double(u);
   free_double(b);
   free(pix_idx);
 
