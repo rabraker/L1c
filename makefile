@@ -33,7 +33,7 @@ DEF_MAT =
 endif
 
 # should check if this is set already
-MEX_INSTALL_DIR = ../../matlab-code/functions/\@CsTools
+MEX_INSTALL_DIR = ../afm-cs/matlab-code/functions/\@CsTools
 MKLROOT        = /opt/intel/compilers_and_libraries_2019.1.144/linux/mkl
 # MKLROOT      = /opt/intel/compilers_and_libraries/linux/mkl
 MATLAB_R       = /usr/local/MATLAB/R2018b
@@ -76,8 +76,12 @@ VCL_ARCHIVE    = $(LIB_DIR)/libvcl_math.a
 
 ifeq (${MAKECMDGOALS},test)
 TEST_ARCHIVE   = test/lib/libtest_l1qc.a
+TEST_LIB       = -lcheck -lcjson
+TEST_LIB_DIR   = -Wl,-rpath=/usr/local/lib
 else
 TEST_ARCHIVE   =
+TEST_LIB       =
+TEST_LIB_DIR   =
 endif
 
 
@@ -112,6 +116,7 @@ endif
 # check header files are in /usr/local/include
 INCLUDE        = -I/usr/include                \
 				 -I/usr/local/include          \
+				 -I/usr/local/include/cjson    \
 	           	 -Iinclude
 
 # ---------- If making a mex file, add the needed includes and libs
@@ -147,8 +152,8 @@ endif
 INCLUDE       +=  $(MATLAB_INCLUDE) $(MATH_INCLUDE)
 CFLAGS        +=  $(MATLAB_CFLAGS) $(MATH_CFLAGS)
 
-LIBDIR         = $(MATLAB_LDIR) $(MATH_LDIR)
-LIBS           = $(MATH_LIBS)  $(MATLAB_LIBS) -lcheck -Wl,-rpath=/usr/local/lib
+LIBDIR         = $(MATLAB_LDIR) $(MATH_LDIR)  $(TEST_LIB_DIR)
+LIBS           = $(MATH_LIBS)  $(MATLAB_LIBS) $(TEST_LIB)
 #N.B. ALL the archive files need to be enclosed in -Wl,--start-group -Wl,--end-group
 # otherwise, linking may fail. See here:
 # https://sourceware.org/binutils/docs/ld/Options.html

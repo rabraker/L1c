@@ -11,12 +11,31 @@ classdef L1qcTestData
     % Main method to build all of the test data.
       addpath ~/matlab/afm-cs/matlab-code/functions
       
+      % Make us a test image to work with.
+      L1qcTestdata.make_test_image(test_data_root);
+      
+      % data for checking the newton_init() routine.
       L1qcTestData.build_newton_init_data(test_data_root);
+      
       L1qcTestData.build_feval_test_data(test_data_root);
       L1qcTestData.build_cgsolve_test_data(test_data_root);
       L1qcTestData.build_dct_test_data(test_data_root);
       L1qcTestData.build_l1qc_newton_test_data(test_data_root);
       L1qcTestData.build_logbarrier_test_data(test_data_root);
+    end
+    function make_test_image(test_data_root)
+    % A build a 256 x 256 test image of the CS20ng grating.
+      x_start = 13;
+      y_start = 13;
+      npix = 256;
+      nholes = 10;
+      img_mat = L1qcTestData.make_CS20NG(x_start, y_start, npix, nholes);
+      pix_mask = L1qcTestData.muPathMaskGen(15, npix, npix, 0.15, false);
+      pix_mask = L1qcTestData.pixmat2vec(pix_mask);
+      pix_idx = find(pix_mask > 0.5);
+      
+      xorig = L1qcTestData.pixmat2vec(img_mat);
+      save(fullfile(test_data_root, 'test_image_data.mat'), 'xorig', 'pix_idx');
     end
     
     xp = build_logbarrier_test_data(data_root, lbiter);
