@@ -1,21 +1,17 @@
 function build_newton_init_data(data_root)
+  img_dat = load(fullfile(test_data_root, 'test_image_data.mat'));
+
+
+  xorig = img_dat.xorig;
+  pix_idx = img_dat.pix_idx;
   
-  fpath = '/home/arnold/matlab/afm-cs/matlab-code/notes/data/cs_sim_CS20NG.mat';
-  addpath ~/matlab/afm-cs/matlab-code/functions
-  addpath ~/matlab/afm-cs/reconstruction/BP
+  A = @(x) L1qcTestData.Afun_dct(x,pix_idx); % E*M
+  At = @(x) L1qcTestData.Atfun_dct(x,pix_idx, length(xorig)); %E^T*M^T
+
   
-  dat = load(fpath);
-  cs_sim = dat.cs_sim;
-  pix_mask_vec = PixelMatrixToVector(cs_sim.pix_mask);
-  pix_idx = find(pix_mask_vec>0.5);
+  b = xorig(pix_idx);
+  x0 = At(b);
   
-  b = PixelMatrixToVector(cs_sim.Img_original);
-  b = b(pix_idx); 
-  b = b/max(b);
-  
-  A = @(x) L1qcTestData.IDCTfun(x,pix_mask_vec);
-  At = @(x) L1qcTestData.DCTfun(x,pix_mask_vec);
-  x0 = round(At(b), 15);
   
   epsilon = 0.1;
       
@@ -28,7 +24,7 @@ function build_newton_init_data(data_root)
     error('Starting point infeasible; using x0 = At*inv(AAt)*y.');
   end
   
-  [u, lbiter, tau] = build_init_dat(x0)
+  [u, lbiter, tau] = build_init_dat(x0, mu, lbtol);
 
   fprintf('Original l1 norm = %.3f, original functional = %.3f\n', sum(abs(x0)), sum(u));
 
@@ -47,8 +43,9 @@ end
 
 
 
-function [u, lbiter, tau] = build_init_dat(x0)
+function [u, lbiter, tau] = build_init_dat(x0, mu, lbtol)
   
+  N = length(x0);
   u = (0.95)*abs(x0) + (0.10)*max(abs(x0));
   
   % choose initial value of tau so that the duality gap after the first

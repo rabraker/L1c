@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "l1qc_newton.h"
-#include "l1qc_common.h"
+#include "l1c_common.h"
 #include <math.h>
 
 #include "dct.h" /* Or whatever you want to use for

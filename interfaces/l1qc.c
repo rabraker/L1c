@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "l1qc_newton.h"
-#include "l1qc_common.h"
+#include "l1c_common.h"
 #include <math.h>
 
 #include "dct_mkl.h" /* Or whatever you want to use for
@@ -137,6 +137,8 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
       params.cg_params.tol = mxGetScalar(tmp);
     }else if ( strcmp(name, "cgmaxiter") == 0){
       params.cg_params.max_iter = mxGetScalar(tmp);
+    }else if ( strcmp(name, "warm_start_cg") == 0){
+      params.warm_start_cg = (int) mxGetScalar(tmp);
     }else if ( strcmp(name, "verbose") == 0){
       params.verbose= (l1c_int) mxGetScalar(tmp);
     }else{

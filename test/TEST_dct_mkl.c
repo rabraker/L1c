@@ -24,7 +24,7 @@
 #include "cJSON.h"
 #include "json_utils.h"
 #include "check_utils.h"
-#include "l1qc_common.h"
+#include "l1c_common.h"
 
 #define TOL_LARGE_DCT 1e-10
 
