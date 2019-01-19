@@ -72,6 +72,7 @@ typedef struct NewtParams{
 typedef struct LBResult{
   double l1;
   int    total_newton_iter;
+  int    total_cg_iter;
   int    status;
 
 }LBResult;

@@ -15,6 +15,15 @@ This contains the conjugate gradient solver, cgsolve. The two small routines Ax 
 #include "cgsolve.h"
 #include "l1c_common.h"
 
+
+void cg_report(int iter,
+               double best_rel_res,
+               double rel_res,
+               double alpha,
+               double beta,
+               double delta);
+
+
 /**
 
    Purpose
@@ -95,26 +104,24 @@ int cgsolve(double *x, double *b, l1c_int N, double *Dwork,
 
   //OLD: cblas_dcopy((int)N, b, 1, r, 1);       /*r=b: copy b (ie, z_i_1) to r */
   /*Using warmstart: set r = b - A*x  */
-  AX_func(N, x, r, AX_data);                /* r = A * x          */
-  cblas_daxpby(N, 1.0, b, 1, -1.0, r, 1);     /* r = 1*b + (-1)*Ax  */
+  AX_func(N, x, r, AX_data);                    /* r = A * x                   */
+  cblas_daxpby(N, 1.0, b, 1, -1.0, r, 1);       /* r = 1*b + (-1)*Ax           */
 
 
-  cblas_dcopy((int)N, r, 1, p, 1);       /*p=r:                         */
-  delta = cblas_ddot(N, r, 1, r, 1);     /*delta = r'*r                 */
+  cblas_dcopy((int)N, r, 1, p, 1);             /*p=r:                          */
+  delta = cblas_ddot(N, r, 1, r, 1);           /*delta = r'*r                  */
 
-  delta_0 = cblas_ddot(N, b, 1, b, 1);  /*delta_0 = b'*b                */
+  delta_0 = cblas_ddot(N, b, 1, b, 1);         /*delta_0 = b'*b                */
   best_rel_res = sqrt(delta/delta_0);
 
-  if (cg_params.verbose > 0){
-    printf("cg: |Iter| Best resid | Current resid| alpha | beta   |   delta  |\n");
-  }
+
   for (iter=1; iter<=cg_params.max_iter; iter++){
 
-    AX_func(N, p, q, AX_data);                 /* q = A * p */
+    AX_func(N, p, q, AX_data);                    /* q = A * p */
 
-    alpha = delta / cblas_ddot(N, p, 1, q, 1); /* alpha delta/(d'*q) */
+    alpha = delta / cblas_ddot(N, p, 1, q, 1);    /* alpha delta/(d'*q) */
 
-    cblas_daxpy(N, alpha, p, 1, x, 1);         /* x = alpha*d + x    */
+    cblas_daxpy(N, alpha, p, 1, x, 1);            /* x = alpha*d + x    */
     // if ( (iter+1 %50 ) == 0){
     //   AX_func(N, x, r, AX_data);               /* r = b - A(x);      */
     //   cblas_daxpby(N, 1.0, b, 1, -1.0, r, 1);  /* r = b - A*x        */
@@ -123,12 +130,12 @@ int cgsolve(double *x, double *b, l1c_int N, double *Dwork,
     //   continue;
     // }
 
-    cblas_daxpy(N, -alpha, q, 1, r, 1);      /* r = - alpha*q + r; */
+    cblas_daxpy(N, -alpha, q, 1, r, 1);          /* r = - alpha*q + r; */
     delta_old = delta;
-    delta = cblas_ddot(N, r, 1, r, 1);         /* delta = r'*r; */
+    delta = cblas_ddot(N, r, 1, r, 1);           /* delta = r'*r;      */
 
     beta = delta/delta_old;
-    cblas_daxpby(N, 1.0, r, 1, beta, p, 1);    /* d = r + beta*p; */
+    cblas_daxpby(N, 1.0, r, 1, beta, p, 1);      /* d = r + beta*p;    */
 
     rel_res = sqrt(delta/delta_0);
     if (rel_res < best_rel_res) {
@@ -137,9 +144,9 @@ int cgsolve(double *x, double *b, l1c_int N, double *Dwork,
       best_rel_res = rel_res;
     }
 
-    if ( cg_params.verbose >0 && (iter % cg_params.verbose)==0){ // modulo 0 is a floating point exception.
-      // printf("cg: Iter = %d, Best residual = %.3e, Current residual = %.3e\n", iter, best_res, res);
-      printf("  %d,   %.16e, %.16e, %.16e, %.16e, %.16e  \n", iter, best_rel_res, rel_res, alpha, beta, delta);
+    // modulo 0 is a floating point exception.
+    if ( cg_params.verbose >0 && (iter % cg_params.verbose)==0){
+      cg_report(iter, best_rel_res, rel_res, alpha, beta, delta);
     }
 
     if (rel_res < cg_params.tol){
@@ -159,6 +166,23 @@ int cgsolve(double *x, double *b, l1c_int N, double *Dwork,
 
 }
 
+
+/*
+  Report progress of cgsolve.
+ */
+void cg_report(int iter,
+               double best_rel_res,
+               double rel_res,
+               double alpha,
+               double beta,
+               double delta){
+
+  if (iter==1){
+    printf("cg: |Iter| Best resid | Current resid| alpha | beta   |   delta  |\n");
+  }
+  printf("  %d,   %.16e, %.16e, %.16e, %.16e, %.16e  \n", iter, best_rel_res, rel_res, alpha, beta, delta);
+
+}
 
 
 /**
