@@ -1,10 +1,10 @@
-function build_dct_test_data(test_data_root)
+function build_dct_test_data(data_root)
   % Create a small set of test data
   jopts.FloatFormat = '%.20f';
   
-  EMx_path = fullfile(test_data_root, 'dct_small_EMx.json');
-  MtEty_path = fullfile(test_data_root, 'dct_small_MtEty.json');
-  MtEt_Emx_path = fullfile(test_data_root, 'dct_small_MtEt_EMx.json');
+  EMx_path = fullfile(data_root, 'dct_small_EMx.json');
+  MtEty_path = fullfile(data_root, 'dct_small_MtEty.json');
+  MtEt_Emx_path = fullfile(data_root, 'dct_small_MtEt_EMx.json');
   N = 50;
   Ts = 1/50;
   To = 0.25;
@@ -58,7 +58,7 @@ function build_dct_test_data(test_data_root)
   MtEt_EMx = At(A(img_vec));
   
   jopts.FloatFormat = '%.20f';
-  jopts.FileName = fullfile(test_data_root, 'dct_small_rand.json');
+  jopts.FileName = fullfile(data_root, 'dct_small_rand.json');
   savejson('', struct('x_in', img_vec(:)', 'y_in', y_vec(:)',...
     'EMx', EMx(:)', 'MtEty', MtEty(:)', 'MtEt_EMx', MtEt_EMx(:)', 'pix_idx', pix_idx(:)'-1), jopts);
   
@@ -66,7 +66,7 @@ function build_dct_test_data(test_data_root)
   %%  
   % Now, Use data from an actual compressed sensing situation. 
   
-  img_dat = load('test_image_data.mat');
+  img_dat = load(fullfile(data_root, 'test_image_data.mat'));
   xorig = img_dat.xorig;
   pix_idx = img_dat.pix_idx;
   N = length(xorig);
@@ -82,7 +82,7 @@ function build_dct_test_data(test_data_root)
   MtEt_EMx = At(A(xorig));
   
   jopts.FloatFormat = '%.20f';
-  jopts.FileName = fullfile(test_data_root, 'dct_large.json');
+  jopts.FileName = fullfile(data_root, 'dct_large.json');
   savejson('', struct('x_in', xorig(:)', 'y_in', b(:)',...
     'EMx', EMx(:)', 'MtEty', MtEty(:)', 'MtEt_EMx', MtEt_EMx(:)', 'pix_idx', pix_idx(:)'-1), jopts);
   
