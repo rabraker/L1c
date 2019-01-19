@@ -8,6 +8,8 @@ extern "C" {
   double vcl_logsum(const l1c_int N, const double alpha, const double *x);
 
   double vcl_sum(const l1c_int N, const double *x);
+
+  void vcl_dxMy_pz(const int N, const double *x, const double *y, double *z);
 #ifdef __cplusplus
 }
 #endif

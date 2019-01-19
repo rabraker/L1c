@@ -51,3 +51,30 @@ extern "C" double vcl_sum(const int N, const double *x){
   total += vcl::horizontal_add(sum_vec);
   return total;
 }
+
+
+/**
+   Computes
+   z = alpha*x
+ */
+extern "C" void vcl_dxMy_pz(const int N, const double *x, const double *y, double *z){
+  const int regularpart = N & (~(VECTORSIZE-1));
+  // (AND-ing with -vectorsize-1 will round down to nearest
+  // lower multiple of vectorsize. This works only if
+  // vectorsize is a power of 2)
+
+  int i=0;
+  Vec4d xvec, yvec, zvec;
+  for(i=0; i<regularpart; i+=VECTORSIZE){
+    xvec.load_a(x+i);
+    yvec.load_a(y+i);
+    zvec.load_a(z+i);
+
+    zvec = xvec * yvec + zvec;
+    zvec.store(z+i);
+  }
+
+  for(; i<N; i++){
+    z[i] = x[i] * y[i] + z[i];
+  }
+}
