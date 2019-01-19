@@ -62,6 +62,7 @@ typedef struct NewtParams{
   l1c_int newton_max_iter;
   l1c_int lbiter;
   double lbtol;
+  double l1_tol;
   l1c_int verbose;
   CgParams cg_params;
   int warm_start_cg; /** 0: no WS; 1 use dx; 2: use step*dx */

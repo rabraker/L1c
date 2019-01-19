@@ -133,6 +133,8 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
       params.lbiter = (l1c_int)mxGetScalar(tmp);
     }else if ( strcmp(name, "lbtol") == 0){
       params.lbtol = mxGetScalar(tmp);
+    }else if ( strcmp(name, "l1_tol") == 0){
+      params.l1_tol = mxGetScalar(tmp);
     }else if ( strcmp(name, "cgtol") == 0){
       params.cg_params.tol = mxGetScalar(tmp);
     }else if ( strcmp(name, "cgmaxiter") == 0){

@@ -32,6 +32,8 @@
 %               -If 2, use dx*step from previous (newton) iteration.
 %         .lbtol :   Determines the total number of log-barrier iterations
 %                    (try  1e-3).
+%         .l1_tol:  The newton iterations will stop if 
+%                 ||f(x_k)|_1 - |f(x_k-1)|_1 |/|f(x_k)|_1 <l1_tol
 %         .newton_tol : newton iterations terminate when the 
 %                       newton decrement < newton_tol (try newton_tol = lbtol).
 %         .newton_max_iter : Maximum number of newton iterations (try 50).

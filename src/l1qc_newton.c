@@ -392,7 +392,7 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
   int iter=0, total_newt_iter = 0, tau_iter = 0, total_cg_iter=0;;
 
   double fe = 0.0, f = 0.0, lambda2 = 0.0, stepsize = 0.0;
-
+  double l1_prev = 0, l1 = 0, rate=0;
   GradData gd = {.w1p=NULL, .dx=NULL, .du=NULL, .sig11=NULL,
                  .sig12=NULL, .ntgu=NULL, .gradf=NULL, .Adx=NULL};
 
@@ -455,7 +455,7 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
       }
 
     f_eval(N, x, u, M, r, params.tau, params.epsilon, fu1, fu2, &fe, &f);
-
+    l1_prev = INFINITY;
     /* ---------------- MAIN Newton ITERATION --------------------- */
     for (iter=1; iter<+params.newton_max_iter; iter++){
 
@@ -511,6 +511,15 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
         break;
       }
 
+      l1 = l1c_dnorm1(N, x);
+      rate = fabs(l1_prev - l1)/l1;
+
+      l1_prev = l1;
+      if (rate < params.l1_tol){
+        printf("rate = %.9f < %.9f, stopping newton iteration\n", rate, params.l1_tol);
+        break;
+      }
+
 
     }/* main iter*/
 
@@ -521,12 +530,10 @@ LBResult l1qc_newton(l1c_int N, double *x, double *u, l1c_int M, double *b,
     if (params.verbose > 0){
       printf("\n************************************************************************************************\n");
       printf("LB iter: %d, l1: %.3f, fctl: %8.3e, tau: %8.3e, total newton-iter: %d, Total CG iter=%d\n",
-             tau_iter, l1c_dnorm1(N, x), l1c_dsum(N, u), params.tau, total_newt_iter, total_cg_iter);
+             tau_iter, l1, l1c_dsum(N, u), params.tau, total_newt_iter, total_cg_iter);
       printf("*************************************************************************************************\n\n");
     }
-#ifdef __MATLAB__
-    mexEvalString("drawnow('update');");
-#endif
+
     params.tau = params.tau * params.mu;
     ls_params.tau = params.tau;
   } /* LB-iter */
