@@ -41,12 +41,16 @@ MATLAB         = matlab -nodesktop -nosplash -r
 TEST_DATA_ROOT = $(CURDIR)/test_data
 ML_BUILD_FCN   = L1qcTestData.build_all_test_data
 
-ML_CMD         = "try;                                   \
-                    ${ML_BUILD_FCN}('${TEST_DATA_ROOT}');\
-                  catch E;                               \
-                    fprintf('%s', E.message);            \
-                    exit(1);                             \
-                  end;                                   \
+ML_CMD         = "try;                                       \
+                    ${ML_BUILD_FCN}('${TEST_DATA_ROOT}');    \
+                  catch E;                                   \
+                    fprintf('%s\n', E.message);              \
+					for i=1:length(E.stack);                 \
+						fprintf('Error in %s (line %d)\n',   \
+						E.stack(i).name, E.stack(i).line);   \
+					end;                                      \
+                    exit(1);                                 \
+                  end;                                       \
                  exit(0);"
 
 SRC_DIR        = ./src
@@ -61,27 +65,29 @@ NATIVE_LIB_DIR     = ./lib
 
 ifeq (${MAKECMDGOALS},mex)
 BUILD_DIR      = $(MEX_BUILD_DIR)
-LIB_DIR        = $(MEX_LIB_DIR)
+APP_LIB_DIR    = $(MEX_LIB_DIR)
 else
 BUILD_DIR      = $(NATIVE_BUILD_DIR)
-LIB_DIR        = $(NATIVE_LIB_DIR)
+APP_LIB_DIR    = $(NATIVE_LIB_DIR)
 endif
 MEX_NAME       = $(ML_INTERFACE)/l1qc.mexa64
 TEST_APP       = test_l1qc
 ML_MEX         = $(ML_INTERFACE)/l1qc.mexa64
 
-LIB_NAME       = $(LIB_DIR)/libl1qc.so
-APP_ARCHIVE    = $(LIB_DIR)/libl1qc.a
-VCL_ARCHIVE    = $(LIB_DIR)/libvcl_math.a
+LIB_NAME       = $(APP_LIB_DIR)/libl1qc.so
+APP_ARCHIVE    = $(APP_LIB_DIR)/libl1qc.a
+VCL_ARCHIVE    = $(APP_LIB_DIR)/libvcl_math.a
 
 ifeq (${MAKECMDGOALS},test)
-TEST_ARCHIVE   = test/lib/libtest_l1qc.a
+TEST_LIB_DIR   = test/lib
+TEST_ARCHIVE   = $(TEST_LIB_DIR)/libtest_l1qc.a
 TEST_LIB       = -lcheck -lcjson
-TEST_LIB_DIR   = -Wl,-rpath=/usr/local/lib
+TEST_LDIR      = -Wl,-rpath=/usr/local/lib
 else
 TEST_ARCHIVE   =
 TEST_LIB       =
 TEST_LIB_DIR   =
+TEST_LDIR   =
 endif
 
 
@@ -152,7 +158,7 @@ endif
 INCLUDE       +=  $(MATLAB_INCLUDE) $(MATH_INCLUDE)
 CFLAGS        +=  $(MATLAB_CFLAGS) $(MATH_CFLAGS)
 
-LIBDIR         = $(MATLAB_LDIR) $(MATH_LDIR)  $(TEST_LIB_DIR)
+LIBDIR         = $(MATLAB_LDIR) $(MATH_LDIR)  $(TEST_LDIR)
 LIBS           = $(MATH_LIBS)  $(MATLAB_LIBS) $(TEST_LIB)
 #N.B. ALL the archive files need to be enclosed in -Wl,--start-group -Wl,--end-group
 # otherwise, linking may fail. See here:
@@ -162,7 +168,8 @@ LDFLAGS       += -Wl,--start-group $(MATH_ARCHIVE) $(TEST_ARCHIVE) \
 				 $(LIBDIR) $(LIBS)
 
 
-$(info $$DEF_MAT  [${ML_MEX}])
+$(info $$DEF_MAT  [${LIB_DIR}])
+$(info $$DEF_MAT  [${LIBDIR}])
 
 
 #-----------------------Targets ----------------------
@@ -194,10 +201,10 @@ mex: mex_obj
 mex_obj:app_ar vcl_ar
 	${CC} ${INCLUDE} ${CFLAGS} -shared -c -o interfaces/l1qc.o interfaces/l1qc.c
 
-app_ar: $(APP_OBJ)
+app_ar: $(APP_OBJ) |$(APP_LIB_DIR)
 	$(AR) -rcs ${APP_ARCHIVE} $^
 
-lib: $(APP_OBJ)
+app_lib: $(APP_OBJ)
 	@echo "building lib -------------"
 	@echo "appobj = $(APP_OBJ)"
 	$(LD) -o ${LIB_NAME} -shared $^ ${LIBDIR} $(LIBS)
@@ -205,14 +212,14 @@ lib: $(APP_OBJ)
 test:test_ar app_ar vcl_ar
 	$(LD) -o ${TEST_APP} $(LDFLAGS)
 
-test_ar: $(TEST_OBJ)
+test_ar: $(TEST_OBJ) |$(TEST_LIB_DIR)
 	$(AR) -rcs $(TEST_ARCHIVE) $^
 
-vcl_ar: $(VCL_OBJ)
+vcl_ar: $(VCL_OBJ) | $(APP_LIB_DIR)
 	$(AR) -rcs $(VCL_ARCHIVE) $^
 
 # $@ is to left side and $^ to the right of :
-$(BUILD_DIR)/%.o : $(SRC_DIR)/%.c
+$(BUILD_DIR)/%.o : $(SRC_DIR)/%.c |$(BUILD_DIR)
 	${CC} $(INCLUDE) ${CFLAGS} -c -o $@ $<
 
 $(BUILD_DIR)/%.o: $(TEST_SRC_DIR)/%.c
@@ -222,8 +229,20 @@ $(BUILD_DIR)/%.o: $(VCL_SRC_DIR)/%.cpp
 	${CPP} $(CPP_VCL_FLAGS) -c -o $@ $<
 
 
-test_data:
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
+$(APP_LIB_DIR):
+	mkdir -p $(APP_LIB_DIR)
+
+$(TEST_LIB_DIR):
+	mkdir $(TEST_LIB_DIR)
+
+test_data: |$(TEST_DATA_ROOT)
 	${MATLAB} ${ML_CMD}
+
+$(TEST_DATA_ROOT):
+	mkdir $(TEST_DATA_ROOT)
 
 install_mex:
 	$(info cp $(MEX_NAME) $(MEX_INSTALL_DIR)/$(notdir $(MEX_NAME)))

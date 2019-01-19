@@ -3,7 +3,7 @@
 
 
 function xp = build_logbarrier_test_data(data_root, lbiter)  
-  img_dat = load(fullfile(test_data_root, 'test_image_data.mat'));
+  img_dat = load(fullfile(data_root, 'test_image_data.mat'));
   xorig = img_dat.xorig;
   pix_idx = img_dat.pix_idx;
   
@@ -50,7 +50,7 @@ function xp = build_logbarrier_test_data(data_root, lbiter)
   for ii = 1:lbiter
    
     [xp, up, ntiter] = L1qcTestData.l1qc_newton(x_k, u, A, At, b, epsilon, tau,...
-      newtontol, newtonmaxiter, cgtol, cgmaxiter, ii, verbose);
+      newtontol, newtonmaxiter, cgtol, cgmaxiter, ii, verbose, 0);
     totaliter = totaliter + ntiter;
     
     fprintf(['\nLog barrier iter = %d, l1 = %.3f, functional = %8.3f, ',...

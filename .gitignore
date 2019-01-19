@@ -9,3 +9,7 @@ test_l1qc
 bench
 BregmanData/
 
+build/
+interfaces/*.o
+interfaces/*.mexa64
+test_data/
