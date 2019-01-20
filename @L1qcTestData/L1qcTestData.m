@@ -33,9 +33,7 @@ classdef L1qcTestData
       npix = 256;
       nholes = 10;
       img_mat = L1qcTestData.make_CS20NG(x_start, y_start, npix, nholes);
-      pix_mask = L1qcTestData.muPathMaskGen(15, npix, npix, 0.15, false);
-      pix_mask = L1qcTestData.pixmat2vec(pix_mask);
-      pix_idx = find(pix_mask > 0.5);
+      pix_idx = L1qcTestData.mu_path_mask(15, npix, npix, 0.15, false);
       
       xorig = L1qcTestData.pixmat2vec(img_mat);
       save(fullfile(test_data_root, 'test_image_data.mat'), 'xorig', 'pix_idx');
@@ -58,7 +56,7 @@ classdef L1qcTestData
     xp = l1qc_logbarrier(x0, A, At, b, epsilon, lbtol, mu, ...
                          cgtol, cgmaxiter, lbiter, verbose);
     %
-    pixelifsampled = muPathMaskGen(mupathLength,n,m,samplingRatio,RepeatSamplingFlag);
+    [pix_idx, pix_mask_mat] = mu_path_mask(mupath_len,n,m,samplingRatio,repeat_sampling);
     
 
     function [ b ] = Afun_dct(eta, pix_idx)

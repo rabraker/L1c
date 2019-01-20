@@ -16,30 +16,49 @@
 %  ---------
 %    x0:  length n vector, is the initial guess. Aften, x0 = E^T*dct(b) works
 %         well.
+% 
 %     b:  length m vector.
 %         pix_idx: index set corresponding to the samples if b. In general, if 
 %         I is an n by n identity, the E = I(pix_idx, :). pix_idx must use
 %         0-based indexing.
+% 
 %   opts: a struct (create with CsTools.l1qc_opts) with the following fields:
-%         .epsilon : denoising tolerance (as in (1) above). 
-%         .mu :      log-barrier weight is multiplied by mu each LB iteration
-%                    (try 10).
-%         .cgtol:    tolerance for the conjugate gradient (CG) solver (try 1e-8).
-%         .cgmaxiter: maximum iterations for the CG solver (try 200).
-%         .warm_start_cg : (0|1|2) Warm start options for CG solver.
-%               -If 0, use dx*0.
-%               -If 1, use use previously computed value of dx as warmstart.
-%               -If 2, use dx*step from previous (newton) iteration.
-%         .lbtol :   Determines the total number of log-barrier iterations
-%                    (try  1e-3).
-%         .l1_tol:  The newton iterations will stop if 
+%     .epsilon : Denoising parameter. l1qc will enforce ||A*eta - b|| < epsilon
+% 
+%     .mu :   Log-barrier weight is multiplied by mu each LB iteration
+%             Default is  10.
+%  
+%     .lbtol : Tolerance for the log-barrier iterations and by
+%              default, determines the total number of log-barrier 
+%              iterations. Default is 1e-3.
+% 
+%     .l1_tol:  The newton iterations will stop if 
 %                 ||f(x_k)|_1 - |f(x_k-1)|_1 |/|f(x_k)|_1 <l1_tol
-%         .newton_tol : newton iterations terminate when the 
-%                       newton decrement < newton_tol (try newton_tol = lbtol).
-%         .newton_max_iter : Maximum number of newton iterations (try 50).
-%         .verbose : How much to print. Silent if verbose =0, prints info each
-%         log-barrier iteration if verbose =1, and also each newton iteration
-%         if verbose = 2.
+%               Default is 0, which will match the Matlab code.
+% 
+%     .newton_tol : The Newton iterations terminate when the 
+%                   newton decrement < newton_tol (try newton_tol = lbtol).
+%
+%     .newton_max_iter : Maximum number of newton iterations.
+%                        Default is 50.
+% 
+%     .cgtol:   tolerance for the conjugate gradient (CG) solver.
+%           Default is 1e-8.
+% 
+%     .cgmaxiter: maximum iterations for the CG solver. Default is 200.
+% 
+%     .warm_start_cg : (0|1|2) Warm start options for CG solver. This
+%                      seems only marginally succesfull and possibly detrimental.
+%                  -If 0, use dx*0.
+%                  -If 1, use use previously computed value of dx as warmstart.
+%                  -If 2, use dx*step from previous (newton)  iteration.
+% 
+%     .verbose : How much to print. 
+%                - If 0, nothing besides warnings are printed.
+%                - If 1, prints info each log-barrier iteration.
+%                - If 2, prints same info as 1, but also info each newton 
+%                  iteration.
+%
 %
 % Returns
 % --------
