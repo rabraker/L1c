@@ -197,21 +197,30 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     x_out[i] = x_ours[i];
   }
 
+  /* Only build the output struct if there is more than 1 output.*/
   if (nlhs == 2){
-    const char *fnames[] = {"l1", "total_newton_iter", "status"};
-    mxArray *l1_mex_pr, *total_newton_iter_mex_pr, *status_mex_pr;
+    const char *fnames[] = {"l1",
+                            "total_newton_iter",
+                            "total_cg_iter",
+                            "status"};
+
+    mxArray *l1_mex_pr, *total_newton_iter_mex_pr;
+    mxArray *total_cg_iter_mex_pr, *status_mex_pr;
     plhs[1] = mxCreateStructMatrix(1, 1, NUMBER_OF_FIELDS(fnames), fnames);
 
     l1_mex_pr = mxCreateDoubleMatrix(1,1, mxREAL);
     total_newton_iter_mex_pr = mxCreateDoubleMatrix(1,1, mxREAL);
+    total_cg_iter_mex_pr = mxCreateDoubleMatrix(1,1, mxREAL);
     status_mex_pr            = mxCreateDoubleMatrix(1,1, mxREAL);
 
     *mxGetPr(l1_mex_pr) = lb_res.l1;
     *mxGetPr(total_newton_iter_mex_pr) = (double)lb_res.total_newton_iter;
+    *mxGetPr(total_cg_iter_mex_pr) = (double)lb_res.total_cg_iter;
     *mxGetPr(status_mex_pr) = (double)lb_res.status;
 
     mxSetField(plhs[1], 0, "l1", l1_mex_pr);
     mxSetField(plhs[1], 0, "total_newton_iter", total_newton_iter_mex_pr);
+    mxSetField(plhs[1], 0, "total_cg_iter", total_cg_iter_mex_pr);
     mxSetField(plhs[1], 0, "status", status_mex_pr);
   }
 

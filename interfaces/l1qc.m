@@ -66,8 +66,15 @@
 %   To recover the signal in the time/spatial domain, x_recovered = idct(eta).
 %   LBRes : a struct with stats from the optimization with the following
 %           fields:
+% 
 %         .l1 : (scalar) is the achieved l1 norm of eta.
+% 
 %         .total_newton_iter : is the total number of newton iterations (across
 %               all log-barrier iterations).
+% 
+%         .total_cg_iter : is the total number of conjugate gradiant
+%                          iterations, across all log-barrier and all Newton 
+%                          iterations.
+% 
 %         .status: 0 if l1qc finished without errors, 1 otherwise.
 % 

@@ -357,10 +357,10 @@ int newton_init(l1c_int N, double *x, double *u,  NewtParams *params){
   params->tau = max(tmp, 1);
 
   // If user has set lbiter, dont compute a different one.
-  if (params->lbiter == 0)
+  if (params->lbiter == 0){
     tmp = log (2 * (double)N + 1) - log(params->lbtol) - log(params->tau);
     params->lbiter =(int) ceil (tmp / log(params->mu));
-
+  }
   return 0;
 }
 
