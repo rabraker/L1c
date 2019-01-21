@@ -13,3 +13,8 @@ build/
 interfaces/*.o
 interfaces/*.mexa64
 test_data/
+
+GTAGS
+GPATH
+GRTAGS
+

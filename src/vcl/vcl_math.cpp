@@ -65,6 +65,7 @@ extern "C" void vcl_dxMy_pz(const int N, const double *x, const double *y, doubl
 
   int i=0;
   Vec4d xvec, yvec, zvec;
+  #pragma omp parallel for
   for(i=0; i<regularpart; i+=VECTORSIZE){
     xvec.load_a(x+i);
     yvec.load_a(y+i);

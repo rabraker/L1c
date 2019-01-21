@@ -22,7 +22,7 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
                     .Aty=dctmkl_MtEty,
                     .AtAx=dctmkl_MtEt_EMx_new};
 
-  double *x_theirs=NULL, *x_ours=NULL, *u=NULL, *b=NULL;
+  double *x_theirs=NULL, *x_ours=NULL,  *b=NULL;
   NewtParams params = {.epsilon=0, .tau=0, .mu=0,
                         .newton_tol=0, .newton_max_iter = 0, .lbiter=0,
                         .lbtol=0, .verbose = 0, .cg_params.tol=0};
@@ -133,6 +133,8 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
       params.lbiter = (l1c_int)mxGetScalar(tmp);
     }else if ( strcmp(name, "lbtol") == 0){
       params.lbtol = mxGetScalar(tmp);
+    }else if ( strcmp(name, "l1_tol") == 0){
+      params.l1_tol = mxGetScalar(tmp);
     }else if ( strcmp(name, "cgtol") == 0){
       params.cg_params.tol = mxGetScalar(tmp);
     }else if ( strcmp(name, "cgmaxiter") == 0){
@@ -170,7 +172,6 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
 
   x_ours = malloc_double(N);
-  u = malloc_double(N);
 
   for (i=0; i<N; i++){
     x_ours[i] = x_theirs[i];
@@ -183,7 +184,7 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   /* ---------------------------------------  */
   dctmkl_setup(N, M, pix_idx);
-  lb_res = l1qc_newton(N, x_ours, u,  M, b, params, Ax_funs);
+  lb_res = l1qc_newton(N, x_ours, M, b, params, Ax_funs);
   dctmkl_destroy();
 
   plhs[0] = mxCreateDoubleMatrix((mwSize)N, 1, mxREAL);
@@ -196,25 +197,33 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     x_out[i] = x_ours[i];
   }
 
+  /* Only build the output struct if there is more than 1 output.*/
   if (nlhs == 2){
-    const char *fnames[] = {"l1", "total_newton_iter", "status"};
-    mxArray *l1_mex_pr, *total_newton_iter_mex_pr, *status_mex_pr;
+    const char *fnames[] = {"l1",
+                            "total_newton_iter",
+                            "total_cg_iter",
+                            "status"};
+
+    mxArray *l1_mex_pr, *total_newton_iter_mex_pr;
+    mxArray *total_cg_iter_mex_pr, *status_mex_pr;
     plhs[1] = mxCreateStructMatrix(1, 1, NUMBER_OF_FIELDS(fnames), fnames);
 
     l1_mex_pr = mxCreateDoubleMatrix(1,1, mxREAL);
     total_newton_iter_mex_pr = mxCreateDoubleMatrix(1,1, mxREAL);
+    total_cg_iter_mex_pr = mxCreateDoubleMatrix(1,1, mxREAL);
     status_mex_pr            = mxCreateDoubleMatrix(1,1, mxREAL);
 
     *mxGetPr(l1_mex_pr) = lb_res.l1;
     *mxGetPr(total_newton_iter_mex_pr) = (double)lb_res.total_newton_iter;
+    *mxGetPr(total_cg_iter_mex_pr) = (double)lb_res.total_cg_iter;
     *mxGetPr(status_mex_pr) = (double)lb_res.status;
 
     mxSetField(plhs[1], 0, "l1", l1_mex_pr);
     mxSetField(plhs[1], 0, "total_newton_iter", total_newton_iter_mex_pr);
+    mxSetField(plhs[1], 0, "total_cg_iter", total_cg_iter_mex_pr);
     mxSetField(plhs[1], 0, "status", status_mex_pr);
   }
 
-  free_double(u);
   free(pix_idx);
 
   mkl_free_buffers();

@@ -45,7 +45,7 @@ START_TEST (test_l1qc_newton_1iter)
   CgParams cgp = {.verbose=0, .max_iter=0.0, .tol=0.0};
   NewtParams params;
   char fpath[] = "test_data/lb_test_data_iter_2.json";
-  double *x0=NULL, *u=NULL, *b=NULL;
+  double *x0=NULL, *b=NULL;
   double *x1_exp=NULL, *u1_exp=NULL;
 
   LBResult lb_res;
@@ -82,8 +82,8 @@ START_TEST (test_l1qc_newton_1iter)
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
 
   dct_setup(N, M, pix_idx);
-  u = malloc_double(N);
-  if (status | !u){
+
+  if (status){
     status += 1;
     goto exit1;
   }
@@ -96,8 +96,9 @@ START_TEST (test_l1qc_newton_1iter)
   params.tau = tau_exp;
   params.cg_params = cgp;
   params.warm_start_cg = 2;
+  params.l1_tol = -1; //wont be used.
 
-  lb_res = l1qc_newton(N, x0, u, M, b, params, ax_funs);
+  lb_res = l1qc_newton(N, x0, M, b, params, ax_funs);
   double dnrm1_x0 = l1c_dnorm1(N, x0);
   double dnrm1_exp= l1c_dnorm1(N, x1_exp);
   double abs_norm1_diff = min(dnrm1_x0, dnrm1_exp);
@@ -106,7 +107,6 @@ START_TEST (test_l1qc_newton_1iter)
       several iterations. l1-norms has decent agreement, at least in a relative sense.
    */
   ck_assert_double_array_eq_tol(N, x1_exp, x0,  0.5);
-  ck_assert_double_array_eq_tol(N, u1_exp, u,   0.5);
 
   ck_assert_double_eq_tol(dnrm1_x0/abs_norm1_diff, dnrm1_exp/abs_norm1_diff, .00005);
   ck_assert_int_eq(0, lb_res.status);
@@ -118,7 +118,6 @@ START_TEST (test_l1qc_newton_1iter)
   free_double(x0);
   free_double(x1_exp);
   free_double(u1_exp);
-  free_double(u);
   free_double(b);
   free(pix_idx);
 
@@ -424,7 +423,8 @@ START_TEST(test_H11pfun)
   char fpath[] = "test_data/hp11_fun_data.json";
 
   Hess_data h11p_data;
-  double *atr, *sigx, *z, *y_exp, *y;
+  double *atr=NULL, *sigx=NULL, *z=NULL;
+  double *y_exp=NULL, *y=NULL, *z_orig=NULL;
   double  fe = 0;
 
   l1c_int N, M, status=0;
@@ -448,19 +448,25 @@ START_TEST(test_H11pfun)
 
   if (status){
     perror("Error Loading json data in 'test_H11pfun()'. Aborting\n");
-    ck_abort();
+    goto exit;
   }
   y = malloc_double(N);
-  if (!y){
+  z_orig = malloc_double(N);
+  h11p_data.Dwork_1N = malloc_double(N);
+  if (!y || !z_orig || !h11p_data.Dwork_1N){
     perror("Unable to allocate memory\n");
+    status +=1;
+    goto exit;
   }
 
   h11p_data.one_by_fe = 1.0/fe;
   h11p_data.one_by_fe_sqrd = 1.0/(fe * fe);
   h11p_data.atr = atr;
   h11p_data.sigx = sigx;
-  h11p_data.Dwork_1N = malloc_double(N);
+
   h11p_data.AtAx = dct_MtEt_EMx_new;
+
+  cblas_dcopy(N, z, 1, z_orig, 1);
 
   /* Setup the DCT */
   dct_setup(N, M, pix_idx);
@@ -472,8 +478,12 @@ START_TEST(test_H11pfun)
      inputs to 1??
   */
   ck_assert_double_array_eq_tol(N, y_exp, y, TOL_DOUBLE*100);
+  // Ensure we didnt overwrite data in z.
+  ck_assert_double_array_eq_tol(N, z, z_orig, TOL_DOUBLE_SUPER);
 
+  goto exit;
   /* ----------------- Cleanup --------------- */
+ exit:
   free_double(atr);
   free_double(sigx);
   free_double(z);
@@ -482,6 +492,8 @@ START_TEST(test_H11pfun)
   free_double(y_exp);
   free_double(y);
   free_double(h11p_data.Dwork_1N);
+
+  free_double(z_orig);
   dct_destroy();
 
   free_json_text_data();
@@ -489,6 +501,9 @@ START_TEST(test_H11pfun)
 #ifdef _USEMKL_
   mkl_free_buffers();
 #endif
+  if (status)
+    ck_abort();
+
 }
 END_TEST
 
@@ -779,7 +794,7 @@ Suite *l1qc_newton_suite(void)
   Suite *s;
 
   TCase *tc_linesearch, *tc_newton_init, *tc_feval, *tc_gradient;
-  TCase *tc_l1qc_newton;
+  TCase *tc_l1qc_newton, *tc_h11p;
 
   s = suite_create("l1qc_newton");
 
@@ -798,10 +813,11 @@ Suite *l1qc_newton_suite(void)
   tcase_add_test(tc_linesearch, test_line_search);
 
   tc_gradient = tcase_create("l1qc_gradient");
-  tcase_add_test(tc_gradient, test_H11pfun);
   tcase_add_test(tc_gradient, test_get_gradient);
   tcase_add_test(tc_gradient, test_compute_descent);
 
+  tc_h11p = tcase_create("h11p");
+  tcase_add_test(tc_h11p, test_H11pfun);
 
   /*Add test cases to the suite */
   suite_add_tcase(s, tc_l1qc_newton);
@@ -809,6 +825,7 @@ Suite *l1qc_newton_suite(void)
   suite_add_tcase(s, tc_feval);
   suite_add_tcase(s, tc_linesearch);
   suite_add_tcase(s, tc_gradient);
+  suite_add_tcase(s, tc_h11p);
 
   return s;
 
