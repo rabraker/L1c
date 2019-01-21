@@ -1,14 +1,21 @@
-% function [eta, LBRes] = l1qc(x0, b, pix_idx, opts)
+% function [x, LBRes] = l1qc_dct(x0, b, pix_idx, opts)
 %
-% Solves the Denoising Basis Pursuit problem
+% Solves the Denoising Basis Pursuit problem with a DCT sparsifying
+% basis. Consider given a true signal $z$, and a subsampled vector
+% $b$ such that $b=E*z$, then let $x=M^T*z$. $M$ is the IDCT
+% transformation matrix and $E$ is an identity with rows removed.
+% 
+% We then solve the optimization
+% 
 %
-% min  ||eta||_1   s.t. ||E*M*eta - b||_2 < epsilon                  (1)
+% min  ||x||_1   s.t. ||E*M*x - b||_2 < epsilon                  (1)
 %  x
 %
 % Where: M = inverse DCT
-%        b \in R^m is a vector of length m of subsampled data.
-%        E \in R^{m x n} is the sampling matrix
-%        eta \in R^n is the recovered signal in the DCT domain.
+%        $E \in\mathbb{R}^{m x n} is the sampling matrix
+%        $b \in\mathbb{R}^m$ is a vector of length m of subsampled
+%        data. Given the true signal $z$ in standard coordinates, b=E*z.
+%        ${\eta \in \mathbb{R^n}$ is the recovered signal in the DCT domain.
 %
 %       Typically, m << n.
 %
@@ -21,6 +28,14 @@
 %         pix_idx: index set corresponding to the samples if b. In general, if 
 %         I is an n by n identity, the E = I(pix_idx, :). pix_idx must use
 %         0-based indexing.
+%    
+%    pix_idx: A vector of indeces of where the measurements in b
+%             were taken. Given the true signal, x, then it should
+%             hold that b = x(pix_idx) and
+%             length(b)=length(pix_idx). That is, pix_idx should
+%             NOT be boolean mask. Finally, pix_idx should have
+%             1-based indexing: it will be converted to c's 0-based
+%             indexing inside the mex-function
 % 
 %   opts: a struct (create with CsTools.l1qc_opts) with the following fields:
 %     .epsilon : Denoising parameter. l1qc will enforce ||A*eta - b|| < epsilon
@@ -32,9 +47,13 @@
 %              default, determines the total number of log-barrier 
 %              iterations. Default is 1e-3.
 % 
-%     .l1_tol:  The newton iterations will stop if 
-%                 ||f(x_k)|_1 - |f(x_k-1)|_1 |/|f(x_k)|_1 <l1_tol
-%               Default is 0, which will match the Matlab code.
+%     .l1_tol:  The newton iterations will stop if the relative
+%               difference in the l1-norms of $x$ between newton
+%               iterations falls below l1_tol. That is, if
+%                 ||x_k||_1 - ||x_k-1||_1 
+%                  -------------------------- < l1_tol
+%                            ||x_k||_1 
+%               The default is 0, which will match the Matlab code.
 % 
 %     .newton_tol : The Newton iterations terminate when the 
 %                   newton decrement < newton_tol (try newton_tol = lbtol).
@@ -62,12 +81,14 @@
 %
 % Returns
 % --------
-%   eta: vector of length n, which is the recovered signal, in the DCT domain.
-%   To recover the signal in the time/spatial domain, x_recovered = idct(eta).
+%   x: vector of length n, which is the recovered signal, in the DCT domain.
+%      To recover the signal in the time/spatial domain,
+%      z_recovered = idct(x).
+% 
 %   LBRes : a struct with stats from the optimization with the following
 %           fields:
 % 
-%         .l1 : (scalar) is the achieved l1 norm of eta.
+%         .l1 : (scalar) is the achieved l1 norm of x.
 % 
 %         .total_newton_iter : is the total number of newton iterations (across
 %               all log-barrier iterations).

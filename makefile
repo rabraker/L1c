@@ -70,9 +70,12 @@ else
 BUILD_DIR      = $(NATIVE_BUILD_DIR)
 APP_LIB_DIR    = $(NATIVE_LIB_DIR)
 endif
-MEX_NAME       = $(ML_INTERFACE)/l1qc.mexa64
+MEX_SRC        = $(ML_INTERFACE)/l1qc_dct.c
+MEX_OBJ        = $(MEX_SRC:.c=.o)
+
+# ML_MEX         = $(MEX_SRC:.c=.mexa64)
+MEX_NAME       = $(MEX_SRC:.c=.mexa64)
 TEST_APP       = test_l1qc
-ML_MEX         = $(ML_INTERFACE)/l1qc.mexa64
 
 LIB_NAME       = $(APP_LIB_DIR)/libl1qc.so
 APP_ARCHIVE    = $(APP_LIB_DIR)/libl1qc.a
@@ -193,11 +196,11 @@ help:
 
 mex: $(MEX_NAME)
 
-$(MEX_NAME):interfaces/l1qc.o
-	${LD} -shared -o $(MEX_NAME) interfaces/l1qc.o ${LDFLAGS}
+$(MEX_NAME):$(MEX_OBJ)
+	${LD} -shared -o $(MEX_NAME) $< ${LDFLAGS}
 
-interfaces/l1qc.o:interfaces/l1qc.c $(APP_ARCHIVE) $(VCL_ARCHIVE)
-	${CC} ${INCLUDE} ${CFLAGS} -shared -c -o interfaces/l1qc.o interfaces/l1qc.c
+$(MEX_OBJ):$(MEX_SRC) $(APP_ARCHIVE) $(VCL_ARCHIVE)
+	${CC} ${INCLUDE} ${CFLAGS} -shared -c -o $@ $<
 
 app_ar:$(APP_ARCHIVE)
 
@@ -255,7 +258,7 @@ install_mex:
 # install the mex-help file
 	cp $(MEX_NAME:.mexa64=.m) $(MEX_INSTALL_DIR)/$(notdir $(MEX_NAME:.mexa64=.m))
 # install the options builder
-	cp interfaces/l1qc_opts.m $(MEX_INSTALL_DIR)/l1qc_opts.m
+	cp interfaces/l1qc_opts.m $(MEX_INSTALL_DIR)/l1qc_dct_opts.m
 
 clean:
 	rm -f $(TEST_APP)

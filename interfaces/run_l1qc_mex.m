@@ -48,19 +48,19 @@ b = b/max(abs(b)); % normalize to 1
 At = @(x) L1qcTestData.Atfun_dct(x,pix_idx, length(img_vec)); %E^T*M^T
 A = @(x) L1qcTestData.Afun_dct(x,pix_idx); 
 
-% We need the initial guess to l1qc to be feasible, ie, 
+% We need the initial guess to l1qc_dct to be feasible, ie, 
 % that ||A*eta_0 - b||<epsilon
 eta_0 = At(b);
 
 
 
 % This will generate an opts struct suitible for passing to l1qc(). 
-opts = l1qc_opts('verbose', 2, 'l1_tol', 1e-5);
+opts = l1qc_dct_opts('verbose', 2, 'l1_tol', 1e-5);
 clear l1qc % In case you just re-compiled.
 % system('export MKL_DYNAMIC=TRUE');
 % system('export MKL_NUM_THREADS=2');
 tic
-[eta_est, LBRes]= l1qc(eta_0, b, pix_idx-1, opts);
+[eta_est, LBRes]= l1qc_dct(eta_0, b, pix_idx, opts);
 tm_mex = toc;
 fprintf('mex file time: %.4f\n', tm_mex);
 

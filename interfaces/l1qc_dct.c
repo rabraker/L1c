@@ -6,15 +6,32 @@
 #include "l1c_common.h"
 #include <math.h>
 
-#include "dct_mkl.h" /* Or whatever you want to use for
-                    the Ax Aty transformations */
+/* dct_mkl.h defines the Ax and Aty operations.
+   To adapt this mex file to a different set of transformations,
+   this largely what must be changed. Your new set of transformations
+   must expose three functions with the following prototype:
 
+   void Ax(double *x, double *y)
+   void Aty(double *y, double *x)
+   void AtAx(double *x, double *z)
+
+   where x and z have length n, and y has length m and m<n.
+ */
+#include "dct_mkl.h"
 #define NUMBER_OF_FIELDS(ST) (sizeof(ST)/sizeof(*ST))
 
 /*
  *	m e x F u n c t i o n
+
+ The matlab protype is
+ [x, LBRes] = l1qc_dct(x0, b, pix_idx, opts),
+ where
+ x0 has length n,
+ b has length m
+ pix_idx has length m
+ and opts is an options struct. See the l1qc_dct.m doc string for details.
  */
-void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
+void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 {
   // l1qc(x0, b, pix_idx, params);
   /* inputs */
@@ -49,7 +66,7 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
                       "First Input vector must be type double.");
   }
 
-  /* check that number of rows in second input argument is 1 */
+  /* check that first input argument is a row or column vector */
   if( (mxGetN(prhs[0]) > 1)  & (mxGetM(prhs[0]) >1) ){
     printf("num dim = %d\n", mxGetNumberOfDimensions(prhs[1]));
     mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notVector",
@@ -160,6 +177,7 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     printf("   newton_max_iter: %d\n", params.newton_max_iter);
     printf("   lbiter:          %d\n", params.lbiter);
     printf("   lbtol:           %.5e\n", params.lbtol);
+    printf("   l1_tol:           %.5e\n", params.l1_tol);
     printf("   cgmaxiter:       %d\n", params.cg_params.max_iter);
     printf("   cgtol:           %.5e\n", params.cg_params.tol);
 
@@ -170,26 +188,38 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   b = mxGetPr(prhs[1]);
   pix_idx_double = mxGetPr(prhs[2]);
 
-
+  /* We are going to change x, so we must allocate and make a copy, so we
+     dont change data in Matlabs workspace.
+  */
   x_ours = malloc_double(N);
 
   for (i=0; i<N; i++){
     x_ours[i] = x_theirs[i];
   }
 
+  /*
+    pix_idx will naturally be a double we supplied from matlab
+    and will have 1-based indexing. Convert to integers and
+    shift to 0-based indexing.
+   */
   pix_idx = calloc(M, sizeof(l1c_int));
   for (i=0; i<M; i++){
-    pix_idx[i] = (l1c_int) pix_idx_double[i];
+    pix_idx[i] = ((l1c_int) pix_idx_double[i]) - 1;
   }
 
-  /* ---------------------------------------  */
+  /*
+    Initialize our Ax,Aty, and AtAx transforms. This will allocate memory
+    and file-scoped variables in dct_mkl.c. On exit, we deallocate with
+    dctmkl_destroy().
+   */
   dctmkl_setup(N, M, pix_idx);
   lb_res = l1qc_newton(N, x_ours, M, b, params, Ax_funs);
   dctmkl_destroy();
 
+
+  /* Prepare output data.
+   */
   plhs[0] = mxCreateDoubleMatrix((mwSize)N, 1, mxREAL);
-
-
 
   x_out =  mxGetPr(plhs[0]);
 
