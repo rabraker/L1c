@@ -33,7 +33,7 @@ DEF_MAT =
 endif
 
 # should check if this is set already
-MEX_INSTALL_DIR = ../afm-cs/matlab-code/functions/\@CsTools
+MEX_INSTALL_DIR = ../afm-cs/matlab-code/functions
 MKLROOT        = /opt/intel/compilers_and_libraries_2019.1.144/linux/mkl
 # MKLROOT      = /opt/intel/compilers_and_libraries/linux/mkl
 MATLAB_R       = /usr/local/MATLAB/R2018b
@@ -168,13 +168,9 @@ LDFLAGS       += -Wl,--start-group $(MATH_ARCHIVE) $(TEST_ARCHIVE) \
 				 $(LIBDIR) $(LIBS)
 
 
-$(info $$DEF_MAT  [${LIB_DIR}])
-$(info $$DEF_MAT  [${LIBDIR}])
-
-
 #-----------------------Targets ----------------------
 .PHONY: clean help mex app_ar vcl_ar test_ar test_obj \
-		lib test test_data clean_all install_mex
+		test test_data clean_all install_mex
 
 # test: $(TEST_APP)
 help:
@@ -195,27 +191,35 @@ help:
 	@echo "USE_OPENBLAS=1|0 (default 0). If 1, will use open_blas."
 	@echo "DEBUG=1|0    (default 0). If 1, disables optimizations.\n"
 
-mex: mex_obj
+mex: $(MEX_NAME)
+
+$(MEX_NAME):interfaces/l1qc.o
 	${LD} -shared -o $(MEX_NAME) interfaces/l1qc.o ${LDFLAGS}
 
-mex_obj:app_ar vcl_ar
+interfaces/l1qc.o:interfaces/l1qc.c $(APP_ARCHIVE) $(VCL_ARCHIVE)
 	${CC} ${INCLUDE} ${CFLAGS} -shared -c -o interfaces/l1qc.o interfaces/l1qc.c
 
-app_ar: $(APP_OBJ) |$(APP_LIB_DIR)
-	$(AR) -rcs ${APP_ARCHIVE} $^
+app_ar:$(APP_ARCHIVE)
+
+vcl_ar:$(VCL_ARCHIVE)
 
 app_lib: $(APP_OBJ)
 	@echo "building lib -------------"
-	@echo "appobj = $(APP_OBJ)"
-	$(LD) -o ${LIB_NAME} -shared $^ ${LIBDIR} $(LIBS)
+	$(LD) -o ${LIB_NAME} -shared $(LDFLAGS)
 
-test:test_ar app_ar vcl_ar
+test:$(TEST_APP)
+
+
+$(TEST_APP):$(TEST_ARCHIVE) $(APP_ARCHIVE) $(VCL_ARCHIVE)
 	$(LD) -o ${TEST_APP} $(LDFLAGS)
 
-test_ar: $(TEST_OBJ) |$(TEST_LIB_DIR)
+$(APP_ARCHIVE): $(APP_OBJ) #|$(APP_LIB_DIR)
+	$(AR) -rcs ${APP_ARCHIVE} $^
+
+$(TEST_ARCHIVE): $(TEST_OBJ) |$(TEST_LIB_DIR)
 	$(AR) -rcs $(TEST_ARCHIVE) $^
 
-vcl_ar: $(VCL_OBJ) | $(APP_LIB_DIR)
+$(VCL_ARCHIVE): $(VCL_OBJ) | $(APP_LIB_DIR)
 	$(AR) -rcs $(VCL_ARCHIVE) $^
 
 # $@ is to left side and $^ to the right of :
@@ -233,6 +237,7 @@ $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
 $(APP_LIB_DIR):
+	@echo "app-lib-dir, test-lib-dir:$(TEST_LIB_DIR)"
 	mkdir -p $(APP_LIB_DIR)
 
 $(TEST_LIB_DIR):
@@ -245,10 +250,12 @@ $(TEST_DATA_ROOT):
 	mkdir $(TEST_DATA_ROOT)
 
 install_mex:
-	$(info cp $(MEX_NAME) $(MEX_INSTALL_DIR)/$(notdir $(MEX_NAME)))
-	@cp $(MEX_NAME) $(MEX_INSTALL_DIR)/$(notdir $(MEX_NAME))
-	$(info cp $(MEX_NAME:.mexa64=.m) $(MEX_INSTALL_DIR)/$(notdir $(MEX_NAME:.mexa64=.m)))
-	@cp $(MEX_NAME:.mexa64=.m) $(MEX_INSTALL_DIR)/$(notdir $(MEX_NAME:.mexa64=.m))
+# install the mex file
+	cp $(MEX_NAME) $(MEX_INSTALL_DIR)/$(notdir $(MEX_NAME))
+# install the mex-help file
+	cp $(MEX_NAME:.mexa64=.m) $(MEX_INSTALL_DIR)/$(notdir $(MEX_NAME:.mexa64=.m))
+# install the options builder
+	cp interfaces/l1qc_opts.m $(MEX_INSTALL_DIR)/l1qc_opts.m
 
 clean:
 	rm -f $(TEST_APP)
@@ -266,5 +273,3 @@ clean_pristine:clean_all
 	rm -f ${TEST_DATA_ROOT}/*.json
 
 
-
-# ${CC_THREAD}
