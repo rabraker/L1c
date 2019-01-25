@@ -22,14 +22,51 @@
 #include "cJSON.h"
 #include "json_utils.h"
 
-#include "l1qc_common.h"
+#include "l1c_common.h"
 #include "bregman.h"
 #include "check_utils.h"
 
 cJSON *test_data_json;
 
+START_TEST(test_breg_DyT){
+  BregFuncs bfuncs = breg_get_functions();
+  int n = 4; // cols
+  int m = 3; // rows
+  double A[] = {107, 38, 102, 184,
+                24, 138, 0, 48,
+                107, 77, 88, 175};
 
+  double dyt_exp[] = {-214, -76, -204, -154,
+                      28,   -72,  368,  -48,
+                      276,    0,   96,  214};
 
+  double dyt[12];
+  double alpha = 2.0;
+  bfuncs.breg_DyT(n, m, alpha, A, dyt);
+
+  ck_assert_double_array_eq_tol(n*m, dyt_exp, dyt, TOL_DOUBLE_SUPER*10);
+}
+END_TEST
+
+START_TEST(test_breg_DyTDy){
+  BregFuncs bfuncs = breg_get_functions();
+  int n = 4; // cols
+  int m = 3; // rows
+  double A[] = {107, 38, 102, 184,
+                24, 138, 0, 48,
+                107, 77, 88, 175};
+
+  double lap_y_exp[] = {-154,  28, -72, 522,
+                        -76,  134,-522, -32,
+                        -198, 154,  80,  136};
+
+  double lap_y[12];
+  double alpha = 2.0;
+  bfuncs.breg_DyTDy(n, m, alpha, A, lap_y);
+
+  ck_assert_double_array_eq_tol(n*m, lap_y_exp, lap_y, TOL_DOUBLE_SUPER*10);
+}
+END_TEST
 
 START_TEST(test_breg_diffX){
   BregFuncs bfuncs = breg_get_functions();
@@ -230,6 +267,8 @@ Suite *bregman_suite(void)
   s = suite_create("bregman");
   tc_diff = tcase_create("diffX");
 
+  tcase_add_test(tc_diff, test_breg_DyT);
+  tcase_add_test(tc_diff, test_breg_DyTDy);
   tcase_add_test(tc_diff, test_breg_diffX);
   tcase_add_test(tc_diff, test_breg_diffY);
   tcase_add_test(tc_diff, test_breg_shrink1);

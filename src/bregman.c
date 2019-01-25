@@ -1,9 +1,13 @@
 #include <math.h>
 #include "mkl.h"
-#include "l1qc_common.h"
+#include "l1c_common.h"
 #include "bregman.h"
 #include <stdio.h>
 /* Forward declarations */
+static void breg_DyT(l1c_int n, l1c_int m, double alpha, double *A, double *dyt);
+
+static void breg_DyTDy(l1c_int n, l1c_int m, double alpha, double *A, double *dytdy);
+
 static void breg_Dx(l1c_int n, l1c_int m, double *X, double *Dx);
 
 static void breg_Dy(l1c_int n, l1c_int m, double *X, double *Dy);
@@ -12,15 +16,84 @@ static void breg_shrink1(l1c_int N, double *x, double *d, double gamma);
 
 static void breg_mxpy_z(l1c_int N, double * restrict x, double * restrict y, double *z);
 
+
+/**
+   For unit tests, exports a table of function pointers.
+ */
 BregFuncs breg_get_functions(){
-  BregFuncs bfun = {.breg_Dx=breg_Dx,
-                    .breg_Dy=breg_Dy,
-                    .breg_shrink1=breg_shrink1,
-                    .breg_mxpy_z=breg_mxpy_z};
+  BregFuncs bfun = {.breg_Dx = breg_Dx,
+                    .breg_Dy = breg_Dy,
+                    .breg_shrink1 = breg_shrink1,
+                    .breg_mxpy_z = breg_mxpy_z,
+                    .breg_DyTDy = breg_DyTDy,
+                    .breg_DyT = breg_DyT};
 
   return bfun;
 }
 
+/*
+  Given an m by n matrix A, computes lambda*Del_y^T*A. We assume A is stored
+  in the 1-D vector A, in row major order. For a 3 x 4 matrix, Del_y^T has
+  the matrix representation
+
+ -1     0     0     0     0     0     0     0     0     0     0     0
+  0    -1     0     0     0     0     0     0     0     0     0     0
+  0     0    -1     0     0     0     0     0     0     0     0     0
+  1     0     0    -1     0     0     0     0     0     0     0     0
+  0     1     0     0    -1     0     0     0     0     0     0     0
+  0     0     1     0     0    -1     0     0     0     0     0     0
+  0     0     0     1     0     0    -1     0     0     0     0     0
+  0     0     0     0     1     0     0    -1     0     0     0     0
+  0     0     0     0     0     1     0     0    -1     0     0     0
+  0     0     0     0     0     0     1     0     0     0     0     0
+  0     0     0     0     0     0     0     1     0     0     0     0
+  0     0     0     0     0     0     0     0     1     0     0     0
+
+ */
+static void breg_DyT(l1c_int n, l1c_int m, double alpha, double *A, double *dyt){
+
+  double Ai = 0, Ai_min_m = 0;
+  int i=0, Len=n*m;
+
+  for (i=0; i<Len; i++){
+    Ai = i<(m-1)*n ? A[i] : 0;
+    Ai_min_m = i < m ? 0 : A[i-m];
+    dyt[i] = alpha * (Ai_min_m - Ai);
+  }
+}
+
+/*
+  Given an m by n matrix A, computes lambda*(Del_y^T*Del_y)*A.
+  We assume A is stored in the 1-D vector A, in row major order.
+  For a 3 x 4 matrix, Del_y^T*Del_y has the matrix representation:
+
+  1     0     0    -1     0     0     0     0     0     0     0     0
+  0     1     0     0    -1     0     0     0     0     0     0     0
+  0     0     1     0     0    -1     0     0     0     0     0     0
+ -1     0     0     2     0     0    -1     0     0     0     0     0
+  0    -1     0     0     2     0     0    -1     0     0     0     0
+  0     0    -1     0     0     2     0     0    -1     0     0     0
+  0     0     0    -1     0     0     2     0     0    -1     0     0
+  0     0     0     0    -1     0     0     2     0     0    -1     0
+  0     0     0     0     0    -1     0     0     2     0     0    -1
+  0     0     0     0     0     0    -1     0     0     1     0     0
+  0     0     0     0     0     0     0    -1     0     0     1     0
+  0     0     0     0     0     0     0     0    -1     0     0     1
+ */
+static void breg_DyTDy(l1c_int n, l1c_int m, double alpha, double *A, double *dytdy){
+
+  double Ai_min_m=0, D_ii_Ai = 0, Ai_p_m=0;
+  int i=0, Len=n*m;
+
+  for (i=0; i<Len; i++){
+    Ai_min_m = i<m ? 0 : A[i-m];
+    D_ii_Ai = (i<m || i > (m-1)*n) ? A[i] : 2 * A[i];
+    Ai_p_m = i < Len-m ? A[i+m] : 0;
+
+    dytdy[i] = alpha * (-Ai_min_m + D_ii_Ai - Ai_p_m);
+  }
+
+}
 static void breg_Dx(l1c_int n, l1c_int m, double *X, double *Dx){
   int row=0, col=0;
   for (row=0; row<n; row++){
