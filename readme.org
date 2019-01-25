@@ -13,7 +13,7 @@
 * Introduction
 The goal of this project is to provide a c library that is useful to compressed sensing.  To date, lots of research has been produced that develops methods to efficiently solve solve various formulations of the compressed sensing problem. To their great credit, many of those reasearchers have released code along with their publications. See, for example, [[https://statweb.stanford.edu/~candes/l1magic/][l1-magic]], [[http://statweb.stanford.edu/~candes/nesta/][NESTA]], [[https://sparselab.stanford.edu/][SparseLab]], and [[https://www.ece.rice.edu/~tag7/Tom_Goldstein/Split_Bregman.html][Split Bregman]]. So, a good question is, why re-do it in c?
 
-- Much of the published code is written in Matlab. This means if you want to use the code in Python or R or Julia or a c/c++ project, you must translate the Matlab code to your language. By contrast, c is something like the langua franca of computing. It is relatively straigtforward to interface c code with most languages, including Matlab.
+- Much of the published code is written in Matlab. This means if you want to use the code in a Python or R or Julia or a c/c++ project, you must translate the Matlab code to your language. By contrast, c is something like the langua franca of computing. It is relatively straigtforward to interface c code with most languages, including Matlab.
 
 - CS optimizations are computationally intensive. Thus, it seems beneficial to write optimized implementations of those optimizations and c fits that requirement (Fortran might be better, but I have forgotten it).
 
@@ -26,7 +26,7 @@ Presently, the only capability this library provides is to solve the problem
 \min_{x} ||x||_{1}  \quad \text{s.t.} \quad ||Ax -b||_{2} < \epsilon,
 \end{aligned}
 
-which, is mostly a port of ~l1qc_log_barrier.m~ from the ~l1-magic~ code, with a few modifications. Currently, the code *only* operates in large-scale mode, which means that the transformation $Ax$ (and the adjoint, $A^Ty$) are performed by user supplied functions, rather than an explicit matrix-vector multiplication. 
+which, is mostly a port of ~l1qc_log_barrier.m~ from the ~l1-magic~ code, with a few modifications. Currently, the code *only* operates in large-scale mode, which means that the transformation $Ax$ (and the adjoint, $A^Ty$) are performed by user supplied functions, rather than an explicit matrix-vector multiplication. This also means that solving for the descent direction is always done via conjugate gradients.
 
 * Performance
 So far, using ~l1C~ gives me a speed increase of between 2 and 5 times faster compared to the original matlab code, depending on which computer I run it on.
