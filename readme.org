@@ -1,33 +1,32 @@
-#+TITLE: l1C: A (very) partial c port of l1-magic
+#+TITLE: l1C: Compressed Sensing in c
 #+SETUPFILE: ~/.emacs.d/org-templates/level-0.org
 #+PROPERTY: TEMPLATE page_math
-#+PROPERTY: URL projects/mpc_j.html 
-#+PROPERTY: SAVE_AS projects/mpc_j.html
+#+PROPERTY: URL projects/l1c.html 
+#+PROPERTY: SAVE_AS projects/l1c.html
 #+OPTIONS: tex:t
 #+STARTUP: latexpreview
 #+TODO: TODO(t) WAITING(w@/!) | DONE(d@/!) CANCELED(c@/!) STARTED(s@/!) DEFERRED(ef@/!)
-#+STARTUP: fold
-#+STARTUP: lognotestate t
 #+SEQ_TODO: TODO STARTED WAITING DELEGATED APPT | DONE DEFERRED CANCELLED
 
 
 
 * Introduction
-This code is basically a c port of portions of the [[https://statweb.stanford.edu/~candes/l1magic/][l1-magic toolbox]], with a few modifications. Currently, the only ported capability is to solve the optimization problem
+The goal of this project is to provide a c library that is useful to compressed sensing.  To date, lots of research has been produced that develops methods to efficiently solve solve various formulations of the compressed sensing problem. To their great credit, many of those reasearchers have released code along with their publications. See, for example, [[https://statweb.stanford.edu/~candes/l1magic/][l1-magic]], [[http://statweb.stanford.edu/~candes/nesta/][NESTA]], [[https://sparselab.stanford.edu/][SparseLab]], and [[https://www.ece.rice.edu/~tag7/Tom_Goldstein/Split_Bregman.html][Split Bregman]]. So, a good question is, why re-do it in c?
 
-\begin{align}
-\min_{x} ||x||_{1}  \quad \text{s.t.} \quad ||Ax -b||_{2} < \epsilon
-\end{align}
-which is converted to the quadratically constrained linear program
-\begin{align}
-\min_{x,u} \quad \mathbb{1}^{T}u \quad &\text{s.t.} \\
- x - u &< 0 \\
- -x - u &< 0\\
- ||Ax -b||_{2} &< \epsilon
-\end{align}
-The inequality constraints are converted to barrier functions. The ~l1-magic~ manual does a really good job walking through all of this. 
+- Much of the published code is written in Matlab. This means if you want to use the code in Python or R or Julia or a c/c++ project, you must translate the Matlab code to your language. By contrast, c is something like the langua franca of computing. It is relatively straigtforward to interface c code with most languages, including Matlab.
 
-Thus, in the terms of ~l1-magic~ this code replaces the functionality of ~l1qc_log_barrier.m~ and its associated ~l1qc_newton.m~ and ~cgsolve.m~). Currently, the code *only* operates in large-scale mode, which means that the transformation $Ax$ (and the adjoint, $A^Ty$) are performed by user supplied functions, rather than an explicit matrix-vector multiplication). If your interest is in "small-scale" mode, modifying the code for that scenario should be relatively straigforward.
+- CS optimizations are computationally intensive. Thus, it seems beneficial to write optimized implementations of those optimizations and c fits that requirement (Fortran might be better, but I have forgotten it).
+
+- c is fun (probably the main reason)
+
+ 
+Presently, the only capability this library provides is to solve the problem
+
+\begin{aligned}
+\min_{x} ||x||_{1}  \quad \text{s.t.} \quad ||Ax -b||_{2} < \epsilon,
+\end{aligned}
+
+which, is mostly a port of ~l1qc_log_barrier.m~ from the ~l1-magic~ code, with a few modifications. Currently, the code *only* operates in large-scale mode, which means that the transformation $Ax$ (and the adjoint, $A^Ty$) are performed by user supplied functions, rather than an explicit matrix-vector multiplication. 
 
 * Performance
 So far, using ~l1C~ gives me a speed increase of between 2 and 5 times faster compared to the original matlab code, depending on which computer I run it on.
@@ -48,9 +47,9 @@ Typing ~make~ in the root directoy will print a summary of availible targets and
   - ~DEBUG=[1|0]~. If 1, build with debugging symbols and turn optimizations off. Default is 0. To debug with optimizations on, please edit the makefile, (e.g., add ~-g~ to ~CFLAGS~).
 ** Dependencies
 *** Core Code
-The core code with examples requires a linear algebra library and an FFT library capable of performing a DCT. The best performance I have seen is by compiling with Intel's [[https://software.intel.com/en-us/mkl][Math Kernel Library (MKL)]]. I beleive most of the increased performance is due to their faster DCT routines. 
+The core code with examples requires a linear algebra library and an FFT library capable of performing a DCT. The best performance I have seen is by compiling with Intel's [[https://software.intel.com/en-us/mkl][Math Kernel Library (MKL)]]. I believe most of the increased performance is due to their faster DCT routines. 
 
-This is, however, unecessary and ~l1C~ can be built with [[https://github.com/xianyi/OpenBLAS][OpenBlas]] and [[http://fftw.org/][FFTW]]. 
+This is, however, unecessary and ~l1C~ can be built with [[https://github.com/xianyi/OpenBLAS][OpenBlas]] and FFTW could be used, as in ~interfaces/l1qc_fftw.c~.
 
 Note that in general, the only use of the DCT is for the (user defined) $A*x$ and $A^{T}*y$ transformations. If your use case uses a different sort of transformation, then an FFT library is unecessary. If this is the case, then you can simply adapt the mex interface file to your needs. Running the tests would require you to modify them and supply a different transformation, and to eliminate the tests for dct.c and dct_mkl.c.
 
@@ -59,6 +58,7 @@ The unit tests depend on two additional libraries. Data for the unit tests is ge
 1. [[https://github.com/libcheck/check][libcheck]] is the unit testing framework. The makefile assumes the headers for check are located in 
  ~/usr/local/include~ and that libcheck.so is located in ~/usr/local/lib~.
 2. To load data generated by matlab, we use [[https://github.com/DaveGamble/cJSON][cJSON]].
+3. Saving data in Matlab/octave is accomplished with [[https://github.com/fangq/jsonlab][jsonlab]].
 
 It is highly recommended to install these dependencies and run the tests.
 ** Building the test data
@@ -142,5 +142,24 @@ I have made a few changes (improvements?) to the original ~~l1-magic~ algorithm,
    \end{equation}
    In the original code, the functional $f(z)$ is only evaluated explicitly at the start of each log-barrier iteration and the value of $f(z_{i})$ is updated from derived values, e.g., $r_{k+1}= r_{k} + sAd_{x}$. Mathematically, this is fine. Numerically, it is problematic because after enough iterations the explicit value of $f(z_{k})$ becomes infinite (due to the barrier functions) even though the putative value is finite. Thus, although it is less efficient, this code evaluates the functional explicitly at each iteration of the line-search and this value is then passed to the next Newton iteration.
 
-* To-Dos
-**  Make ~MATLAB_ROOT~ and ~MKLROOT~ set-able from the commandline, or figure out a way to detect them.
+** To-Dos
+1. Make ~MATLAB_ROOT~ and ~MKLROOT~ set-able from the commandline, or figure out a way to detect them.
+
+2. Need an aligned memory allocator for when we don't have MKL.
+
+3. Figure out the license. This may mean re-working all the test code because ~l1-magic~ doesn't come with an explicit license.
+4. Make it build on windows, at least using cygwin or mingw.
+5. Other optimization routines. On the list are
+   - The TV-denoising problem using Bregman iteration. This seems like a really nice way to reduce much of the noise CS reconstructions.
+   - [[https://web.stanford.edu/~boyd/l1_ls/][l1-ls]] from Stephen Boyd's research group.
+   - NESTA, which from my cursory inspection, seems to depend on l1-ls.
+
+6. Generalize the backtracking line search. There is really no reason that it needs to be specific to the l1qc algorithm. All it needs is a way to evaluate the functional and gradient at different step sizes.
+
+7. With a bit of work, it should be possible to generalize the entire set of log-barrier and newton iterations, so that it is not specific the quadratically constrained l1 problem. Basically, all that is required is
+   - A function to evaluate the functional
+   - A function to compute the descent direction
+   - A function to compute the linear approximation for the linesearch
+   - A function to compute the max-step size. This seems like the main difference to a standard Newton descent algorithm and this one with barrier functions.
+   - A function to compute the stopping criteria.
+

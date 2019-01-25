@@ -118,7 +118,40 @@ void H11pfun(l1c_int N, double *z, double *y,  void *hess_data_in){
 }
 
 
+/**
+## Should rename this to something like l1qc_grad_hess(), since it computes
+both the gradient and the (modified) hessian.
 
+For f1 = x-u
+    f2 = -x-u
+    f3 = ||Ax-b||^2 - eps^2
+
+and cost f(x,u) = (0,1)^T(x,u) + (1/tau) sum( -log(-f1))
+                  +(1/tau) sum(-log(-f2))
+                  +(1/tau) sum(-log(f3))
+
+the negative gradient multiplied by tau is partitioned as (delf_x, delf_u) where
+
+    neg_tau_delx = [ 1/f1  - 1/f2 + (1/f3)*A^Tr     (where r = Ax-b)
+    neg_tau_delu = [ 1 - 1/f1 - 1/f2]
+
+The hessian is given by Hx + Hu where
+
+         |-(1/f3)A^TA + (1/f3^2)A^Trr^TA  |   0   |
+    Hx = |--------------------------------|-------|
+         |              0                 |   0   |
+
+    Hu = | (1/f1)^2 + (1/f2)^2  |
+
+    |                | diag(-1/f1^2) |
+    |diag(1/f1^2)    | + diag(1/f2^2)|
+    |  + diag(1/f2^2)|               |   |Hu_11 | Hu_12 |
+    |--------------------------------| = |--------------|
+    | diag(-1/f1^2)  |diag(1/f1^2)   |   |Hu_12 | Hu_11 |
+    |  +diag(1/f2^2) | + diag(1/f2^2)|
+    |                |               |
+
+ */
 void get_gradient(l1c_int N, double *fu1, double *fu2, double *sigx, double *atr,
                   double fe,  double tau, GradData gd){
 
@@ -156,6 +189,15 @@ void get_gradient(l1c_int N, double *fu1, double *fu2, double *sigx, double *atr
   }
 }
 
+
+/**
+  Computes the descent direction (dx,du) as the solution to
+  H (dx,du) = -(\nabla_x f(x,u), \nabla_u f(x,u)), where H is the Hessian. We decompose
+  the hessian.
+
+  The Hessian is split into 4 blocks: only the H11 part is dense.
+  The rest (H12, H21, and H22) are diagonal.
+ */
 int compute_descent(l1c_int N, double *fu1, double *fu2, double *atr, double fe,  double tau,
                     GradData gd, double *Dwork_6N, CgParams cg_params, CgResults *cg_result,
                     AxFuns Ax_funs){
@@ -207,6 +249,22 @@ int compute_descent(l1c_int N, double *fu1, double *fu2, double *atr, double fe,
   return 0;
 }
 
+
+/**
+  Finds the maximum step size s that can be used in our update
+  x_{k+1} = x_k + sdx
+  u_{k+1} = u_k + sdu
+
+  that satisfies the constraints that
+  f1(x,u) =x - u <=0
+  f2(x,u) = -x - u <=0
+  f3(x,u) = ||Ax-b||_2^2 - epsilon^2<=0
+
+  In principle, this should be unneccesary, since the line search should reject
+  values which don't satisfy the constraints, as they will yield an infinite
+  functional. However, this should be faster, that iterating through
+  the line search.
+ */
 double find_max_step(l1c_int N, GradData gd, double *fu1,
                      double *fu2, int M, double *r, double epsilon){
   double aqe = 0.0, bqe = 0.0, cqe=0.0;
@@ -228,13 +286,16 @@ double find_max_step(l1c_int N, GradData gd, double *fu1,
     root = 1.0;
   }
 
-  /* Implements the matlab code:
-     ifu1 = find((dx-du) > 0);
-     ifu2 = find((-dx-du) > 0);
-     min_u1 =  -fu1(ifu1)./(dx(ifu1)-du(ifu1));
-     min_u2 = -fu2(ifu2)./(-dx(ifu2)-du(ifu2)); ...
+  /*
+    We require that the new points  x_{k+1} = x_k + sdx and  u_{k+1} = u_k + sdu
+    satisfy:
+    f1(x_{k+1},u_{k+1}) = x_k - uk +s(dx -du) <=0
+    f2(x_{k+1},u_{k+1}) = -x_k - uk +s(dx -du) <=0
 
-  */
+    if dx-du<0, then this will be the case for any positive s, provided
+    f1(x_k,u_k) and f2(x_k,u_k) satisfied the constraints. Thus, we only
+    care about the cases when,  dx-du>0 or -dx-du>0.
+   */
   min_u1 = INFINITY;
   for (i=0; i<N; i++){
     if ( !(gd.dx[i] - gd.du[i] > 0) ){
@@ -452,11 +513,11 @@ LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
 
     /* Compute Ax - b = r */
     Ax_funs.Ax(x,r);
-    cblas_daxpy(M, -1.0, b, 1, r, 1); //-b + Ax -->r
+    cblas_daxpy(M, -1.0, b, 1, r, 1);
 
     if ( (lb_iter==1) & check_feasible_start(M, r, params.epsilon) ){
         printf("Starting point is infeasible, exiting\n");
-        lb_res.status = 1;
+        lb_res.status = 2;
         goto exit;
       }
 
@@ -524,10 +585,10 @@ LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
       }
 
 
-    }/* main iter*/
+    }/* Newton iter*/
 
 
-    /* ----- Update tau or exit ------ */
+    /* ----- Update tau ------ */
     lb_res.total_newton_iter += iter;
 
     params.tau = params.tau * params.mu;
