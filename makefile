@@ -151,7 +151,7 @@ WARN_FLAGS     = -pedantic -Wall -Wextra -Wunused -Werror                   \
 
 CFLAGS         =  $(OPT) $(DBG) -fopenmp -fPIC $(WARN_FLAGS) \
                   -std=c11 $(MAT_DEF)
-CPP_VCL_FLAGS  =  -Iinclude/vcl $(DBG) $(VCL_OPT)  -fabi-version=0 -fPIC
+CPP_VCL_FLAGS  =  -Iinclude/vcl $(DBG) $(VCL_OPT) $(WARN_FLAGS) -fabi-version=0 -fPIC
 
 ifeq (${USE_OPENBLAS},1)
 MATH_INCLUDE   =  -I/usr/local/OpenBlas/include
