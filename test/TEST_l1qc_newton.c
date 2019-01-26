@@ -122,7 +122,7 @@ START_TEST (test_l1qc_newton_1iter)
   free(pix_idx);
 
   dct_destroy();
-  free_json_text_data();
+
   cJSON_Delete(test_data_json);
 
 #ifdef _USEMKL_
@@ -224,7 +224,7 @@ START_TEST (test_newton_init)
   free(pix_idx);
   free_double(Dwork);
 
-  free_json_text_data();
+
   cJSON_Delete(test_data_json);
 
 #ifdef _USEMKL_
@@ -278,7 +278,7 @@ START_TEST (test_find_max_step)
   free_double(fu2);
   free_double(r);
 
-  free_json_text_data();
+
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -405,7 +405,7 @@ START_TEST(test_compute_descent)
 
   dct_destroy();
 
-  free_json_text_data();
+
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -496,7 +496,7 @@ START_TEST(test_H11pfun)
   free_double(z_orig);
   dct_destroy();
 
-  free_json_text_data();
+
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -584,7 +584,7 @@ START_TEST(test_get_gradient)
   free_double(gd.ntgu);
   free_double(gd.w1p);
 
-  free_json_text_data();
+
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -715,7 +715,7 @@ START_TEST(test_line_search)
 
   dct_destroy();
 
-  free_json_text_data();
+
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -778,7 +778,7 @@ START_TEST(test_f_eval)
   free_double(fu1);
   free_double(fu2);
 
-  free_json_text_data();
+
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();

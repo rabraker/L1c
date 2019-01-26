@@ -8,15 +8,10 @@
 #include "json_utils.h"
 #include <fftw3.h>
 #include "l1c_common.h"
+
+
 /* Utility functions */
 
-
-char *file_data;
-
-void free_json_text_data(void){
-  /*Only call after you have called load_file_to_json(). */
-  free(file_data);
-}
 
 void print_vec(l1c_int N, double *x, char *name){
   l1c_int i = 0;
@@ -53,11 +48,14 @@ int load_file_as_text(char *fname, char **file_data){
 }
 
 int load_file_to_json(char *fname, cJSON **data_json){
+  char *file_data =NULL;
 
   if (load_file_as_text(fname, &file_data))
     return 1;
 
   *data_json = cJSON_Parse(file_data);
+
+  free(file_data);
 
   if (data_json == NULL){
     const char *error_ptr = cJSON_GetErrorPtr();
