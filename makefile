@@ -140,13 +140,18 @@ endif
 
 # More warnings to look at:
 # https://fastcompression.blogspot.com/2019/01/compiler-warnings.html
-# -Wcast-qual -Wcast-align -Wstrict-aliasing -Wpointer-arith -Winit-self \
-#  -Wshadow -Wswitch-enum -Wstrict-prototypes -Wmissing-prototypes -Wredundant-decls \
-#  -Wfloat-equal -Wundef -Wvla -Wdeclaration-after-statement -Wc++-compat
+#  -Wstrict-aliasing -Wpointer-arith  \
+#     -Wredundant-decls -Wmissing-prototypes\
+#    -Wdeclaration-after-statement -Wc++-compat
 #
-CFLAGS         =  $(OPT) $(DBG) -fopenmp -fPIC -Wall -Wextra -Wunused -Werror\
-                  -std=c11 -pedantic $(MAT_DEF)
-CPP_VCL_FLAGS  =  -Iinclude/vcl $(DBG) $(VCL_OPT) -fabi-version=0 -fPIC
+# FAILS -Wredundant-decls -Wstrict-prototypes (seems like fault of mkl.h )
+WARN_FLAGS     = -pedantic -Wall -Wextra -Wunused -Werror                   \
+				 -Wcast-qual -Wcast-align -Winit-self -Wfloat-equal -Wundef \
+				 -Wshadow -Wswitch-enum -Wvla
+
+CFLAGS         =  $(OPT) $(DBG) -fopenmp -fPIC $(WARN_FLAGS) \
+                  -std=c11 $(MAT_DEF)
+CPP_VCL_FLAGS  =  -Iinclude/vcl $(DBG) $(VCL_OPT)  -fabi-version=0 -fPIC
 
 ifeq (${USE_OPENBLAS},1)
 MATH_INCLUDE   =  -I/usr/local/OpenBlas/include
@@ -223,7 +228,7 @@ test:$(TEST_APP)
 $(TEST_APP):$(TEST_ARCHIVE) $(APP_ARCHIVE) $(VCL_ARCHIVE)
 	$(LD) -o ${TEST_APP} $(LDFLAGS)
 
-$(APP_ARCHIVE): $(APP_OBJ) #|$(APP_LIB_DIR)
+$(APP_ARCHIVE): $(APP_OBJ) |$(APP_LIB_DIR)
 	$(AR) -rcs ${APP_ARCHIVE} $^
 
 $(TEST_ARCHIVE): $(TEST_OBJ) |$(TEST_LIB_DIR)
