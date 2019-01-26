@@ -12,15 +12,22 @@
 
 
 #ifdef _USEMKL_
+
 #include "mkl.h"
 #define free_double(x) mkl_free(x)
 // parenthesis around N are crucial here.
 #define malloc_double(N) (double*)mkl_malloc((size_t)(N) *sizeof(double), DALIGN)
+
 #else
+
+#include <stdlib.h>
 #include "cblas.h"
 
-#define free_double(x) free(x)
-#define malloc_double(N) calloc(N, sizeof(double))
+// #define free_double(x) free(x)
+// #define malloc_double(N) calloc(N, sizeof(double))
+#define malloc_double(N) (double*) mm_malloc((size_t)(N) * sizeof(double), DALIGN)
+#define free_double(x) mm_free(x)
+
 #endif
 
 #if defined(MKL_INT)
