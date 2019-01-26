@@ -34,8 +34,10 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 #include "test_constants.h"
 #include  "l1c_math.h"
 #include "check_utils.h"
-#include "mkl.h"
 
+#ifdef _USE_MKL_
+#include "mkl.h"
+#endif
 
 static cJSON *test_data_json;
 

@@ -144,7 +144,7 @@ CPP_VCL_FLAGS  =  -Iinclude/vcl $(DBG) $(VCL_OPT) -fabi-version=0 -fPIC
 ifeq (${USE_OPENBLAS},1)
 MATH_INCLUDE   =  -I/usr/local/OpenBlas/include
 MATH_LDIR      =  -L/usr/local/OpenBlas/lib
-MATH_LIBS      =  -lfftw3 -lopenblas -lm
+MATH_LIBS      =  -lfftw3 -lgomp -lopenblas -lm
 
 else
 MATH_INCLUDE   =  -I${MKLROOT}/include
@@ -216,7 +216,7 @@ test:$(TEST_APP)
 $(TEST_APP):$(TEST_ARCHIVE) $(APP_ARCHIVE) $(VCL_ARCHIVE)
 	$(LD) -o ${TEST_APP} $(LDFLAGS)
 
-$(APP_ARCHIVE): $(APP_OBJ) #|$(APP_LIB_DIR)
+$(APP_ARCHIVE): $(APP_OBJ) |$(APP_LIB_DIR)
 	$(AR) -rcs ${APP_ARCHIVE} $^
 
 $(TEST_ARCHIVE): $(TEST_OBJ) |$(TEST_LIB_DIR)

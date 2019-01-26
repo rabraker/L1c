@@ -20,13 +20,16 @@
 
 #else
 
-#include <stdlib.h>
 #include "cblas.h"
 
-// #define free_double(x) free(x)
-// #define malloc_double(N) calloc(N, sizeof(double))
-#define malloc_double(N) (double*) mm_malloc((size_t)(N) * sizeof(double), DALIGN)
-#define free_double(x) mm_free(x)
+/* If we dont have MKL, use _mm_malloc. It may be better to use
+   posix_memalign() and only use  _aligned_malloc() for compilation with
+   MSVC
+*/
+#include <xmmintrin.h>
+
+#define malloc_double(N) (double*) _mm_malloc((size_t)(N) * sizeof(double), DALIGN)
+#define free_double(x) _mm_free(x)
 
 #endif
 
