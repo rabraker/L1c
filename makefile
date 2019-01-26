@@ -137,6 +137,13 @@ MATLAB_LDIR    = -L$(MATLAB_R)/bin/glnxa64 \
 MATLAB_LIBS    = -lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
 endif
 
+
+# More warnings to look at:
+# https://fastcompression.blogspot.com/2019/01/compiler-warnings.html
+# -Wcast-qual -Wcast-align -Wstrict-aliasing -Wpointer-arith -Winit-self \
+#  -Wshadow -Wswitch-enum -Wstrict-prototypes -Wmissing-prototypes -Wredundant-decls \
+#  -Wfloat-equal -Wundef -Wvla -Wdeclaration-after-statement -Wc++-compat
+#
 CFLAGS         =  $(OPT) $(DBG) -fopenmp -fPIC -Wall -Wextra -Wunused -Werror\
                   -std=c11 -pedantic $(MAT_DEF)
 CPP_VCL_FLAGS  =  -Iinclude/vcl $(DBG) $(VCL_OPT) -fabi-version=0 -fPIC
