@@ -57,7 +57,7 @@ START_TEST(test_dctmkl_MtEt_EMx_small_rand)
     ck_abort();
   }
 
-  dctmkl_setup(Nx, Npix, (MKL_INT*)pix_idx);
+  dctmkl_setup(Nx, Npix, pix_idx);
 
   MtEt_EMx_act = malloc_double(Nx);
 

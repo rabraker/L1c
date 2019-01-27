@@ -160,18 +160,19 @@ MATH_LIBS      =  -lfftw3 -lopenblas -lm
 
 else
 MATH_INCLUDE   =  -I${MKLROOT}/include
-MATH_CFLAGS    =   -D_USEMKL_ -DMKL_ILP64 -m64
+MATH_CFLAGS    =  -DMKL_ILP64  -D_USEMKL_  -m64
 MATH_LDIR      =
-MATH_ARCHIVE   =  ${MKLROOT}/lib/intel64/libmkl_intel_ilp64.a \
-${MKLROOT}/lib/intel64/libmkl_gnu_thread.a  \
-${MKLROOT}/lib/intel64/libmkl_core.a
-MATH_LIBS      = -lgomp -lpthread -lm -ldl
-
+# MATH_ARCHIVE   =  ${MKLROOT}/lib/intel64/libmkl_intel_ilp64.a \
+# ${MKLROOT}/lib/intel64/libmkl_gnu_thread.a  \
+# ${MKLROOT}/lib/intel64/libmkl_core.a
+# MATH_LIBS      = -lgomp -lpthread -lm -ldl
+MATH_LIBS      = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_rt -lpthread -lm -ldl \
+				-lfftw3 -lgomp
 endif
 
 # put them all together
 INCLUDE       +=  $(MATLAB_INCLUDE) $(MATH_INCLUDE)
-CFLAGS        +=  $(MATLAB_CFLAGS) $(MATH_CFLAGS)
+CFLAGS        +=   $(MATLAB_CFLAGS) $(MATH_CFLAGS)
 
 LIBDIR         = $(MATLAB_LDIR) $(MATH_LDIR)  $(TEST_LDIR)
 LIBS           = $(MATH_LIBS)  $(MATLAB_LIBS) $(TEST_LIB)
