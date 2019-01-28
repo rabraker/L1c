@@ -32,8 +32,8 @@ typedef struct L1qcDctOpts{
   ("warm_start_cg", c_int),
 ]
  */
-int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx, L1qcDctOpts opts)
-{
+int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
+             L1qcDctOpts opts, LBResult *lb_res){
   /* Ensure intel doesnt fuck us.*/
   mkl_set_interface_layer(MKL_INTERFACE_ILP64);
   mkl_set_threading_layer(MKL_THREADING_GNU);
@@ -57,7 +57,7 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx, L1qcDctOp
                        .cg_params.max_iter = opts.cgmaxiter,
                        .cg_params.tol = opts.cgtol};
 
-  LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
+  // LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
 
 
   /* Allocate memory for x and b, which is aligned to DALIGN.
@@ -78,7 +78,7 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx, L1qcDctOp
 
   dctmkl_setup(N, M, (l1c_int*)pix_idx);
   Ax_funs.Aty(b, eta_0);
-  lb_res = l1qc_newton(N, eta_0, M, b, params, Ax_funs);
+  *lb_res = l1qc_newton(N, eta_0, M, b, params, Ax_funs);
 
   /* We solved for eta in the DCT domain. Transform back to
      standard coorbbdinates.

@@ -9,6 +9,28 @@ import numpy as np
 from ctypes import Structure
 from ctypes import c_int
 from ctypes import c_double
+from ctypes import POINTER, byref
+
+
+class LBResult(Structure):
+    _fields_ = [("l1", c_double),
+                ("total_newton_iter", c_int),
+                ("total_cg_iter", c_int),
+                ("status", c_int)]
+
+    def __init__(self):
+        self.l1 = 0
+        self.total_newton_iter = 0
+        self.total_cg_iter = 0
+        self.status = 0
+
+    def __repr__(self):
+        return ""                                                 \
+            "l1                : %f\n" % self.l1 +                \
+            "total_newton_iter : %d\n" % self.total_newton_iter + \
+            "total_cg_iter     : %d\n" % self.total_cg_iter +     \
+            "status            : %d\n" % self.status
+
 
 class l1qc_dct_params(Structure):
     _fields_ = [("epsilon", c_double),
@@ -22,6 +44,35 @@ class l1qc_dct_params(Structure):
                 ("cgmaxiter", c_int),
                 ("warm_start_cg", c_int)]
 
+    def __init__(self, epsilon=0.1, mu=10, lbtol=1e-3,
+                 newton_tol=1e-3, newton_max_iter=50,
+                 verbose=2, l1_tol=0, cgtol=1e-8,
+                 cgmaxiter=200, warm_start_cg=0):
+
+        self.epsilon = epsilon
+        self.mu = mu
+        self.lbtol = lbtol
+        self.newton_tol = newton_tol
+        self.newton_max_iter = newton_max_iter
+        self.verbose = verbose
+        self.l1_tol = l1_tol
+        self.cgtol = cgtol
+        self.cgmaxiter = cgmaxiter
+        self.warm_start_cg = warm_start_cg
+
+    def __repr__(self):
+        return "" + \
+            "epsilon         : %f\n" % self.epsilon +         \
+            "mu              : %f\n" % self.mu +              \
+            "lbtol           : %f\n" % self.lbtol +           \
+            "newton_tol      : %f\n" % self.newton_tol +      \
+            "newton_max_iter : %d\n" % self.newton_max_iter + \
+            "verbose         : %d\n" % self.verbose +         \
+            "l1_tol          : %f\n" % self.l1_tol +          \
+            "cgtol           : %f\n" % self.cgtol +           \
+            "cgmaxiter       : %d\n" % self.cgmaxiter +       \
+            "warm_start_cg   : %d" % self.warm_start_cg
+
 
 def l1qc_dct(eta_0, b, pix_idx, opts):
     import numpy.ctypeslib as npct
@@ -34,14 +85,16 @@ def l1qc_dct(eta_0, b, pix_idx, opts):
     libl1c.l1qc_dct.restype = np.int32
     libl1c.l1qc_dct.argtypes = [c_int, array_1d_double,
                                 c_int, array_1d_double, array_1d_int,
-                                l1qc_dct_params]
+                                l1qc_dct_params, POINTER(LBResult)]
 
     N = len(eta_0)
     M = len(b)
     eta_out = np.zeros(N)
-    libl1c.l1qc_dct(N, eta_out, M, b, pix_idx, opts)
+    lb_res = LBResult()
 
-    return eta_out
+    libl1c.l1qc_dct(N, eta_out, M, b, pix_idx, opts, byref(lb_res))
+
+    return (eta_out, lb_res)
 
 
 def remove_ticks(ax):
@@ -80,8 +133,9 @@ def dct_mkl_example():
                                1e-8,  # cgtol
                                200,   # cgmaxiter
                                0)     # warm_start_cg
+
         # Call the library wrapper.
-        x_recon = l1qc_dct(x_orig, b, pix_idx, opts)
+        x_recon, lb_result = l1qc_dct(x_orig, b, pix_idx, opts)
 
         # Turn the vectors back into matrices so we can show them as an image.
         N = int(np.sqrt(len(x_orig)))
