@@ -18,10 +18,11 @@
 
 clear
 addpath ~/matlab/l1c/interfaces
+addpath ~/matlab/l1c/
 
 sampling_ratio = 0.1; % take 10% of the pixels
 mu_path_len = 40;     % mu-path length in pixels.
-N = 512;              % (pixels) Size of square image
+N = 256;              % (pixels) Size of square image
 
 % Create the test image.
 x_start = 13; % x-offset for the grating holes.
@@ -39,6 +40,11 @@ pix_mask_vec = L1qcTestData.pixmat2vec(pix_mask_mat);
 % Put the image matrix into a vector.
 img_vec = L1qcTestData.pixmat2vec(X_img_orig);
 
+if 1
+  opts.FileName = 'example_img_data.json';
+  opts.FloatFormat = '%.15f';
+  savejson('', struct('x_orig', img_vec(:)', 'pix_idx', pix_idx(:)'-1), opts);
+end
 
 b = img_vec(pix_idx);      % sub samble the original image.
 b = b/max(abs(b)); % normalize to 1
@@ -51,8 +57,6 @@ A = @(x) L1qcTestData.Afun_dct(x,pix_idx);
 % We need the initial guess to l1qc_dct to be feasible, ie, 
 % that ||A*eta_0 - b||<epsilon
 eta_0 = At(b);
-
-
 
 % This will generate an opts struct suitible for passing to l1qc(). 
 opts = l1qc_dct_opts('verbose', 2, 'l1_tol', 1e-5);
@@ -94,7 +98,7 @@ tm_matlab = toc;
 fprintf('matlab l1qc-time: %f\n', tm_matlab);
 fprintf('mexl1qc-time:     %f\n', tm_mex);
 
-%%
+
 X_ml = L1qcTestData.pixvec2mat(idct(eta_est_ml), N);
 imagesc(ha(2,2), X_ml);
 colormap('gray')
