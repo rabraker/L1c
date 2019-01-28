@@ -36,5 +36,8 @@ autom4te.cache/
 stamp-h1
 *.o
 *.a
+*.so
+
+
 compile
 missing

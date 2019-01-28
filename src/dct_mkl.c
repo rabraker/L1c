@@ -65,17 +65,20 @@ void dctmkl_destroy(){
   free_double(dctmkl_dpar);
 }
 
-void dctmkl_idct(double * restrict x, double * restrict y){
+void dctmkl_idct(double * restrict x){
   double *x_ = __builtin_assume_aligned(x, DALIGN);
-  double *y_ = __builtin_assume_aligned(y, DALIGN);
 
-  cblas_dcopy(dctmkl_Nx, x_, 1, y_, 1);
+  x_[0] = x_[0] * sqrt(2.0); //proper scaling
+  //dctmkl_ipar[7] = 0;
+  dctmkl_ipar[10] = 1; // Don't normalize
 
-  dctmkl_ipar[7] = 0;
-  dctmkl_ipar[10] = 1;
-
-  d_forward_trig_transform(y_, &mkl_dct_handle,
+  d_forward_trig_transform(x_, &mkl_dct_handle,
                             dctmkl_ipar, dctmkl_dpar, &dctmkl_stat);
+  // normalize
+  for (int i=0; i<dctmkl_Nx; i++){
+    x_[i] =x_[i] * dctmkl_root_1_by_2N;
+  }
+
 }
 
 void dctmkl_EMx_new(double * restrict x, double * restrict y){
