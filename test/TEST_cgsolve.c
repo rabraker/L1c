@@ -19,7 +19,7 @@
 /* Tolerances and things */
 #include "test_constants.h"
 /* To read in test data */
-#include "cJSON.h"
+#include <cjson/cJSON.h>
 #include "json_utils.h"
 #include "l1qc_newton.h"
 #include "dct.h"
