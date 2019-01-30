@@ -15,17 +15,17 @@ static inline double ck_min(double a,double b){
 /* OP can have values: <; >=. */
 #define _ck_assert_floating_array_absdiff_op_tol(N, X, Y, OP, T, TP, TM) \
   do {                                                                   \
-  for (int i=0; i<N;i++){                                                \
-    TP _ck_x = (X[i]);                                                   \
-    TP _ck_y = (Y[i]);                                                   \
+    for (int _ck_i_=0; _ck_i_<N;_ck_i_++){                                   \
+    TP _ck_x = (X[_ck_i_]);                                                   \
+    TP _ck_y = (Y[_ck_i_]);                                                   \
     TP _ck_t = (T);                                                      \
     ck_assert_msg(fabsl(_ck_y - _ck_x) OP _ck_t,                         \
                   "\n     Assertion '%s' failed: \n"                     \
                   "      %s[%d] == %.*" TM "g,"                          \
                   " %s[%d] == %.*" TM "g, %s == %.*" TM "g",             \
                   "fabsl("#Y" - "#X") "#OP" "#T,                         \
-                  #X, i, (int)CK_FLOATING_DIG, _ck_x,                    \
-                  #Y, i, (int)CK_FLOATING_DIG, _ck_y,                    \
+                  #X, _ck_i_, (int)CK_FLOATING_DIG, _ck_x,                    \
+                  #Y, _ck_i_, (int)CK_FLOATING_DIG, _ck_y,                    \
                   #T, (int)CK_FLOATING_DIG, _ck_t);                      \
     }                                                                    \
   } while (0)
@@ -44,9 +44,9 @@ u[0]/min(|u|, |u_exp|) = 7407.4074074074069,u_exp[0]/min(|u|, |u_exp|) = 1,
   do {                                                                  \
     TP _ck_rel_num=1;                                                   \
                                                                         \
-    for (int i=0; i<N;i++){                                             \
-      TP _ck_x = (X[i]);                                                \
-      TP _ck_y = (Y[i]);                                                \
+    for (int _ck_i_=0; _ck_i_<N;_ck_i_++){                                             \
+      TP _ck_x = (X[_ck_i_]);                                                \
+      TP _ck_y = (Y[_ck_i_]);                                                \
       _ck_rel_num = ck_min(fabsl(_ck_x), fabsl(_ck_y));                 \
       TP _ck_t = (T);                                                   \
       ck_assert_msg(fabsl(_ck_y - _ck_x)/_ck_rel_num OP _ck_t,          \
@@ -58,13 +58,13 @@ u[0]/min(|u|, |u_exp|) = 7407.4074074074069,u_exp[0]/min(|u|, |u_exp|) = 1,
                     "TOL == %.*g\n"                                     \
                     "     %s[%d]/min(|%s|, |%s|) = %.*g, "                \
                     "%s[%d]/min(|%s|, |%s|) = %.*g\n",                  \
-                    #Y,i, #X,i, #Y,i, #X,i, #OP, #T,                    \
-                    #X, i, (int)CK_FLOATING_DIG, _ck_x,                 \
-                    #Y, i, (int)CK_FLOATING_DIG, _ck_y,                 \
-                    #X, i, #Y, i, (int)CK_FLOATING_DIG, _ck_rel_num,    \
+                    #Y,_ck_i_, #X,_ck_i_, #Y,_ck_i_, #X,_ck_i_, #OP, #T,                    \
+                    #X, _ck_i_, (int)CK_FLOATING_DIG, _ck_x,                 \
+                    #Y, _ck_i_, (int)CK_FLOATING_DIG, _ck_y,                 \
+                    #X, _ck_i_, #Y, _ck_i_, (int)CK_FLOATING_DIG, _ck_rel_num,    \
                     (int)CK_FLOATING_DIG, _ck_t,                        \
-                    #Y, i, #Y, #X, (int)CK_FLOATING_DIG, _ck_y/_ck_rel_num, \
-                    #X, i, #Y, #X, (int)CK_FLOATING_DIG, _ck_x/_ck_rel_num); \
+                    #Y, _ck_i_, #Y, #X, (int)CK_FLOATING_DIG, _ck_y/_ck_rel_num, \
+                    #X, _ck_i_, #Y, #X, (int)CK_FLOATING_DIG, _ck_x/_ck_rel_num); \
     }                                                                   \
   } while (0)
 
@@ -116,24 +116,24 @@ u[0]/min(|u|, |u_exp|) = 7407.4074074074069,u_exp[0]/min(|u|, |u_exp|) = 1,
 #define _ck_assert_floating_array_absdiff_op_reltol(N, X, Y, OP, T, TP, TM) \
   do {                                                                  \
      TP _ck_nrm_x=0, _ck_nrm_y=0;                                        \
-     for (int i=0; i<N; i++){                                            \
-       _ck_nrm_x += X[i] * X[i];                                         \
-       _ck_nrm_y += Y[i] * Y[i];                                         \
+     for (int _ck_i_=0; _ck_i_<N; _ck_i_++){                                            \
+       _ck_nrm_x += X[_ck_i_] * X[_ck_i_];                                         \
+       _ck_nrm_y += Y[_ck_i_] * Y[_ck_i_];                                         \
      }                                                                   \
      _ck_nrm_x = (TP) sqrt((double)_ck_nrm_x);                           \
      _ck_nrm_y = (TP) sqrt((double)_ck_nrm_y);                           \
                                                                          \
-   for (int i=0; i<N;i++){                                               \
-     TP _ck_x = (X[i]);                                                  \
-     TP _ck_y = (Y[i]);                                                  \
+   for (int _ck_i_=0; _ck_i_<N;_ck_i_++){                                               \
+     TP _ck_x = (X[_ck_i_]);                                                  \
+     TP _ck_y = (Y[_ck_i_]);                                                  \
      TP _ck_t = (T);                                                     \
      ck_assert_msg(fabsl(_ck_y/_ck_nrm_y - _ck_x/_ck_nrm_x) OP _ck_t,    \
                    "\n     Assertion '%s' failed: \n"                    \
                    "     %s[%d]/|%s| == %.*" TM "g,"                     \
                    " %s[%d]/|%s| == %.*" TM "g, %s == %.*" TM "g",       \
                    "fabsl("#Y" - "#X") "#OP" "#T,                        \
-                   #X, i, #X, (int)CK_FLOATING_DIG, _ck_x/_ck_nrm_x,     \
-                   #Y, i, #Y, (int)CK_FLOATING_DIG, _ck_y/_ck_nrm_y,     \
+                   #X, _ck_i_, #X, (int)CK_FLOATING_DIG, _ck_x/_ck_nrm_x,     \
+                   #Y, _ck_i_, #Y, (int)CK_FLOATING_DIG, _ck_y/_ck_nrm_y,     \
                    #T, (int)CK_FLOATING_DIG, _ck_t);                     \
      }                                                                   \
    } while (0)

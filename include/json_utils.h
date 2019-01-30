@@ -2,7 +2,6 @@
 #define  _JSON_UTILS_
 #include "l1c_common.h"
 
-void free_json_text_data(void);
 
 long get_file_length(FILE *file_ptr);
 

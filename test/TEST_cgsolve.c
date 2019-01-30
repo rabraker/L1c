@@ -19,7 +19,7 @@
 /* Tolerances and things */
 #include "test_constants.h"
 /* To read in test data */
-#include "cJSON.h"
+#include <cjson/cJSON.h>
 #include "json_utils.h"
 #include "l1qc_newton.h"
 #include "dct.h"
@@ -119,7 +119,7 @@ START_TEST(test_cgsolve)
   free_double(b);
   free_double(Dwork);
 
-  free_json_text_data();
+
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -211,7 +211,7 @@ START_TEST(test_cgsolve_h11p){
   free_double(h11p_data.Dwork_1N);
   dct_destroy();
 
-  free_json_text_data();
+
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -268,7 +268,7 @@ START_TEST(test_cgsolve_Ax_sym){
   free_double(y_exp);
   free_double(y);
 
-  free_json_text_data();
+
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();

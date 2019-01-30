@@ -125,21 +125,32 @@ endif
 # check header files are in /usr/local/include
 INCLUDE        = -I/usr/include                \
 				 -I/usr/local/include          \
-				 -I/usr/local/include/cjson    \
 	           	 -Iinclude
 
 # ---------- If making a mex file, add the needed includes and libs
 ifeq ($(MAKECMDGOALS),mex)
-MATLAB_CFLAGS  = -Wall -fPIC -D__MATLAB__ -fexceptions
+MATLAB_CFLAGS  = -fPIC -D__MATLAB__ -fexceptions
 MATLAB_INCLUDE = -I$(MATLAB_R)/extern/include
 MATLAB_LDIR    = -L$(MATLAB_R)/bin/glnxa64 \
 
 MATLAB_LIBS    = -lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
 endif
 
-CFLAGS         =  $(OPT) $(DBG) -fopenmp -fPIC -Wall -Wextra -Wunused -Werror\
-                  -std=c11 -pedantic $(MAT_DEF)
-CPP_VCL_FLAGS  =  -Iinclude/vcl $(DBG) $(VCL_OPT) -fabi-version=0 -fPIC
+
+# More warnings to look at:
+# https://fastcompression.blogspot.com/2019/01/compiler-warnings.html
+#  -Wstrict-aliasing -Wpointer-arith  \
+#     -Wredundant-decls -Wmissing-prototypes\
+#    -Wdeclaration-after-statement -Wc++-compat
+#
+# FAILS -Wredundant-decls -Wstrict-prototypes (seems like fault of mkl.h )
+WARN_FLAGS     = -pedantic -Wall -Wextra -Wunused -Werror                   \
+				 -Wcast-qual -Wcast-align -Winit-self -Wfloat-equal -Wundef \
+				 -Wshadow -Wswitch-enum -Wvla
+
+CFLAGS         =  $(OPT) $(DBG) -fopenmp -fPIC $(WARN_FLAGS) \
+                  -std=c11 $(MAT_DEF)
+CPP_VCL_FLAGS  =  -Iinclude/vcl $(DBG) $(VCL_OPT) $(WARN_FLAGS) -fabi-version=0 -fPIC
 
 ifeq (${USE_OPENBLAS},1)
 MATH_INCLUDE   =  -I/usr/local/OpenBlas/include
@@ -148,18 +159,19 @@ MATH_LIBS      =  -lfftw3 -lopenblas -lm
 
 else
 MATH_INCLUDE   =  -I${MKLROOT}/include
-MATH_CFLAGS    =   -D_USEMKL_ -DMKL_ILP64 -m64
+MATH_CFLAGS    =  -DMKL_ILP64  -D_USEMKL_  -m64
 MATH_LDIR      =
-MATH_ARCHIVE   =  ${MKLROOT}/lib/intel64/libmkl_intel_ilp64.a \
-${MKLROOT}/lib/intel64/libmkl_gnu_thread.a  \
-${MKLROOT}/lib/intel64/libmkl_core.a
-MATH_LIBS      = -lgomp -lpthread -lm -ldl
-
+# MATH_ARCHIVE   =  ${MKLROOT}/lib/intel64/libmkl_intel_ilp64.a \
+# ${MKLROOT}/lib/intel64/libmkl_gnu_thread.a  \
+# ${MKLROOT}/lib/intel64/libmkl_core.a
+# MATH_LIBS      = -lgomp -lpthread -lm -ldl
+MATH_LIBS      = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_rt -lpthread -lm -ldl \
+				-lfftw3 -lgomp
 endif
 
 # put them all together
 INCLUDE       +=  $(MATLAB_INCLUDE) $(MATH_INCLUDE)
-CFLAGS        +=  $(MATLAB_CFLAGS) $(MATH_CFLAGS)
+CFLAGS        +=   $(MATLAB_CFLAGS) $(MATH_CFLAGS)
 
 LIBDIR         = $(MATLAB_LDIR) $(MATH_LDIR)  $(TEST_LDIR)
 LIBS           = $(MATH_LIBS)  $(MATLAB_LIBS) $(TEST_LIB)
@@ -216,7 +228,7 @@ test:$(TEST_APP)
 $(TEST_APP):$(TEST_ARCHIVE) $(APP_ARCHIVE) $(VCL_ARCHIVE)
 	$(LD) -o ${TEST_APP} $(LDFLAGS)
 
-$(APP_ARCHIVE): $(APP_OBJ) #|$(APP_LIB_DIR)
+$(APP_ARCHIVE): $(APP_OBJ) |$(APP_LIB_DIR)
 	$(AR) -rcs ${APP_ARCHIVE} $^
 
 $(TEST_ARCHIVE): $(TEST_OBJ) |$(TEST_LIB_DIR)

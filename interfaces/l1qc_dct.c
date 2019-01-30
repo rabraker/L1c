@@ -33,6 +33,10 @@
  */
 void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 {
+  /* Ensure intel doesnt fuck us.*/
+  mkl_set_interface_layer(MKL_INTERFACE_ILP64);
+  mkl_set_threading_layer(MKL_THREADING_GNU);
+
   // l1qc(x0, b, pix_idx, params);
   /* inputs */
   AxFuns Ax_funs = {.Ax=dctmkl_EMx_new,
