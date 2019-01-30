@@ -37,6 +37,7 @@ stamp-h1
 *.o
 *.a
 *.so
+*.la
 
 
 compile
