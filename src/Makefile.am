@@ -5,14 +5,12 @@
 # Otherwise,
 #       DBG = '' and OPT = -O3 -march=native -mtune=native
 
-AM_CFLAGS = $(MKL_CFLAGS) $(OPT) $(DBG) -fopenmp -fPIC -Wall -Wextra -Wunused -Werror\
-			-std=c11 -pedantic $(MAT_DEF)
+AM_CFLAGS =	 $(MAT_DEF)
 
-# l1cincludedir = $(includedir)
-# libl1cinclude_HEADERS = \
-# 					../include/l1qc_newton.h
+# libl1cinclude_HEADERS =../include/l1qc_newton.h
 
-
+libl1c_a_CPPFLAGS = -I$(top_srcdir)/include $(L1CCPPFLAGS)
+libl1c_a_CFLAGS = $(OPT) $(DBG) -std=c11  -fopenmp -fPIC  $(WARNFLAGS)
 noinst_LIBRARIES = libl1c.a
 libl1c_a_SOURCES = l1qc_newton.c \
 					l1c_math.c \
@@ -37,4 +35,4 @@ libl1c_a_SOURCES = l1qc_newton.c \
 # 					../include/dct_mkl.h
 
 
-AM_CPPFLAGS = $(MKL_INCLUDE) -I$(top_srcdir)/include
+AM_CPPFLAGS = $(MKL_INCLUDE)
