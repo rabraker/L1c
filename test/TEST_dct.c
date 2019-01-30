@@ -18,7 +18,7 @@
 /* Tolerances and things */
 #include "test_constants.h"
 /* To read in test data */
-#include "cJSON.h"
+#include <cjson/cJSON.h>
 #include "json_utils.h"
 #include "check_utils.h"
 #include "l1c_common.h"
@@ -71,7 +71,6 @@ START_TEST(test_dct_MtEt_EMx_small_rand)
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
 
-  free_json_text_data();
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -118,7 +117,6 @@ START_TEST(test_dct_MtEty_small_rand)
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
 
-  free_json_text_data();
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -169,7 +167,6 @@ START_TEST(test_dct_EMx_new_small_rand)
   fftw_free(x_in_aligned);
   dct_destroy(); //will free MtEty_act.
 
-  free_json_text_data();
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -216,7 +213,6 @@ START_TEST(test_dct_MtEt_EMx_large)
 
   dct_destroy(); //will free MtEty_act.
 
-  free_json_text_data();
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -262,7 +258,6 @@ START_TEST(test_dct_MtEty_large)
   free_double(MtEty_act);
   dct_destroy(); //will free MtEty_act.
 
-  free_json_text_data();
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -308,7 +303,6 @@ START_TEST(test_dct_EMx_large)
 
   dct_destroy(); //will free MtEty_act.
 
-  free_json_text_data();
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -382,7 +376,7 @@ START_TEST(test_dct_MtEt_EMx_small)
   free(pix_idx);
   dct_destroy();
   free_double(x_act);
-  free_json_text_data();
+
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -413,7 +407,6 @@ START_TEST(test_dct_MtEty_small)
   dct_destroy();
   free_double(x_act);
 
-  free_json_text_data();
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -456,7 +449,6 @@ START_TEST(test_dct_EMx_new_small)
   dct_destroy();
   free_double(y_act);
 
-  free_json_text_data();
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();

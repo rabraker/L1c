@@ -34,7 +34,7 @@
 #endif
 
 #if defined(MKL_INT)
-typedef MKL_INT l1c_int;
+typedef MKL_INT64 l1c_int;
 #elif defined(blasint)
 typedef blasint l1c_int;
 #else

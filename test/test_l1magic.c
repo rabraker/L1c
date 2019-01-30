@@ -23,9 +23,17 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 #include <check.h>
 
 #include "TEST.h"
+#include "l1c_common.h"
+
 
 int main(void)
 {
+
+#ifdef MKL_ILP64
+  mkl_set_interface_layer(MKL_INTERFACE_ILP64);
+  printf("have ilp64\n");
+#endif
+
   enum fork_status fstat = CK_NOFORK;
   // enum fork_status fstat = CK_FORK;
   int number_failed;

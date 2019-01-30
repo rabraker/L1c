@@ -40,7 +40,7 @@ extern "C" double vcl_sum(const int N, const double *x){
   int i=0;
   double total = 0.0;
   Vec4d xvec, sum_vec(0.0);
-  for(i=0; i<N-4+1; i+=4){
+  for(i=0; i<regularpart; i+=VECTORSIZE){
     xvec.load_a(x+i);
     sum_vec += xvec;
   }
@@ -65,7 +65,7 @@ extern "C" void vcl_dxMy_pz(const int N, const double *x, const double *y, doubl
 
   int i=0;
   Vec4d xvec, yvec, zvec;
-  #pragma omp parallel for
+  // #pragma omp parallel for private(xvec, yvec, zvec, i)
   for(i=0; i<regularpart; i+=VECTORSIZE){
     xvec.load_a(x+i);
     yvec.load_a(y+i);
