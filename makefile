@@ -125,12 +125,11 @@ endif
 # check header files are in /usr/local/include
 INCLUDE        = -I/usr/include                \
 				 -I/usr/local/include          \
-				 -I/usr/local/include/cjson    \
 	           	 -Iinclude
 
 # ---------- If making a mex file, add the needed includes and libs
 ifeq ($(MAKECMDGOALS),mex)
-MATLAB_CFLAGS  = -Wall -fPIC -D__MATLAB__ -fexceptions
+MATLAB_CFLAGS  = -fPIC -D__MATLAB__ -fexceptions
 MATLAB_INCLUDE = -I$(MATLAB_R)/extern/include
 MATLAB_LDIR    = -L$(MATLAB_R)/bin/glnxa64 \
 

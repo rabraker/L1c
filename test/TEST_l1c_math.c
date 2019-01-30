@@ -6,7 +6,7 @@
 
 #include "l1c_common.h"
 
-#include "cJSON.h"
+#include <cjson/cJSON.h>
 #include "json_utils.h"
 #include "l1qc_newton.h"
 

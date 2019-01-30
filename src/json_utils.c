@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "cJSON.h"
+#include <cjson/cJSON.h>
 
 #include "json_utils.h"
 #include <fftw3.h>

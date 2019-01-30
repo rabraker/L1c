@@ -21,7 +21,7 @@
 /* Tolerances and things */
 #include "test_constants.h"
 /* To read in test data */
-#include "cJSON.h"
+#include <cjson/cJSON.h>
 #include "json_utils.h"
 #include "check_utils.h"
 #include "l1c_common.h"
