@@ -64,7 +64,7 @@ then
     AX_APPEND_ALL_COMPILE_FLAGS([-fopenmp -m64 -DMKL_ILP64 -D_USEMKL_], [TMP],
                                    [AC_MSG_ERROR("Compiler does not support required flag")],
                                    [],[])
-    AC_SUBST(L1C_FLAGS, $TMP)
+    AC_SUBST(L1CCPPFLAGS, $TMP)
     AC_CHECK_HEADER([mkl.h], [], [AC_MSG_ERROR("Cannot find mkl.h")])
     dnl # FIXME: Replace `main' with a function in `-lpthread':
     AC_CHECK_LIB([pthread], [pthread_mutex_trylock], [],
@@ -103,10 +103,10 @@ fi
 echo "Compile with fftw3? $use_fftw"
 
 
-
 AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused -Werror  \
                          -Wcast-qual -Wcast-align -Winit-self      \
-                         -Wfloat-equal -Wundef -Wshadow -Wswitch-enum -Wvla], [WARN_FLAGS], [] [])
+                         -Wfloat-equal -Wundef -Wshadow -Wswitch-enum -Wvla], [WARNFLAGS], [] [])
+AC_SUBST(WARNFLAGS, $WARNFLAGS)
 echo  $CFLAGS $CPPFLAGS
 
 
@@ -191,7 +191,6 @@ AC_TYPE_UINT8_T
 AC_FUNC_ERROR_AT_LINE
 AC_CHECK_FUNCS([strerror])
 
-EXEEXT=.mexa64;
 
 AC_CONFIG_FILES([Makefile  src/Makefile src/vcl/Makefile interfaces/Makefile])
 AC_OUTPUT
