@@ -1,5 +1,6 @@
 #ifndef _L1QC_COMMON_
 #define _L1QC_COMMON_
+#include "config.h"
 
 #define DALIGN  64
 #define ALIGNMENT_DOUBLE DALIGN
