@@ -55,11 +55,19 @@ AC_ARG_WITH(debug, [AS_HELP_STRING([--with-debug],[Compile with debugging suppor
 AC_ARG_WITH(opt, [AS_HELP_STRING([--without-opt],[Compile optimizations off.])],
 [with_opt=yes], [with_opt=yes])
 
-# ------------------------------ Checks for MKL -------------------------------------------
+
 AC_ARG_WITH(mkl, [AS_HELP_STRING([--with-mkl], [Compile using Intel Math Kernel Library])], [
                  use_mkl=yes], [use_mkl=no])
 
-echo $LDFLAGS
+AC_ARG_WITH(mex, [AS_HELP_STRING([--with-mex],
+                 [Compile matlab interface mex functions. This requires that
+                 CPPLAGS contains -I${MATLABROOT}/extern/include and that
+                 LDFLAGS contains -L${MATLABROOT}/bin/(glnxa64|win64)/])], [
+                 use_mex=yes], [use_mex=no])
+
+
+# ----------------------------------------------------------------------------------------- #
+# ------------------------------ Checks for MKL ------------------------------------------- #
 if test "x$use_mkl" = "xyes";
 then
     AX_CHECK_LINK_FLAG([-lmkl_rt], [AX_APPEND_FLAG([-lmkl_rt], [MATH_LDLIBS])],
@@ -110,8 +118,7 @@ then
 
    AC_CHECK_HEADER([fftw3.h], [], [AC_MSG_ERROR("Cannot find fftw3.h")])
    AC_CHECK_LIB([fftw3], [fftw_plan_r2r_1d],[],[
-                echo "fftw3 library is required for this program"
-                exit -1])
+                AC_MSG_ERROR(fftw3 library is required for this program)])
    AX_APPEND_FLAG([-lfftw3], [MATH_LDLIBS])
    AC_DEFINE([_USEFFTW3_], [1], 0)
 fi
@@ -119,6 +126,35 @@ fi
 echo "Compile with fftw3? $use_fftw3"
 AC_SUBST(MATHLIBS, $MATH_LDLIBS)
 
+
+# ----------------------------------------------------------------------------------------- #
+# ------------------------------ Checks for matlab MEX------------------------------------- #
+
+if test x$use_mex = xyes;
+then
+dnl AC_CHECK_LIB([mat], [matOpen],[],[
+dnl    AC_MSG_ERROR(libmat (Mathworks) library is required for this program)])
+echo $LDFLAGS
+
+dnl The compilation check for matlabs libs will fail if we dont try to compile
+dnl as a shared library.
+dnl Also, if third arg to AC_CHECK_LIB is missing, it will automatically append, e.g.,
+dnl -lmex to $LIBS, which will make the rest of the checks fail.
+tmp_cflags=$CFLAGS
+CFLAGS="-shared $CFLAGS"
+AC_CHECK_LIB([mex], [mexErrMsgTxt],[
+             MATLAB_LIBS=mex],[
+   AC_MSG_ERROR(Matlab libmex library not found.)])
+CFLAGS=$tmp_cflags
+
+#AC_CHECK_LIB([mwbuiltinsutil], [main])
+#AC_CHECK_LIB([mwservices], [main])
+#AC_CHECK_LIB([mx], [main])
+
+fi
+
+
+echo $CFLAGS
 
 AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused -Werror  \
                          -Wcast-qual -Wcast-align -Winit-self      \
@@ -168,21 +204,6 @@ dnl AC_CHECK_LIB([dl], [main])
 
 
 
-
-dnl AC_CHECK_LIB([mat], [matOpen],[],[
-dnl    echo "libmat (Mathworks) library is required for this program"
-dnl    exit -1])
-
-dnl AC_CHECK_LIB([mex], [ mexErrMsgTxt],[],[
-dnl    echo "Matlab libmex library not found."
-dnl    exit -1])
-
-# FIXME: Replace `main' with a function in `-lmwbuiltinsutil':
-#AC_CHECK_LIB([mwbuiltinsutil], [main])
-# FIXME: Replace `main' with a function in `-lmwservices':
-#AC_CHECK_LIB([mwservices], [main])
-# FIXME: Replace `main' with a function in `-lmx':
-#AC_CHECK_LIB([mx], [main])
 
 
 AM_CONDITIONAL([comp_with_mkl], [test x$use_mkl = xyes])
