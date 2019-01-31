@@ -1,3 +1,4 @@
+#include "config.h"
 #ifdef _USEMKL_ //disable the entire file if no mkl.
 
 #include <stdlib.h>

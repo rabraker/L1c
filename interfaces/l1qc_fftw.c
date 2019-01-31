@@ -16,6 +16,12 @@
  */
 void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 {
+
+#ifdef _USEMKL_
+  /* Ensure intel doesnt fuck us.*/
+  mkl_set_interface_layer(MKL_INTERFACE_ILP64);
+  mkl_set_threading_layer(MKL_THREADING_GNU);
+#endif
   // l1qc(x0, b, pix_idx, params);
   /* inputs */
   AxFuns Ax_funs = {.Ax=dct_EMx_new,
@@ -30,7 +36,7 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   int i=0,N=0, M=0, npix=0;
   double *pix_idx_double=NULL, *x_out=NULL;
-  int *pix_idx;
+  l1c_int *pix_idx;
   // mwSize *dims;
 
   if(nrhs != 4) {
@@ -174,14 +180,14 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     x_ours[i] = x_theirs[i];
   }
 
-  pix_idx = calloc(M, sizeof(int));
+  pix_idx = calloc(M, sizeof(l1c_int));
   for (i=0; i<M; i++){
-    pix_idx[i] = (int) pix_idx_double[i];
+    pix_idx[i] = (l1c_int) pix_idx_double[i];
   }
 
   /* ---------------------------------------  */
   dct_setup(N, M, pix_idx);
-  lb_res = l1qc_newton(N, x_ours, u, M, b,  params, Ax_funs);
+  lb_res = l1qc_newton(N, x_ours, M, b,  params, Ax_funs);
   dct_destroy();
 
   plhs[0] = mxCreateDoubleMatrix((mwSize)N, 1, mxREAL);
@@ -215,6 +221,7 @@ void mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   free_double(u);
   free(pix_idx);
 
+#ifdef _USEMKL_
   mkl_free_buffers();
-
+#endif
 } /* ------- mexFunction ends here ----- */

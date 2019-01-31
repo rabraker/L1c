@@ -1,9 +1,15 @@
+/* Dont compile if we dont have fftw */
+#include "config.h"
+
+#ifdef _USEFFTW3_
+
 #include <stdlib.h>
+
 #include <fftw3.h>
 
-#ifdef _USEMKL_
-#include "fftw/fftw3_mkl.h"
-#endif
+// #ifdef _USEMKL_
+// #include "fftw/fftw3_mkl.h"
+// #endif
 
 #ifdef _USETHREADS_
 // #include <omp.h>
@@ -166,3 +172,9 @@ void dct_MtEt_EMx_new(double *x_fftw, double *z){
 
 
 }
+
+#else
+
+typedef int make_iso_compilers_happy;
+
+#endif

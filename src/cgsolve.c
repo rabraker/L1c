@@ -2,6 +2,7 @@
 This contains the conjugate gradient solver, cgsolve. The two small routines Ax and Ax_sym illustrate how the user function AX_func can parse the input void *AX_data.
 
 */
+#include "config.h"
 
 #ifdef _USEMKL_
 #include "mkl.h"
