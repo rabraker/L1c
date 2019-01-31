@@ -38,7 +38,7 @@ stamp-h1
 *.a
 *.so
 *.la
-
+*.mexa64
 
 compile
 missing
