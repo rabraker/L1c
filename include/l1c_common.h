@@ -42,9 +42,9 @@ static inline double* malloc_double(int N){
   /*DALIGN must be multiple of sizeof(double) and power of two.
    This is satisfired for DALIGN=64 and sizeof(double)=8.
   */
-  if(posix_memalign(&dptr, DALIGN, (size_t)(N) * sizeof(double)))
+  if(posix_memalign(&dptr, DALIGN, (size_t)(N) * sizeof(double))){
     return NULL; // We could check the value
-                 //(different for out of Mem, vs unacceptable DALIGN.)
+  //(different for out of Mem, vs unacceptable DALIGN.)
   }else{
     return (double*) dptr;
   }
