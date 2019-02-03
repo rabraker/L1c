@@ -10,7 +10,7 @@ AM_CFLAGS =	 $(MAT_DEF)
 # libl1cinclude_HEADERS =../include/l1qc_newton.h
 
 libl1c_a_CPPFLAGS = -I$(top_srcdir)/include $(L1CCPPFLAGS)
-libl1c_a_CFLAGS = $(OPT) $(DBG) -std=c11  -fopenmp -fPIC $(WARNFLAGS)
+libl1c_a_CFLAGS = $(L1CCFLAGS)  -fPIC $(WARNFLAGS)
 noinst_LIBRARIES = libl1c.a
 libl1c_a_SOURCES = l1qc_newton.c \
 					l1c_math.c \

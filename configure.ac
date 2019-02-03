@@ -48,9 +48,9 @@ AC_PROG_CPP
 
 
 AC_ARG_WITH(debug, [AS_HELP_STRING([--with-debug],[Compile with debugging support.])],
-                   [AC_DEFINE(WITH_DEBUG,1,0)
-                   AC_SUBST(DBG, "-O0 -ggdb")],
-                   [])
+                   [AC_DEFINE(WITH_DEBUG,1,[Debugging enabled])
+                   with_debug=yes],
+                   [with_debug=no])
 
 AC_ARG_WITH(opt, [AS_HELP_STRING([--without-opt],[Compile optimizations off.])],
 [with_opt=yes], [with_opt=yes])
@@ -65,25 +65,45 @@ AC_ARG_WITH(mex, [AS_HELP_STRING([--with-mex],
                  LDFLAGS contains -L${MATLABROOT}/bin/(glnxa64|win64)/])], [
                  use_mex=yes], [use_mex=no])
 
+if test x$with_debug = xyes;
+then
+    AX_APPEND_COMPILE_FLAGS([-O0 -ggdb -g], [l1c_cflags], [], [])
+fi
+
+if test x$with_opt = xyes;
+then
+    AX_APPEND_COMPILE_FLAGS([-O3 -march=native -mtune=native], [l1c_cflags], [], [])
+fi
+
+
+# --------------------------------------------------------------------------------------- #
+# We will build these flags up as we go, and AC_SUBST them at the bottom.
+l1c_cppflags =
+
+AX_APPEND_ALL_COMPILE_FLAGS([-fopenmp -m64 -pthread -std=c11], [l1c_cflags],
+                            [AC_MSG_ERROR("Compiler does not support required flag")],
+                            [],[])
+mex_cppflags =
+mex_cflags =
+mkl_cppflags =
+mkl_cflags =
+test_cppflags=
+test_cflags=
+
+AC_CHECK_LIB([pthread], [pthread_mutex_trylock], [],
+                        AC_MSG_ERROR(Cannot find libpthread))
 
 # ----------------------------------------------------------------------------------------- #
 # ------------------------------ Checks for MKL ------------------------------------------- #
 if test "x$use_mkl" = "xyes";
 then
     AX_CHECK_LINK_FLAG([-lmkl_rt], [AX_APPEND_FLAG([-lmkl_rt], [MATH_LDLIBS])],
-                                   [AC_MSG_ERROR(Cannot find MKL)],[], [])
+                       [AC_MSG_ERROR(Cannot find MKL)],[], [])
 
-    AX_APPEND_ALL_COMPILE_FLAGS([-fopenmp -m64], [TMP],
-                                   [AC_MSG_ERROR("Compiler does not support required flag")],
-                                   [],[])
-    AC_SUBST(L1CCPPFLAGS, $TMP)
     AC_CHECK_HEADER([mkl.h], [], [AC_MSG_ERROR("Cannot find mkl.h")])
-    dnl # FIXME: Replace `main' with a function in `-lpthread':
-    AC_CHECK_LIB([pthread], [pthread_mutex_trylock], [],
-    AC_MSG_ERROR(Cannot find libpthread))
 
-    AC_DEFINE([_USEMKL_], [1], 0)
-    AC_DEFINE([MKL_ILP64], [1], 0)
+    AC_DEFINE([_USEMKL_], [1], [We have MKL.])
+    AC_DEFINE([MKL_ILP64], [1], [Use ILP64 with mkl.])
 
 else
  dnl ----------- look for another BLAS library ---------------------
@@ -98,10 +118,42 @@ else
 
     AX_APPEND_FLAG([-lopenblas], [MATH_LDLIBS])
 
+    # Check for posix_memalign or _mm_malloc
+    AC_CHECK_FUNC(posix_memalign, [have_posix_mem=yes], [])
+
+    AC_LANG([C])
+
+    # _mm_malloc is an inline function in mm_malloc.h, included by xmmintrin.h
+    AC_CHECK_HEADER([xmmintrin.h], [], [AC_MSG_ERROR("Cannot find mkl.h")])
+    AC_MSG_CHECKING([checking for _mm_malloc])
+    AC_LINK_IFELSE([AC_LANG_SOURCE([[
+    #include <xmmintrin.h>
+    void main(){
+         double *x=_mm_malloc(10*sizeof(double), 64);
+    }]])], [have_mm_malloc=yes
+           AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
+
+
+    dnl AC_CHECK_FUNC(_mm_malloc, [have_mm_malloc=yes], [])
+
+    if test x$have_posix_mem = xyes;
+    then
+        AC_DEFINE([_POSIX_C_SOURCE], [200112L], [Unlocks posix_memalign in stdlib.h.])
+        AC_DEFINE([_HAVE_POSIX_MEMALIGN_], [1], [We have posix_memalign.])
+        l1c_cppflags="${l1c_cppflags} -D_POSIX_C_SOURCE=200112L -D_HAVE_POSIX_MEMALIGN_"
+
+    elif test x$have_mm_malloc = xyes
+    then
+         AC_DEFINE(_HAVE_MM_MALLOC_, [1], [We have _mm_malloc])
+         l1c_cppflags="${l1c_cppflags} -D_HAVE_MM_MALLOC_"
+    else
+        AC_MSG_ERROR(This program requires either posix_memalign() or _mm_malloc in the\
+        standard library or MKL);
+    fi
+
 fi
 
-
-
+echo $l1c_cppflags
 echo $CFLAGS $CPPFLAGS
 
 
@@ -113,7 +165,7 @@ AC_ARG_WITH(fftw3, [AS_HELP_STRING([--with-fftw3], [Compile example with FFTW])]
 
 if test x$use_fftw3 = xyes;
 then
-    AX_CHECK_LINK_FLAG([-lfftw3], [AX_APPEND_FLAG([-lmkl_rt], [MATH_LDLIBS])],
+    AX_CHECK_LINK_FLAG([-lfftw3], [AX_APPEND_FLAG([-lfftw3], [MATH_LDLIBS])],
                        [echo "Cannot find MKL"],[], [])
 
    AC_CHECK_HEADER([fftw3.h], [], [AC_MSG_ERROR("Cannot find fftw3.h")])
@@ -151,6 +203,8 @@ CFLAGS=$tmp_cflags
 #AC_CHECK_LIB([mwservices], [main])
 #AC_CHECK_LIB([mx], [main])
 
+    mex_cppflags="-D__MATLAB__"
+    mex_cflags="-fexceptions"
 fi
 
 
@@ -161,11 +215,6 @@ AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused -Werror  \
                          -Wfloat-equal -Wundef -Wshadow -Wswitch-enum -Wvla], [WARNFLAGS], [] [])
 AC_SUBST(WARNFLAGS, $WARNFLAGS)
 
-if test x$with_opt = xyes;
-then
-    AX_APPEND_COMPILE_FLAGS([-O3 -march=native -mtune=native], [OPT], [], [])
-fi
-AC_SUBST(OPT, $OPT)
 
 
 # Checks for programs.
@@ -208,6 +257,7 @@ dnl AC_CHECK_LIB([dl], [main])
 
 AM_CONDITIONAL([comp_with_mkl], [test x$use_mkl = xyes])
 AM_CONDITIONAL([comp_with_fftw], [test x$use_fftw3 = xyes])
+AM_CONDITIONAL([comp_with_mex], [test x$use_mex = xyes])
 
 
 
@@ -228,7 +278,19 @@ AC_TYPE_UINT8_T
 AC_FUNC_ERROR_AT_LINE
 AC_CHECK_FUNCS([strerror])
 
-AC_MSG_NOTICE(L1C will be built with OPT = $OPT")
+# ----------------------------------------------------------------- #
+# Make the flags we collected visible to automake
+AC_SUBST(L1CCPPFLAGS, $l1c_cppflags)
+AC_SUBST(L1CCFLAGS, $l1c_cflags)
+AC_SUBST(MEXCPPFLAGS, $mex_cppflags)
+AC_SUBST(MEXCFLAGS, $mex_cflags)
+AC_SUBST(MKLCPPFLAGS, $mkl_cppflags)
+AC_SUBST(MKLCFLAGS, $mkl_cflags)
+AC_SUBST(TESTCPPFLAGS, $test_cppflags)
+AC_SUBST(TESTCFLAGS, $test_cflags)
+
+AC_MSG_NOTICE(L1C will be built with l1c_cflags = $l1c_cflags")
+AC_MSG_NOTICE(L1C will be built with l1c_cppflags = $l1c_cppflags")
 AC_MSG_NOTICE(Compile with MKL? $use_mkl)
 AC_MSG_NOTICE(Compile with FFTW? $use_fftw3)
 
