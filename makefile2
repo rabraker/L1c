@@ -153,9 +153,11 @@ CFLAGS         =  $(OPT) $(DBG) -fopenmp -fPIC $(WARN_FLAGS) \
 CPP_VCL_FLAGS  =  -Iinclude/vcl $(DBG) $(VCL_OPT) $(WARN_FLAGS) -fabi-version=0 -fPIC
 
 ifeq (${USE_OPENBLAS},1)
+# MATH_CFLAGS    = -D_HAVE_MM_MALLOC_
+MATH_CFLAGS    = -D_POSIX_C_SOURCE=200112L -D_HAVE_POSIX_MEMALIGN_
 MATH_INCLUDE   =  -I/usr/local/OpenBlas/include
 MATH_LDIR      =  -L/usr/local/OpenBlas/lib
-MATH_LIBS      =  -lfftw3 -lopenblas -lm
+MATH_LIBS      =  -lfftw3 -lgomp -lopenblas -lm
 
 else
 MATH_INCLUDE   =  -I${MKLROOT}/include
