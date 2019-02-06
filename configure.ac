@@ -30,6 +30,7 @@ AC_PROG_CC
 AC_PROG_RANLIB
 dnl Need this for AC_EGREP_HEADER to work
 AC_PROG_EGREP
+AC_PROG_LN_S
 dnl AC_PROG_MAKE_SET
 dnl AC_PROG_CPP
 AM_PROG_AR
@@ -50,11 +51,12 @@ AC_PROG_CPP
 
 AC_ARG_WITH(debug, [AS_HELP_STRING([--with-debug],[Compile with debugging support.])],
                    [AC_DEFINE(WITH_DEBUG,1,[Debugging enabled])
-                   with_debug=yes],
-                   [with_debug=no])
+                   with_debug=yes], [with_debug=no])
 
 AC_ARG_WITH(opt, [AS_HELP_STRING([--without-opt],[Compile optimizations off.])],
-[with_opt=yes], [with_opt=yes])
+                 [with_opt=no], [with_opt=yes])
+
+
 
 
 AC_ARG_WITH(mkl, [AS_HELP_STRING([--with-mkl], [Compile using Intel Math Kernel Library])], [

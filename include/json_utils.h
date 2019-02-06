@@ -7,8 +7,6 @@ long get_file_length(FILE *file_ptr);
 
 int extract_json_double_array(cJSON *data_json, char *name, double **x, l1c_int *N);
 
-int extract_json_double_array_fftw(cJSON *data_json, char *name, double **x, l1c_int *N);
-
 int load_file_as_text(char *fname, char **file_data);
 
 int load_file_to_json(char *fname, cJSON **data_json);

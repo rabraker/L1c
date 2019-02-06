@@ -3,6 +3,9 @@
 #include <math.h>
 #include "l1c_common.h"
 #include "l1qc_newton.h"
+#include "omp.h"
+#include <sys/time.h>
+#include <unistd.h>
 
 /* dct_mkl.h defines the Ax and Aty operations.
    To adapt this mex file to a different set of transformations,
@@ -48,14 +51,27 @@ typedef struct L1qcDctOpts{
  */
 int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
              L1qcDctOpts opts, LBResult *lb_res){
+
+  long start, end;
+  struct timeval timecheck;
+  gettimeofday(&timecheck, NULL);
+  start = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;
+
   /* Ensure intel doesnt fuck us.*/
   mkl_set_interface_layer(MKL_INTERFACE_ILP64);
   mkl_set_threading_layer(MKL_THREADING_GNU);
 
+  mkl_set_num_threads(8);
+  omp_set_num_threads(8);
+  printf("mkl num t:%d\n", mkl_get_max_threads());
+  // printf("mkl num t:%d", omp_get_num_threads());
 
   /*
     Pointers to the transform functions that define A*x and A^T *y
    */
+
+
+
   AxFuns Ax_funs = {.Ax=dctmkl_EMx_new,
                     .Aty=dctmkl_MtEty,
                     .AtAx=dctmkl_MtEt_EMx_new};
@@ -108,6 +124,12 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
   free_double(eta_0);
   mkl_free_buffers();
 
+  gettimeofday(&timecheck, NULL);
+  end = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;
+  printf("total c time: %f\n", ((double)(end -start)) / 1000.0);
+
+  printf("total-newton-iter: %d\n", lb_res->total_newton_iter);
+  printf("total-cg-iter: %d\n", lb_res->total_cg_iter);
   return 0;
 
 }

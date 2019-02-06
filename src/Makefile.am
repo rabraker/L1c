@@ -19,7 +19,8 @@ libl1c_la_SOURCES = l1qc_newton.c \
 					l1c_math.c \
 					cgsolve.c  \
 					dct.c      \
-					dct_mkl.c
+					dct_mkl.c  \
+					json_utils.c
 
 
 # include_HEADERS = ../include/*.c

@@ -5,6 +5,7 @@ https://www.scipy-lectures.org/advanced/interfacing_with_c/interfacing_with_c.ht
 """
 import matplotlib.pyplot as plt
 import json
+import time
 import numpy as np
 from ctypes import Structure
 from ctypes import c_int
@@ -87,7 +88,7 @@ def l1qc_dct(eta_0, b, pix_idx, opts):
     array_1d_double = npct.ndpointer(dtype=np.double, ndim=1, flags='CONTIGUOUS')
     array_1d_int = npct.ndpointer(dtype=np.int64, ndim=1, flags='CONTIGUOUS')
 
-    libl1c = npct.load_library("libl1qc_dct", ".")
+    libl1c = npct.load_library("libl1qc_dct.so.0", ".")
 
     libl1c.l1qc_dct.restype = np.int32
     libl1c.l1qc_dct.argtypes = [c_int, array_1d_double,
@@ -135,17 +136,18 @@ def dct_mkl_example():
                                lbtol=1e-3,  # lbtol
                                newton_tol=1e-3,  # newton_tol
                                newton_max_iter=50,    # newton_max_iter
-                               verbose=2,     # verbose
+                               verbose=0,     # verbose
                                l1_tol=1e-5,  # l1_tol
                                cgtol=1e-8,  # cgtol
                                cgmaxiter=200,   # cgmaxiter
                                warm_start_cg=0)     # warm_start_cg
 
-        import ipdb
-        ipdb.set_trace()
         # Call the library wrapper.
+        time0 = time.time()
         x_recon, lb_result = l1qc_dct(x_orig, b, pix_idx, opts)
+        time_total=time.time() - time0
 
+        print("Total python time: %f", time_total)
         # Turn the vectors back into matrices so we can show them as an image.
         N = int(np.sqrt(len(x_orig)))
 

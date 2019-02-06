@@ -44,6 +44,8 @@ stamp-h1
 *.m4
 *.pyc
 .libs
+*.so.0*
+l1qc_dct_c
 ltmain.sh
 libtool
 \#*

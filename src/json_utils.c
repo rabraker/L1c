@@ -6,7 +6,6 @@
 #include <cjson/cJSON.h>
 
 #include "json_utils.h"
-#include <fftw3.h>
 #include "l1c_common.h"
 
 
@@ -119,38 +118,6 @@ int extract_json_double_array(cJSON *data_json, char *name, double **x, l1c_int 
  end:
   return status;
 }
-
-
-int extract_json_double_array_fftw(cJSON *data_json, char *name, double **x, l1c_int *N){
-  /*Should update this to just take a function pointer to an arbitrary alloc */
-  int status = 0;
-  cJSON *x_json = cJSON_GetObjectItemCaseSensitive(data_json, name);
-  if (!cJSON_IsArray(x_json) ){
-      status = 1;
-      *N = 0;
-      goto end;
-    }
-  *N = cJSON_GetArraySize(x_json);
-  *x = fftw_alloc_real(*N);
-  if (!*x){
-    status =1;
-    perror("error allocating memory\n");
-    goto end;
-  }
-
-  int k=0;
-  cJSON *xk_json;
-  cJSON_ArrayForEach(xk_json, x_json){
-    // note to self: if you do *x[k], that would be
-    // the next pointer in an array of pointers.
-    (*x)[k] = xk_json->valuedouble;
-    k = k+1;
-  }
-
- end:
-  return status;
-}
-
 
 int extract_json_int_array(cJSON *data_json, char *name, l1c_int **x, l1c_int *N){
   int status = 0;
