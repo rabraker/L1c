@@ -6,27 +6,34 @@
 #include "l1c_common.h"
 #include <math.h>
 
-/* dct_mkl.h defines the Ax and Aty operations.
-   To adapt this mex file to a different set of transformations,
-   this largely what must be changed. Your new set of transformations
-   must expose three functions with the following prototype:
 
-   void Ax(double *x, double *y)
-   void Aty(double *y, double *x)
-   void AtAx(double *x, double *z)
+/* ----- Forward Declarations */
+typedef struct L1qcDctOpts{
+  double epsilon;
+  double mu;
+  double lbtol;
+  double tau;
+  double lbiter;
+  double newton_tol;
+  int newton_max_iter;
+  int verbose;
+  double l1_tol;
+  double cgtol;
+  int cgmaxiter;
+  int warm_start_cg;
+}L1qcDctOpts;
 
-   where x and z have length n, and y has length m and m<n.
- */
-#include "dct_mkl.h"
+int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
+             L1qcDctOpts opts, LBResult *lb_res);
+
 #define NUMBER_OF_FIELDS(ST) (sizeof(ST)/sizeof(*ST))
 
 /*
  *	m e x F u n c t i o n
 
  The matlab protype is
- [x, LBRes] = l1qc_dct(x0, b, pix_idx, opts),
+ [x, LBRes] = l1qc_dct(N, b, pix_idx, opts),
  where
- x0 has length n,
  b has length m
  pix_idx has length m
  and opts is an options struct. See the l1qc_dct.m doc string for details.
@@ -39,18 +46,26 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   // l1qc(x0, b, pix_idx, params);
   /* inputs */
-  AxFuns Ax_funs = {.Ax=dctmkl_EMx_new,
-                    .Aty=dctmkl_MtEty,
-                    .AtAx=dctmkl_MtEt_EMx_new};
 
-  double *x_theirs=NULL, *x_ours=NULL,  *b=NULL;
-  NewtParams params = {.epsilon=0, .tau=0, .mu=0,
-                        .newton_tol=0, .newton_max_iter = 0, .lbiter=0,
-                        .lbtol=0, .verbose = 0, .cg_params.tol=0};
+
+  double *x_out=NULL,  *b=NULL;
+
+  L1qcDctOpts l1qc_dct_opts = {.epsilon=0,
+							   .mu = 0,
+							   .lbtol = 0,
+							   .newton_tol = 0,
+                               .newton_max_iter = 0,
+                               .verbose = 0,
+                               .l1_tol = 0,
+                               .cgtol = 0,
+                               .cgmaxiter = 0,
+                               .warm_start_cg=0};
+
+
   LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
 
   l1c_int i=0,N=0, M=0, npix=0;
-  double *pix_idx_double=NULL, *x_out=NULL;
+  double *pix_idx_double=NULL, *x_ours=NULL;
   l1c_int *pix_idx;
   // mwSize *dims;
 
@@ -64,26 +79,19 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
                       "One output required.");
   }
 
-  /* -------- Check x0 -------------*/
-  if( !mxIsDouble(prhs[0]) ) {
+  /* -------- Check N -------------*/
+  if( !mxIsDouble(prhs[0]) || !mxIsScalar(prhs[0]) ) {
       mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notDouble",
                       "First Input vector must be type double.");
   }
 
-  /* check that first input argument is a row or column vector */
-  if( (mxGetN(prhs[0]) > 1)  & (mxGetM(prhs[0]) >1) ){
-    printf("num dim = %d\n", mxGetNumberOfDimensions(prhs[1]));
-    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notVector",
-                      "First Input must be a vector.");
-  }else{
-    N =(l1c_int)( mxGetM(prhs[0]) *  mxGetN(prhs[0]) );
-  }
 
   /* -------- Check b -------------*/
   if( !mxIsDouble(prhs[1]) ) {
     mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notDouble",
                       "Second Input vector must be type double.");
   }
+  N = (l1c_int) mxGetScalar(prhs[0]);
 
   /* check that second input argument is vector */
   if( (mxGetN(prhs[1]) > 1)  & (mxGetM(prhs[1]) >1) ){
@@ -110,7 +118,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     npix = (l1c_int) ( mxGetM(prhs[2]) *  mxGetN(prhs[2]) );
   }
 
-
+  mexPrintf("N = %d", N);
  if ( !(N > M) | (M != npix) ){
    printf("N = %d, M=%d, npix = %d\n", N, M, npix);
    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:incompatible_dimensions",
@@ -141,29 +149,29 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     }
 
     if ( strcmp(name, "epsilon") == 0){
-      params.epsilon = mxGetScalar(tmp);
+      l1qc_dct_opts.epsilon = mxGetScalar(tmp);
     }else if ( strcmp(name, "mu") == 0){
-      params.mu = mxGetScalar(tmp);
+      l1qc_dct_opts.mu = mxGetScalar(tmp);
     }else if ( strcmp(name, "tau") == 0){
-      params.tau = mxGetScalar(tmp);
+      l1qc_dct_opts.tau = mxGetScalar(tmp);
     }else if ( strcmp(name, "newton_tol") == 0){
-      params.newton_tol = mxGetScalar(tmp);
+      l1qc_dct_opts.newton_tol = mxGetScalar(tmp);
     }else if ( strcmp(name, "newton_max_iter") == 0){
-      params.newton_max_iter = (l1c_int) mxGetScalar(tmp);
+      l1qc_dct_opts.newton_max_iter = (int) mxGetScalar(tmp);
     }else if ( strcmp(name, "lbiter") == 0){
-      params.lbiter = (l1c_int)mxGetScalar(tmp);
+      l1qc_dct_opts.lbiter = (int)mxGetScalar(tmp);
     }else if ( strcmp(name, "lbtol") == 0){
-      params.lbtol = mxGetScalar(tmp);
+      l1qc_dct_opts.lbtol = mxGetScalar(tmp);
     }else if ( strcmp(name, "l1_tol") == 0){
-      params.l1_tol = mxGetScalar(tmp);
+      l1qc_dct_opts.l1_tol = mxGetScalar(tmp);
     }else if ( strcmp(name, "cgtol") == 0){
-      params.cg_params.tol = mxGetScalar(tmp);
+      l1qc_dct_opts.cgtol = mxGetScalar(tmp);
     }else if ( strcmp(name, "cgmaxiter") == 0){
-      params.cg_params.max_iter = mxGetScalar(tmp);
+      l1qc_dct_opts.cgmaxiter = mxGetScalar(tmp);
     }else if ( strcmp(name, "warm_start_cg") == 0){
-      params.warm_start_cg = (int) mxGetScalar(tmp);
+      l1qc_dct_opts.warm_start_cg = (int) mxGetScalar(tmp);
     }else if ( strcmp(name, "verbose") == 0){
-      params.verbose= (l1c_int) mxGetScalar(tmp);
+      l1qc_dct_opts.verbose= (int) mxGetScalar(tmp);
     }else{
       mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:norverbose",
                         "Unrecognized field '%s' in params struct.", name);
@@ -171,24 +179,24 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   }
 
-  if (params.verbose > 1){
+  if (l1qc_dct_opts.verbose > 1){
     printf("Input Parameters\n---------------\n");
-    printf("   verbose:         %d\n", params.verbose);
-    printf("   epsilon:         %.5e\n", params.epsilon);
-    printf("   tau:             %.5e\n", params.tau);
-    printf("   mu:              %.5e\n", params.mu);
-    printf("   newton_tol:      %.5e\n", params.newton_tol);
-    printf("   newton_max_iter: %d\n", params.newton_max_iter);
-    printf("   lbiter:          %d\n", params.lbiter);
-    printf("   lbtol:           %.5e\n", params.lbtol);
-    printf("   l1_tol:           %.5e\n", params.l1_tol);
-    printf("   cgmaxiter:       %d\n", params.cg_params.max_iter);
-    printf("   cgtol:           %.5e\n", params.cg_params.tol);
+    printf("   verbose:         %d\n", l1qc_dct_opts.verbose);
+    printf("   epsilon:         %.5e\n", l1qc_dct_opts.epsilon);
+    printf("   tau:             %.5e\n", l1qc_dct_opts.tau);
+    printf("   mu:              %.5e\n", l1qc_dct_opts.mu);
+    printf("   newton_tol:      %.5e\n", l1qc_dct_opts.newton_tol);
+    printf("   newton_max_iter: %d\n", l1qc_dct_opts.newton_max_iter);
+    printf("   lbiter:          %d\n", l1qc_dct_opts.lbiter);
+    printf("   lbtol:           %.5e\n", l1qc_dct_opts.lbtol);
+    printf("   l1_tol:           %.5e\n", l1qc_dct_opts.l1_tol);
+    printf("   cgmaxiter:       %d\n", l1qc_dct_opts.cgmaxiter);
+    printf("   cgtol:           %.5e\n", l1qc_dct_opts.cgtol);
 
     printf("NB: lbiter and tau usually generated automatically.\n");
   }
 
-  x_theirs = mxGetPr(prhs[0]);
+
   b = mxGetPr(prhs[1]);
   pix_idx_double = mxGetPr(prhs[2]);
 
@@ -196,11 +204,6 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
      dont change data in Matlabs workspace.
   */
   x_ours = malloc_double(N);
-
-  for (i=0; i<N; i++){
-    x_ours[i] = x_theirs[i];
-  }
-
   /*
     pix_idx will naturally be a double we supplied from matlab
     and will have 1-based indexing. Convert to integers and
@@ -211,14 +214,8 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     pix_idx[i] = ((l1c_int) pix_idx_double[i]) - 1;
   }
 
-  /*
-    Initialize our Ax,Aty, and AtAx transforms. This will allocate memory
-    and file-scoped variables in dct_mkl.c. On exit, we deallocate with
-    dctmkl_destroy().
-   */
-  dctmkl_setup(N, M, pix_idx);
-  lb_res = l1qc_newton(N, x_ours, M, b, params, Ax_funs);
-  dctmkl_destroy();
+  l1qc_dct(N, x_ours, M, b, pix_idx, l1qc_dct_opts, &lb_res);
+
 
 
   /* Prepare output data.

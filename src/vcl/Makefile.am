@@ -10,8 +10,8 @@
 # lib_LTLIBRARIES = libvcl_math.la
 # libvcl_math_la_SOURCES = vcl_math.cpp
 
-noinst_LIBRARIES = libvcl_math.a
-libvcl_math_a_SOURCES = vcl_math.cpp
+noinst_LTLIBRARIES = libvcl_math.la
+libvcl_math_la_SOURCES = vcl_math.cpp
 
 
 # -O3 -march=native -mtune=native

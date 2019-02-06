@@ -4,6 +4,18 @@
 #include "l1c_common.h"
 #include "l1qc_newton.h"
 
+/* dct_mkl.h defines the Ax and Aty operations.
+   To adapt this mex file to a different set of transformations,
+   this largely what must be changed. Your new set of transformations
+   must expose three functions with the following prototype:
+
+   void Ax(double *x, double *y)
+   void Aty(double *y, double *x)
+   void AtAx(double *x, double *z)
+
+   where x and z have length n, and y has length m and m<n.
+*/
+
 #include "dct_mkl.h"
 
 
@@ -11,6 +23,8 @@ typedef struct L1qcDctOpts{
   double epsilon;
   double mu;
   double lbtol;
+  double tau;
+  double lbiter;
   double newton_tol;
   int newton_max_iter;
   int verbose;
@@ -46,7 +60,7 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
                     .Aty=dctmkl_MtEty,
                     .AtAx=dctmkl_MtEt_EMx_new};
   NewtParams params = {.epsilon = opts.epsilon,
-                       .tau = 0,
+                       .tau = opts.tau,
                        .mu = opts.mu,
                        .newton_tol = opts.newton_tol,
                        .newton_max_iter = opts.newton_max_iter,
@@ -55,7 +69,8 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
                        .lbtol = opts.lbtol,
                        .verbose = opts.verbose,
                        .cg_params.max_iter = opts.cgmaxiter,
-                       .cg_params.tol = opts.cgtol};
+                       .cg_params.tol = opts.cgtol,
+                       .warm_start_cg=opts.warm_start_cg};
 
   // LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
 
