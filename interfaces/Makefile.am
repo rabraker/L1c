@@ -13,24 +13,33 @@ AUTOMAKE_OPTIONS = foreign 1.8 no-dependencies
 MATLAB_R       = /usr/local/MATLAB/R2018b
 # AM_CPPFLAGS = $(MKL_INCLUDE)
 
-EXEEXT=.mexa64
 
-bin_PROGRAMS=
+bin_PROGRAMS=l1qc_dct_c
+l1qc_dct_c_SOURCES = l1qc_dct_c.c libl1qc_dct.c
+l1qc_dct_c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la \
+					$(MATHLIBS) -lpthread -lm -ldl -lgomp
+
+l1qc_dct_c_CPPFLAGS =-I$(top_srcdir)/include  \
+						$(L1CCPPFLAGS)
+l1qc_dct_c_CFLAGS = $(L1CCFLAGS) -std=c11 $(WARNFLAGS)
+l1qc_dct_c_LDFLAGS = $(LDFLAGS)
+
+
 $(info "MATHLIBS = $(MATHLIBS)")
 $(info "LDFLAGS = $(LDFLAGS)")
 $(info "MEXCPP = $(MEXCPPFLAGS)")
 
 
 lib_LTLIBRARIES = libl1qc_dct.la
-libl1qc_dct_la_SOURCES = libl1qc_dct.c
+libl1qc_dct_la_SOURCES  = libl1qc_dct.c
 libl1qc_dct_la_CPPFLAGS = -I$(top_srcdir)/include  \
 							$(L1CCPPFLAGS)
-libl1qc_dct_la_CFLAGS =  $(L1CCFLAGS) -fPIC \
+libl1qc_dct_la_CFLAGS   =  $(L1CCFLAGS) -fPIC \
 							-std=c11 $(WARNFLAGS)
-libl1qc_dct_la_LIBADD = ../src/libl1c.la \
-						../src/vcl/libvcl_math.la \
-						$(MATHLIBS) -lpthread -lm -ldl -lgomp
-libl1qc_dct_la_LDFLAGS = -Wl,--no-as-needed $(LDFLAGS)
+libl1qc_dct_la_LIBADD   = ../src/libl1c.la \
+							../src/vcl/libvcl_math.la \
+							$(MATHLIBS) -lpthread -lm -ldl -lgomp
+libl1qc_dct_la_LDFLAGS  = -module 	 $(LDFLAGS)
 
 
 if comp_with_mkl
@@ -44,35 +53,19 @@ if comp_with_mex
 #    -shrext .mexa64 lets us get a library without the .so, and with
 #                    matlabs required extension.
 
-
-
 lib_LTLIBRARIES += l1qc_dct_mex.la
 
 l1qc_dct_mex_la_SOURCES  = l1qc_dct_mex.c libl1qc_dct.c
-l1qc_dct_mex_la_LDFLAGS = -module -avoid-version -shrext .mexa64 $(LDFLAGS)
+l1qc_dct_mex_la_LDFLAGS  = -module -avoid-version -shrext .mexa64 $(LDFLAGS)
 
 l1qc_dct_mex_la_CPPFLAGS = -I$(top_srcdir)/include -I$(MATLAB_R)/extern/include \
 								$(L1CCPPFLAGS) $(MEXCPPFLAGS)
 l1qc_dct_mex_la_CFLAGS   =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC \
 								-std=c11 $(WARNFLAGS)
 
-l1qc_dct_mex_la_LIBADD    =	libl1qc_dct.la ../src/libl1c.la \
-								../src/vcl/libvcl_math.la\
-								$(MATHLIBS) -lpthread -lm -ldl -lgomp \
-								-lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
-
-# bin_PROGRAMS += l1qc_dct_gnu
-# l1qc_dct_gnu_SOURCES  = l1qc_dct_mex.c libl1qc_dct.c
-# l1qc_dct_gnu_CPPFLAGS = -I$(top_srcdir)/include -I$(MATLAB_R)/extern/include \
-# 							$(L1CCPPFLAGS) $(MEXCPPFLAGS)
-# l1qc_dct_gnu_CFLAGS   =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC \
-# 							-std=c11 $(WARNFLAGS)
-
-# l1qc_dct_gnu_LDADD    =	../src/libl1c.a \
-# 							../src/vcl/libvcl_math.a\
-# 							$(MATHLIBS) -lpthread -lm -ldl -lgomp \
-# 							-lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
-# l1qc_dct_gnu_LDFLAGS = -shared $(LDFLAGS)
+l1qc_dct_mex_la_LIBADD   =	libl1qc_dct.la \
+							$(MATHLIBS) -lpthread -lm -ldl -lgomp \
+							-lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
 
 endif
 endif
@@ -81,18 +74,54 @@ if comp_with_fftw
 if comp_with_mex
 bin_PROGRAMS += l1qc_dct_fftw
 
-l1qc_dct_fftw_SOURCES = l1qc_fftw.c libl1qc_dct.c
+l1qc_dct_fftw_SOURCES  = l1qc_fftw.c libl1qc_dct.c
 
 l1qc_dct_fftw_CPPFLAGS = -I$(top_srcdir)/include -I$(MATLAB_R)/extern/include \
 							$(L1CCPPFLAGS) $(MEXCPPFLAGS)
-l1qc_dct_fftw_CFLAGS   =  $(L1CCFLAGS) $(MEXCFLAGS)  -fPIC \
+l1qc_dct_fftw_CFLAGS   = $(L1CCFLAGS) $(MEXCFLAGS)  -fPIC \
 						  -std=c11 $(WARNFLAGS)
 
-l1qc_dct_fftw_LDADD =  	../src/libl1c.a \
-						../src/vcl/libvcl_math.a\
-						$(MATHLIBS) -lfftw3 -lpthread -lm -ldl -lgomp \
-                         -lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
-l1qc_dct_fftw_LDFLAGS = -shared -L$(MATLAB_R)/bin/glnxa64 \
-						-Wl,--no-as-needed
+l1qc_dct_fftw_LDADD    = ../src/libl1c.a \
+							../src/vcl/libvcl_math.a\
+							$(MATHLIBS) -lfftw3 -lpthread -lm -ldl -lgomp \
+							-lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
+l1qc_dct_fftw_LDFLAGS  = -shared -L$(MATLAB_R)/bin/glnxa64 \
+							-Wl,--no-as-needed
 endif
 endif
+
+
+# Rules to copy the libs .libs into the current directory
+# Idea from here:
+# https://stackoverflow.com/questions/13948916/how-to-build-so-module-in-automake-and-a-libtool-using-project
+# but modified because his regexp doesnt work.
+
+.PHONY: convenience-link clean-convenience-link
+
+convenience-link: $(lib_LTLIBRARIES)
+	@for soname in `$(EGREP) "^dlname=" $^|sed -e "s/^.*=//g"|sed -e "s/'//g"`; do  \
+		echo "$$soname: creating convenience link from $(abs_builddir)/.libs to $(abs_builddir)"; \
+		echo "soname: $$soname";\
+		rm -f $(abs_builddir)/$$soname ; \
+		test -e $(abs_builddir)/.libs/$$soname && \
+		$(LN_S) $(abs_builddir)/.libs/$$soname $$soname || echo "FAILED";\
+	done
+
+# Im not sure what exactly this was supposed to do, but it doesnt work.
+# @for soname in `echo | $(EGREP) "^dlname=" $^ | $(SED) -e "s|^dlname='\(.*\)'|\1|"`; do  \
+#   	echo "$$soname: creating convenience link from $(abs_builddir)/.libs to $(top_builddir)"; \
+# 	rm -f $(top_builddir)/$$soname ; \
+# 	test -e $(abs_builddir)/.libs/$$soname && \
+# 	cd $(top_builddir) && \
+# 	$(LN_S) $(abs_builddir)/.libs/$$soname $$soname || true;\
+# done
+
+clean-convenience-link:
+	@for soname in `$(EGREP) "^dlname=" $^|sed -e "s/^.*=//g"|sed -e "s/'//g"`; do  \
+		echo "$$soname: cleaning convenience links"; \
+		test -L $(abs_builddir)/$$soname && rm -f $(abs_builddir)/$$soname || true; \
+	done
+
+all-local:: convenience-link
+
+clean-local:: clean-convenience-link

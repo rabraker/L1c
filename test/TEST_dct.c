@@ -49,7 +49,7 @@ START_TEST(test_dct_MtEt_EMx_small_rand)
     ck_abort();
   }
 
-  status +=extract_json_double_array_fftw(test_data_json, "x_in", &x_in, &Nx);
+  status +=extract_json_double_array(test_data_json, "x_in", &x_in, &Nx);
   status +=extract_json_double_array(test_data_json, "MtEt_EMx", &MtEt_EMx_exp, &Nx);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &Npix);
 
@@ -65,8 +65,8 @@ START_TEST(test_dct_MtEt_EMx_small_rand)
 
   ck_assert_double_array_eq_tol(Nx, MtEt_EMx_exp, MtEt_EMx_act, TOL_DOUBLE_SUPER);
 
-  fftw_free(x_in);
-  fftw_free(MtEt_EMx_act);
+  free_double(x_in);
+  free_double(MtEt_EMx_act);
   free_double(MtEt_EMx_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
@@ -93,7 +93,7 @@ START_TEST(test_dct_MtEty_small_rand)
     ck_abort();
   }
 
-  status +=extract_json_double_array_fftw(test_data_json, "y_in", &y_in, &Ny);
+  status +=extract_json_double_array(test_data_json, "y_in", &y_in, &Ny);
   status +=extract_json_double_array(test_data_json, "MtEty", &MtEty_exp, &Nx);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &Npix);
 
@@ -111,8 +111,8 @@ START_TEST(test_dct_MtEty_small_rand)
 
   ck_assert_double_array_eq_tol(Nx, MtEty_exp, MtEty_act, TOL_DOUBLE_SUPER);
 
-  fftw_free(y_in);
-  fftw_free(MtEty_act);
+  free_double(y_in);
+  free_double(MtEty_act);
   free_double(MtEty_exp);
   free(pix_idx);
   dct_destroy(); //will free MtEty_act.
@@ -138,7 +138,7 @@ START_TEST(test_dct_EMx_new_small_rand)
     ck_abort();
   }
 
-  status +=extract_json_double_array_fftw(test_data_json, "x_in", &x_in, &Nx);
+  status +=extract_json_double_array(test_data_json, "x_in", &x_in, &Nx);
   status +=extract_json_double_array(test_data_json, "EMx", &EMx_exp, &Ny);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &Npix);
 
@@ -160,11 +160,11 @@ START_TEST(test_dct_EMx_new_small_rand)
 
   ck_assert_double_array_eq_tol(Ny, EMx_exp, EMx_act, TOL_DOUBLE_SUPER);
 
-  fftw_free(x_in);
-  fftw_free(EMx_act);
+  free_double(x_in);
+  free_double(EMx_act);
   free_double(EMx_exp);
   free(pix_idx);
-  fftw_free(x_in_aligned);
+  free_double(x_in_aligned);
   dct_destroy(); //will free MtEty_act.
 
   cJSON_Delete(test_data_json);
@@ -190,7 +190,7 @@ START_TEST(test_dct_MtEt_EMx_large)
     ck_abort();
   }
 
-  status +=extract_json_double_array_fftw(test_data_json, "x_in", &x_in, &Nx);
+  status +=extract_json_double_array(test_data_json, "x_in", &x_in, &Nx);
   status +=extract_json_double_array(test_data_json, "MtEt_EMx", &MtEt_EMx_exp, &Nx);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &Npix);
 
@@ -206,7 +206,7 @@ START_TEST(test_dct_MtEt_EMx_large)
 
   ck_assert_double_array_eq_tol(Nx, MtEt_EMx_exp, MtEt_EMx_act,  TOL_LARGE_DCT);
 
-  fftw_free(x_in);
+  free_double(x_in);
   free_double(MtEt_EMx_exp);
   free(pix_idx);
   free_double(MtEt_EMx_act);
@@ -235,7 +235,7 @@ START_TEST(test_dct_MtEty_large)
     ck_abort();
   }
 
-  status +=extract_json_double_array_fftw(test_data_json, "y_in", &y_in, &Ny);
+  status +=extract_json_double_array(test_data_json, "y_in", &y_in, &Ny);
   status +=extract_json_double_array(test_data_json, "MtEty", &MtEty_exp, &Nx);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &Npix);
 
@@ -252,7 +252,7 @@ START_TEST(test_dct_MtEty_large)
 
   ck_assert_double_array_eq_tol(Nx, MtEty_exp, MtEty_act, TOL_LARGE_DCT);
 
-  fftw_free(y_in);
+  free_double(y_in);
   free_double(MtEty_exp);
   free(pix_idx);
   free_double(MtEty_act);
@@ -279,7 +279,7 @@ START_TEST(test_dct_EMx_large)
     ck_abort();
   }
 
-  status +=extract_json_double_array_fftw(test_data_json, "x_in", &x_in, &Nx);
+  status +=extract_json_double_array(test_data_json, "x_in", &x_in, &Nx);
   status +=extract_json_double_array(test_data_json, "EMx", &EMx_exp, &Ny);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &Npix);
 
@@ -296,7 +296,7 @@ START_TEST(test_dct_EMx_large)
 
   ck_assert_double_array_eq_tol(Ny, EMx_exp, EMx_act, TOL_LARGE_DCT);
 
-  fftw_free(x_in);
+  free_double(x_in);
   free_double(EMx_exp);
   free_double(EMx_act);
   free(pix_idx);
@@ -318,11 +318,11 @@ static int load_EMx_data(l1c_int *Nx0, double **x0, l1c_int *Nx1, double **x1, l
   if (load_file_to_json(fpath, &test_data_json) ){
     return 1;
   }
-  if (extract_json_double_array_fftw(test_data_json, "x0", x0, Nx0) ){
+  if (extract_json_double_array(test_data_json, "x0", x0, Nx0) ){
     perror("Error Loading x\n");
     return 1;
   }
-  if (extract_json_double_array_fftw(test_data_json, "x1", x1, Nx1) ){
+  if (extract_json_double_array(test_data_json, "x1", x1, Nx1) ){
     perror("Error Loading y_exp\n");
     return 1;
   }
@@ -371,8 +371,8 @@ START_TEST(test_dct_MtEt_EMx_small)
 
   ck_assert_double_array_eq_tol(Nx0, x_exp, x_act, TOL_DOUBLE_SUPER);
 
-  fftw_free(x_exp);
-  fftw_free(x0);
+  free_double(x_exp);
+  free_double(x0);
   free(pix_idx);
   dct_destroy();
   free_double(x_act);
@@ -402,8 +402,8 @@ START_TEST(test_dct_MtEty_small)
 
   ck_assert_double_array_eq_tol(Nx, x_exp, x_act, TOL_DOUBLE_SUPER);
 
-  fftw_free(y);
-  fftw_free(x_exp);
+  free_double(y);
+  free_double(x_exp);
   dct_destroy();
   free_double(x_act);
 
@@ -442,9 +442,9 @@ START_TEST(test_dct_EMx_new_small)
 
   ck_assert_double_array_eq_tol(Ny, y_exp, y_act, TOL_DOUBLE_SUPER);
 
-  fftw_free(y_exp);
-  fftw_free(x_new);
-  fftw_free(x);
+  free_double(y_exp);
+  free_double(x_new);
+  free_double(x);
   free(pix_idx);
   dct_destroy();
   free_double(y_act);
