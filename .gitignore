@@ -39,6 +39,14 @@ stamp-h1
 *.so
 *.la
 *.mexa64
-
+*.lo
+*.json
+*.m4
+*.pyc
+.libs
+ltmain.sh
+libtool
+\#*
+.\#*
 compile
 missing

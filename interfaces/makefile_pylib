@@ -13,7 +13,7 @@ MATH_CFLAGS    =  -DMKL_ILP64  -D_USEMKL_  -m64
 
 CFLAGS         =  $(OPT) $(DBG) -fopenmp -fPIC $(WARN_FLAGS) \
 					-std=c11 $(MAT_DEF)
-CFLAGS        +=   -I../include $(MATH_INCLUDE) $(MATH_CFLAGS)
+CFLAGS        +=   -I../ -I../include $(MATH_INCLUDE) $(MATH_CFLAGS)
 
 MATH_LIBS      = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_rt -lpthread -lm -ldl \
 					-lfftw3 -lgomp
@@ -29,9 +29,6 @@ lib: libl1qc_dct.o
 
 libl1qc_dct.o:libl1qc_dct.c
 	gcc $(CFLAGS) -c -o libl1qc_dct.o libl1qc_dct.c
-#clean:
-#	@rm -rf Debug Release $(APP_BIN)/Debug $(APP_BIN)/
 
-
-
-
+clean:
+	rm libl1qc_dct.so

@@ -60,18 +60,20 @@ eta_0 = At(b);
 
 % This will generate an opts struct suitible for passing to l1qc(). 
 opts = l1qc_dct_opts('verbose', 2, 'l1_tol', 1e-5);
-clear l1qc % In case you just re-compiled.
+clear l1qc_dct_mex % In case you just re-compiled.
 % system('export MKL_DYNAMIC=TRUE');
 % system('export MKL_NUM_THREADS=2');
+%%
 tic
-[eta_est, LBRes]= l1qc_dct(eta_0, b, pix_idx, opts);
+[x_est, LBRes]= l1qc_dct_mex(length(img_vec), b, pix_idx, opts);
 tm_mex = toc;
 fprintf('mex file time: %.4f\n', tm_mex);
-
+return
+%%
 % Put things back in standard basis.
-X_est = L1qcTestData.pixvec2mat(idct(eta_est), N);
+X_est = L1qcTestData.pixvec2mat(x_est, N);
 %return
-
+%%
 figure(1); clf
 ha = make_axes(gcf);
 
@@ -86,7 +88,7 @@ title(ha(1,2), '$\mu$-path sampled image')
 imagesc(ha(2,1), X_est)
 colormap('gray')
 mex_title = sprintf('BPDN Reconstruction (matlab)\n %.2f sec, $||\\eta||=%.2f$',...
-  tm_mex, norm(eta_est,1));
+  tm_mex, norm(dct(x_est),1));
 title(ha(2,1), mex_title)
 
 

@@ -36,6 +36,8 @@ class l1qc_dct_params(Structure):
     _fields_ = [("epsilon", c_double),
                 ("mu", c_double),
                 ("lbtol", c_double),
+                ("tau", c_double),
+                ("lbiter", c_int),
                 ("newton_tol", c_double),
                 ("newton_max_iter", c_int),
                 ("verbose", c_int),
@@ -45,6 +47,7 @@ class l1qc_dct_params(Structure):
                 ("warm_start_cg", c_int)]
 
     def __init__(self, epsilon=0.1, mu=10, lbtol=1e-3,
+                 tau=0, lbiter=0,
                  newton_tol=1e-3, newton_max_iter=50,
                  verbose=2, l1_tol=0, cgtol=1e-8,
                  cgmaxiter=200, warm_start_cg=0):
@@ -52,6 +55,8 @@ class l1qc_dct_params(Structure):
         self.epsilon = epsilon
         self.mu = mu
         self.lbtol = lbtol
+        self.tau = tau
+        self.lbiter = lbiter
         self.newton_tol = newton_tol
         self.newton_max_iter = newton_max_iter
         self.verbose = verbose
@@ -65,6 +70,8 @@ class l1qc_dct_params(Structure):
             "epsilon         : %f\n" % self.epsilon +         \
             "mu              : %f\n" % self.mu +              \
             "lbtol           : %f\n" % self.lbtol +           \
+            "tau             : %f\n" % self.tau +             \
+            "lbiter             : %f\n" % self.lbiter +       \
             "newton_tol      : %f\n" % self.newton_tol +      \
             "newton_max_iter : %d\n" % self.newton_max_iter + \
             "verbose         : %d\n" % self.verbose +         \
@@ -123,17 +130,19 @@ def dct_mkl_example():
         b = x_orig[pix_idx]
 
         # Options for l1qc_dct()
-        opts = l1qc_dct_params(0.1,   # eps
-                               10,    # mu
-                               1e-3,  # lbtol
-                               1e-3,  # newton_tol
-                               50,    # newton_max_iter
-                               2,     # verbose
-                               1e-5,  # l1_tol
-                               1e-8,  # cgtol
-                               200,   # cgmaxiter
-                               0)     # warm_start_cg
+        opts = l1qc_dct_params(epsilon=0.1,   # eps
+                               mu=10,    # mu
+                               lbtol=1e-3,  # lbtol
+                               newton_tol=1e-3,  # newton_tol
+                               newton_max_iter=50,    # newton_max_iter
+                               verbose=2,     # verbose
+                               l1_tol=1e-5,  # l1_tol
+                               cgtol=1e-8,  # cgtol
+                               cgmaxiter=200,   # cgmaxiter
+                               warm_start_cg=0)     # warm_start_cg
 
+        import ipdb
+        ipdb.set_trace()
         # Call the library wrapper.
         x_recon, lb_result = l1qc_dct(x_orig, b, pix_idx, opts)
 
