@@ -35,6 +35,7 @@ dnl AC_PROG_CPP
 AM_PROG_AR
 dnl AM_PROG_LIBTOOL
 dnl AC_PROG_INSTALL
+dnl LT_INIT
 
 AM_INIT_AUTOMAKE
 
@@ -73,6 +74,7 @@ fi
 if test x$with_opt = xyes;
 then
     AX_APPEND_COMPILE_FLAGS([-O3 -march=native -mtune=native], [l1c_cflags], [], [])
+    AX_APPEND_COMPILE_FLAGS([-O3 -march=native -mtune=native], [l1c_cxxflags], [], [])
 fi
 
 
@@ -280,6 +282,8 @@ AC_CHECK_FUNCS([strerror])
 
 # ----------------------------------------------------------------- #
 # Make the flags we collected visible to automake
+AC_SUBST(L1CCXXFLAGS, $l1c_cxxflags)
+
 AC_SUBST(L1CCPPFLAGS, $l1c_cppflags)
 AC_SUBST(L1CCFLAGS, $l1c_cflags)
 AC_SUBST(MEXCPPFLAGS, $mex_cppflags)

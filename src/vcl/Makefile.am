@@ -18,3 +18,4 @@ libvcl_math_a_SOURCES = vcl_math.cpp
 AM_CPPFLAGS = -I$(top_srcdir)/include/vcl $(DBG) $(OPT) -fopenmp -fabi-version=0 -fPIC \
 				-Wall -Wextra -Wunused -Werror\
 	 			-pedantic
+AM_CXXFLAGS = $(L1CCXXFLAGS)
