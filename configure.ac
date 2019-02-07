@@ -169,12 +169,16 @@ AC_ARG_WITH(fftw3, [AS_HELP_STRING([--with-fftw3], [Compile example with FFTW])]
 
 if test x$use_fftw3 = xyes;
 then
-    AX_CHECK_LINK_FLAG([-lfftw3], [AX_APPEND_FLAG([-lfftw3], [MATH_LDLIBS])],
-                       [echo "Cannot find MKL"],[], [])
+    dnl AX_CHECK_LINK_FLAG([-lfftw3], [AX_APPEND_FLAG([-lfftw3], [MATH_LDLIBS])],
+    dnl                    [echo "Cannot find FFTW3"],[], [])
 
    AC_CHECK_HEADER([fftw3.h], [], [AC_MSG_ERROR("Cannot find fftw3.h")])
-   AC_CHECK_LIB([fftw3], [fftw_plan_r2r_1d],[],[
-                AC_MSG_ERROR(fftw3 library is required for this program)])
+   dnl AC_CHECK_LIB([fftw3], [fftw_plan_r2r_1d],[],[
+   dnl              AC_MSG_ERROR(fftw3 library is required for this program)])
+      AC_CHECK_LIB([fftw3_omp], [fftw_init_threads],[],[
+                AC_MSG_ERROR(fftw3 threading library is required for this program)])
+
+
    AX_APPEND_FLAG([-lfftw3], [MATH_LDLIBS])
    AC_DEFINE([_USEFFTW3_], [1], 0)
 fi
