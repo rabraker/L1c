@@ -19,7 +19,30 @@
    where x and z have length n, and y has length m and m<n.
 */
 
+#ifdef _AX_MKL_
 #include "dct_mkl.h"
+
+#define Ax_fun dctmkl_EMx_new
+#define Aty_fun dctmkl_MtEty
+#define AtAx_fun dctmkl_MtEt_EMx_new
+#define ax_idct dctmkl_idct
+#define ax_setup dctmkl_setup
+#define ax_destroy dctmkl_destroy
+
+#else
+#ifdef _AX_FFTW_
+
+#include "dct.h"
+#define Ax_fun dct_EMx_new
+#define Aty_fun dct_MtEty
+#define AtAx_fun dct_MtEt_EMx_new
+#define ax_idct dct_idct
+#define ax_setup dct_setup
+#define ax_destroy dct_destroy
+
+#endif
+#endif
+
 
 
 typedef struct L1qcDctOpts{
@@ -36,19 +59,10 @@ typedef struct L1qcDctOpts{
   int cgmaxiter;
   int warm_start_cg;
 }L1qcDctOpts;
-/*
-  [("epsilon", c_double),
-  ("mu", c_double),
-  ("lbtol", c_double),
-  ("newton_tol", c_double),
-  ("newton_max_iter", c_int),
-  ("verbose", c_int),
-  ("l1_tol", c_double)
-  ("cgtol", c_double),
-  ("cgmaxiter", c_int),
-  ("warm_start_cg", c_int),
-]
- */
+
+
+
+
 int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
              L1qcDctOpts opts, LBResult *lb_res){
 
@@ -57,24 +71,19 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
   gettimeofday(&timecheck, NULL);
   start = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;
 
+#ifdef _AX_MKL_
   /* Ensure intel doesnt fuck us.*/
   mkl_set_interface_layer(MKL_INTERFACE_ILP64);
   mkl_set_threading_layer(MKL_THREADING_GNU);
-
-  mkl_set_num_threads(8);
-  omp_set_num_threads(8);
-  printf("mkl num t:%d\n", mkl_get_max_threads());
-  // printf("mkl num t:%d", omp_get_num_threads());
+#endif
 
   /*
     Pointers to the transform functions that define A*x and A^T *y
-   */
+  */
+  AxFuns Ax_funs = {.Ax=Ax_fun,
+                    .Aty=Aty_fun,
+                    .AtAx=AtAx_fun};
 
-
-
-  AxFuns Ax_funs = {.Ax=dctmkl_EMx_new,
-                    .Aty=dctmkl_MtEty,
-                    .AtAx=dctmkl_MtEt_EMx_new};
   NewtParams params = {.epsilon = opts.epsilon,
                        .tau = opts.tau,
                        .mu = opts.mu,
@@ -107,22 +116,32 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
 
   cblas_dcopy(M, b, 1, b_ours, 1);
 
-  dctmkl_setup(N, M, (l1c_int*)pix_idx);
+  ax_setup(N, M, (l1c_int*)pix_idx);
   Ax_funs.Aty(b, eta_0);
+  // printf("%f\n", params.epsilon);
+  // for (int k=1; k<10000; k++){
+  // Ax_funs.Aty(b, eta_0);
+  // Ax_funs.Ax(eta_0, b);
+  // }
+
   *lb_res = l1qc_newton(N, eta_0, M, b, params, Ax_funs);
 
   /* We solved for eta in the DCT domain. Transform back to
      standard coorbbdinates.
   */
-  dctmkl_idct(eta_0);
+  ax_idct(eta_0);
+
   cblas_dcopy(N, eta_0, 1, x_out, 1);
 
   /* Cleanup our mess. */
-  dctmkl_destroy();
+  ax_destroy();
+#ifdef _AX_MKL_
+  mkl_free_buffers();
+#endif
 
   free_double(b_ours);
   free_double(eta_0);
-  mkl_free_buffers();
+
 
   gettimeofday(&timecheck, NULL);
   end = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;

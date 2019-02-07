@@ -7,15 +7,10 @@
 
 #include <fftw3.h>
 
-// #ifdef _USEMKL_
-// #include "fftw/fftw3_mkl.h"
-// #endif
 
-#ifdef _USETHREADS_
 // #include <omp.h>
-// #include <fftw3_threads.h>
-#include <pthread.h>
-#endif
+// #include <pthread.h>
+// #endif
 
 #include <math.h>
 #include "dct.h"
@@ -38,10 +33,8 @@ static double dct_root_1_by_2N;
 
 int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
 
-  #ifdef _USETHREADS_
   fftw_init_threads();
-  fftw_plan_with_nthreads(6);
-  #endif
+  fftw_plan_with_nthreads(8);
 
   l1c_int i=0;
   dct_Ety_sparse = malloc_double(Nx);
@@ -89,20 +82,18 @@ void dct_destroy(){
 }
 
 
-double* idct_plain(double *x_fftw){
-  /* Compute y = M *dct_x, where M is the IDCT, and E is the subsampling matrix.
-     This performs the same function as dct_EMx, except that you can provide your own
-     array.
+void dct_idct(double *x){
+  // double *x_ = __builtin_assume_aligned(x, DALIGN);
 
-     NOTE: x_fftw MUST have been allocated with fftw_alloc_real;
+  cblas_dcopy(dct_Nx, x, 1, dct_x, 1);
+  dct_x[0] = dct_x[0] * sqrt(2.0); //proper scaling
 
-     On exit, the first N_pix_mask entries of y will contain the result of E * M *x.
-  */
-  /* Will fill y. Plan_AT has saved the pointer to x and y, so we
-     dont have to supply, but should be updated by the caller.*/
-  fftw_execute_r2r(dct_plan_EMx, x_fftw, dct_y);
+  fftw_execute_r2r(dct_plan_EMx, dct_x, x);
+  // normalize
+  for (int i=0; i<dct_Nx; i++){
+    x[i] =x[i] * dct_root_1_by_2N;
+  }
 
-  return dct_y;
 }
 
 void dct_EMx_new(double *x_fftw, double *y){

@@ -6,43 +6,44 @@
 #       DBG = '' and OPT = -O3 -march=native -mtune=native
 
 AUTOMAKE_OPTIONS = foreign 1.8 no-dependencies
+clean-local:: clean-convenience-link
 
-# MAT_CFLAGS = $(MKL_CFLAGS) $(OPT) $(DBG) -fopenmp -fPIC -Werror\
-# 			-std=c11 -pedantic $(MAT_DEF)
-
-MATLAB_R       = /usr/local/MATLAB/R2018b
-# AM_CPPFLAGS = $(MKL_INCLUDE)
-
-
-bin_PROGRAMS=l1qc_dct_c
-l1qc_dct_c_SOURCES = l1qc_dct_c.c libl1qc_dct.c
-l1qc_dct_c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la \
-					$(MATHLIBS) -lpthread -lm -ldl -lgomp
-
-l1qc_dct_c_CPPFLAGS =-I$(top_srcdir)/include  \
-						$(L1CCPPFLAGS)
-l1qc_dct_c_CFLAGS = $(L1CCFLAGS) -std=c11 $(WARNFLAGS)
-l1qc_dct_c_LDFLAGS = $(LDFLAGS)
-
+bin_PROGRAMS    =
+lib_LTLIBRARIES =
 
 $(info "MATHLIBS = $(MATHLIBS)")
 $(info "LDFLAGS = $(LDFLAGS)")
 $(info "MEXCPP = $(MEXCPPFLAGS)")
 
-
-lib_LTLIBRARIES = libl1qc_dct.la
-libl1qc_dct_la_SOURCES  = libl1qc_dct.c
-libl1qc_dct_la_CPPFLAGS = -I$(top_srcdir)/include  \
-							$(L1CCPPFLAGS)
-libl1qc_dct_la_CFLAGS   =  $(L1CCFLAGS) -fPIC \
-							-std=c11 $(WARNFLAGS)
-libl1qc_dct_la_LIBADD   = ../src/libl1c.la \
-							../src/vcl/libvcl_math.la \
-							$(MATHLIBS) -lpthread -lm -ldl -lgomp
-libl1qc_dct_la_LDFLAGS  = -module 	 $(LDFLAGS)
-
-
+# ----------------------------------------------------------------------#
+# ------------------------------- MKL ----------------------------------#
 if comp_with_mkl
+
+bin_PROGRAMS +=l1qc_dct_c
+l1qc_dct_c_SOURCES = l1qc_dct_c.c libl1qc_dct.c
+l1qc_dct_c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la \
+					$(MATHLIBS)  -lm -ldl -lgomp
+# -lpthread
+l1qc_dct_c_CPPFLAGS =-I$(top_srcdir)/include  \
+					-D_AX_MKL_ $(L1CCPPFLAGS)
+l1qc_dct_c_CFLAGS = $(L1CCFLAGS) -std=c11 $(WARNFLAGS)
+l1qc_dct_c_LDFLAGS = $(LDFLAGS) -pthread
+
+
+
+lib_LTLIBRARIES += libl1qc_dct_mkl.la
+libl1qc_dct_mkl_la_SOURCES  = libl1qc_dct.c
+libl1qc_dct_mkl_la_CPPFLAGS = -I$(top_srcdir)/include  \
+							-D_AX_MKL_ $(L1CCPPFLAGS)
+libl1qc_dct_mkl_la_CFLAGS   =  $(L1CCFLAGS) -fPIC \
+							-std=c11 $(WARNFLAGS)
+libl1qc_dct_mkl_la_LIBADD   = ../src/libl1c.la \
+							../src/vcl/libvcl_math.la \
+							$(MATHLIBS)  -lm -ldl -lgomp
+libl1qc_dct_mkl_la_LDFLAGS  = -module 	 $(LDFLAGS) -pthread
+
+# -lpthread
+
 if comp_with_mex
 # LIBEXT
 # NOTES:
@@ -55,29 +56,55 @@ if comp_with_mex
 
 lib_LTLIBRARIES += l1qc_dct_mex.la
 
-l1qc_dct_mex_la_SOURCES  = l1qc_dct_mex.c libl1qc_dct.c
-l1qc_dct_mex_la_LDFLAGS  = -module -avoid-version -shrext .mexa64 $(LDFLAGS)
+l1qc_dct_mex_la_SOURCES  = l1qc_dct_mex.c
+l1qc_dct_mex_la_LDFLAGS  = -module -avoid-version -shrext .mexa64 $(LDFLAGS) -pthread
 
-l1qc_dct_mex_la_CPPFLAGS = -I$(top_srcdir)/include -I$(MATLAB_R)/extern/include \
+l1qc_dct_mex_la_CPPFLAGS = -I$(top_srcdir)/include  \
 								$(L1CCPPFLAGS) $(MEXCPPFLAGS)
 l1qc_dct_mex_la_CFLAGS   =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC \
 								-std=c11 $(WARNFLAGS)
 
-l1qc_dct_mex_la_LIBADD   =	libl1qc_dct.la \
-							$(MATHLIBS) -lpthread -lm -ldl -lgomp \
+l1qc_dct_mex_la_LIBADD   =	libl1qc_dct_mkl.la \
+							$(MATHLIBS)  -lm -ldl -lgomp \
 							-lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
-
+# -lpthread
 endif
 endif
 
+# ----------------------------------------------------------------------#
+# --------------------------- FFTW/OpenBlas ----------------------------#
 if comp_with_fftw
+
+bin_PROGRAMS +=l1qc_dct_c_fftw
+l1qc_dct_c_fftw_SOURCES = l1qc_dct_c.c libl1qc_dct.c
+l1qc_dct_c_fftw_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la \
+							$(MATHLIBS)  -lm -ldl -lgomp
+# -lpthread
+l1qc_dct_c_fftw_CPPFLAGS =-I$(top_srcdir)/include  \
+							-D_AX_FFTW_ $(L1CCPPFLAGS)
+l1qc_dct_c_fftw_CFLAGS = $(L1CCFLAGS) -std=c11 $(WARNFLAGS)
+l1qc_dct_c_fftw_LDFLAGS = $(LDFLAGS) -pthread
+
+
+lib_LTLIBRARIES += libl1qc_dct_fftw.la
+libl1qc_dct_fftw_la_SOURCES  = libl1qc_dct.c
+libl1qc_dct_fftw_la_CPPFLAGS = -I$(top_srcdir)/include  \
+								-D_AX_FFTW_ $(L1CCPPFLAGS)
+libl1qc_dct_fftw_la_CFLAGS   =  $(L1CCFLAGS) -fPIC \
+									-std=c11 $(WARNFLAGS)
+libl1qc_dct_fftw_la_LIBADD   = ../src/libl1c.la \
+								../src/vcl/libvcl_math.la \
+								$(MATHLIBS)  -lm -ldl -lgomp
+libl1qc_dct_fftw_la_LDFLAGS  = -module 	 $(LDFLAGS) -pthread
+
+
 if comp_with_mex
 bin_PROGRAMS += l1qc_dct_fftw
 
 l1qc_dct_fftw_SOURCES  = l1qc_fftw.c libl1qc_dct.c
 
-l1qc_dct_fftw_CPPFLAGS = -I$(top_srcdir)/include -I$(MATLAB_R)/extern/include \
-							$(L1CCPPFLAGS) $(MEXCPPFLAGS)
+l1qc_dct_fftw_CPPFLAGS = -I$(top_srcdir)/include  \
+							-D_AX_FFTW_ $(L1CCPPFLAGS) $(MEXCPPFLAGS)
 l1qc_dct_fftw_CFLAGS   = $(L1CCFLAGS) $(MEXCFLAGS)  -fPIC \
 						  -std=c11 $(WARNFLAGS)
 
@@ -99,6 +126,7 @@ endif
 .PHONY: convenience-link clean-convenience-link
 
 convenience-link: $(lib_LTLIBRARIES)
+	@echo "tlt libs $(lib_LTLIBRARIES)"
 	@for soname in `$(EGREP) "^dlname=" $^|sed -e "s/^.*=//g"|sed -e "s/'//g"`; do  \
 		echo "$$soname: creating convenience link from $(abs_builddir)/.libs to $(abs_builddir)"; \
 		echo "soname: $$soname";\
@@ -117,11 +145,13 @@ convenience-link: $(lib_LTLIBRARIES)
 # done
 
 clean-convenience-link:
-	@for soname in `$(EGREP) "^dlname=" $^|sed -e "s/^.*=//g"|sed -e "s/'//g"`; do  \
-		echo "$$soname: cleaning convenience links"; \
-		test -L $(abs_builddir)/$$soname && rm -f $(abs_builddir)/$$soname || true; \
-	done
+	rm -f *.so* *.mexa64
 
+# @echo "input to clean-conf:  $(lib_LTLIBRARIES)"
+# @for soname in `$(EGREP) "^dlname=" $(lib_LTLIBRARIES)|sed -e "s/^.*=//g"|sed -e "s/'//g"`; do  \
+# 	echo "$$soname: cleaning convenience links"; \
+# done
+
+# 		test -L $(abs_builddir)/$$soname && rm -f $(abs_builddir)/$$soname || true; \
+#
 all-local:: convenience-link
-
-clean-local:: clean-convenience-link
