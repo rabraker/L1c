@@ -8,7 +8,7 @@
 #include <fftw3.h>
 
 
-// #include <omp.h>
+#include <omp.h>
 // #include <pthread.h>
 // #endif
 
@@ -34,7 +34,10 @@ static double dct_root_1_by_2N;
 int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
 
   fftw_init_threads();
-  fftw_plan_with_nthreads(8);
+  int n_proc = omp_get_num_procs();
+  int n_thread = omp_get_max_threads();
+  printf("num procs: %d, num_thread: %d\n", n_proc, n_thread);
+  fftw_plan_with_nthreads(n_proc);
 
   l1c_int i=0;
   dct_Ety_sparse = malloc_double(Nx);
@@ -61,7 +64,7 @@ int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
   dct_root_1_by_2N = sqrt(1.0 / ( (double) dct_Nx * 2)); // Normalization constant.
 
   // FFTW_PATIENT | FFTW_DESTROY_INPUT| FFTW_PRESERVE_INPUT;
-  unsigned flags = FFTW_PATIENT;
+  unsigned flags = FFTW_ESTIMATE | FFTW_PRESERVE_INPUT;;
 
   fftw_r2r_kind dct_kind_MtEty = FFTW_REDFT10; //computes an REDFT10 transform, a DCT-II
   fftw_r2r_kind dct_kind_EMx   = FFTW_REDFT01; //computes an REDFT01 transform, a DCT-III, “the” IDCT
@@ -149,18 +152,39 @@ void dct_MtEty( double *y, double *x){
 
 }
 
-void dct_MtEt_EMx_new(double *x_fftw, double *z){
+void dct_MtEt_EMx_new(double *x, double *z){
   /* Performs the Multiplication z = (EM)^T * (EM) * x
      on the supplied vector x.
 
      -- x should have dimension at least dct_Nx.
-        NOTE: you MUST have allocated x with fftw_alloc_real()!
      -- z should have dimension at least dct_Nx
    */
 
-  dct_EMx_new(x_fftw, dct_y); //writes output y to global, which belongs to fftw.
-  dct_MtEty(dct_y, z);
+  // dct_EMx_new(x_fftw, dct_y); //writes output y to global, which belongs to fftw.
+  // dct_MtEty(dct_y, z);
 
+  /* It should be faster to implement E^T*Ex in shot*/
+  l1c_int i = 0;
+  //double one_by_2N = 1.0 / ( (double) dct_Nx * 2);
+
+  double x0_tmp = x[0];
+  x[0] = x[0] * sqrt(2.0);
+  fftw_execute_r2r(dct_plan_EMx, x, dct_y);
+  x[0] = x0_tmp;
+
+  // Apply the subsampling operation. Assume that the indexes are ordered, and
+  // Do this in place
+  for (i=0; i<dct_Ny; i++){
+    dct_Ety_sparse[ dct_pix_mask_idx[i]] = dct_y[ dct_pix_mask_idx[i]] * dct_root_1_by_2N;
+  }
+
+  // Result contained in dct_x.
+  fftw_execute(dct_plan_MtEty); // This is the M^T * dct_y_sparse
+
+  dct_x[0] = dct_x[0]/sqrt(2.0);
+  for(i=0; i<dct_Nx; i++){
+    z[i] = dct_x[i]  * dct_root_1_by_2N;
+  }
 
 }
 
