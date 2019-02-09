@@ -35,9 +35,9 @@ int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
 
   fftw_init_threads();
   int n_proc = omp_get_num_procs();
-  int n_thread = omp_get_max_threads();
-  printf("num procs: %d, num_thread: %d\n", n_proc, n_thread);
-  fftw_plan_with_nthreads(n_proc);
+  // int n_thread = omp_get_max_threads();
+  // printf("num procs: %d, num_thread: %d\n", n_proc, n_thread);
+  fftw_plan_with_nthreads(n_proc/2);
 
   l1c_int i=0;
   dct_Ety_sparse = malloc_double(Nx);

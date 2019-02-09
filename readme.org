@@ -31,6 +31,11 @@ which, is mostly a port of ~l1qc_log_barrier.m~ from the ~l1-magic~ code, with a
 * Performance
 So far, using ~l1C~ gives me a speed increase of between 2 and 5 times faster compared to the original matlab code, depending on which computer I run it on.
 
+If you compile with FFTW+OpenBlas, it is important that both libraries are compiled with openmp. I dont quite understand what happens, but if this is not the case, performance can suffer dramatically. In addition, if you have a CPU with hyperthreading, it is important to export the environmental variable
+
+>> export OMP_NUM_THREADS=N
+
+where N is the number of physical cores (essentially, if you have HT, this is half the the number of processors you see in a resource monitor). The code currently can not detect this (only the number of logical cores) and for number crunching applications like this one, HT is detrimental.
 
 * Building
 Typing ~make~ in the root directoy will print a summary of availible targets and options. To summarize, the availible targets are:
