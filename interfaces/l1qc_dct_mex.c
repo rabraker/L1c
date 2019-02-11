@@ -41,9 +41,10 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
 void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 {
   /* Ensure intel doesnt fuck us.*/
+#if defined(_USEMKL_)
   mkl_set_interface_layer(MKL_INTERFACE_ILP64);
   mkl_set_threading_layer(MKL_THREADING_GNU);
-
+#endif
   // l1qc(x0, b, pix_idx, params);
   /* inputs */
 
@@ -256,7 +257,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   }
 
   free(pix_idx);
-
+#if defined(_USEMKL_)
   mkl_free_buffers();
-
+#endif
 } /* ------- mexFunction ends here ----- */
