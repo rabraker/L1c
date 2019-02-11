@@ -43,7 +43,7 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
 
 
 int main(){
-#ifdef _AX_MKL_
+#ifdef _USEMKL_
   mkl_set_interface_layer(MKL_INTERFACE_ILP64);
   mkl_set_threading_layer(MKL_THREADING_GNU);
 #endif

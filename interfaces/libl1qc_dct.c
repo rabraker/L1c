@@ -19,7 +19,7 @@
    where x and z have length n, and y has length m and m<n.
 */
 
-#ifdef _AX_MKL_
+#ifdef _USEMKL_
 #include "dct_mkl.h"
 
 #define Ax_fun dctmkl_EMx_new
@@ -30,7 +30,7 @@
 #define ax_destroy dctmkl_destroy
 
 #else
-#ifdef _AX_FFTW_
+#ifdef _USEFFTW3_
 
 #include "dct.h"
 #define Ax_fun dct_EMx_new
@@ -71,7 +71,7 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
   gettimeofday(&timecheck, NULL);
   start = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;
 
-#ifdef _AX_MKL_
+#ifdef _USEMKL_
   /* Ensure intel doesnt fuck us.*/
   mkl_set_interface_layer(MKL_INTERFACE_ILP64);
   mkl_set_threading_layer(MKL_THREADING_GNU);
@@ -135,7 +135,7 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
 
   /* Cleanup our mess. */
   ax_destroy();
-#ifdef _AX_MKL_
+#ifdef _USEMKL_
   mkl_free_buffers();
 #endif
 

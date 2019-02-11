@@ -16,33 +16,31 @@ $(info "LDFLAGS = $(LDFLAGS)")
 $(info "MEXCPP = $(MEXCPPFLAGS)")
 
 # ----------------------------------------------------------------------#
-# ------------------------------- MKL ----------------------------------#
-if comp_with_mkl
-
+# -------------------------------  ----------------------------------#
+if compile_dct_example
+# -lm -ldl -lgomp
 bin_PROGRAMS +=l1qc_dct_c
 l1qc_dct_c_SOURCES = l1qc_dct_c.c libl1qc_dct.c
 l1qc_dct_c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la \
-					$(MATHLIBS)  -lm -ldl -lgomp
-# -lpthread
+					$(MATHLIBS)
+
 l1qc_dct_c_CPPFLAGS =-I$(top_srcdir)/include  \
-					-D_AX_MKL_ $(L1CCPPFLAGS)
+						 $(L1CCPPFLAGS)
 l1qc_dct_c_CFLAGS = $(L1CCFLAGS) -std=c11 $(WARNFLAGS)
 l1qc_dct_c_LDFLAGS = $(LDFLAGS) -pthread
 
 
 
-lib_LTLIBRARIES += libl1qc_dct_mkl.la
-libl1qc_dct_mkl_la_SOURCES  = libl1qc_dct.c
-libl1qc_dct_mkl_la_CPPFLAGS = -I$(top_srcdir)/include  \
-							-D_AX_MKL_ $(L1CCPPFLAGS)
-libl1qc_dct_mkl_la_CFLAGS   =  $(L1CCFLAGS) -fPIC \
-							-std=c11 $(WARNFLAGS)
-libl1qc_dct_mkl_la_LIBADD   = ../src/libl1c.la \
-							../src/vcl/libvcl_math.la \
-							$(MATHLIBS)  -lm -ldl -lgomp
-libl1qc_dct_mkl_la_LDFLAGS  = -module 	 $(LDFLAGS) -pthread
-
-# -lpthread
+lib_LTLIBRARIES += libl1qc_dct.la
+libl1qc_dct_la_SOURCES	= libl1qc_dct.c
+libl1qc_dct_la_CPPFLAGS = -I$(top_srcdir)/include  \
+							 $(L1CCPPFLAGS)
+libl1qc_dct_la_CFLAGS	=  $(L1CCFLAGS) -fPIC \
+						-std=c11 $(WARNFLAGS)
+libl1qc_dct_la_LIBADD	= ../src/libl1c.la \
+						../src/vcl/libvcl_math.la \
+						$(MATHLIBS)
+libl1qc_dct_la_LDFLAGS	= -module	 $(LDFLAGS) -pthread
 
 if comp_with_mex
 # LIBEXT
@@ -64,58 +62,11 @@ l1qc_dct_mex_la_CPPFLAGS = -I$(top_srcdir)/include  \
 l1qc_dct_mex_la_CFLAGS   =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC \
 								-std=c11 $(WARNFLAGS)
 
-l1qc_dct_mex_la_LIBADD   =	libl1qc_dct_mkl.la \
-							$(MATHLIBS)  -lm -ldl -lgomp \
-							-lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
-# -lpthread
+l1qc_dct_mex_la_LIBADD   =	libl1qc_dct.la \
+							$(MATHLIBS)  $(MEXLIBS)
 endif
 endif
 
-# ----------------------------------------------------------------------#
-# --------------------------- FFTW/OpenBlas ----------------------------#
-if comp_with_fftw
-
-bin_PROGRAMS +=l1qc_dct_c_fftw
-l1qc_dct_c_fftw_SOURCES = l1qc_dct_c.c libl1qc_dct.c
-l1qc_dct_c_fftw_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la \
-							$(MATHLIBS)  -lm -ldl -lgomp
-# -lpthread
-l1qc_dct_c_fftw_CPPFLAGS =-I$(top_srcdir)/include  \
-							-D_AX_FFTW_ $(L1CCPPFLAGS)
-l1qc_dct_c_fftw_CFLAGS = $(L1CCFLAGS) -std=c11 $(WARNFLAGS)
-l1qc_dct_c_fftw_LDFLAGS = $(LDFLAGS) -pthread
-
-
-lib_LTLIBRARIES += libl1qc_dct_fftw.la
-libl1qc_dct_fftw_la_SOURCES  = libl1qc_dct.c
-libl1qc_dct_fftw_la_CPPFLAGS = -I$(top_srcdir)/include  \
-								-D_AX_FFTW_ $(L1CCPPFLAGS)
-libl1qc_dct_fftw_la_CFLAGS   =  $(L1CCFLAGS) -fPIC \
-									-std=c11 $(WARNFLAGS)
-libl1qc_dct_fftw_la_LIBADD   = ../src/libl1c.la \
-								../src/vcl/libvcl_math.la \
-								$(MATHLIBS)  -lm -ldl -lgomp
-libl1qc_dct_fftw_la_LDFLAGS  = -module 	 $(LDFLAGS) -pthread
-
-
-if comp_with_mex
-bin_PROGRAMS += l1qc_dct_fftw
-
-l1qc_dct_fftw_SOURCES  = l1qc_fftw.c libl1qc_dct.c
-
-l1qc_dct_fftw_CPPFLAGS = -I$(top_srcdir)/include  \
-							-D_AX_FFTW_ $(L1CCPPFLAGS) $(MEXCPPFLAGS)
-l1qc_dct_fftw_CFLAGS   = $(L1CCFLAGS) $(MEXCFLAGS)  -fPIC \
-						  -std=c11 $(WARNFLAGS)
-
-l1qc_dct_fftw_LDADD    = ../src/libl1c.a \
-							../src/vcl/libvcl_math.a\
-							$(MATHLIBS) -lfftw3 -lpthread -lm -ldl -lgomp \
-							-lmex -lmat -lmx -lmwservices -lmwbuiltinsutil
-l1qc_dct_fftw_LDFLAGS  = -shared -L$(MATLAB_R)/bin/glnxa64 \
-							-Wl,--no-as-needed
-endif
-endif
 
 
 # Rules to copy the libs .libs into the current directory
@@ -145,7 +96,7 @@ convenience-link: $(lib_LTLIBRARIES)
 # done
 
 clean-convenience-link:
-	rm -f *.so* *.mexa64
+	rm -f *.so* *.mexa64 *.o *.lo *.la
 
 # @echo "input to clean-conf:  $(lib_LTLIBRARIES)"
 # @for soname in `$(EGREP) "^dlname=" $(lib_LTLIBRARIES)|sed -e "s/^.*=//g"|sed -e "s/'//g"`; do  \

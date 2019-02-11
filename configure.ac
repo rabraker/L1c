@@ -93,7 +93,8 @@ mkl_cppflags =
 mkl_cflags =
 test_cppflags=
 test_cflags=
-
+dnl AC_CHECK_LIB([-lm], [sqrt], [], [AC_MSG_ERROR("Cannot find libmath")])
+dnl AC_CHECK_LIB([-lgomp], [omp_get_thread_num], [], [AC_MSG_ERROR("Cannot find libgomp")])
 AC_CHECK_LIB([pthread], [pthread_mutex_trylock], [],
                         AC_MSG_ERROR(Cannot find libpthread))
 
@@ -103,6 +104,8 @@ if test "x$use_mkl" = "xyes";
 then
     AX_CHECK_LINK_FLAG([-lmkl_rt], [AX_APPEND_FLAG([-lmkl_rt], [MATH_LDLIBS])],
                        [AC_MSG_ERROR(Cannot find MKL)],[], [])
+    AC_CHECK_LIB([dl], [dlopen],[], [AC_MSG_ERROR("Cannot find libdl")])
+
 
     AC_CHECK_HEADER([mkl.h], [], [AC_MSG_ERROR("Cannot find mkl.h")])
 
@@ -179,7 +182,7 @@ then
                 AC_MSG_ERROR(fftw3 threading library is required for this program)])
 
 
-   AX_APPEND_FLAG([-lfftw3], [MATH_LDLIBS])
+   AX_APPEND_FLAG([-lfftw3 -lgomp], [MATH_LDLIBS])
    AC_DEFINE([_USEFFTW3_], [1], 0)
 fi
 
@@ -210,7 +213,7 @@ CFLAGS=$tmp_cflags
 #AC_CHECK_LIB([mwbuiltinsutil], [main])
 #AC_CHECK_LIB([mwservices], [main])
 #AC_CHECK_LIB([mx], [main])
-
+    mex_libs = "-lmex -lmat -lmx -lmwservices -lmwbuiltinsutil"
     mex_cppflags="-D__MATLAB__"
     mex_cflags="-fexceptions"
 fi
@@ -263,8 +266,7 @@ dnl AC_CHECK_LIB([dl], [main])
 
 
 
-AM_CONDITIONAL([comp_with_mkl], [test x$use_mkl = xyes])
-AM_CONDITIONAL([comp_with_fftw], [test x$use_fftw3 = xyes])
+AM_CONDITIONAL([compile_dct_example], [test x$use_mkl = xyes || test x$use_fftw3 = xyes])
 AM_CONDITIONAL([comp_with_mex], [test x$use_mex = xyes])
 
 
@@ -298,6 +300,7 @@ AC_SUBST(MKLCPPFLAGS, $mkl_cppflags)
 AC_SUBST(MKLCFLAGS, $mkl_cflags)
 AC_SUBST(TESTCPPFLAGS, $test_cppflags)
 AC_SUBST(TESTCFLAGS, $test_cflags)
+AC_SUBST(MEXLIBS, $mex_libs)
 
 AC_MSG_NOTICE(L1C will be built with l1c_cflags = $l1c_cflags")
 AC_MSG_NOTICE(L1C will be built with l1c_cppflags = $l1c_cppflags")
