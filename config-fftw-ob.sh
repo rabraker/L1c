@@ -10,7 +10,7 @@
 #     export LDFLAGS="-L/usr/local/OpenBlas/lib -L/usr/local/MATLAB/R2018b/bin/glnxa64"
 # fi
 
-./configure --with-fftw3 --with-mex
+./configure --with-fftw3 --with-mex "${@}"
 
 
 # --with-mex

@@ -118,11 +118,6 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
 
   ax_setup(N, M, (l1c_int*)pix_idx);
   Ax_funs.Aty(b, eta_0);
-  // printf("%f\n", params.epsilon);
-  // for (int k=1; k<10000; k++){
-  // Ax_funs.Aty(b, eta_0);
-  // Ax_funs.Ax(eta_0, b);
-  // }
 
   *lb_res = l1qc_newton(N, eta_0, M, b, params, Ax_funs);
 
@@ -145,10 +140,13 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
 
   gettimeofday(&timecheck, NULL);
   end = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;
-  printf("total c time: %f\n", ((double)(end -start)) / 1000.0);
 
+  double time_total = ((double)(end -start)) / 1000.0;
+
+  printf("total c time: %f\n", time_total);
   printf("total-newton-iter: %d\n", lb_res->total_newton_iter);
   printf("total-cg-iter: %d\n", lb_res->total_cg_iter);
+  printf("time per cg iter: %g\n", time_total / (double) lb_res->total_cg_iter);
   return 0;
 
 }

@@ -95,6 +95,7 @@ test_cppflags=
 test_cflags=
 dnl AC_CHECK_LIB([-lm], [sqrt], [], [AC_MSG_ERROR("Cannot find libmath")])
 dnl AC_CHECK_LIB([-lgomp], [omp_get_thread_num], [], [AC_MSG_ERROR("Cannot find libgomp")])
+
 AC_CHECK_LIB([pthread], [pthread_mutex_trylock], [],
                         AC_MSG_ERROR(Cannot find libpthread))
 
@@ -261,6 +262,7 @@ AC_CHECK_HEADER([math.h], [], [AC_MSG_ERROR("Cannot find math.h")])
 
 dnl # FIXME: Replace `main' with a function in `-ldl':
 dnl AC_CHECK_LIB([dl], [main])
+
 
 
 

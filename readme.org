@@ -35,6 +35,8 @@ If you compile with FFTW+OpenBlas, it is important that both libraries are compi
 
 >> export OMP_NUM_THREADS=N
 
+Setting OMP_BIND_PROC=true seems to cost us about 1 second.
+
 where N is the number of physical cores (essentially, if you have HT, this is half the the number of processors you see in a resource monitor). The code currently can not detect this (only the number of logical cores) and for number crunching applications like this one, HT is detrimental.
 
 * Building
