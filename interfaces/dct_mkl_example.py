@@ -86,7 +86,7 @@ def l1qc_dct(eta_0, b, pix_idx, opts):
     import numpy.ctypeslib as npct
 
     array_1d_double = npct.ndpointer(dtype=np.double, ndim=1, flags='CONTIGUOUS')
-    array_1d_int = npct.ndpointer(dtype=np.int64, ndim=1, flags='CONTIGUOUS')
+    array_1d_int = npct.ndpointer(dtype=np.int32, ndim=1, flags='CONTIGUOUS')
 
     libl1c = npct.load_library("libl1qc_dct.so.0", ".")
 
@@ -99,7 +99,6 @@ def l1qc_dct(eta_0, b, pix_idx, opts):
     M = len(b)
     eta_out = np.zeros(N)
     lb_res = LBResult()
-
     libl1c.l1qc_dct(N, eta_out, M, b, pix_idx, opts, byref(lb_res))
 
     return (eta_out, lb_res)
@@ -123,7 +122,7 @@ def dct_mkl_example():
 
         # pix_idx is a index set where we sampled. x_orig is a vector  of the
         # original image.
-        pix_idx = np.array(d['pix_idx'], dtype=np.int64, ndmin=1)
+        pix_idx = np.array(d['pix_idx'], dtype=np.int32, ndmin=1)
         x_orig = np.array(d['x_orig'], ndmin=1)
 
         x_masked = np.zeros(len(x_orig))

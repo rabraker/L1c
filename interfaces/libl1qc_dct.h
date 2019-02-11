@@ -1,5 +1,5 @@
 
-typedef long l1c_int;
+typedef int l1c_int;
 
 typedef struct LBResult{
   double l1;

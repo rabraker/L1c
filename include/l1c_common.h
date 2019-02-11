@@ -11,12 +11,11 @@
 #include <stdio.h>
 #endif
 
+typedef int l1c_int;
 
 #if defined(_USEMKL_)
 
 #include "mkl.h"
-typedef MKL_INT64 l1c_int;
-
 #define free_double(x) mkl_free(x)
 // parenthesis around N are crucial here.
 #define malloc_double(N) (double*)mkl_malloc((size_t)(N) *sizeof(double), DALIGN)
@@ -27,12 +26,6 @@ typedef MKL_INT64 l1c_int;
 */
 
 #include "cblas.h"
-#if defined(blasint)
-typedef blasint l1c_int;
-#else
-typedef int l1c_int;
-#endif
-
 
 #if defined(_HAVE_POSIX_MEMALIGN_)
 // #define _POSIX_C_SOURCE  200112L
@@ -44,8 +37,8 @@ static inline double* malloc_double(int N){
    This is satisfired for DALIGN=64 and sizeof(double)=8.
   */
   if(posix_memalign(&dptr, DALIGN, (size_t)(N) * sizeof(double))){
-    return NULL; // We could check the value
-  //(different for out of Mem, vs unacceptable DALIGN.)
+    return NULL; // We could check the value,
+                 // it's different for out of Mem, vs unacceptable DALIGN.
   }else{
     return (double*) dptr;
   }

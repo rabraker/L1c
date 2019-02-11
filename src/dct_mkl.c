@@ -14,23 +14,31 @@ DFTI_DESCRIPTOR_HANDLE mkl_dct_handle=0;
 static double *dctmkl_tmp_x=NULL;
 static double *dctmkl_tmp_y=NULL;
 
-static l1c_int  dctmkl_Ny;
-static l1c_int dctmkl_Nx;
+static MKL_INT dctmkl_Ny;
+static MKL_INT dctmkl_Nx;
 
-static l1c_int dctmkl_ipar[128];
+static MKL_INT dctmkl_ipar[128];
 static double *dctmkl_dpar=NULL;
-static l1c_int dctmkl_stat;
+static MKL_INT dctmkl_stat;
 
 static l1c_int *dctmkl_pix_mask_idx;
 static double dctmkl_root_1_by_2N;
+/*
+  Standard BLAS interfaces (e.g., NetLib, ATLAS) use a standard int (32).
 
+  OpenBlas ~can~ use long int (64) if OPENBLAS_USE64BITINT is defined.
+
+  But for compatibility with as many as possible, we for now use a standard int.
+
+  The int size in MKL depends on if one chooses ILP64 or LP64.
+ */
 int dctmkl_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
 
-  l1c_int tt_type = MKL_STAGGERED_COSINE_TRANSFORM;
+  MKL_INT tt_type = MKL_STAGGERED_COSINE_TRANSFORM;
   l1c_int i=0;
 
-  dctmkl_Nx = Nx;
-  dctmkl_Ny = Ny;
+  dctmkl_Nx = (MKL_INT)Nx;
+  dctmkl_Ny = (MKL_INT)Ny;
   dctmkl_root_1_by_2N = sqrt(1.0 / ( (double) dctmkl_Nx * 2)); // Normalization constant.
   dctmkl_pix_mask_idx = pix_mask_idx;
 
@@ -131,9 +139,9 @@ void dctmkl_MtEty( double * restrict y, double * restrict x){
   for(i=0; i<dctmkl_Nx+1; i++){
     tmp_x_a[i] = 0.0;
   }
-
-  // I.e., tmp_x_a[pix_idx] = y_a;
-  vdUnpackV(dctmkl_Ny, y_a, tmp_x_a, dctmkl_pix_mask_idx);
+  for(i=0; i<dctmkl_Ny; i++){
+    tmp_x_a[dctmkl_pix_mask_idx[i]] = y_a[i];
+  }
 
 
   dctmkl_ipar[10] = 1; //Dont normalize

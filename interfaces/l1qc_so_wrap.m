@@ -28,7 +28,7 @@ function [x_out, lb_res] = l1qc_so_wrap(N, b, pix_idx, opts)
   x_out = zeros(1, N);
   M = length(b);
   [~,x_out,~, ~, lb_res] = calllib(libname, 'l1qc_dct',...
-                                   N, x_out, M, b, int64(pix_idx)-1, opts, lb_res);
+                                   N, x_out, M, b, int32(pix_idx)-1, opts, lb_res);
 
 
 end
