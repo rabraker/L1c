@@ -132,7 +132,7 @@ else
     AC_LANG([C])
 
     # _mm_malloc is an inline function in mm_malloc.h, included by xmmintrin.h
-    AC_CHECK_HEADER([xmmintrin.h], [], [AC_MSG_ERROR("Cannot find mkl.h")])
+    # Should not need a header check, since if xmmintrin.h is not found, this should fail.
     AC_MSG_CHECKING([checking for _mm_malloc])
     AC_LINK_IFELSE([AC_LANG_SOURCE([[
     #include <xmmintrin.h>

@@ -32,11 +32,16 @@ static double dctmkl_root_1_by_2N;
 
   The int size in MKL depends on if one chooses ILP64 or LP64.
  */
+
+
+/**
+   If return is not zero, do not call dct_destroy();
+ */
 int dctmkl_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
 
   MKL_INT tt_type = MKL_STAGGERED_COSINE_TRANSFORM;
   l1c_int i=0;
-
+  int status = 0;
   dctmkl_Nx = (MKL_INT)Nx;
   dctmkl_Ny = (MKL_INT)Ny;
   dctmkl_root_1_by_2N = sqrt(1.0 / ( (double) dctmkl_Nx * 2)); // Normalization constant.
@@ -46,12 +51,10 @@ int dctmkl_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
   dctmkl_tmp_y = malloc_double(Nx+1);
   dctmkl_dpar = malloc_double(5*Nx/2 + 2);
 
-  if (!dctmkl_tmp_x | !dctmkl_tmp_y | !dctmkl_dpar){
-    perror("Error allocating memory in dctmkl_setup");
-    free_double(dctmkl_tmp_x);
-    free_double(dctmkl_tmp_y);
-    free_double(dctmkl_dpar);
-    return 1;
+  if (!dctmkl_tmp_x || !dctmkl_tmp_y || !dctmkl_dpar){
+    fprintf(stderr, "Error allocating memory in dctmkl_setup\n");
+    status = L1C_OUT_OF_MEMORY;
+    goto fail;
   }
 
   for (i=0; i<Nx+1; i++){
@@ -61,9 +64,23 @@ int dctmkl_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
 
 
   d_init_trig_transform(&dctmkl_Nx, &tt_type, dctmkl_ipar, dctmkl_dpar, &dctmkl_stat);
+  if (dctmkl_stat){
+    status = L1C_DCT_INIT_FAILURE;
+    goto fail;
+  }
   d_commit_trig_transform(dctmkl_tmp_x, &mkl_dct_handle, dctmkl_ipar, dctmkl_dpar, &dctmkl_stat);
+  if (dctmkl_stat){
+    status = L1C_DCT_INIT_FAILURE;
+    goto fail;
+  }
 
-  return 0;
+  return status;
+
+ fail:
+  free_double(dctmkl_tmp_x);
+  free_double(dctmkl_tmp_y);
+  free_double(dctmkl_dpar);
+  return status;
 }
 
 void dctmkl_destroy(){
@@ -101,7 +118,6 @@ void dctmkl_EMx_new(double * restrict x, double * restrict y){
   double *x_a = __builtin_assume_aligned(x, DALIGN);
   double *y_a = __builtin_assume_aligned(y, DALIGN);
   double *tmp_x = __builtin_assume_aligned(dctmkl_tmp_x, DALIGN);
-  // l1c_int idx_ = __builtin_assume_aligned(dctmkl_pix_mask_idx, DALIGN);
 
   l1c_int i=0;
 

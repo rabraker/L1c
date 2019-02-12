@@ -65,6 +65,7 @@ typedef struct L1qcDctOpts{
 
 int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
              L1qcDctOpts opts, LBResult *lb_res){
+  int status = 0;
 
   long start, end;
   struct timeval timecheck;
@@ -109,14 +110,16 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
 
   if ( !b_ours || !eta_0){
     fprintf(stderr, "Memory Allocation failure\n");
-    free_double(b_ours);
-    free_double(eta_0);
-    return 1;
+    status =  L1C_OUT_OF_MEMORY;
+    goto fail;
   }
 
   cblas_dcopy(M, b, 1, b_ours, 1);
 
-  ax_setup(N, M, (l1c_int*)pix_idx);
+  if (ax_setup(N, M, (l1c_int*)pix_idx)){
+    status = L1C_DCT_INIT_FAILURE;
+    goto fail;
+  }
   Ax_funs.Aty(b, eta_0);
 
   *lb_res = l1qc_newton(N, eta_0, M, b, params, Ax_funs);
@@ -128,14 +131,7 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
 
   cblas_dcopy(N, eta_0, 1, x_out, 1);
 
-  /* Cleanup our mess. */
-  ax_destroy();
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
 
-  free_double(b_ours);
-  free_double(eta_0);
 
 
   gettimeofday(&timecheck, NULL);
@@ -147,7 +143,18 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
   printf("total-newton-iter: %d\n", lb_res->total_newton_iter);
   printf("total-cg-iter: %d\n", lb_res->total_cg_iter);
   printf("time per cg iter: %g\n", time_total / (double) lb_res->total_cg_iter);
-  return 0;
 
+
+  ax_destroy(); // Should not call this if ax_setup() failed.
+
+ fail:
+  /* Cleanup our mess. */
+  free_double(b_ours);
+  free_double(eta_0);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
+
+  return status;
 }
 

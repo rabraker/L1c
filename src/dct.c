@@ -24,9 +24,11 @@ static l1c_int dct_Ny;
 static l1c_int dct_Nx;
 static double dct_root_1_by_2N;
 
-
+/**
+   If return is not zero, do not call dct_destroy();
+*/
 int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
-
+  int status = 0;
   fftw_init_threads();
   int n_proc = omp_get_num_procs();
   int n_thread = omp_get_max_threads();
@@ -37,12 +39,10 @@ int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
   dct_Ety_sparse = malloc_double(Nx);
   dct_x = malloc_double(Nx);
   dct_y = malloc_double(Nx);
-  if (!dct_x | !dct_y | !dct_Ety_sparse){
+  if (!dct_x || !dct_y || !dct_Ety_sparse){
     fprintf(stderr, "Error allocating memory in dct_setup");
-    free_double(dct_x);
-    free_double(dct_y);
-    free_double(dct_Ety_sparse);
-    return 1;
+    status = L1C_OUT_OF_MEMORY;
+    goto fail;
   }
 
   for (i=0; i<Nx; i++){
@@ -66,8 +66,17 @@ int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
 
   dct_plan_MtEty = fftw_plan_r2r_1d(Nx, dct_Ety_sparse, dct_x, dct_kind_MtEty, flags);
   dct_plan_EMx = fftw_plan_r2r_1d(Nx, dct_x, dct_y, dct_kind_EMx, flags);
+  if ( !dct_plan_MtEty || !dct_plan_EMx){
+    fprintf(stderr, "Failed to initialize FFTW3 dct plans.\n");
+    status = L1C_DCT_INIT_FAILURE;
+    goto fail;
+  }
 
-  return 0;
+  return status;
+
+ fail:
+  dct_destroy();
+  return status;
 }
 
 void dct_destroy(){

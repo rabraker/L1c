@@ -48,7 +48,7 @@ int main(){
   mkl_set_threading_layer(MKL_THREADING_GNU);
 #endif
 
-  cJSON *test_data_json;
+  cJSON *test_data_json=NULL;
   double *x=NULL, *b=NULL;
   l1c_int *pix_idx=NULL;
   l1c_int N=0, M=0, status=0;
@@ -90,5 +90,6 @@ int main(){
   free_double(x);
   free(pix_idx);
   free_double(b);
+  cJSON_Delete(test_data_json);
 
 }
