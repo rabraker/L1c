@@ -116,8 +116,8 @@ def remove_ticks(ax):
         labelright=False)   # labels along the right edge are off
 
 
-def dct_mkl_example():
-    with open('example_img_data.json') as json_data:
+def dct_mkl_example(verbose=2, fpath='example_img_data.json', plot=False):
+    with open(fpath) as json_data:
         d = json.load(json_data)
 
         # pix_idx is a index set where we sampled. x_orig is a vector  of the
@@ -135,7 +135,7 @@ def dct_mkl_example():
                                lbtol=1e-3,  # lbtol
                                newton_tol=1e-3,  # newton_tol
                                newton_max_iter=50,    # newton_max_iter
-                               verbose=0,     # verbose
+                               verbose=verbose,     # verbose
                                l1_tol=1e-5,  # l1_tol
                                cgtol=1e-8,  # cgtol
                                cgmaxiter=200,   # cgmaxiter
@@ -144,36 +144,52 @@ def dct_mkl_example():
         # Call the library wrapper.
         time0 = time.time()
         x_recon, lb_result = l1qc_dct(x_orig, b, pix_idx, opts)
-        time_total=time.time() - time0
+        time_total = time.time() - time0
 
-        print("Total python time: %f", time_total)
+        print("Total python time: %f" % time_total)
         # Turn the vectors back into matrices so we can show them as an image.
         N = int(np.sqrt(len(x_orig)))
 
         X_orig_mat = np.reshape(x_orig, (N, N))
         X_recon_mat = np.reshape(x_recon, (N, N))
         X_masked_mat = np.reshape(x_masked, (N, N))
+        if plot:
+            plt.figure(num=1, figsize=(12, 4))
 
-        plt.figure(num=1, figsize=(12, 4))
+            ax1 = plt.subplot(131)
+            remove_ticks(ax1)
+            ax1.set_title("Original Image (CS-20ng grating)")
+            ax1.imshow(X_orig_mat, cmap='gray')
+            remove_ticks(ax1)
 
-        ax1 = plt.subplot(131)
-        remove_ticks(ax1)
-        ax1.set_title("Original Image (CS-20ng grating)")
-        ax1.imshow(X_orig_mat, cmap='gray')
-        remove_ticks(ax1)
+            ax2 = plt.subplot(132)
+            ax2.imshow(X_masked_mat, cmap='gray')
+            ax2.set_title("Subsampled image")
+            remove_ticks(ax2)
 
-        ax2 = plt.subplot(132)
-        ax2.imshow(X_masked_mat, cmap='gray')
-        ax2.set_title("Subsampled image")
-        remove_ticks(ax2)
+            ax3 = plt.subplot(133)
+            ax3.set_title("Reconstruction")
+            ax3.imshow(X_recon_mat, cmap='gray')
+            remove_ticks(ax3)
 
-        ax3 = plt.subplot(133)
-        ax3.set_title("Reconstruction")
-        ax3.imshow(X_recon_mat, cmap='gray')
-        remove_ticks(ax3)
-
-        plt.show()
+            plt.show()
 
 
 if __name__ == '__main__':
-    dct_mkl_example()
+    import sys
+    plot = False
+
+    if len(sys.argv) >= 2:
+        fpath = sys.argv[1]
+    else:
+        fpath = "example_img_data.json"
+
+    if len(sys.argv) >= 3:
+        verbose = int(sys.argv[2])
+    else:
+        verbose = 1
+
+    if len(sys.argv) >= 4:
+        plot = True
+
+    dct_mkl_example(verbose=verbose, fpath=fpath, plot=plot)
