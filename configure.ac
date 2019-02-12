@@ -148,12 +148,10 @@ else
     then
         AC_DEFINE([_POSIX_C_SOURCE], [200112L], [Unlocks posix_memalign in stdlib.h.])
         AC_DEFINE([_HAVE_POSIX_MEMALIGN_], [1], [We have posix_memalign.])
-        l1c_cppflags="${l1c_cppflags} -D_POSIX_C_SOURCE=200112L -D_HAVE_POSIX_MEMALIGN_"
 
-    elif test x$have_mm_malloc = xyes
+    elif test x$have_mm_malloc = xyes;
     then
          AC_DEFINE(_HAVE_MM_MALLOC_, [1], [We have _mm_malloc])
-         l1c_cppflags="${l1c_cppflags} -D_HAVE_MM_MALLOC_"
     else
         AC_MSG_ERROR(This program requires either posix_memalign() or _mm_malloc in the\
         standard library or MKL);

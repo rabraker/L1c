@@ -1,5 +1,6 @@
-#include <math.h>
+#include "config.h"
 
+#include <math.h>
 #include "l1c_common.h"
 
 /**

@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "mex.h"
 #include "matrix.h"
 #include <string.h>

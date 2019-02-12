@@ -4,6 +4,7 @@
 
 #ifndef _L1QC_NEWTON_
 #define _L1QC_NEWTON_
+#include "config.h"
 
 #include "cgsolve.h"
 #include "l1c_common.h"
