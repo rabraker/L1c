@@ -29,11 +29,13 @@ static double dct_root_1_by_2N;
 */
 int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
   int status = 0;
+#if defined(HAVE_FFTW3_THREADS)
   fftw_init_threads();
   int n_proc = omp_get_num_procs();
   int n_thread = omp_get_max_threads();
   printf("num procs: %d, num thread: %d\n", n_proc, n_thread);
   fftw_plan_with_nthreads(n_thread);
+#endif
 
   l1c_int i=0;
   dct_Ety_sparse = malloc_double(Nx);
@@ -86,6 +88,9 @@ void dct_destroy(){
 
   fftw_destroy_plan(dct_plan_EMx);
   fftw_destroy_plan(dct_plan_MtEty);
+#if defined(HAVE_FFTW3_THREADS)
+  fftw_cleanup_threads();
+#endif
 }
 
 

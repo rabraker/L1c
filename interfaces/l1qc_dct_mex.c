@@ -1,5 +1,7 @@
 #include "config.h"
-
+/* It is important that mex.h is included before l1c_common.h
+ so that, for this function, we get matlabs definition of fprintf
+*/
 #include "mex.h"
 #include "matrix.h"
 #include <string.h>

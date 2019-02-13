@@ -27,16 +27,17 @@ fi
 
 AC_PROG_CXX
 AC_PROG_CC
-AC_PROG_RANLIB
 dnl Need this for AC_EGREP_HEADER to work
 AC_PROG_EGREP
 AC_PROG_LN_S
 dnl AC_PROG_MAKE_SET
 dnl AC_PROG_CPP
 AM_PROG_AR
-dnl AM_PROG_LIBTOOL
-dnl AC_PROG_INSTALL
+
+AC_PROG_INSTALL
 LT_INIT
+# callint LT_INIT means we dont need: AC_PROG_RANLIB, AM_PROG_LIBTOOL
+
 
 AM_INIT_AUTOMAKE
 
@@ -56,17 +57,22 @@ AC_ARG_WITH(debug, [AS_HELP_STRING([--with-debug],[Compile with debugging suppor
 AC_ARG_WITH(opt, [AS_HELP_STRING([--without-opt],[Compile optimizations off.])],
                  [with_opt=no], [with_opt=yes])
 
-
-
-
 AC_ARG_WITH(mkl, [AS_HELP_STRING([--with-mkl], [Compile using Intel Math Kernel Library])], [
-                 use_mkl=yes], [use_mkl=no])
+                 with_mkl=yes], [with_mkl=no])
 
 AC_ARG_WITH(mex, [AS_HELP_STRING([--with-mex],
                  [Compile matlab interface mex functions. This requires that
                  CPPLAGS contains -I${MATLABROOT}/extern/include and that
                  LDFLAGS contains -L${MATLABROOT}/bin/(glnxa64|win64)/])], [
-                 use_mex=yes], [use_mex=no])
+                 with_mex=yes], [with_mex=no])
+AC_ARG_WITH(fftw3, [AS_HELP_STRING([--with-fftw3], [Compile example with FFTW])], [
+                 use_fftw3=yes], [use_fftw3=no])
+                 AC_ARG_WITH(fftw3_threads, [AS_HELP_STRING(
+                 [--with-fftw3-threads=@<:@combined@:>@@<:@omp@:>@@<:@threads@:>@@<:@yes@:>@@<:@no@:>@],
+                   [Compile example with FFTW threading. By default, searches for combined, then omp
+                   then threads. The default is to compile with threads. Threading can be
+                   disabled by setting ARG=no])], [], [with_fftw3_threads=no   ])
+
 
 if test x$with_debug = xyes;
 then
@@ -84,27 +90,21 @@ fi
 # We will build these flags up as we go, and AC_SUBST them at the bottom.
 l1c_cppflags =
 
-AX_APPEND_ALL_COMPILE_FLAGS([-fopenmp -m64 -pthread -std=c11], [l1c_cflags],
+AX_APPEND_ALL_COMPILE_FLAGS([-fopenmp -m64 -std=c11], [l1c_cflags],
                             [AC_MSG_ERROR("Compiler does not support required flag")],
                             [],[])
-mex_cppflags =
-mex_cflags =
-mkl_cppflags =
-mkl_cflags =
+mex_cppflags=
+mex_cflags=
+mkl_cppflags=
+mkl_cflags=
 test_cppflags=
 test_cflags=
-dnl AC_CHECK_LIB([-lm], [sqrt], [], [AC_MSG_ERROR("Cannot find libmath")])
-dnl AC_CHECK_LIB([-lgomp], [omp_get_thread_num], [], [AC_MSG_ERROR("Cannot find libgomp")])
-
-AC_CHECK_LIB([pthread], [pthread_mutex_trylock], [],
-                        AC_MSG_ERROR(Cannot find libpthread))
 
 # ----------------------------------------------------------------------------------------- #
 # ------------------------------ Checks for MKL ------------------------------------------- #
-if test "x$use_mkl" = "xyes";
+if test "x$with_mkl" = "xyes";
 then
-    AX_CHECK_LINK_FLAG([-lmkl_rt], [AX_APPEND_FLAG([-lmkl_rt], [MATH_LDLIBS])],
-                       [AC_MSG_ERROR(Cannot find MKL)],[], [])
+    AC_CHECK_LIB([mkl_rt], [cblas_daxpby],[], [AC_MSG_ERROR("Cannot find libmkl_rt")])
     AC_CHECK_LIB([dl], [dlopen],[], [AC_MSG_ERROR("Cannot find libdl")])
 
 
@@ -124,8 +124,6 @@ else
                   [AC_MSG_RESULT(no)
                   AC_MSG_ERROR(Could not find cblas_daxpy in cblas.h)])
 
-    AX_APPEND_FLAG([-lopenblas], [MATH_LDLIBS])
-
     # Check for posix_memalign or _mm_malloc
     AC_CHECK_FUNC(posix_memalign, [have_posix_mem=yes], [])
 
@@ -142,8 +140,6 @@ else
            AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
 
 
-    dnl AC_CHECK_FUNC(_mm_malloc, [have_mm_malloc=yes], [])
-
     if test x$have_posix_mem = xyes;
     then
         AC_DEFINE([_POSIX_C_SOURCE], [200112L], [Unlocks posix_memalign in stdlib.h.])
@@ -159,44 +155,73 @@ else
 
 fi
 
-echo $l1c_cppflags
-echo $CFLAGS $CPPFLAGS
-
-
-
-
 # ------------------------------ Checks for FFTW ---------------------------------------- #
-AC_ARG_WITH(fftw3, [AS_HELP_STRING([--with-fftw3], [Compile example with FFTW])], [
-                 use_fftw3=yes], [use_fftw3=no])
-
 if test x$use_fftw3 = xyes;
 then
-    dnl AX_CHECK_LINK_FLAG([-lfftw3], [AX_APPEND_FLAG([-lfftw3], [MATH_LDLIBS])],
-    dnl                    [echo "Cannot find FFTW3"],[], [])
-
    AC_CHECK_HEADER([fftw3.h], [], [AC_MSG_ERROR("Cannot find fftw3.h")])
-   dnl AC_CHECK_LIB([fftw3], [fftw_plan_r2r_1d],[],[
-   dnl              AC_MSG_ERROR(fftw3 library is required for this program)])
-      AC_CHECK_LIB([fftw3_omp], [fftw_init_threads],[],[
-                AC_MSG_ERROR(fftw3 threading library is required for this program)])
 
+   AC_CHECK_LIB([fftw3], [fftw_plan_r2r_1d],[],[
+                         AC_MSG_ERROR(fftw3 library is required for this program)])
+# Figure out which threading library we are supposed to use, if any.
+   have_fftw_threads=no
+   maybe_suffx="combined omp threads"
+   for suffx in $maybe_suffx; do
 
-   AX_APPEND_FLAG([-lfftw3 -lgomp], [MATH_LDLIBS])
-   AC_DEFINE([_USEFFTW3_], [1], 0)
-fi
+       case $suffx in
+            combined)
+                lib=fftw3
+                ;;
+            omp)
+                lib=fftw3_omp
+                ;;
+            threads)
+                lib=fftw3_threads
+                ;;
+            *)
+       esac
+
+       if test x$suffx = x$with_fftw3_threads ||test x$with_fftw3_threads = xyes   ; then
+          AC_CHECK_LIB([$lib], [fftw_init_threads],[have_fftw_threads=yes],[have_fftw_threads=no])
+       fi
+
+       if test x$have_fftw_threads = xyes; then
+          LIBS="$LIBS -l$lib"
+          break
+       fi
+   done
+
+   if test x$with_fftw3_threads != xno && test x$have_fftw_threads = no; then
+      AC_MSG_ERROR(fftw3 threading library is required for this program)]
+   else
+      AC_DEFINE([HAVE_FFTW3_THREADS], [1], [Compile with fftw threading support])
+   fi
+
+   # We link with OMP anyway, down below. But if the user selected thread,
+   # we need to also link with pthread.
+   if test x$lib = xthread; then
+   AC_CHECK_LIB([pthread], [pthread_mutex_trylock], [],
+                 AC_MSG_ERROR([Cannot find libpthread, which is required with --with-fftw3-threads=threads]))
+   fi
+
+  AC_DEFINE([_USEFFTW3_], [1], 0)
+fi  # checks for fftw
 
 echo "Compile with fftw3? $use_fftw3"
-AC_SUBST(MATHLIBS, $MATH_LDLIBS)
+echo "Compile with fftw3 threads? $have_fftw_threads"
 
+
+
+AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused -Werror  \
+                          -Wcast-qual -Wcast-align -Winit-self     \
+                          -Wfloat-equal -Wundef -Wshadow           \
+                          -Wswitch-enum -Wvla], [WARNFLAGS], [] [])
+AC_SUBST(WARNFLAGS, $WARNFLAGS)
 
 # ----------------------------------------------------------------------------------------- #
 # ------------------------------ Checks for matlab MEX------------------------------------- #
 
-if test x$use_mex = xyes;
+if test x$with_mex = xyes;
 then
-dnl AC_CHECK_LIB([mat], [matOpen],[],[
-dnl    AC_MSG_ERROR(libmat (Mathworks) library is required for this program)])
-echo $LDFLAGS
 
 dnl The compilation check for matlabs libs will fail if we dont try to compile
 dnl as a shared library.
@@ -204,31 +229,32 @@ dnl Also, if third arg to AC_CHECK_LIB is missing, it will automatically append,
 dnl -lmex to $LIBS, which will make the rest of the checks fail.
 tmp_cflags=$CFLAGS
 CFLAGS="-shared $CFLAGS"
-AC_CHECK_LIB([mex], [mexErrMsgTxt],[
-             MATLAB_LIBS=mex],[
-   AC_MSG_ERROR(Matlab libmex library not found.)])
+AC_CHECK_LIB([mex], [mexErrMsgTxt],[mex_ldlibs="-lmex"],[
+             AC_MSG_ERROR(Matlab libmex library not found.)])
+AC_CHECK_LIB([mx], [mxIsScalar], [mex_ldlibs="$mex_ldlibs -lmx"],
+                   [AC_MSG_ERROR(Matlab libmx library not found.)])
+AC_CHECK_LIB([mwservices], [svMatlabRoot], [mex_ldlibs="$mex_ldlibs -lmwservices"],
+                   [AC_MSG_ERROR(Matlab libmwservices library not found.)])
+AC_CHECK_LIB([mwbuiltinsutil], [_fini], [mex_ldlibs="$mex_ldlibs -lmwbuiltinsutil"],
+                   [AC_MSG_ERROR(Matlab libmwbuiltinsutil library not found.)])
+# Reset the user CFLAGS
 CFLAGS=$tmp_cflags
 
-#AC_CHECK_LIB([mwbuiltinsutil], [main])
-#AC_CHECK_LIB([mwservices], [main])
-#AC_CHECK_LIB([mx], [main])
-    mex_libs = "-lmex -lmat -lmx -lmwservices -lmwbuiltinsutil"
-    mex_cppflags="-D__MATLAB__"
+AC_DEFINE([__MATLAB__], [1], [1 to compile with mex interfaces])
     mex_cflags="-fexceptions"
+
+if test -z $MEXEXT; then
+   MEXEXT=$(mexext)
+   if test $? -ne 0; then
+      AC_MSG_ERROR([Mathworks mexext must be on the system path, or you must export
+                    the proper mex file extension as an envrionmental variable.])
+   fi
 fi
-
-
-echo $CFLAGS
-
-AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused -Werror  \
-                         -Wcast-qual -Wcast-align -Winit-self      \
-                         -Wfloat-equal -Wundef -Wshadow -Wswitch-enum -Wvla], [WARNFLAGS], [] [])
-AC_SUBST(WARNFLAGS, $WARNFLAGS)
-
+AC_SUBST(MEXEXT, [.$MEXEXT])
+fi  # checks for mex
 
 
 # Checks for programs.
-
 
 # Checks for libraries.
 AC_CHECK_LIB([check], [suite_add_tcase],[],[
@@ -253,21 +279,13 @@ AC_CHECK_LIB([m], [sqrt],[],[
 
 AC_CHECK_HEADERS([stddef.h stdint.h stdlib.h string.h])
 AC_CHECK_HEADER([check.h], [], [AC_MSG_ERROR("Cannot find check.h")], [])
-AC_CHECK_HEADER([check.h], [], [AC_MSG_ERROR("Cannot find check.h")])
 AC_CHECK_HEADER([cjson/cJSON.h], [], [AC_MSG_ERROR("Cannot find CJSON.h")])
 AC_CHECK_HEADER([math.h], [], [AC_MSG_ERROR("Cannot find math.h")])
 
 
-dnl # FIXME: Replace `main' with a function in `-ldl':
-dnl AC_CHECK_LIB([dl], [main])
 
-
-
-
-
-
-AM_CONDITIONAL([compile_dct_example], [test x$use_mkl = xyes || test x$use_fftw3 = xyes])
-AM_CONDITIONAL([comp_with_mex], [test x$use_mex = xyes])
+AM_CONDITIONAL([compile_dct_example], [test x$with_mkl = xyes || test x$use_fftw3 = xyes])
+AM_CONDITIONAL([comp_with_mex], [test x$with_mex = xyes])
 
 
 
@@ -294,18 +312,22 @@ AC_SUBST(L1CCXXFLAGS, $l1c_cxxflags)
 
 AC_SUBST(L1CCPPFLAGS, $l1c_cppflags)
 AC_SUBST(L1CCFLAGS, $l1c_cflags)
+
 AC_SUBST(MEXCPPFLAGS, $mex_cppflags)
 AC_SUBST(MEXCFLAGS, $mex_cflags)
+AC_SUBST(MEXLDLIBS, $mex_ldlibs)
+
 AC_SUBST(MKLCPPFLAGS, $mkl_cppflags)
 AC_SUBST(MKLCFLAGS, $mkl_cflags)
+
 AC_SUBST(TESTCPPFLAGS, $test_cppflags)
 AC_SUBST(TESTCFLAGS, $test_cflags)
-AC_SUBST(MEXLIBS, $mex_libs)
 
 AC_MSG_NOTICE(L1C will be built with l1c_cflags = $l1c_cflags")
 AC_MSG_NOTICE(L1C will be built with l1c_cppflags = $l1c_cppflags")
-AC_MSG_NOTICE(Compile with MKL? $use_mkl)
+AC_MSG_NOTICE(Compile with MKL? $with_mkl)
 AC_MSG_NOTICE(Compile with FFTW? $use_fftw3)
+AC_MSG_NOTICE(Using mex linkage $mex_ldlibs)
 
 AC_CONFIG_FILES([Makefile  src/Makefile src/vcl/Makefile interfaces/Makefile])
 AC_OUTPUT

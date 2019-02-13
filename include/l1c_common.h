@@ -5,11 +5,8 @@
 #define DALIGN  64
 #define ALIGNMENT_DOUBLE DALIGN
 
-#ifdef __MATLAB__
-#include "mex.h"
-#else
 #include <stdio.h>
-#endif
+
 
 typedef int l1c_int;
 
