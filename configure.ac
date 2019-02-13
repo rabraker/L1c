@@ -48,6 +48,10 @@ dnl AC_PROG_CPP will be expanded in the else, and not visible outside, which lea
 dnl warnings like WARNING: check.h: accepted by the compiler, rejected by the preprocessor!
 AC_PROG_CPP
 
+AH_TEMPLATE([HAVE_SATLAS],
+    [Define to if you have libsatlas])
+AH_TEMPLATE([HAVE_OPENBLAS],
+    [Define to if you have libopenblas])
 
 
 AC_ARG_WITH(debug, [AS_HELP_STRING([--with-debug],[Compile with debugging support.])],
@@ -67,11 +71,11 @@ AC_ARG_WITH(mex, [AS_HELP_STRING([--with-mex],
                  with_mex=yes], [with_mex=no])
 AC_ARG_WITH(fftw3, [AS_HELP_STRING([--with-fftw3], [Compile example with FFTW])], [
                  use_fftw3=yes], [use_fftw3=no])
-                 AC_ARG_WITH(fftw3_threads, [AS_HELP_STRING(
+AC_ARG_WITH(fftw3_threads, [AS_HELP_STRING(
                  [--with-fftw3-threads=@<:@combined@:>@@<:@omp@:>@@<:@threads@:>@@<:@yes@:>@@<:@no@:>@],
                    [Compile example with FFTW threading. By default, searches for combined, then omp
                    then threads. The default is to compile with threads. Threading can be
-                   disabled by setting ARG=no])], [], [with_fftw3_threads=no   ])
+                   disabled by setting ARG=no])], [], [with_fftw3_threads=yes   ])
 
 
 if test x$with_debug = xyes;
@@ -88,11 +92,12 @@ fi
 
 # --------------------------------------------------------------------------------------- #
 # We will build these flags up as we go, and AC_SUBST them at the bottom.
-l1c_cppflags =
+
 
 AX_APPEND_ALL_COMPILE_FLAGS([-fopenmp -m64 -std=c11], [l1c_cflags],
                             [AC_MSG_ERROR("Compiler does not support required flag")],
                             [],[])
+l1c_cppflags=
 mex_cppflags=
 mex_cflags=
 mkl_cppflags=
@@ -100,29 +105,97 @@ mkl_cflags=
 test_cppflags=
 test_cflags=
 
+AC_CHECK_LIB([m], [sqrt], [], [])
 # ----------------------------------------------------------------------------------------- #
 # ------------------------------ Checks for MKL ------------------------------------------- #
 if test "x$with_mkl" = "xyes";
 then
-    AC_CHECK_LIB([mkl_rt], [cblas_daxpby],[], [AC_MSG_ERROR("Cannot find libmkl_rt")])
+# Intel says the link order should look like:
+# -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
+# AC_CHECK_LIB prepends the libraries, so we work backwards.
+# N.B. If we dont also linke with libkl_avx, we get link errors when dlopening in python and matlab.
+# Intel has nothing to say about this in the link advisor...
     AC_CHECK_LIB([dl], [dlopen],[], [AC_MSG_ERROR("Cannot find libdl")])
 
+    AC_CHECK_LIB([pthread], [pthread_mutex_trylock], [],
+                 [AC_MSG_ERROR([Cannot find libpthread, which is required
+                 with --with-fftw3-threads=threads])])
+
+    AC_CHECK_LIB([gomp], [omp_set_num_threads],[],[
+                 AC_MSG_ERROR(omp library is required for this program)])
+
+    mkl_libs_check="-lmkl_core -lmkl_gnu_thread -lmkl_avx -lgomp"
+    AC_SEARCH_LIBS([mkl_xblas_avx_blas_ztrmv_d], [mkl_avx], [],
+               [AC_MSG_ERROR("Cannot find libmkl_core")], [$mkl_libs_check])
+    AC_SEARCH_LIBS([mkl_spblas_zzeros], [mkl_core], [],
+               [AC_MSG_ERROR("Cannot find libmkl_core")], [$mkl_libs_check])
+    AC_SEARCH_LIBS([mkl_trs_djacobi], [mkl_gnu_thread], [],
+               [AC_MSG_ERROR("Cannot find libmkl_gnu_thread")], [$mkl_libs_check])
+    AC_SEARCH_LIBS([cblas_daxpby], [mkl_intel_lp64], [],
+               [AC_MSG_ERROR("Cannot find libmkl_intel_lp64")], [$mkl_libs_check])
 
     AC_CHECK_HEADER([mkl.h], [], [AC_MSG_ERROR("Cannot find mkl.h")])
 
     AC_DEFINE([_USEMKL_], [1], [We have MKL.])
-    AC_DEFINE([MKL_ILP64], [1], [Use ILP64 with mkl.])
+    AC_DEFINE([MKL_LP64], [1], [Use ILP64 with mkl.])
 
 else
  dnl ----------- look for another BLAS library ---------------------
-    AC_CHECK_LIB([openblas], [cblas_daxpby],[],[
-                 AC_MSG_ERROR("BLAS library with cblas_daxpby is required for this program")])
+ AC_CHECK_HEADER([cblas.h], [], [AC_MSG_ERROR("Cannot find cblas.h")])
 
-    AC_CHECK_HEADER([cblas.h], [], [AC_MSG_ERROR("Cannot find cblas.h")])
-    AC_MSG_CHECKING(checking for cblas_daxpby in cblas.h)
-    AC_EGREP_HEADER([cblas_daxpby], [cblas.h], [AC_MSG_RESULT(yes)],
-                  [AC_MSG_RESULT(no)
-                  AC_MSG_ERROR(Could not find cblas_daxpy in cblas.h)])
+    if test ! -z $BLAS_LIB ; then
+       AC_CHECK_LIB([$BLAS_LIB], [cblas_daxpy],[
+                    tmp="HAVE_${BLAS_LIB^^}"
+                    AC_DEFINE_UNQUOTED([$tmp], [1])
+                    LIBS="-l$BLAS_LIB $LIBS"], [BLAS_LIB=])
+    fi
+    # Check in OpenBlas
+    if test -z $BLAS_LIB; then
+       AC_CHECK_LIB([openblas], [cblas_daxpy],[BLAS_LIB=openblas
+                    AC_DEFINE([HAVE_OPENBLAS], [1])
+                    LIBS="-lopenblas $LIBS"],[])
+    fi
+    # Check in ATLAS
+    if test -z $BLAS_LIB; then
+       AC_CHECK_LIB([satlas], [cblas_daxpy],[BLAS_LIB=satlas
+       AC_DEFINE([HAVE_SATLAS], [1], [0])
+       LIBS="-lsatlas $LIBS"],[])
+    fi
+
+    # If we still havent found it, error out.
+    if test -z $BLAS_LIB; then
+       AC_MSG_ERROR(BLAS library with cblas_daxpy is required for this program)
+    fi
+
+# Now check if the supplied lib has daxpby
+  case $BLAS_LIB in
+       openblas)
+            AC_CHECK_FUNC([cblas_daxpby], [AC_DEFINE([HAVE_DAXPBY], [1], [0])], [have_daxpby=no])
+            AC_MSG_CHECKING(checking for cblas_daxpby in cblas.h)
+            AC_EGREP_HEADER([cblas_daxpby], [cblas.h], [AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)
+                          AC_MSG_ERROR(Could not find cblas_daxpby in cblas.h)])
+            ;;
+       satlas)  # Make a special exception for ATLAS, since they call it catlas_daxpby
+            AC_CHECK_FUNC([catlas_daxpby], [
+            AC_DEFINE([HAVE_DAXPBY], [1], [0])],
+            [have_daxpby=no])
+            AC_MSG_CHECKING(checking for cblas_daxpby in cblas.h)
+            AC_EGREP_HEADER([catlas_daxpby], [cblas.h], [AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)
+                           AC_MSG_ERROR(Could not find cblas_daxpby in cblas.h)])
+            ;;
+           *)
+           AC_CHECK_FUNC(cblas_daxpby, [AC_DEFINE([HAVE_DAXPBY], [1], [0])], [have_daxpby=no])
+           AC_MSG_CHECKING(checking for cblas_daxpby in cblas.h)
+           AC_EGREP_HEADER([cblas_daxpby], [cblas.h], [AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)
+                           AC_MSG_ERROR(Could not find cblas_daxpby in cblas.h)])
+           ;;
+  esac
+
+  #For now, throw an error if we dont have cblas_daxpby. Later, we will provide an implementation.
+  if test x$have_daxpby = xno; then
+     AC_MSG_ERROR(BLAS library with cblas_daxpby is required for this program)
+  fi
+
 
     # Check for posix_memalign or _mm_malloc
     AC_CHECK_FUNC(posix_memalign, [have_posix_mem=yes], [])
@@ -149,8 +222,7 @@ else
     then
          AC_DEFINE(_HAVE_MM_MALLOC_, [1], [We have _mm_malloc])
     else
-        AC_MSG_ERROR(This program requires either posix_memalign() or _mm_malloc in the\
-        standard library or MKL);
+        AC_MSG_ERROR(This program requires either posix_memalign() or _mm_malloc in the standard library or MKL);
     fi
 
 fi
@@ -166,7 +238,6 @@ then
    have_fftw_threads=no
    maybe_suffx="combined omp threads"
    for suffx in $maybe_suffx; do
-
        case $suffx in
             combined)
                 lib=fftw3
@@ -190,9 +261,9 @@ then
        fi
    done
 
-   if test x$with_fftw3_threads != xno && test x$have_fftw_threads = no; then
-      AC_MSG_ERROR(fftw3 threading library is required for this program)]
-   else
+   if test x$with_fftw3_threads = xyes && test x$have_fftw_threads = xno; then
+      AC_MSG_ERROR(fftw3 threading library not found)]
+   elif test x$have_fftw_threads = xyes; then
       AC_DEFINE([HAVE_FFTW3_THREADS], [1], [Compile with fftw threading support])
    fi
 
@@ -227,30 +298,30 @@ dnl The compilation check for matlabs libs will fail if we dont try to compile
 dnl as a shared library.
 dnl Also, if third arg to AC_CHECK_LIB is missing, it will automatically append, e.g.,
 dnl -lmex to $LIBS, which will make the rest of the checks fail.
-tmp_cflags=$CFLAGS
-CFLAGS="-shared $CFLAGS"
-AC_CHECK_LIB([mex], [mexErrMsgTxt],[mex_ldlibs="-lmex"],[
-             AC_MSG_ERROR(Matlab libmex library not found.)])
-AC_CHECK_LIB([mx], [mxIsScalar], [mex_ldlibs="$mex_ldlibs -lmx"],
-                   [AC_MSG_ERROR(Matlab libmx library not found.)])
-AC_CHECK_LIB([mwservices], [svMatlabRoot], [mex_ldlibs="$mex_ldlibs -lmwservices"],
-                   [AC_MSG_ERROR(Matlab libmwservices library not found.)])
-AC_CHECK_LIB([mwbuiltinsutil], [_fini], [mex_ldlibs="$mex_ldlibs -lmwbuiltinsutil"],
-                   [AC_MSG_ERROR(Matlab libmwbuiltinsutil library not found.)])
+    tmp_cflags=$CFLAGS
+    CFLAGS="-shared $CFLAGS"
+    AC_CHECK_LIB([mex], [mexErrMsgTxt],[mex_ldlibs="-lmex"],[
+                 AC_MSG_ERROR(Matlab libmex library not found.)])
+    AC_CHECK_LIB([mx], [mxIsScalar], [mex_ldlibs="$mex_ldlibs -lmx"],
+                 [AC_MSG_ERROR(Matlab libmx library not found.)])
+    AC_CHECK_LIB([mwservices], [svMatlabRoot], [mex_ldlibs="$mex_ldlibs -lmwservices"],
+                 [AC_MSG_ERROR(Matlab libmwservices library not found.)])
+    AC_CHECK_LIB([mwbuiltinsutil], [_fini], [mex_ldlibs="$mex_ldlibs -lmwbuiltinsutil"],
+                 [AC_MSG_ERROR(Matlab libmwbuiltinsutil library not found.)])
 # Reset the user CFLAGS
-CFLAGS=$tmp_cflags
+    CFLAGS=$tmp_cflags
 
-AC_DEFINE([__MATLAB__], [1], [1 to compile with mex interfaces])
-    mex_cflags="-fexceptions"
+    AC_DEFINE([__MATLAB__], [1], [1 to compile with mex interfaces])
+              mex_cflags="-fexceptions"
 
-if test -z $MEXEXT; then
-   MEXEXT=$(mexext)
-   if test $? -ne 0; then
-      AC_MSG_ERROR([Mathworks mexext must be on the system path, or you must export
+    if test -z $MEXEXT; then
+       MEXEXT=$(mexext)
+       if test $? -ne 0; then
+          AC_MSG_ERROR([Mathworks mexext must be on the system path, or you must export
                     the proper mex file extension as an envrionmental variable.])
-   fi
-fi
-AC_SUBST(MEXEXT, [.$MEXEXT])
+       fi
+    fi
+    AC_SUBST(MEXEXT, [.$MEXEXT])
 fi  # checks for mex
 
 
@@ -258,21 +329,15 @@ fi  # checks for mex
 
 # Checks for libraries.
 AC_CHECK_LIB([check], [suite_add_tcase],[],[
-             echo "check library is required for this program"
-             exit -1])
+             AC_MSG_ERROR(check library is required for this program)])
 AC_CHECK_LIB([cjson], [cJSON_GetArraySize],[],[
-    echo "cJSON library is required for this program"
-    exit -1])
-
+             AC_MSG_ERROR(cJSON library is required for this program)])
 
 AC_CHECK_LIB([gomp], [omp_set_num_threads],[],[
-echo "omp library is required for this program"
-exit -1])
+             AC_MSG_ERROR(omp library is required for this program)])
 
 AC_CHECK_LIB([m], [sqrt],[],[
-   echo "math library is required for this program"
-   exit -1])
-
+             AC_MSG_ERROR(library is required for this program)])
 
 
 # Check for headers
@@ -282,11 +347,8 @@ AC_CHECK_HEADER([check.h], [], [AC_MSG_ERROR("Cannot find check.h")], [])
 AC_CHECK_HEADER([cjson/cJSON.h], [], [AC_MSG_ERROR("Cannot find CJSON.h")])
 AC_CHECK_HEADER([math.h], [], [AC_MSG_ERROR("Cannot find math.h")])
 
-
-
 AM_CONDITIONAL([compile_dct_example], [test x$with_mkl = xyes || test x$use_fftw3 = xyes])
 AM_CONDITIONAL([comp_with_mex], [test x$with_mex = xyes])
-
 
 
 # Checks for typedefs, structures, and compiler characteristics.

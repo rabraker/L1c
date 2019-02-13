@@ -74,7 +74,7 @@ int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
   gettimeofday(&timecheck, NULL);
   start = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;
 
-#ifdef _USEMKL_
+#if defined(HAVE_LIBMKL_RT)
   /* Ensure intel doesnt fuck us.*/
   mkl_set_interface_layer(MKL_INTERFACE_ILP64);
   mkl_set_threading_layer(MKL_THREADING_GNU);

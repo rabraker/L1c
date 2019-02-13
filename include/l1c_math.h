@@ -1,7 +1,11 @@
 #ifndef __L1C_MATH__
 #define __L1C_MATH__
-
+#include "config.h"
 #include "l1c_common.h"
+
+#if defined(HAVE_SATLAS)
+#define cblas_daxpby catlas_daxpby
+#endif
 
 
 void l1c_dxmuly_z(l1c_int N,

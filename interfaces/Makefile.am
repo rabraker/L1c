@@ -38,8 +38,12 @@ libl1qc_dct_la_CFLAGS	=  $(L1CCFLAGS) -fPIC \
 libl1qc_dct_la_LIBADD	= ../src/libl1c.la \
 						../src/vcl/libvcl_math.la
 
-libl1qc_dct_la_LDFLAGS	= -module	 $(LDFLAGS)
 
+libl1qc_dct_la_LDFLAGS	= -module	 $(LDFLAGS)\
+	-Wl,--no-as-needed -Wl,--rpath=/opt/intel/compilers_and_libraries_2019.1.144/linux/mkl/lib/intel64_lin
+
+# This worked: note libmkl_avx.so
+# gcc -shared  -fPIC -DPIC  .libs/libl1qc_dct_la-libl1qc_dct.o  -Wl,--whole-archive ../src/.libs/libl1c.a ../src/vcl/.libs/libvcl_math.a -Wl,--no-whole-archive  -L/opt/intel/mkl/lib/intel64 /opt/intel/mkl/lib/intel64/libmkl_intel_ilp64.so /opt/intel/mkl/lib/intel64/libmkl_gnu_thread.so /opt/intel/mkl/lib/intel64/libmkl_core.so /opt/intel/mkl/lib/intel64/libmkl_avx.so -lgomp -lm -ldl  -lcjson -O3 -march=native -mtune=native -fopenmp -m64 -Wl,--no-as-needed -Wl,--rpath,/opt/intel/mkl/lib/intel64   -fopenmp -Wl,-soname -Wl,libl1qc_dct.so.0 -o libl1qc_dct.so.0
 
 if comp_with_mex
 # LIBEXT

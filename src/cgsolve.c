@@ -5,17 +5,17 @@ This contains the conjugate gradient solver, cgsolve. The two small routines Ax 
 #include "config.h"
 
 #ifdef _USEMKL_
-#include "mkl.h"
+#include "mkl_cblas.h"
 #else
 #include "cblas.h"
 #endif
-// #include "clapack.h"
+
 #include <stdlib.h>
 #include <math.h>
-// #include <stdio.h>
+
 #include "cgsolve.h"
 #include "l1c_common.h"
-
+#include "l1c_math.h"
 
 void cg_report(int iter,
                double best_rel_res,
