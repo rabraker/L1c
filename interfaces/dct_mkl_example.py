@@ -88,7 +88,7 @@ def l1qc_dct(eta_0, b, pix_idx, opts):
     array_1d_double = npct.ndpointer(dtype=np.double, ndim=1, flags='CONTIGUOUS')
     array_1d_int = npct.ndpointer(dtype=np.int32, ndim=1, flags='CONTIGUOUS')
 
-    libl1c = npct.load_library("libl1qc_dct.so.0", ".")
+    libl1c = npct.load_library("libl1qc_dct.so", ".")
 
     libl1c.l1qc_dct.restype = np.int32
     libl1c.l1qc_dct.argtypes = [c_int, array_1d_double,

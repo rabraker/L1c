@@ -18,7 +18,7 @@ $(info "MEXLIBS = $(MEXLDLIBS)")
 # ----------------------------------------------------------------------#
 # -------------------------------  ----------------------------------#
 if compile_dct_example
-# -lm -ldl -lgomp
+
 bin_PROGRAMS +=l1qc_dct_c
 l1qc_dct_c_SOURCES = l1qc_dct_c.c libl1qc_dct.c
 l1qc_dct_c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la
@@ -39,11 +39,9 @@ libl1qc_dct_la_LIBADD	= ../src/libl1c.la \
 						../src/vcl/libvcl_math.la
 
 
-libl1qc_dct_la_LDFLAGS	= -module	 $(LDFLAGS)\
-	-Wl,--no-as-needed -Wl,--rpath=/opt/intel/compilers_and_libraries_2019.1.144/linux/mkl/lib/intel64_lin
+libl1qc_dct_la_LDFLAGS	= $(LDFLAGS)\
+							-Wl,--no-as-needed
 
-# This worked: note libmkl_avx.so
-# gcc -shared  -fPIC -DPIC  .libs/libl1qc_dct_la-libl1qc_dct.o  -Wl,--whole-archive ../src/.libs/libl1c.a ../src/vcl/.libs/libvcl_math.a -Wl,--no-whole-archive  -L/opt/intel/mkl/lib/intel64 /opt/intel/mkl/lib/intel64/libmkl_intel_ilp64.so /opt/intel/mkl/lib/intel64/libmkl_gnu_thread.so /opt/intel/mkl/lib/intel64/libmkl_core.so /opt/intel/mkl/lib/intel64/libmkl_avx.so -lgomp -lm -ldl  -lcjson -O3 -march=native -mtune=native -fopenmp -m64 -Wl,--no-as-needed -Wl,--rpath,/opt/intel/mkl/lib/intel64   -fopenmp -Wl,-soname -Wl,libl1qc_dct.so.0 -o libl1qc_dct.so.0
 
 if comp_with_mex
 # LIBEXT
@@ -54,6 +52,7 @@ if comp_with_mex
 #    -module makes it so we dont have to have the 'lib' prefix
 #    -shrext .mexa64 lets us get a library without the .so, and with
 #                    matlabs required extension.
+
 
 lib_LTLIBRARIES += l1qc_dct_mex.la
 
@@ -79,33 +78,24 @@ endif
 
 .PHONY: convenience-link clean-convenience-link
 
+# We need to ensure that we dont grep if lib_LTLTLIBRARIES is empty.
+# Also, need to replace things like .so.0 with .so, so matlab can read it.
+# lib_LTLLIBRARIES contains the .la files, which are just text descriptions.
 convenience-link: $(lib_LTLIBRARIES)
 	@echo "tlt libs $(lib_LTLIBRARIES)"
-	@for soname in `$(EGREP) "^dlname=" $^|sed -e "s/^.*=//g"|sed -e "s/'//g"`; do  \
+	@for soname in `test -z $$^ || $(EGREP) "^dlname=" $^|sed -e "s/^.*=//g"|sed -e "s/'//g"`; do  \
 		echo "$$soname: creating convenience link from $(abs_builddir)/.libs to $(abs_builddir)"; \
+		new_soname=`echo $$soname|sed -e "s/so.*$$/so/g"`; \
 		echo "soname: $$soname";\
+		echo "new-soname: $$new_soname";\
 		rm -f $(abs_builddir)/$$soname ; \
 		test -e $(abs_builddir)/.libs/$$soname && \
-		$(LN_S) $(abs_builddir)/.libs/$$soname $$soname || echo "FAILED";\
+		$(LN_S) $(abs_builddir)/.libs/$$soname $$new_soname || echo "FAILED";\
 	done
 
-# Im not sure what exactly this was supposed to do, but it doesnt work.
-# @for soname in `echo | $(EGREP) "^dlname=" $^ | $(SED) -e "s|^dlname='\(.*\)'|\1|"`; do  \
-#   	echo "$$soname: creating convenience link from $(abs_builddir)/.libs to $(top_builddir)"; \
-# 	rm -f $(top_builddir)/$$soname ; \
-# 	test -e $(abs_builddir)/.libs/$$soname && \
-# 	cd $(top_builddir) && \
-# 	$(LN_S) $(abs_builddir)/.libs/$$soname $$soname || true;\
-# done
 
 clean-convenience-link:
 	rm -f *.so* *.mexa64 *.o *.lo *.la
 
-# @echo "input to clean-conf:  $(lib_LTLIBRARIES)"
-# @for soname in `$(EGREP) "^dlname=" $(lib_LTLIBRARIES)|sed -e "s/^.*=//g"|sed -e "s/'//g"`; do  \
-# 	echo "$$soname: cleaning convenience links"; \
-# done
 
-# 		test -L $(abs_builddir)/$$soname && rm -f $(abs_builddir)/$$soname || true; \
-#
 all-local:: convenience-link

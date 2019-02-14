@@ -8,7 +8,7 @@ function cleanup(){
 trap cleanup EXIT
 
 cd interfaces
-cp libl1qc_dct.so.0 libl1qc_dct.so
+# cp libl1qc_dct.so.0 libl1qc_dct.so
 
 verbose=0
 data_path="example_img_data.json"
