@@ -5,6 +5,9 @@
   https://libcheck.github.io/
 
  */
+#include "config.h"
+
+
 #define CK_FLOATING_DIG 20
 #include <stdlib.h>
 #include <stdio.h>

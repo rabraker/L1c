@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "l1c_common.h"
 #include <check.h>
 #include <stdint.h>

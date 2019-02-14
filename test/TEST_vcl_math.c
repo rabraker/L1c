@@ -14,6 +14,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
   https://libcheck.github.io/check/doc/check_html/check_4.html#No-Fork-Mode
 
  */
+#include "config.h"
 
 
 #define CK_FLOATING_DIG 20

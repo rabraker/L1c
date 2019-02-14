@@ -1,6 +1,6 @@
 
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src src/vcl interfaces
+SUBDIRS = src src/vcl interfaces test
 
 LDFLAGS=-L/usr/local/MATLAB/R2018b/bin/glnxa64 -lmex
 

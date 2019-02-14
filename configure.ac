@@ -391,5 +391,5 @@ AC_MSG_NOTICE(Compile with MKL? $with_mkl)
 AC_MSG_NOTICE(Compile with FFTW? $use_fftw3)
 AC_MSG_NOTICE(Using mex linkage $mex_ldlibs)
 
-AC_CONFIG_FILES([Makefile  src/Makefile src/vcl/Makefile interfaces/Makefile])
+AC_CONFIG_FILES([Makefile  test/Makefile src/Makefile src/vcl/Makefile interfaces/Makefile])
 AC_OUTPUT
