@@ -34,9 +34,9 @@ libl1qc_dct_la_SOURCES	= libl1qc_dct.c
 libl1qc_dct_la_CPPFLAGS = -I$(top_srcdir)/include  \
 							 $(L1CCPPFLAGS)
 libl1qc_dct_la_CFLAGS	=  $(L1CCFLAGS) -fPIC \
-						-std=c11 $(WARNFLAGS)
+							-std=c11 $(WARNFLAGS)
 libl1qc_dct_la_LIBADD	= ../src/libl1c.la \
-						../src/vcl/libvcl_math.la
+						  ../src/vcl/libvcl_math.la
 
 
 libl1qc_dct_la_LDFLAGS	= $(LDFLAGS)\

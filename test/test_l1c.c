@@ -29,10 +29,11 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 int main(void)
 {
 
-// #ifdef MKL_ILP64
-//   mkl_set_interface_layer(MKL_INTERFACE_ILP64);
-//   printf("have ilp64\n");
-// #endif
+#if defined(HAVE_LIBMKL_RT)
+  // This should fail to compile, but is here for now to prevent the tests
+  // from failing bizarily if we decide to go with the single MKL lib again.
+  mkl_set_interface_layer(MKL_INTERFACE_ILP64);
+#endif
 
   enum fork_status fstat = CK_NOFORK;
   // enum fork_status fstat = CK_FORK;
