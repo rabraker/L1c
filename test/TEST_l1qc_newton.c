@@ -62,7 +62,7 @@ START_TEST (test_l1qc_newton_1iter)
                     .AtAx=dct_MtEt_EMx_new};
 
   if (load_file_to_json(fpath, &test_data_json)){
-    perror("Error loading data in test_l1qc_newton_1iter\n");
+    fprintf(stderr, "Error loading data in test_l1qc_newton_1iter\n");
     ck_abort();
   }
   status +=extract_json_double_array(test_data_json, "x0", &x0, &N);
@@ -134,7 +134,7 @@ START_TEST (test_l1qc_newton_1iter)
 
 
   if (status){
-    perror("Error Loading json data in 'test_l1qc_newton_1ter()'. Aborting\n");
+    fprintf(stderr, "Error Loading json data in 'test_l1qc_newton_1ter()'. Aborting\n");
     ck_abort();
   }
 
@@ -181,7 +181,7 @@ START_TEST (test_newton_init)
   l1c_int *pix_idx=NULL;
 
   if (load_file_to_json(fpath, &test_data_json)){
-    perror("Error loading data in test_newton_init\n");
+    fprintf(stderr, "Error loading data in test_newton_init\n");
     ck_abort();
   }
   status +=extract_json_double_array(test_data_json, "x", &x, &N);
@@ -198,7 +198,7 @@ START_TEST (test_newton_init)
   u = malloc_double(N);
   Dwork = malloc_double(N);
   if (status | !u | !Dwork){
-    perror("Error Loading json data in 'test_newton_init()'. Aborting\n");
+    fprintf(stderr, "Error Loading json data in 'test_newton_init()'. Aborting\n");
     goto exit1;
   }
 
@@ -250,7 +250,7 @@ START_TEST (test_find_max_step)
   int status=0;
 
   if (load_file_to_json(fpath, &test_data_json)){
-    perror("Error loading data in test_find_max_stept\n");
+    fprintf(stderr, "Error loading data in test_find_max_stept\n");
     ck_abort();
   }
   status +=extract_json_double_array(test_data_json, "dx", &dx, &N);
@@ -263,7 +263,7 @@ START_TEST (test_find_max_step)
   status +=extract_json_double(test_data_json, "epsilon", &epsilon);
 
   if (status){
-    perror("Error Loading json data in 'test_find_max_step()'. Aborting\n");
+    fprintf(stderr, "Error Loading json data in 'test_find_max_step()'. Aborting\n");
     ck_abort();
   }
   //s = find_max_step(dx, du, Adx, fu1, fu2, r, epsilon, save_on, jopts);
@@ -313,7 +313,7 @@ START_TEST(test_compute_descent)
                     .AtAx=dct_MtEt_EMx_new};
 
   if (load_file_to_json(fpath, &test_data_json)){
-    perror("Error loading data in test_compute_descent\n");
+    fprintf(stderr, "Error loading data in test_compute_descent\n");
     ck_abort();
   }
 
@@ -340,7 +340,7 @@ START_TEST(test_compute_descent)
   status +=extract_json_double(test_data_json, "cgres", &cgres_exp);
   status +=extract_json_int(test_data_json, "cgiter", &cgiter_exp);
   if (status){
-    perror("Error Loading json data in 'test_compute_descent()'. Aborting\n");
+    fprintf(stderr, "Error Loading json data in 'test_compute_descent()'. Aborting\n");
     ck_abort();
   }
 
@@ -355,7 +355,7 @@ START_TEST(test_compute_descent)
   gd.ntgu = malloc_double(N);
   if ( (!DWORK_6N) | (!gd.w1p) | (!gd.dx) | (!gd.du) | (!gd.gradf) | (!gd.Adx)
        |(!gd.sig11)| (!gd.sig12) |(!gd.ntgu) ){
-    perror("Error allocating memory\n");
+    fprintf(stderr, "Error allocating memory\n");
   }
 
 
@@ -434,7 +434,7 @@ START_TEST(test_H11pfun)
   l1c_int *pix_idx;
 
   if (load_file_to_json(fpath, &test_data_json)){
-    perror("Error loading data in test_H11pfun\n");
+    fprintf(stderr, "Error loading data in test_H11pfun\n");
     ck_abort();
   }
 
@@ -450,14 +450,14 @@ START_TEST(test_H11pfun)
   status +=extract_json_double_array(test_data_json, "y_exp", &y_exp, &N);
 
   if (status){
-    perror("Error Loading json data in 'test_H11pfun()'. Aborting\n");
+    fprintf(stderr, "Error Loading json data in 'test_H11pfun()'. Aborting\n");
     goto exit;
   }
   y = malloc_double(N);
   z_orig = malloc_double(N);
   h11p_data.Dwork_1N = malloc_double(N);
   if (!y || !z_orig || !h11p_data.Dwork_1N){
-    perror("Unable to allocate memory\n");
+    fprintf(stderr, "Unable to allocate memory\n");
     status +=1;
     goto exit;
   }
@@ -523,7 +523,7 @@ START_TEST(test_get_gradient)
   char fpath[] = "test_data/descent_data.json";
 
   if (load_file_to_json(fpath, &test_data_json)){
-    perror("Error loading data in test_get_gradient\n");
+    fprintf(stderr, "Error loading data in test_get_gradient\n");
     ck_abort();
   }
 
@@ -543,7 +543,7 @@ START_TEST(test_get_gradient)
   status +=extract_json_double(test_data_json, "tau", &tau);
 
   if (status){
-    perror("Error Loading json data in 'test_get_gradient()'. Aborting\n");
+    fprintf(stderr, "Error Loading json data in 'test_get_gradient()'. Aborting\n");
     ck_abort();
   }
 
@@ -620,7 +620,7 @@ START_TEST(test_line_search)
   char fpath[] = "test_data/line_search_data.json";
 
   if (load_file_to_json(fpath, &test_data_json)){
-    perror("Error loading data in test_line_search\n");
+    fprintf(stderr, "Error loading data in test_line_search\n");
     ck_abort();
   }
 
@@ -657,7 +657,7 @@ START_TEST(test_line_search)
   status +=extract_json_double(test_data_json, "flu", &flu_exp);
 
   if (status){
-    perror("Error Loading json data in 'test_line_search()'. Aborting\n");
+    fprintf(stderr, "Error Loading json data in 'test_line_search()'. Aborting\n");
     ck_abort();
   }
 
@@ -738,7 +738,7 @@ START_TEST(test_f_eval)
   l1c_int N=0, M=0, status=0;
   char fpath[] = "test_data/f_eval_data.json";
   if (  load_file_to_json(fpath, &test_data_json) ){
-    perror("Error loading data for test_f_eval\n");
+    fprintf(stderr, "Error loading data for test_f_eval\n");
     ck_abort();
   }
   // Inputs to f_eval
@@ -754,7 +754,7 @@ START_TEST(test_f_eval)
   status +=extract_json_double(test_data_json, "f_exp", &f_exp);
   status +=extract_json_double(test_data_json, "fe_exp", &fe_exp);
   if (status){
-    perror("Error Loading json data in 'test_f_eval'. Aborting\n");
+    fprintf(stderr, "Error Loading json data in 'test_f_eval'. Aborting\n");
     ck_abort();
   }
 

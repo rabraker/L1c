@@ -7,6 +7,7 @@
 #define cblas_daxpby catlas_daxpby
 #endif
 
+void l1c_init_vec(l1c_int N, double *x, double alpha);
 
 void l1c_dxmuly_z(l1c_int N,
                   double *x,

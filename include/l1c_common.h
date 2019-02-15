@@ -79,6 +79,7 @@ static inline double max(double a, double b){
 #define L1C_OUT_OF_MEMORY     (1U << 3)
 #define L1C_DCT_INIT_FAILURE  (1U << 5)
 #define L1C_FILE_READ_FAILURE (1U << 7)
+#define L1C_CGSOLVE_FAILURE   (1U << 7)
 
 
 #endif

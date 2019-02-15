@@ -3,6 +3,17 @@
 #include <math.h>
 #include "l1c_common.h"
 
+
+/**
+   Initialize a vector x of length N to alpha in all entries.
+*/
+void l1c_init_vec(l1c_int N, double *x, double alpha){
+  for (int i=1; i<N; i++){
+    x[i] = alpha;
+  }
+}
+
+
 /**
    Compute the vector elementwise product
    z = x.*y

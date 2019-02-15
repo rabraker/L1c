@@ -5,10 +5,10 @@
 
 #include "l1qc_newton.h"
 #include "cgsolve.h"
-#include "l1c_common.h" //includes <stdio.h> or mex.h, as needed.
+#include "l1c_common.h"
 #include "vcl_math.h"
 #include "l1c_math.h"
-//#include "omp.h"
+
 
 
 void lb_report(int lb_iter,
@@ -25,14 +25,6 @@ void newton_report(int iter,
                    double f,
                    CgResults cg_results,
                    LSStat ls_status);
-/**
-   Initialize a vector x of length to alpha in all entries.
- */
-void init_vec(l1c_int N, double *x, double alpha){
-  for (int i=1; i<N; i++){
-    x[i] = alpha;
-  }
-}
 
 
 
@@ -52,7 +44,7 @@ void f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, double tau, d
     fu1 = x - u
     fu2 = -x - u
 
-    fe  = r^T*r - epsilon ^2
+    fe  = <r, r> - epsilon ^2
     f = total cost function value
 
     work space
@@ -246,7 +238,7 @@ int compute_descent(l1c_int N, double *fu1, double *fu2, double *atr, double fe,
   }
 
   if (cg_result->cgres > 0.5){
-    return 1;
+    return L1C_CGSOLVE_FAILURE;
   }
   return 0;
 }
@@ -487,7 +479,7 @@ LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
        |!gd.w1p| !gd.dx| !gd.du
        |!gd.sig11 | !gd.sig12 |!gd.ntgu
        |!gd.gradf|!gd.Adx| !atr){
-    lb_res.status = 1;
+    lb_res.status = L1C_OUT_OF_MEMORY;
     goto exit;
   }
 
@@ -510,7 +502,7 @@ LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
   for (lb_iter=1; lb_iter<=params.lbiter; lb_iter++){
 
     /*Re-initialize dx to zero every lb-iteration. */
-    init_vec(N, gd.dx, 0.0);
+    l1c_init_vec(N, gd.dx, 0.0);
 
 
     /* Compute Ax - b = r */
@@ -519,7 +511,7 @@ LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
 
     if ( (lb_iter==1) & check_feasible_start(M, r, params.epsilon) ){
         printf("Starting point is infeasible, exiting\n");
-        lb_res.status = 2;
+        lb_res.status = L1C_INFEASIBLE_START;
         goto exit;
       }
 
@@ -604,7 +596,7 @@ LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
   } /* LB-iter */
 
   /* ----- Cleanup -------------------- */
-  goto exit;
+
 
  exit:
   free_double(u);

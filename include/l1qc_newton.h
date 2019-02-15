@@ -96,13 +96,10 @@ void H11pfun(l1c_int N, double *z, double *y,  void *hess_data_in);
 
 int newton_init(l1c_int N, double *x, double *u,  NewtParams *params);
 
-/*
-int get_gradient(int N, double *fu1, double *fu2, double fe,  double tau, double *gradf);
-*/
 
 /* Evalutes the value function */
-extern void f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, double tau, double epsilon,
+void f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, double tau, double epsilon,
                    double *fu1, double *fu2, double *fe, double *f);
-extern LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
+LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
                             NewtParams params, AxFuns Ax_funs);
 #endif
