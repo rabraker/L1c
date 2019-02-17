@@ -20,6 +20,12 @@ GPATH
 GRTAGS
 ltximg/
 
+test-driver
+*.log
+*.trs
+test_l1c
+*.dll
+
 config.guess
 config.h
 config.h.in~

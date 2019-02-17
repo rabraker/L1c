@@ -1,4 +1,5 @@
 #!/bin/bash
 
 autoreconf -i
-automake
+automake --add-missing
+

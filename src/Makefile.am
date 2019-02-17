@@ -11,8 +11,10 @@ AM_CFLAGS =	 $(MAT_DEF)
 # Using noinst_LTLLIBRARIES instead of noinst_LIBRARIES prevents the warning
 # about linking against a static library when we compile and link the interfaces
 
+lib_LTLIBRARIES = libl1c.la
 
-noinst_LTLIBRARIES = libl1c.la
+# noinst_LTLIBRARIES = libl1c.la
+
 libl1c_la_CPPFLAGS = -I$(top_srcdir)/include $(L1CCPPFLAGS)
 libl1c_la_CFLAGS = $(L1CCFLAGS)  -fPIC $(WARNFLAGS)
 libl1c_la_SOURCES = l1qc_newton.c \
@@ -21,6 +23,11 @@ libl1c_la_SOURCES = l1qc_newton.c \
 					dct.c      \
 					dct_mkl.c  \
 					json_utils.c
+
+libl1c_la_LIBADD	= ../src/vcl/libvcl_math.la
+
+libl1c_la_LDFLAGS	= $(LDFLAGS)\
+					-Wl,--no-as-needed
 
 
 # include_HEADERS = ../include/*.c

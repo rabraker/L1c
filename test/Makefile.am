@@ -8,23 +8,20 @@
 AUTOMAKE_OPTIONS = foreign 1.8 no-dependencies
 
 
+AM_TESTS_FD_REDIRECT = 9>&1
 
-$(info "MATHLIBS = $(MATHLIBS)")
-$(info "LDFLAGS = $(LDFLAGS)")
-$(info "MEXCPP = $(MEXCPPFLAGS)")
-$(info "MEXLIBS = $(MEXLDLIBS)")
 # ----------------------------------------------------------------------#
 # -------------------------------  ----------------------------------#
 # if compile_test
+TESTS = test_l1c
+check_PROGRAMS   = test_l1c
 
-bin_PROGRAMS   = test_l1c
-
-test_l1c_SOURCES = TEST_cgsolve.c      \
+test_l1c_SOURCES = TEST_cgsolve.c       \
 					TEST_l1c_math.c     \
 					TEST_l1c_common.c   \
 					TEST_l1qc_newton.c  \
 					TEST_vcl_math.c     \
-					test_l1magic.c      \
+					test_l1c.c          \
 					TEST_dct.c          \
 					TEST_dct_mkl.c
 test_l1c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la

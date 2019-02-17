@@ -1,16 +1,7 @@
 /*
-This is a test suite for the fourier integration functions contained in
-../src/ss_fourier_functions.c. The data used to test these functions is
-contained in the header file test_data_ss_ff.h, which defines several global
-variables. The header file is generated from the matlab script called
-generate_test_data.m
+This is a test suite for the l1qc_newton library.
 
-This test suite uses the libcheck framework. On my computer, this got installed
-into /usr/local/lib, which was not by default found by the system. Thus, I have
-to do
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
-
-
+This test suite uses the libcheck framework.
   https://libcheck
   .github.io/check/doc/check_html/check_4.html#No-Fork-Mode
 
@@ -380,8 +371,8 @@ START_TEST(test_compute_descent)
   ck_assert_double_array_eq_tol(N, sig11_exp, gd.sig11, TOL_DOUBLE*100);
   ck_assert_double_array_eq_tol(N, sig12_exp, gd.sig12, TOL_DOUBLE*100);
   ck_assert_double_array_eq_tol(N, w1p_exp, gd.w1p, TOL_DOUBLE*100);
-  ck_assert_double_array_eq_reltol(N, dx_exp, gd.dx, TOL_DOUBLE*100);
-  ck_assert_double_array_eq_reltol(N, du_exp, gd.du, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(N, dx_exp, gd.dx, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(N, du_exp, gd.du, TOL_DOUBLE*100);
 
   // ck_assert_int_eq(cgr.cgiter, cgiter_exp);
   ck_assert_double_eq_tol(cgr.cgres, cgres_exp, TOL_DOUBLE*100);
