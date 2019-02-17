@@ -5,8 +5,6 @@
 #+PROPERTY: SAVE_AS projects/l1c.html
 #+OPTIONS: tex:t
 #+STARTUP: latexpreview
-#+TODO: TODO(t) WAITING(w@/!) | DONE(d@/!) CANCELED(c@/!) STARTED(s@/!) DEFERRED(ef@/!)
-#+SEQ_TODO: TODO STARTED WAITING DELEGATED APPT | DONE DEFERRED CANCELLED
 
 
 
@@ -33,7 +31,7 @@ So far, using ~l1C~ gives me a speed increase of between 2 and 5 times faster co
 
 If you compile with FFTW+OpenBlas, it is important that both libraries are compiled with openmp. I dont quite understand what happens, but if this is not the case, performance can suffer dramatically. In addition, if you have a CPU with hyperthreading, it is important to export the environmental variable
 
-~>> export OMP_NUM_THREADS=N~
+~export OMP_NUM_THREADS=N~
 
 where N is the number of *physical* cores (essentially, if you have HT, this is half the the number of processors you see in a resource monitor). The code currently can not detect this, and for number crunching applications like this one, HT is detrimental.
 
@@ -68,11 +66,11 @@ If OpenBlas/Atlas and FFTW3 are compiled with support for threading and the avx 
 
 By default, the configure script will search for first OpenBlas, then ATLAS (MKL is handled as a special case, see below). If you have both installed, you can instruct ~configure~ to choose one over the other by setting the envirnmental variable ~BLAS_LIB=[openblas][satlas]~. The key requirement for the BLAS library is that it has the extension ~cblas_daxpby~, or in the case of ATLAS, ~catlas_daxpby~. Thus, in principle, you can use another BLAS library with this extension, though that is untested.
 
-To enable compiling the examples, use the flag ~--with-fftw3~. FFtW3 threading comes in three flavors: (1) OpenMP threading (~libfftw_omp~), (2) POSIX threads (~libfftw3_threads~) and (3), as a single, combined library. To choose a particular threading version, use the flag ~--with-fftw3-threads=[combined][omp][threads][yes][no]~. The ~yes~ option will search over all three possibilities. 
+To enable compiling the examples, use the flag ~--with-fftw3~. FFTW3 threading comes in three flavors: (1) OpenMP threading (~libfftw_omp~), (2) POSIX threads (~libfftw3_threads~) and (3), as a single, combined library. To choose a particular threading version, use the flag ~--with-fftw3-threads=[combined][omp][threads][yes][no]~. The ~yes~ option will search over all three possibilities. On Windows with MinGW, FFTW3 only compiles threading into a combined library.
 
-To compile with MKL, use ~--with-mkl~. However, see below for [[sec:mkl_cautions][cautions regarding this option]].
+To compile with MKL, use ~--with-mkl~. However, see below for [[sec:mkl_cautions][cautions regarding MKL]].
 
-To enable compiling a Matlab mex function, use ~--with-mex~. This requires that a script ~mexext~ is on your path, or that your export the environmental variable ~MEXEXT~ with the proper mex extension for your platform.
+To enable compiling a Matlab mex function, use ~--with-mex~. This requires that a script ~mexext~ is on your path, or that you export the environmental variable ~MEXEXT~ with the proper mex extension for your platform.
 
 In general, it is likely (almost certain for mex) that these libraries will not be on your default search path, so you must tell ~configure~ where they are by defining them in the ~CPPFLAGS~ and ~LDFLAGS~ environmental variables. See the example below. 
 
@@ -86,7 +84,7 @@ The unit tests depend on two additional libraries. Data for the unit tests is ge
 
 It is highly recommended to install these dependencies and run the tests.
 
-*** TODO Remove dependency on Matlab
+*** TODO: Remove dependency on Matlab
 It remains an outstanding goal to remove the dependency on Matlab for the test data.
 
 *** Examples
@@ -98,7 +96,7 @@ CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include" \
 #+END_SRC
 
 
-Alternatively, you export ~CPPFLAGS~ and ~LDFLAGS~:
+Alternatively, you can export ~CPPFLAGS~ and ~LDFLAGS~:
 #+BEGIN_SRC bash
 export CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include"
 export LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib"
@@ -120,12 +118,12 @@ Note that on my system, the command ~mexext~ is located in ~/usr/local/MATLAB/R2
 ** Building the test data
 
 1. ~build_log_barrier_test_data.m~: this scripts builds data to test the outer log-barrier iterations. JSON files are saved into test_data with the name ~sprintf('lb_test_data_iter_%d.json', lb_iter)~.
-2. ~~build_newton_init_data.m~ Builds a small set of data to check that we compute the number of log-barrier iterations and tau parameter properly. Used in ~test_newton_init()~.
+2. ~build_newton_init_data.m~ Builds a small set of data to check that we compute the number of log-barrier iterations and tau parameter properly. Used in ~test_newton_init()~.
 
 *** Cautions with MKL
 <<sec:mkl_cautions>>
 
-Building with MKL is finicky, especially if you want build a shared library that you use in python or matlab. Intel recommends using their  [[https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor/][Link Advisor]] to figure out the right compiler flags and linking order. Unfortunately, this information is both incomplete and changes with different versions of MKL. I have had good success using the Link Advisor link line when compiling a stand alone program. When compiling a shared library that you then want to call from matlab (via either mex or dlopen) or from python, typically results in python and matlab being unable to resolve all the dependencies when they try to dlopen your library.
+Building with MKL is finicky, especially if you want to build a shared library that you use in python or Matlab. Intel recommends using their  [[https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor/][Link Advisor]] to figure out the right compiler flags and linking order. Unfortunately, this information is both incomplete and changes with different versions of MKL. I have had good success using the Link Advisor link line when compiling a stand alone program. When compiling a shared library that you then want to call from matlab (via either mex or dlopen) or from python, typically results in python and matlab being unable to resolve all the dependencies when they try to dlopen your library.
 
 Especially on the python side, the internet is full of people complaining about undefined references (to, e.g., ~libmkl_avx~ and ~libmkl_def.so~) when trying to link Numpy with MKL [[[https://stackoverflow.com/questions/36659453/intel-mkl-fatal-error-cannot-load-libmkl-avx2-so-or-libmkl-def-so][1]]] [[[https://software.intel.com/en-us/forums/intel-math-kernel-library/topic/473447][2]]] [[[https://software.intel.com/en-us/forums/intel-math-kernel-library/topic/733207][3]]], with folks suggestion solutions like wrapper scripts that LD_PRELOAD the missing libaries. Even the Intel folks don't know exactly what to do with it. For me, I have had success adding the un-resolved libraries to the link line (which Intel still has not noted in the Link Advisor). However, this seems to not work for some people, may cause problems on chips without avx instructions, and may or may not work with other versions of MKL (I have tested with 2019). 
 
@@ -137,7 +135,7 @@ As a user, the primary function you need to worry about is
 #+BEGIN_SRC c 
 
 /*l1qc_newton.h */
-extern LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
+LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
                             NewtParams params, AxFuns Ax_funs);
 
 #+END_SRC
@@ -216,7 +214,7 @@ I have made a few changes (improvements?) to the original ~~l1-magic~ algorithm,
 2. Figure out the license. This may mean re-working all the test code because ~l1-magic~ doesn't come with an explicit license.
 3. Make it build on windows, at least using cygwin or mingw.
 4. Other optimization routines. On the list are
-   - The TV-denoising problem using Bregman iteration. This seems like a really nice way to reduce much of the noise CS reconstructions.
+   - The TV-denoising problem using Bregman iteration. This seems like a really nice way to reduce much of the noise in CS reconstructions.
    - [[https://web.stanford.edu/~boyd/l1_ls/][l1-ls]] from Stephen Boyd's research group.
    - NESTA, which from my cursory inspection, seems to depend on l1-ls.
 
