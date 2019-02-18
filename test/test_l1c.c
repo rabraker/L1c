@@ -40,7 +40,7 @@ int main(void)
   Suite *s;
   SRunner *sr;
 
-  s = dct_mkl_suite();
+  s = dct_suite();
   sr = srunner_create(s);
   srunner_set_fork_status(sr, fstat);
 
@@ -48,7 +48,6 @@ int main(void)
 
   srunner_add_suite(sr, cgsolve_suite());
   srunner_add_suite(sr, l1qc_newton_suite());
-  srunner_add_suite(sr, dct_suite());
   srunner_add_suite(sr, vcl_math_suite());
 
   srunner_add_suite(sr, l1c_math_suite());

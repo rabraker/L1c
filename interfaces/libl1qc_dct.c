@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 /* dct_mkl.h defines the Ax and Aty operations.
-   To adapt this mex file to a different set of transformations,
+   To adapt this file to a different set of transformations,
    this largely what must be changed. Your new set of transformations
    must expose three functions with the following prototype:
 
@@ -21,20 +21,8 @@
    where x and z have length n, and y has length m and m<n.
 */
 
-#ifdef _USEMKL_
-#include "dct_mkl.h"
-
-#define Ax_fun dctmkl_EMx_new
-#define Aty_fun dctmkl_MtEty
-#define AtAx_fun dctmkl_MtEt_EMx_new
-#define ax_idct dctmkl_idct
-#define ax_setup dctmkl_setup
-#define ax_destroy dctmkl_destroy
-
-#else
-#ifdef _USEFFTW3_
-
 #include "dct.h"
+
 #define Ax_fun dct_EMx_new
 #define Aty_fun dct_MtEty
 #define AtAx_fun dct_MtEt_EMx_new
@@ -42,8 +30,6 @@
 #define ax_setup dct_setup
 #define ax_destroy dct_destroy
 
-#endif
-#endif
 
 
 

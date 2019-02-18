@@ -9,19 +9,6 @@
 #include <cjson/cJSON.h>
 #include "json_utils.h"
 
-/* dct_mkl.h defines the Ax and Aty operations.
-   To adapt this mex file to a different set of transformations,
-   this largely what must be changed. Your new set of transformations
-   must expose three functions with the following prototype:
-
-   void Ax(double *x, double *y)
-   void Aty(double *y, double *x)
-   void AtAx(double *x, double *z)
-
-   where x and z have length n, and y has length m and m<n.
-*/
-
-// #include "dct_mkl.h"
 
 
 typedef struct L1qcDctOpts{

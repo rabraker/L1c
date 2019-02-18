@@ -22,8 +22,8 @@ test_l1c_SOURCES = TEST_cgsolve.c       \
 					TEST_l1qc_newton.c  \
 					TEST_vcl_math.c     \
 					test_l1c.c          \
-					TEST_dct.c          \
-					TEST_dct_mkl.c
+					TEST_dct.c
+
 test_l1c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la
 
 test_l1c_CPPFLAGS =-I$(top_srcdir)/include  \
