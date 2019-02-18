@@ -19,8 +19,8 @@ classdef L1qcTestData
       L1qcTestData.build_newton_init_data(test_data_root);
       
       L1qcTestData.build_feval_test_data(test_data_root);
-      L1qcTestData.build_cgsolve_test_data(test_data_root);
-      L1qcTestData.build_dct_test_data(test_data_root);
+      % L1qcTestData.build_cgsolve_test_data(test_data_root);
+      % L1qcTestData.build_dct_test_data(test_data_root);
       L1qcTestData.build_l1qc_newton_test_data(test_data_root);
 
       L1qcTestData.build_logbarrier_test_data(test_data_root);
