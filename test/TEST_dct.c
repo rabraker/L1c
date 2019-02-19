@@ -32,6 +32,8 @@
 #define TOL_LARGE_DCT TOL_DOUBLE_SUPER
 #endif
 
+extern char* fullfile(char *base_path, char *name);
+extern char *test_data_dir;
 
 typedef struct DctData{
   l1c_int *pix_idx;
@@ -74,7 +76,7 @@ void setup(DctData *dctd){
 
   int setup_status=0;
   if (load_file_to_json(dctd->fpath, &test_data_json)){
-    fprintf(stderr, "Error loading data in test_dct_MtEt_large\n");
+    fprintf(stderr, "Error loading data in test_dct\n");
     ck_abort();
   }
 
@@ -128,10 +130,12 @@ void teardown(DctData *dctd){
 void setup_small(void){
   dct_small_data = malloc(sizeof(DctData));
 
-  char fpath_dct_small[] = "test_data/dct_small.json";
+  char *fpath_dct_small = fullfile(test_data_dir, "dct_small.json");
+
   sprintf(dct_small_data->fpath, "%s", fpath_dct_small);
   setup(dct_small_data);
 
+  free(fpath_dct_small);
 }
 
 void teardown_small(void){
@@ -143,9 +147,12 @@ void teardown_small(void){
 void setup_large(void){
   dct_large_data = malloc(sizeof(DctData));
 
-  char fpath_dct_large[] = "test_data/dct_large.json";
+  char *fpath_dct_large = fullfile(test_data_dir, "dct_large.json");
   sprintf(dct_large_data->fpath, "%s", fpath_dct_large);
   setup(dct_large_data);
+
+  free(fpath_dct_large);
+
 }
 
 void teardown_large(void){
@@ -156,9 +163,11 @@ void teardown_large(void){
 void setup_pure_dct(void){
   dct_pure_data = malloc(sizeof(DctData));
 
-  char fpath_dct_pure[] = "test_data/dct_small_pure_dct.json";
+  char *fpath_dct_pure = fullfile(test_data_dir, "dct_small_pure_dct.json");
   sprintf(dct_pure_data->fpath, "%s", fpath_dct_pure);
   setup(dct_pure_data);
+
+  free(fpath_dct_pure);
 }
 
 void teardown_pure(void){
