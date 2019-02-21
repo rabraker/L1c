@@ -425,7 +425,7 @@ int check_feasible_start(l1c_int M, double *r, double epsilon){
     // Using minimum-2 norm  x0 = At*inv(AAt)*y.') as they
     // will require updates to cgsolve.
     printf("epsilon = %f,  ||r|| = %.20f\n", epsilon, cblas_dnrm2(M, r, 1));
-    return 1;
+    return L1C_INFEASIBLE_START;
   }else
     return 0;
 }
