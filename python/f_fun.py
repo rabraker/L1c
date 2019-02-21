@@ -202,11 +202,11 @@ def f_fun_fact(b, Amat, epsilon, tau):
 def gradf(Amat, r, fu1, fu2, fe, tau):
     atr = (Amat.T).dot(r)
 
-    ntgz = 1/fu1 - 1/fu2 + (1/fe) * atr
-    ntgu = -tau - 1/fu1 - 1/fu2
-    gradf = -(1/tau)*np.hstack((ntgz, ntgu))
+    ntau_gradx = 1/fu1 - 1/fu2 + (1/fe) * atr
+    ntau_gradu = -tau - 1/fu1 - 1/fu2
+    gradf = -(1/tau)*np.vstack((ntau_gradx, ntau_gradu))
 
-    return gradf
+    return gradf, ntau_gradu, ntau_gradx
 
 
 def H11p_fun(sigx, fe, A, atr, z):
@@ -217,10 +217,80 @@ def H11p_fun(sigx, fe, A, atr, z):
     return h11p_z
 
 
+def Hess_gradf(fe, fu1, fu2, r, A):
+
+    gf, ntgu, ntgz = gradf(A, r, fu1, fu2, fe, tau)
+    atr = (A.T).dot(r)
+
+    sig11 = (1.0/fu1**2) + (1.0/fu2**2)
+    sig12 = -(1.0/fu1**2) + (1.0/fu2**2)
+
+    H11 = np.diag(sig11[:, 0]) - (1.0/fe) * A.T.dot(A) + (1.0/fe**2) * atr.dot(atr.T)
+
+    H1 = np.hstack((H11, np.diag(sig12[:, 0])))
+    H2 = np.hstack((np.diag(sig12[:, 0]), np.diag(sig11[:, 0])))
+    H = np.vstack((H1, H2))
+
+    sigx = sig11 - (sig12**2)/sig11
+    w1p = ntgz - (sig12/sig11)*ntgu
+
+    H11_prime = np.diag(sigx[:, 0]) - (1.0/fe) * A.T.dot(A) + \
+        (1.0/fe**2) * atr.dot(atr.T)
+
+    dxdu = np.linalg.solve(H, np.vstack((ntgz, ntgu)))
+
+    _,s,_=np.linalg.svd(H11_prime)
+    print(np.max(s)/np.min(s))
+    dx = np.linalg.solve(H11_prime, w1p)
+    du = (1/sig11)*ntgu - (sig12/sig11)*dx
+
+    N = dx.shape[0]
+    print(dx - dxdu[0:N])
+    print(du - dxdu[N:])
+    return gf, ntgu, ntgz, atr, sig11, sig12, sigx, w1p, dxdu
+
+
+def build_Hess_gradf_data(A, b, x, epsilon, tau):
+    hess_grad_path = test_data_path+"/descent_data.json"
+
+    r, f, fe, fu1, fu2 = f_fun(np.vstack((x, u)), b, Amat, epsilon, tau)
+
+    gf, ntgu, ntgx, atr, sig11, sig12, sigx, w1p, dxdu = Hess_gradf(fe,
+                                                                    fu1, fu2,
+                                                                    r, A)
+    N=int(dxdu.shape[0]/2)
+    dx = dxdu[0:N]
+    du = dxdu[N:]
+    ipdb.set_trace()
+    print(pix_idx)
+    data = {'dx0': dx*0,
+            'dx': dx,
+            'du': du,
+            'gradf': gf,
+            'fu1': fu1,
+            'fu2': fu2,
+            'r': r,
+            'atr': atr,
+            'ntgx': ntgx,
+            'ntgu': ntgu,
+            'sig11': sig11,
+            'sig12': sig12,
+            'w1p': w1p,
+            'sigx': sigx,
+            'pix_idx': pix_idx,
+            'fe': fe,
+            'tau': tau,
+            'cgtol': 1e-9,
+            'cgmaxiter': 500}
+
+    data = jsonify(data)
+    save_json(data, hess_grad_path)
+
+
 
 
 np.random.seed(0)
-N = 64
+N = 16
 tau = 10
 mu = 10
 lbtol = 1e-3
@@ -238,19 +308,22 @@ du = np.random.randn(N, 1)
 Adx = Amat.dot(dx)
 
 r, f, fe, fu1, fu2 = f_fun(np.vstack((x, u)), b, Amat, epsilon, tau)
-smax = find_max_step(dx, du, Adx, fu1, fu2, r, epsilon)
 
-build_find_smax_data(dx, du, Adx, fu1, fu2, r, epsilon)
+build_Hess_gradf_data(Amat, b, x, epsilon, tau)
 
-build_newton_init_data(x, lbtol, mu, epsilon, b, pix_idx)
+# smax = find_max_step(dx, du, Adx, fu1, fu2, r, epsilon)
+
+# build_find_smax_data(dx, du, Adx, fu1, fu2, r, epsilon)
+
+# build_newton_init_data(x, lbtol, mu, epsilon, b, pix_idx)
 
 
-# build_h11p_data(Amat, pix_idx)
-# build_feval_data(x, u, b, Amat, epsilon, tau)
+# # build_h11p_data(Amat, pix_idx)
+# # build_feval_data(x, u, b, Amat, epsilon, tau)
 
-print("||Ax-b||")
-print(np.linalg.norm(Amat.dot(x) - b) )
-ipdb.set_trace()
+# print("||Ax-b||")
+# print(np.linalg.norm(Amat.dot(x) - b) )
+# ipdb.set_trace()
 
 
 # xu = np.hstack((x, u))
@@ -320,23 +393,6 @@ ipdb.set_trace()
 #             H[jcol, krow] = ( (f12p+f12m) - (f1 + f2)) / (4.0*h*h)
 
 #     return H
-
-
-# def Hess(fe, fu1, fu2, r, A):
-#     atr = np.array([((A.T).dot(r)).T]).T
-
-#     sig11 = np.diag((1.0/fu1**2) + (1.0/fu2**2))
-#     sig12 = np.diag(-(1.0/fu1**2) + (1.0/fu2**2))
-
-#     H11 = sig11 - (1.0/fe) * (A.T).dot(A)
-#     + (1.0/fe**2) * atr.dot(atr.T)
-
-#     H1 = np.hstack((H11, sig12))
-#     H2 = np.hstack((sig12, sig11))
-
-#     H = np.vstack((H1, H2))
-
-#     return H, H11
 
 
 

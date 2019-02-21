@@ -291,10 +291,10 @@ START_TEST(test_compute_descent)
   double *sig11_exp, *sig12_exp, *w1p_exp;
 
   double *DWORK_6N;
-  double  fe,tau,cgres_exp,cgtol = 0;
+  double  fe,tau,cgtol = 0;
 
   int status=0;
-  l1c_int N, Npix, cg_maxiter, cgiter_exp;
+  l1c_int N, Npix, cg_maxiter;
   l1c_int *pix_idx;
   AxFuns Ax_funs = {.Ax=dct_EMx_new,
                     .Aty=dct_MtEty,
@@ -325,8 +325,6 @@ START_TEST(test_compute_descent)
   status +=extract_json_double_array(test_data_json, "sig12", &sig12_exp, &N);
   status +=extract_json_double_array(test_data_json, "w1p", &w1p_exp, &N);
 
-  status +=extract_json_double(test_data_json, "cgres", &cgres_exp);
-  status +=extract_json_int(test_data_json, "cgiter", &cgiter_exp);
   if (status){
     fprintf(stderr, "Error Loading json data in 'test_compute_descent()'. Aborting\n");
     ck_abort();
@@ -371,8 +369,6 @@ START_TEST(test_compute_descent)
   ck_assert_double_array_eq_tol(N, dx_exp, gd.dx, TOL_DOUBLE*100);
   ck_assert_double_array_eq_tol(N, du_exp, gd.du, TOL_DOUBLE*100);
 
-  // ck_assert_int_eq(cgr.cgiter, cgiter_exp);
-  ck_assert_double_eq_tol(cgr.cgres, cgres_exp, TOL_DOUBLE*100);
 
   /* /\* ----------------- Cleanup --------------- *\/ */
   free_double(fu1);
