@@ -165,11 +165,10 @@ START_TEST (test_newton_init)
 {
   NewtParams params;
   char fpath[] = "test_data/newton_init_data.json";
-  double *x=NULL, *u=NULL, *u_exp=NULL, *b=NULL, *Dwork=NULL;
+  double *x=NULL, *u=NULL, *u_exp=NULL, *Dwork=NULL;
   double epsilon = 0., tau_exp=0., lbtol=0.;
   double mu = 0.0;
-  l1c_int N=0, M=0, status=0, ret=0, lbiter_exp=0;
-  l1c_int *pix_idx=NULL;
+  l1c_int N=0, status=0, ret=0, lbiter_exp=0;
 
   if (load_file_to_json(fpath, &test_data_json)){
     fprintf(stderr, "Error loading data in test_newton_init\n");
@@ -177,7 +176,7 @@ START_TEST (test_newton_init)
   }
   status +=extract_json_double_array(test_data_json, "x", &x, &N);
   status +=extract_json_double_array(test_data_json, "u", &u_exp, &N);
-  status +=extract_json_double_array(test_data_json, "b", &b, &M);
+  // status +=extract_json_double_array(test_data_json, "b", &b, &M);
 
   status +=extract_json_double(test_data_json, "epsilon", &epsilon);
   status +=extract_json_double(test_data_json, "mu", &mu);
@@ -185,7 +184,7 @@ START_TEST (test_newton_init)
   status +=extract_json_double(test_data_json, "tau", &tau_exp);
 
   status +=extract_json_int(test_data_json, "lbiter", &lbiter_exp);
-  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
+
   u = malloc_double(N);
   Dwork = malloc_double(N);
   if (status | !u | !Dwork){
@@ -199,6 +198,7 @@ START_TEST (test_newton_init)
   params.lbiter = 0;
   ret= newton_init(N, x, u, &params);
 
+  ck_assert_int_eq(0, ret);
   ck_assert_double_array_eq_tol(N, u_exp, u,  TOL_DOUBLE_SUPER);
   ck_assert_double_eq_tol(tau_exp, params.tau,  TOL_DOUBLE_SUPER*100);
   ck_assert_int_eq(lbiter_exp, params.lbiter);
@@ -208,14 +208,11 @@ START_TEST (test_newton_init)
   ret= newton_init(N, x, u, &params);
   ck_assert_int_eq(1, params.lbiter);
 
-  goto exit1;
 
  exit1:
   free_double(x);
   free_double(u);
   free_double(u_exp);
-  free_double(b);
-  free(pix_idx);
   free_double(Dwork);
 
 

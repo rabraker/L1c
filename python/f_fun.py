@@ -1,6 +1,30 @@
 import numpy as np
 from scipy.fftpack import dct
 import ipdb
+import json
+import codecs
+
+
+test_data_path = "/home/arnold/matlab/l1c/test/test_data"
+
+
+def jsonify(data):
+
+    for key, value in data.items():
+        if type(value) is np.ndarray:
+            if len(value.flatten()) == 1:
+                data[key] = value.flatten()[0]
+            else:
+                data[key] = value.flatten().tolist()
+
+    return data
+
+
+def save_json(data, file_path):
+
+    json.dump(data, codecs.open(file_path, 'w'),
+              separators=(',', ':'), sort_keys=True, indent=4)
+
 
 def build_dct_mat(N):
     dct_mat = np.zeros((N, N))
@@ -18,13 +42,136 @@ def build_Amats(N):
 
     E_mat = np.eye(N)
     row_select = np.random.rand(N)
-    E_mat = E_mat[row_select > 0.7, :]
+
+    # The comma is important! Otherwise we get tuple and everything
+    # below is fubar.
+    pix_idx, = np.where(row_select > 0.7)
+
+    E_mat = E_mat[pix_idx, :]
     print(E_mat.shape)
 
     Amat = E_mat.dot(dct_mat.T)
     Atmat = Amat.T
 
-    return Amat, Atmat
+    return Amat, Atmat, pix_idx
+
+
+def build_h11p_data(A, pix_idx):
+    h11p_path = test_data_path+"/hp11_fun_data.json"
+
+    N = A.shape[1]
+    M = A.shape[0]
+
+    sigx = np.random.randn(N, 1)
+    z = np.random.randn(N, 1)
+    r = np.random.randn(M, 1)
+
+    atr = A.T.dot(r)
+    fe = np.random.rand(1)[0]
+    fe = -np.abs(fe)
+
+    h11p_z = H11p_fun(sigx, fe, A, atr, z)
+
+    data = {'z': z,
+            'atr': atr,
+            'fe': fe,
+            'sigx': sigx,
+            'y_exp': h11p_z,
+            'pix_idx': pix_idx}
+
+    data = jsonify(data)
+    save_json(data, h11p_path)
+
+
+def build_feval_data(x, u, b, Amat, epsilon, tau):
+    feval_path = test_data_path+"/f_eval_data.json"
+
+    xu = np.vstack((x, u))
+    r, f, fe, fu1, fu2 = f_fun(xu, b, Amat, epsilon, tau)
+
+    data = {'x': x,
+            'u': u,
+            'r': r,
+            'tau': tau,
+            'epsilon': epsilon,
+            'fu1_exp': fu1,
+            'fu2_exp': fu2,
+            'fe_exp': fe,
+            'f_exp': f}
+
+    data = jsonify(data)
+
+    save_json(data, feval_path)
+
+
+def find_max_step(dx, du, Adx, fu1, fu2, r, epsilon):
+    # ipdb.set_trace()
+    idx_fu1, = np.where((dx-du)[:, 0] > 0)
+    idx_fu2, = np.where((-dx-du)[:, 0] > 0)
+
+    aqe = Adx.T.dot(Adx)[0][0]
+    bqe = 2*r.T.dot(Adx)[0][0]
+    cqe = (r.T.dot(r) - epsilon**2)[0][0]
+
+    smax_f1 = np.min(-fu1[idx_fu1] / (dx[idx_fu1] - du[idx_fu1]))
+    smax_f2 = np.min(-fu2[idx_fu2] / (-dx[idx_fu2] - du[idx_fu2]))
+    smax_quad = (-bqe + np.sqrt(bqe**2 - 4*aqe*cqe)) / (2*aqe)
+
+    print(smax_f1)
+    print(smax_f2)
+    print(smax_quad)
+    smax = np.min([1, smax_f1, smax_f2, smax_quad])
+
+    return smax * 0.99
+
+
+def build_find_smax_data(dx, du, Adx, fu1, fu2, r, epsilon):
+    smax_path = test_data_path+"/find_max_step_data.json"
+
+    print(smax_path)
+    smax = find_max_step(dx, du, Adx, fu1, fu2, r, epsilon)
+
+    data = {'dx': dx,
+            'du': du,
+            'Adx': Adx,
+            'fu1': fu1,
+            'fu2': fu2,
+            'r': r,
+            'epsilon': epsilon,
+            'smax': smax}
+
+    data = jsonify(data)
+    save_json(data, smax_path)
+
+
+def newton_init(x0, lbtol, mu):
+    N = x0.shape[0]
+    u = (0.95)*np.abs(x0) + (0.10)*np.max(np.abs(x0))
+    ipdb.set_trace()
+    tmp = (2.0*N+1.0)/np.sum(np.abs(x0))
+    tau = np.max((tmp, 1))
+    lbiter = np.ceil((np.log(2.0*N+1.0)-np.log(lbtol)-np.log(tau))/np.log(mu))
+
+    return u, tau, lbiter
+
+
+def build_newton_init_data(x0, lbtol, mu, epsilon, b, pix_idx):
+    newton_init_path = test_data_path+"/newton_init_data.json"
+
+    u, tau, lbiter = newton_init(x0, lbtol, mu)
+
+    data = {'x': x,
+            'u': u,
+            'b': b,
+            'lbtol': lbtol,
+            'mu': mu,
+            'tau': tau,
+            'epsilon': epsilon,
+            'lbiter': lbiter,
+            'pix_idx': pix_idx}
+
+    data = jsonify(data)
+    save_json(data, newton_init_path)
 
 
 def f_fun(xu, b, Amat, epsilon, tau):
@@ -36,12 +183,13 @@ def f_fun(xu, b, Amat, epsilon, tau):
     r = Amat.dot(x) - b
     fu1 = x-u
     fu2 = -x - u
-    fe = (1.0/2.0) * (r.dot(r) - epsilon**2)
+    fe = (1.0/2.0) * (r.T.dot(r) - epsilon**2)
     # ipdb.set_trace()
     f = np.sum(u) - (1.0/tau)*(np.sum(np.log(-fu1)) +
                                np.sum(np.log(-fu2)) + np.log(-fe))
 
     return r, f, fe, fu1, fu2
+
 
 def f_fun_fact(b, Amat, epsilon, tau):
     def fun(xu):
@@ -61,34 +209,58 @@ def gradf(Amat, r, fu1, fu2, fe, tau):
     return gradf
 
 
+def H11p_fun(sigx, fe, A, atr, z):
+    # Need the slash here, python will not continue the line on its own.
+    h11p_z = sigx*z + (-1.0/fe) * A.T.dot(A.dot(z)) + \
+             (1/fe**2) * (atr.T.dot(z))*atr
+
+    return h11p_z
+
+
 
 
 np.random.seed(0)
-N = 15
+N = 64
 tau = 10
+mu = 10
+lbtol = 1e-3
 epsilon = .1
-Amat, Atmat = build_Amats(N)
+Amat, Atmat, pix_idx = build_Amats(N)
 
-# Amat = Amat*0
-# Atmat = Atmat*0
 M = Amat.shape[0]
-h = 1e-7
-
-
-xx = np.random.randn(N)
-b = Amat.dot(xx) + np.random.randn(M) * 0.015
-x = Atmat.dot(b)
+xx = np.random.randn(N, 1)
+b = Amat.dot(xx) + np.random.randn(M, 1) * 0.015
+x = Atmat.dot(b) + np.random.randn(N, 1) * 0.0001
 u = (0.99)*np.abs(x) + (0.10)*np.max(np.abs(x))
 
+dx = np.random.randn(N, 1)
+du = np.random.randn(N, 1)
+Adx = Amat.dot(dx)
 
-xu = np.hstack((x, u))
-r, f, fe, fu1, fu2 = f_fun(xu, b, Amat, epsilon, tau)
+r, f, fe, fu1, fu2 = f_fun(np.vstack((x, u)), b, Amat, epsilon, tau)
+smax = find_max_step(dx, du, Adx, fu1, fu2, r, epsilon)
 
-f_fun_handle = f_fun_fact(b, Amat, epsilon, tau)
+build_find_smax_data(dx, du, Adx, fu1, fu2, r, epsilon)
+
+build_newton_init_data(x, lbtol, mu, epsilon, b, pix_idx)
+
+
+# build_h11p_data(Amat, pix_idx)
+# build_feval_data(x, u, b, Amat, epsilon, tau)
+
+print("||Ax-b||")
+print(np.linalg.norm(Amat.dot(x) - b) )
+ipdb.set_trace()
+
+
+# xu = np.hstack((x, u))
+# r, f, fe, fu1, fu2 = f_fun(xu, b, Amat, epsilon, tau)
+
+# f_fun_handle = f_fun_fact(b, Amat, epsilon, tau)
 
 
 
-gf_true = gradf(Amat, r, fu1, fu2, fe, tau)
+# gf_true = gradf(Amat, r, fu1, fu2, fe, tau)
 
 
 
