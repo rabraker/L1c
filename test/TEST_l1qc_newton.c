@@ -34,6 +34,150 @@ This test suite uses the libcheck framework.
 static cJSON *test_data_json;
 
 
+typedef struct L1qcTestData {
+  l1c_int N;
+  l1c_int M;
+  double tau0;
+  double lbtol;
+  double mu;
+  double epsilon;
+  double cgtol;
+  int cgmaxiter;
+  l1c_int *pix_idx;
+  double *A;
+  double *b;
+  double *x;
+  double tau;
+  int lbiter;
+  double *u;
+  double *r;
+  double f;
+  double fe;
+  double *fu1;
+  double *fu2;
+  //for smax
+  double *Adx_rand1;
+  double *dx_rand1;
+  double *du_rand1;
+  double smax;
+  // For h11p
+  double *sigx_rand;
+  double *z_rand;
+  double *r_rand;
+  double *at_rrand;
+  double fe_rand;
+  double *h11p_z;
+  // For descent data
+  double *gradf;
+  double *atr;
+  double *ntgx;
+  double *ntgu;
+  double *sig11;
+  double *sig12;
+  double *w1p;
+  double *sigx;
+  double *dx;
+  double *du;
+}L1qcTestData;
+
+
+static void init_generic_data(L1qcTestData *dat){
+  char fpath[] = "test_data/l1qc_data.json";
+  cJSON *json_data;
+
+  int N_tmp=0, M_tmp=0, status=0;
+  if (load_file_to_json(fpath, &json_data)){
+    fprintf(stderr, "Error loading data in test_l1qc_newton_1iter\n");
+    ck_abort();
+  }
+  status +=extract_json_int(json_data, "N", &dat->N);
+  status +=extract_json_int(json_data, "M", &dat->M);
+  status +=extract_json_double(json_data, "tau0", &dat->tau0);
+  status +=extract_json_double(json_data, "lbtol", &dat->lbtol);
+  status +=extract_json_double(json_data, "mu", &dat->mu);
+  status +=extract_json_double(json_data, "epsilon", &dat->epsilon);
+  status +=extract_json_double(json_data, "cgtol", &dat->cgtol);
+  status +=extract_json_int(json_data, "cgmaxiter", &dat->cgmaxiter);
+  status +=extract_json_int_array(json_data, "pix_idx", &dat->pix_idx, &N_tmp);
+
+  status +=extract_json_double_array(json_data, "A", &dat->A, &N_tmp);
+  status +=extract_json_double_array(json_data, "b", &dat->b, &M_tmp);
+  status +=extract_json_double_array(json_data, "x", &dat->x, &N_tmp);
+
+  status +=extract_json_double(json_data, "tau", &dat->tau);
+  status +=extract_json_int(json_data, "lbiter", &dat->lbiter);
+  status +=extract_json_double_array(json_data, "u", &dat->u, &N_tmp);
+  status +=extract_json_double_array(json_data, "r", &dat->r, &M_tmp);
+  status +=extract_json_double(json_data, "f", &dat->f);
+  status +=extract_json_double(json_data, "fe", &dat->fe);
+  status +=extract_json_double_array(json_data, "fu1", &dat->fu1, &N_tmp);
+  status +=extract_json_double_array(json_data, "fu2", &dat->fu2, &N_tmp);
+  //Smax
+  status +=extract_json_double_array(json_data, "Adx_rand1", &dat->Adx_rand1, &N_tmp);
+  status +=extract_json_double_array(json_data, "dx_rand1", &dat->dx_rand1, &N_tmp);
+  status +=extract_json_double_array(json_data, "du_rand1", &dat->du_rand1, &N_tmp);
+  status +=extract_json_double(json_data, "smax", &dat->smax);
+  //h11p
+  status +=extract_json_double_array(json_data, "sigx_rand", &dat->sigx_rand, &N_tmp);
+  status +=extract_json_double_array(json_data, "z_rand", &dat->z_rand, &N_tmp);
+  status +=extract_json_double_array(json_data, "r_rand", &dat->r_rand, &N_tmp);
+  status +=extract_json_double_array(json_data, "at_rrand", &dat->at_rrand, &N_tmp);
+  status +=extract_json_double(json_data, "fe_rand", &dat->fe_rand);
+  status +=extract_json_double_array(json_data, "h11p_z", &dat->h11p_z, &N_tmp);
+  //For descent data
+
+  status +=extract_json_double_array(json_data, "gradf", &dat->gradf, &N_tmp);
+  status +=extract_json_double_array(json_data, "atr", &dat->atr, &N_tmp);
+  status +=extract_json_double_array(json_data, "ntgx", &dat->ntgx, &N_tmp);
+  status +=extract_json_double_array(json_data, "ntgu", &dat->ntgu, &N_tmp);
+  status +=extract_json_double_array(json_data, "sig11", &dat->sig11, &N_tmp);
+  status +=extract_json_double_array(json_data, "sig12", &dat->sig12, &N_tmp);
+  status +=extract_json_double_array(json_data, "w1p", &dat->w1p, &N_tmp);
+  status +=extract_json_double_array(json_data, "sigx", &dat->sigx, &N_tmp);
+  status +=extract_json_double_array(json_data, "dx", &dat->dx, &N_tmp);
+  status +=extract_json_double_array(json_data, "du", &dat->du, &N_tmp);
+
+  if (status){
+    fprintf(stderr, "Error initializing data\n");
+    ck_abort();
+  }
+  cJSON_Delete(json_data);
+}
+
+void free_generic_data(L1qcTestData Tdat){
+    free(Tdat.pix_idx);
+    free_double(Tdat.A);
+    free_double(Tdat.b);
+    free_double(Tdat.x);
+
+    free_double(Tdat.u);
+    free_double(Tdat.r);
+    free_double(Tdat.fu1);
+    free_double(Tdat.fu2);
+    //for smax
+    free_double(Tdat.Adx_rand1);
+    free_double(Tdat.dx_rand1);
+    free_double(Tdat.du_rand1);
+    // For h11p
+    free_double(Tdat.sigx_rand);
+    free_double(Tdat.z_rand);
+    free_double(Tdat.r_rand);
+    free_double(Tdat.at_rrand);
+    free_double(Tdat.h11p_z);
+    // For descent data
+    free_double(Tdat.gradf);
+    free_double(Tdat.atr);
+    free_double(Tdat.ntgx);
+    free_double(Tdat.ntgu);
+    free_double(Tdat.sig11);
+    free_double(Tdat.sig12);
+    free_double(Tdat.w1p);
+    free_double(Tdat.sigx);
+    free_double(Tdat.dx);
+    free_double(Tdat.du);
+
+}
+
 START_TEST (test_l1qc_newton_1iter)
 {
   CgParams cgp = {.verbose=0, .max_iter=0.0, .tol=0.0};
@@ -106,7 +250,6 @@ START_TEST (test_l1qc_newton_1iter)
   ck_assert_int_eq(0, lb_res.status);
 
 
-  goto exit1;
 
  exit1:
   free_double(x0);
@@ -163,61 +306,38 @@ END_TEST
 
 START_TEST (test_newton_init)
 {
-  NewtParams params;
-  char fpath[] = "test_data/newton_init_data.json";
-  double *x=NULL, *u=NULL, *u_exp=NULL, *Dwork=NULL;
-  double epsilon = 0., tau_exp=0., lbtol=0.;
-  double mu = 0.0;
-  l1c_int N=0, status=0, ret=0, lbiter_exp=0;
+  L1qcTestData Tdat;
+  init_generic_data(&Tdat);
 
-  if (load_file_to_json(fpath, &test_data_json)){
-    fprintf(stderr, "Error loading data in test_newton_init\n");
-    ck_abort();
-  }
-  status +=extract_json_double_array(test_data_json, "x", &x, &N);
-  status +=extract_json_double_array(test_data_json, "u", &u_exp, &N);
-  // status +=extract_json_double_array(test_data_json, "b", &b, &M);
+  double *u=NULL;
+  int ret=0, status=0;
 
-  status +=extract_json_double(test_data_json, "epsilon", &epsilon);
-  status +=extract_json_double(test_data_json, "mu", &mu);
-  status +=extract_json_double(test_data_json, "lbtol", &lbtol);
-  status +=extract_json_double(test_data_json, "tau", &tau_exp);
-
-  status +=extract_json_int(test_data_json, "lbiter", &lbiter_exp);
-
-  u = malloc_double(N);
-  Dwork = malloc_double(N);
-  if (status | !u | !Dwork){
-    fprintf(stderr, "Error Loading json data in 'test_newton_init()'. Aborting\n");
+  u = malloc_double(Tdat.N);
+  if ( !u ){
+    fprintf(stderr, "Error Allocating Memory in 'test_newton_init()'. Aborting\n");
+    status = L1C_OUT_OF_MEMORY;
     goto exit1;
   }
 
-  params.mu = mu;
-  params.lbtol = lbtol;
-  params.epsilon = epsilon;
-  params.lbiter = 0;
-  ret= newton_init(N, x, u, &params);
+  NewtParams params = {.mu=Tdat.mu, .lbtol=Tdat.lbtol,
+                       .epsilon=Tdat.epsilon, .lbiter = 0};
+
+  ret= newton_init(Tdat.N, Tdat.x, u, &params);
 
   ck_assert_int_eq(0, ret);
-  ck_assert_double_array_eq_tol(N, u_exp, u,  TOL_DOUBLE_SUPER);
-  ck_assert_double_eq_tol(tau_exp, params.tau,  TOL_DOUBLE_SUPER*100);
-  ck_assert_int_eq(lbiter_exp, params.lbiter);
-  ck_assert_int_eq(0, ret);
+  ck_assert_double_array_eq_tol(Tdat.N, Tdat.u, u,  TOL_DOUBLE_SUPER);
+  ck_assert_double_eq_tol(Tdat.tau, params.tau,  TOL_DOUBLE_SUPER*100);
+  ck_assert_int_eq(Tdat.lbiter, params.lbiter);
 
   params.lbiter = 1;
-  ret= newton_init(N, x, u, &params);
+  ret= newton_init(Tdat.N, Tdat.x, u, &params);
   ck_assert_int_eq(1, params.lbiter);
 
 
  exit1:
-  free_double(x);
   free_double(u);
-  free_double(u_exp);
-  free_double(Dwork);
 
-
-  cJSON_Delete(test_data_json);
-
+  free_generic_data(Tdat);
 #ifdef _USEMKL_
   mkl_free_buffers();
 #endif
@@ -230,47 +350,21 @@ END_TEST
 
 START_TEST (test_find_max_step)
 {
+  L1qcTestData Tdat;
+  init_generic_data(&Tdat);
+
   GradData gd;
-  char fpath[] = "test_data/find_max_step_data.json";
-  double *dx, *du, *Adx, *fu1, *fu2, *r;
-  double epsilon, smax, smax_exp = 0.0;
-  l1c_int N, M;
-  int status=0;
+  double smax= 0.0;
 
-  if (load_file_to_json(fpath, &test_data_json)){
-    fprintf(stderr, "Error loading data in test_find_max_stept\n");
-    ck_abort();
-  }
-  status +=extract_json_double_array(test_data_json, "dx", &dx, &N);
-  status +=extract_json_double_array(test_data_json, "du", &du, &N);
-  status +=extract_json_double_array(test_data_json, "Adx", &Adx, &N);
-  status +=extract_json_double_array(test_data_json, "fu1", &fu1, &N);
-  status +=extract_json_double_array(test_data_json, "fu2", &fu2, &N);
-  status +=extract_json_double_array(test_data_json, "r", &r, &M);
-  status +=extract_json_double(test_data_json, "smax", &smax_exp);
-  status +=extract_json_double(test_data_json, "epsilon", &epsilon);
+  gd.dx = Tdat.dx_rand1;
+  gd.du = Tdat.du_rand1;
+  gd.Adx = Tdat.Adx_rand1;
 
-  if (status){
-    fprintf(stderr, "Error Loading json data in 'test_find_max_step()'. Aborting\n");
-    ck_abort();
-  }
-  //s = find_max_step(dx, du, Adx, fu1, fu2, r, epsilon, save_on, jopts);
-  gd.dx = dx;
-  gd.du = du;
-  gd.Adx = Adx;
-
-  smax = find_max_step(N, gd, fu1, fu2, M, r, epsilon);
-  ck_assert_double_eq_tol(smax_exp, smax,  TOL_DOUBLE*100);
-
-  free_double(dx);
-  free_double(du);
-  free_double(Adx);
-  free_double(fu1);
-  free_double(fu2);
-  free_double(r);
+  smax = find_max_step(Tdat.N, gd, Tdat.fu1, Tdat.fu2, Tdat.M, Tdat.r, Tdat.epsilon);
+  ck_assert_double_eq_tol(Tdat.smax, smax,  TOL_DOUBLE);
 
 
-  cJSON_Delete(test_data_json);
+  free_generic_data(Tdat);
 #ifdef _USEMKL_
   mkl_free_buffers();
 #endif
@@ -281,104 +375,53 @@ END_TEST
 
 START_TEST(test_compute_descent)
 {
-  char fpath[] = "test_data/descent_data.json";
+  L1qcTestData Tdat;
+  init_generic_data(&Tdat);
 
   GradData gd;
-  CgParams cgp;
-  CgResults cgr;
-
-  double *fu1, *fu2, *atr, *dx_exp, *du_exp;
-  double *sig11_exp, *sig12_exp, *w1p_exp;
-
+  CgParams cgp = {.verbose=0, .max_iter=Tdat.cgmaxiter, .tol = Tdat.cgtol};
+  CgResults cgr = {.cgres=0.0, .cgiter=0};
   double *DWORK_6N;
-  double  fe,tau,cgtol = 0;
-
   int status=0;
-  l1c_int N, Npix, cg_maxiter;
-  l1c_int *pix_idx;
+
   AxFuns Ax_funs = {.Ax=dct_EMx_new,
                     .Aty=dct_MtEty,
                     .AtAx=dct_MtEt_EMx_new};
 
-  if (load_file_to_json(fpath, &test_data_json)){
-    fprintf(stderr, "Error loading data in test_compute_descent\n");
-    ck_abort();
-  }
-
-  // Inputs to get_gradient
-  status +=extract_json_double_array(test_data_json, "fu1", &fu1, &N);
-  status +=extract_json_double_array(test_data_json, "fu2", &fu2, &N);
-  status +=extract_json_double_array(test_data_json, "atr", &atr, &N);
-
-  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &Npix);
-
-  status +=extract_json_double(test_data_json, "fe", &fe);
-  status +=extract_json_double(test_data_json, "cgtol", &cgtol);
-  status +=extract_json_double(test_data_json, "tau", &tau);
-  status +=extract_json_int(test_data_json, "cgmaxiter", &cg_maxiter);
-
-  status +=extract_json_double_array(test_data_json, "dx0", &gd.dx, &N);
-  // Expected outputs
-  status +=extract_json_double_array(test_data_json, "dx", &dx_exp, &N);
-  status +=extract_json_double_array(test_data_json, "du", &du_exp, &N);
-  status +=extract_json_double_array(test_data_json, "sig11", &sig11_exp, &N);
-  status +=extract_json_double_array(test_data_json, "sig12", &sig12_exp, &N);
-  status +=extract_json_double_array(test_data_json, "w1p", &w1p_exp, &N);
-
-  if (status){
-    fprintf(stderr, "Error Loading json data in 'test_compute_descent()'. Aborting\n");
-    ck_abort();
-  }
-
-  DWORK_6N = malloc_double(6*N);
-  gd.w1p = malloc_double(N);
-  // gd.dx = malloc_double(N);
-  gd.du = malloc_double(N);
-  gd.gradf = malloc_double(2*N);
-  gd.Adx = malloc_double(2*N);
-  gd.sig11 = malloc_double(N);
-  gd.sig12 = malloc_double(N);
-  gd.ntgu = malloc_double(N);
+  DWORK_6N = malloc_double(6*Tdat.N);
+  gd.w1p = malloc_double(Tdat.N);
+  gd.dx = malloc_double(Tdat.N);
+  gd.du = malloc_double(Tdat.N);
+  gd.gradf = malloc_double(2*Tdat.N);
+  gd.Adx = malloc_double(2*Tdat.N);
+  gd.sig11 = malloc_double(Tdat.N);
+  gd.sig12 = malloc_double(Tdat.N);
+  gd.ntgu = malloc_double(Tdat.N);
   if ( (!DWORK_6N) | (!gd.w1p) | (!gd.dx) | (!gd.du) | (!gd.gradf) | (!gd.Adx)
        |(!gd.sig11)| (!gd.sig12) |(!gd.ntgu) ){
-    fprintf(stderr, "Error allocating memory\n");
+    fprintf(stderr, "Error allocating memory in 'test_compute_descent'\n");
+    status = L1C_OUT_OF_MEMORY;
+    goto exit;
   }
 
-
-  cgr.cgres = 0.0;
-  cgr.cgiter = 0;
-  cgp.verbose = 0;
-  cgp.max_iter = cg_maxiter;
-  cgp.tol = cgtol;
-
   /* Setup the DCT */
-  dct_setup(N, Npix, pix_idx);
+  dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
 
-  compute_descent(N, fu1, fu2, atr, fe, tau, gd, DWORK_6N, cgp, &cgr, Ax_funs);
-  //get_gradient(N, fu1, fu2, DWORK_5N, atr, fe, tau, gd);
-  /* ----- Now check: if this fails, look at *relative* tolerance. Here, we check
-     absolute tolerance, but for real data,  y_exp is huge 1e22. Should probably normalize
-     inputs to 1??
-  */
+  compute_descent(Tdat.N, Tdat.fu1, Tdat.fu2, Tdat.atr, Tdat.fe,
+                  Tdat.tau0, gd, DWORK_6N, cgp, &cgr, Ax_funs);
 
   /*The next three should already be checked by test_get_gradient, but we can
-   do it here to, to make sure things are staying sane.*/
-  ck_assert_double_array_eq_tol(N, sig11_exp, gd.sig11, TOL_DOUBLE*100);
-  ck_assert_double_array_eq_tol(N, sig12_exp, gd.sig12, TOL_DOUBLE*100);
-  ck_assert_double_array_eq_tol(N, w1p_exp, gd.w1p, TOL_DOUBLE*100);
-  ck_assert_double_array_eq_tol(N, dx_exp, gd.dx, TOL_DOUBLE*100);
-  ck_assert_double_array_eq_tol(N, du_exp, gd.du, TOL_DOUBLE*100);
+   do it here too, to make sure things are staying sane.*/
+  ck_assert_double_array_eq_tol(Tdat.N, Tdat.sig11, gd.sig11, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(Tdat.N, Tdat.sig12, gd.sig12, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(Tdat.N, Tdat.w1p, gd.w1p, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(Tdat.N, Tdat.dx, gd.dx, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(Tdat.N, Tdat.du, gd.du, TOL_DOUBLE*100);
 
 
-  /* /\* ----------------- Cleanup --------------- *\/ */
-  free_double(fu1);
-  free_double(fu2);
-  free_double(atr);
-  free_double(dx_exp);
-  free_double(du_exp);
-  free_double(sig11_exp);
-  free_double(sig12_exp);
-  free_double(w1p_exp);
+  /* ----------------- Cleanup --------------- */
+ exit:
+
   free_double(DWORK_6N);
   free_double(gd.w1p);
   free_double(gd.dx);
@@ -388,106 +431,70 @@ START_TEST(test_compute_descent)
   free_double(gd.sig11);
   free_double(gd.sig12);
   free_double(gd.ntgu);
-  free(pix_idx);
 
   dct_destroy();
 
-
-  cJSON_Delete(test_data_json);
+  free_generic_data(Tdat);
 #ifdef _USEMKL_
   mkl_free_buffers();
 #endif
+
+  if (status)
+    ck_abort();
 
 }
 END_TEST
 
 
-
-
-
 START_TEST(test_H11pfun)
 {
-  char fpath[] = "test_data/hp11_fun_data.json";
+  L1qcTestData Tdat;
+  init_generic_data(&Tdat);
 
   Hess_data h11p_data;
-  double *atr=NULL, *sigx=NULL, *z=NULL;
-  double *y_exp=NULL, *y=NULL, *z_orig=NULL;
-  double  fe = 0;
+  double *h11p_z=NULL, *z_orig=NULL;
+  int status=0;
 
-  l1c_int N, M, status=0;
-  l1c_int *pix_idx;
-
-  if (load_file_to_json(fpath, &test_data_json)){
-    fprintf(stderr, "Error loading data in test_H11pfun\n");
-    ck_abort();
-  }
-
-  // Inputs to get_gradient
-  status +=extract_json_double_array(test_data_json, "atr", &atr, &N);
-  status +=extract_json_double_array(test_data_json, "sigx", &sigx, &N);
-  status +=extract_json_double_array(test_data_json, "z", &z, &N);
-  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
-
-  status +=extract_json_double(test_data_json, "fe", &fe);
-
-  // Expected outputs
-  status +=extract_json_double_array(test_data_json, "y_exp", &y_exp, &N);
-
-  if (status){
-    fprintf(stderr, "Error Loading json data in 'test_H11pfun()'. Aborting\n");
-    goto exit;
-  }
-  y = malloc_double(N);
-  z_orig = malloc_double(N);
-  h11p_data.Dwork_1N = malloc_double(N);
-  if (!y || !z_orig || !h11p_data.Dwork_1N){
+  h11p_z = malloc_double(Tdat.N);
+  z_orig = malloc_double(Tdat.N);
+  h11p_data.Dwork_1N = malloc_double(Tdat.N);
+  if (!h11p_z || !z_orig || !h11p_data.Dwork_1N){
     fprintf(stderr, "Unable to allocate memory\n");
-    status +=1;
+    status = L1C_OUT_OF_MEMORY;
     goto exit;
   }
 
-  h11p_data.one_by_fe = 1.0/fe;
-  h11p_data.one_by_fe_sqrd = 1.0/(fe * fe);
-  h11p_data.atr = atr;
-  h11p_data.sigx = sigx;
+  h11p_data.one_by_fe = 1.0/Tdat.fe_rand;
+  h11p_data.one_by_fe_sqrd = 1.0/(Tdat.fe_rand * Tdat.fe_rand);
+  h11p_data.atr = Tdat.at_rrand;
+  h11p_data.sigx = Tdat.sigx_rand;
 
   h11p_data.AtAx = dct_MtEt_EMx_new;
 
-  cblas_dcopy(N, z, 1, z_orig, 1);
+  cblas_dcopy(Tdat.N, Tdat.z_rand, 1, z_orig, 1);
 
   /* Setup the DCT */
-  dct_setup(N, M, pix_idx);
+  dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
 
-  H11pfun(N, z, y, &h11p_data);
+  H11pfun(Tdat.N, Tdat.z_rand, h11p_z, &h11p_data);
 
-  /* ----- Now check: if this fails, look at *relative* tolerance. Here, we check
-     absolute tolerance, but for real data,  y_exp is huge 1e22. Should probably normalize
-     inputs to 1??
-  */
-  ck_assert_double_array_eq_tol(N, y_exp, y, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(Tdat.N, Tdat.h11p_z, h11p_z, TOL_DOUBLE);
   // Ensure we didnt overwrite data in z.
-  ck_assert_double_array_eq_tol(N, z, z_orig, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(Tdat.N, Tdat.z_rand, z_orig, TOL_DOUBLE_SUPER);
 
-  goto exit;
+
   /* ----------------- Cleanup --------------- */
  exit:
-  free_double(atr);
-  free_double(sigx);
-  free_double(z);
-  free(pix_idx);
-
-  free_double(y_exp);
-  free_double(y);
   free_double(h11p_data.Dwork_1N);
-
   free_double(z_orig);
   dct_destroy();
 
+  free_generic_data(Tdat);
 
-  cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
 #endif
+
   if (status)
     ck_abort();
 
@@ -497,85 +504,53 @@ END_TEST
 
 START_TEST(test_get_gradient)
 {
+  L1qcTestData Tdat;
+  init_generic_data(&Tdat);
+
   GradData gd;
-  double *fu1, *fu2, *sigx, *sigx_exp, *atr;
-  double  *w1p_exp, *sig11_exp, *sig12_exp, *gradf_exp, *ntgu_exp;
-  double tau; //loaded
+  double *sigx;
+  int status = 0;
 
-  double fe;
-  l1c_int N,N2, M, status=0;
-  char fpath[] = "test_data/descent_data.json";
-
-  if (load_file_to_json(fpath, &test_data_json)){
-    fprintf(stderr, "Error loading data in test_get_gradient\n");
-    ck_abort();
+  gd.sig11 = malloc_double(Tdat.N);
+  gd.sig12 = malloc_double(Tdat.N);
+  gd.gradf = malloc_double(2*Tdat.N);
+  gd.w1p = malloc_double(Tdat.N);
+  gd.ntgu = malloc_double(Tdat.N);
+  sigx = malloc_double(Tdat.N);
+  if (!gd.sig11 || !gd.sig12 || !gd.gradf || !gd.w1p || !gd.ntgu || !sigx){
+    fprintf(stderr, "Error Allocating Memory in 'test_get_gradient'\n");
+    status = L1C_OUT_OF_MEMORY;
+    goto exit;
   }
 
-  // Inputs to get_gradient
-  status +=extract_json_double_array(test_data_json, "fu1", &fu1, &N);
-  status +=extract_json_double_array(test_data_json, "fu2", &fu2, &N);
-  status +=extract_json_double_array(test_data_json, "atr", &atr, &N);
-  // Expected outputs
-  status +=extract_json_double_array(test_data_json, "sigx", &sigx_exp, &N);
-  status +=extract_json_double_array(test_data_json, "sig11", &sig11_exp, &N);
-  status +=extract_json_double_array(test_data_json, "sig12", &sig12_exp, &M);
-  status +=extract_json_double_array(test_data_json, "gradf", &gradf_exp, &N2);
-  status +=extract_json_double_array(test_data_json, "ntgu", &ntgu_exp, &N);
-  status +=extract_json_double_array(test_data_json, "w1p", &w1p_exp, &N);
+  /*-------------- Compute --------------------------- */
+  get_gradient(Tdat.N, Tdat.fu1, Tdat.fu2, sigx, Tdat.atr, Tdat.fe, Tdat.tau0, gd);
 
-  status +=extract_json_double(test_data_json, "fe", &fe);
-  status +=extract_json_double(test_data_json, "tau", &tau);
-
-  if (status){
-    fprintf(stderr, "Error Loading json data in 'test_get_gradient()'. Aborting\n");
-    ck_abort();
-  }
-
-  gd.sig11 = malloc_double(N);
-  gd.sig12 = malloc_double(N);
-  gd.gradf = malloc_double(2*N);
-  gd.w1p = malloc_double(N);
-  gd.ntgu = malloc_double(N);
-  sigx = malloc_double(N);
-
-  /*-------------------------------------------- */
-    get_gradient(N, fu1, fu2, sigx, atr, fe, tau, gd);
-
-
-  ck_assert_int_eq(2*N, N2);
-  /* ----- Now check -------*/
-  ck_assert_double_array_eq_tol(N, sig11_exp, gd.sig11,TOL_DOUBLE_SUPER*100);
-  ck_assert_double_array_eq_tol(N, sig12_exp, gd.sig12,TOL_DOUBLE_SUPER*100);
-  ck_assert_double_array_eq_tol(N, w1p_exp, gd.w1p,TOL_DOUBLE_SUPER*100);
-  ck_assert_double_array_eq_tol(N, sigx_exp, sigx,TOL_DOUBLE_SUPER*100);
-  ck_assert_double_array_eq_tol(N, ntgu_exp, gd.ntgu,TOL_DOUBLE_SUPER*100);
-  ck_assert_double_array_eq_tol(N2, gradf_exp, gd.gradf,TOL_DOUBLE_SUPER*100);
+  /* ----- Check -------*/
+  ck_assert_double_array_eq_tol(Tdat.N, Tdat.sig11, gd.sig11, TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(Tdat.N, Tdat.sig12, gd.sig12, TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(Tdat.N, Tdat.w1p, gd.w1p, TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(Tdat.N, Tdat.sigx, sigx, TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(Tdat.N, Tdat.ntgu, gd.ntgu, TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(Tdat.N*2, Tdat.gradf, gd.gradf, TOL_DOUBLE_SUPER*100);
 
   /* ----------------- Cleanup --------------- */
 
-  free_double(fu1);
-  free_double(fu2);
-  free_double(sigx);
-  free_double(atr);
-
-  free_double(sigx_exp);
-  free_double(sig11_exp);
-  free_double(sig12_exp);
-  free_double(gradf_exp);
-  free_double(ntgu_exp);
-  free_double(w1p_exp);
-
+ exit:
   free_double(gd.sig11);
   free_double(gd.sig12);
   free_double(gd.gradf);
   free_double(gd.ntgu);
   free_double(gd.w1p);
+  free_double(sigx);
 
 
-  cJSON_Delete(test_data_json);
+  free_generic_data(Tdat);
 #ifdef _USEMKL_
   mkl_free_buffers();
 #endif
+  if (status)
+    ck_abort();
 }
 END_TEST
 
@@ -715,61 +690,43 @@ END_TEST
 
 START_TEST(test_f_eval)
 {
-  double *x, *u, *r, tau, epsilon; //loaded
+  L1qcTestData Tdat;
+  init_generic_data(&Tdat);
   double *fu1, *fu2, fe, f;
-  double *fu1_exp, *fu2_exp, fe_exp, f_exp;
+  int status = 0;
 
-  l1c_int N=0, M=0, status=0;
-  char fpath[] = "test_data/f_eval_data.json";
-  if (  load_file_to_json(fpath, &test_data_json) ){
-    fprintf(stderr, "Error loading data for test_f_eval\n");
-    ck_abort();
+  fu1 = malloc_double(Tdat.N);
+  fu2 = malloc_double(Tdat.N);
+  if (!fu1 || !fu2){
+    fprintf(stderr, "Error allocating memory in test_f_eval\n");
+    status = L1C_OUT_OF_MEMORY;
+    goto exit;
   }
-  // Inputs to f_eval
-  status +=extract_json_double_array(test_data_json, "x", &x, &N);
-  status +=extract_json_double_array(test_data_json, "u", &u, &N);
-  status +=extract_json_double_array(test_data_json, "r", &r, &M);
-  status +=extract_json_double(test_data_json, "tau", &tau);
-  status +=extract_json_double(test_data_json, "epsilon", &epsilon);
-
-  // Expected outputs
-  status +=extract_json_double_array(test_data_json, "fu1_exp", &fu1_exp, &N);
-  status +=extract_json_double_array(test_data_json, "fu2_exp", &fu2_exp, &N);
-  status +=extract_json_double(test_data_json, "f_exp", &f_exp);
-  status +=extract_json_double(test_data_json, "fe_exp", &fe_exp);
-  if (status){
-    fprintf(stderr, "Error Loading json data in 'test_f_eval'. Aborting\n");
-    ck_abort();
-  }
-
-  fu1 = malloc_double(N);
-  fu2 = malloc_double(N);
-
-  f_eval(N,  x, u, M, r, tau, epsilon, fu1, fu2, &fe, &f);
+  f_eval(Tdat.N,  Tdat.x, Tdat.u, Tdat.M, Tdat.r, Tdat.tau0,
+         Tdat.epsilon, fu1, fu2, &fe, &f);
 
   /* ----- Now check -------*/
-  ck_assert_double_eq_tol(fe_exp, fe, TOL_DOUBLE);
-  ck_assert_double_array_eq_tol(N, fu1_exp, fu1, TOL_DOUBLE);
-  ck_assert_double_array_eq_tol(N, fu2_exp, fu2, TOL_DOUBLE);
+  ck_assert_double_eq_tol(Tdat.fe, fe, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Tdat.N, Tdat.fu1, fu1, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Tdat.N, Tdat.fu2, fu2, TOL_DOUBLE);
 
-  ck_assert_double_eq_tol(f_exp, f, TOL_DOUBLE);
+  ck_assert_double_eq_tol(Tdat.f, f, TOL_DOUBLE);
 
   /* ----------------- Cleanup --------------- */
-  free_double(x);
-  free_double(u);
-  free_double(r);
 
-  free_double(fu1_exp);
-  free_double(fu2_exp);
-
+ exit:
   free_double(fu1);
   free_double(fu2);
 
+  free_generic_data(Tdat);
 
-  cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();
 #endif
+
+  if (status)
+    ck_abort();
+
 }
 END_TEST
 

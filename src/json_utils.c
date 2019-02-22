@@ -28,7 +28,7 @@ int load_file_as_text(char *fname, char **file_data){
   file_ptr = fopen(fname, "r");  /* Open in TEXT mode */
 
   if (file_ptr == NULL ){             /* Could not open file */
-    printf("Error opening %s: %s (%u)\n", fname, strerror(errno), errno);
+    fprintf(stderr, "Error opening %s: %s (%u)\n", fname, strerror(errno), errno);
     return 1;
   }
 
@@ -36,7 +36,7 @@ int load_file_as_text(char *fname, char **file_data){
   *file_data = calloc(file_len + 1, sizeof(char));
 
   if(*file_data == NULL ){
-    printf("\nInsufficient memory to read file.\n");
+    fprintf(stderr, "\nInsufficient memory to read file.\n");
     fclose(file_ptr);
     return 1;
   }
@@ -69,8 +69,15 @@ int load_file_to_json(char *fname, cJSON **data_json){
 }
 
 int extract_json_int(cJSON *data_json, char * name, l1c_int *N){
+  if (!data_json){
+    fprintf(stderr, "Error in extract_json_int: cannot extract %s\n", name);
+    fprintf(stderr, "         cJSON input is NULL\n");
+    return 1;
+  }
+
   cJSON *N_json = cJSON_GetObjectItemCaseSensitive(data_json, name);
   if (!cJSON_IsNumber(N_json) ){
+    fprintf(stderr, "Error in extract_json_int: cannot extract %s\n", name);
     return 1;
   }
 
@@ -79,8 +86,15 @@ int extract_json_int(cJSON *data_json, char * name, l1c_int *N){
 }
 
 int extract_json_double(cJSON *data_json, char * name, double *a){
+  if (!data_json){
+    fprintf(stderr, "Error in extract_json_double: cannot extract %s\n", name);
+    fprintf(stderr, "         cJSON input is NULL\n");
+    return 1;
+  }
+
   cJSON *a_json = cJSON_GetObjectItemCaseSensitive(data_json, name);
   if (!cJSON_IsNumber(a_json)){
+    fprintf(stderr, "Error in extract_json_double: cannot extract %s\n", name);
     return 1;
   }
 
@@ -90,20 +104,26 @@ int extract_json_double(cJSON *data_json, char * name, double *a){
 
 
 int extract_json_double_array(cJSON *data_json, char *name, double **x, l1c_int *N){
+  if (!data_json){
+    fprintf(stderr, "Error in extract_json_double_array: cannot extract %s\n", name);
+    fprintf(stderr, "         cJSON input is NULL\n");
+    return 1;
+  }
+
   int status = 0;
   cJSON *x_json = cJSON_GetObjectItemCaseSensitive(data_json, name);
   if (!cJSON_IsArray(x_json) ){
-      status = 1;
-      *N = 0;
-      goto end;
-    }
+    fprintf(stderr, "Error in extract_json_double_array: cannot extract %s\n", name);
+    status = 1;
+    *N = 0;
+    goto end;
+  }
   *N = cJSON_GetArraySize(x_json);
-  // *x = calloc(*N, sizeof(double));
   *x = malloc_double(*N);
 
   if (!*x){
     status =1;
-    perror("error allocating memory\n");
+    fprintf(stderr, "error allocating memory\n");
     goto end;
   }
 
@@ -121,9 +141,16 @@ int extract_json_double_array(cJSON *data_json, char *name, double **x, l1c_int 
 }
 
 int extract_json_int_array(cJSON *data_json, char *name, l1c_int **x, l1c_int *N){
+  if (!data_json){
+    fprintf(stderr, "Error in extract_json_int_array: cannot extract %s\n", name);
+    fprintf(stderr, "         cJSON input is NULL\n");
+    return 1;
+  }
+
   int status = 0;
   cJSON *x_json = cJSON_GetObjectItemCaseSensitive(data_json, name);
   if (!cJSON_IsArray(x_json) ){
+    fprintf(stderr, "Error in extract_json_int_array: cannot extract %s\n", name);
     status = 1;
     *N = 0;
     goto end;
