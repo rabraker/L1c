@@ -56,7 +56,6 @@ typedef struct L1qcTestData {
   double *fu1;
   double *fu2;
   //for smax
-  double *Adx_rand1;
   double *dx_rand1;
   double *du_rand1;
   double smax;
@@ -113,7 +112,6 @@ static void init_generic_data(L1qcTestData *dat){
   status +=extract_json_double_array(json_data, "fu1", &dat->fu1, &N_tmp);
   status +=extract_json_double_array(json_data, "fu2", &dat->fu2, &N_tmp);
   //Smax
-  status +=extract_json_double_array(json_data, "Adx_rand1", &dat->Adx_rand1, &N_tmp);
   status +=extract_json_double_array(json_data, "dx_rand1", &dat->dx_rand1, &N_tmp);
   status +=extract_json_double_array(json_data, "du_rand1", &dat->du_rand1, &N_tmp);
   status +=extract_json_double(json_data, "smax", &dat->smax);
@@ -155,7 +153,6 @@ void free_generic_data(L1qcTestData Tdat){
     free_double(Tdat.fu1);
     free_double(Tdat.fu2);
     //for smax
-    free_double(Tdat.Adx_rand1);
     free_double(Tdat.dx_rand1);
     free_double(Tdat.du_rand1);
     // For h11p
@@ -358,9 +355,17 @@ START_TEST (test_find_max_step)
 
   gd.dx = Tdat.dx_rand1;
   gd.du = Tdat.du_rand1;
-  gd.Adx = Tdat.Adx_rand1;
+  double *DWORK = malloc_double(Tdat.N);
 
-  smax = find_max_step(Tdat.N, gd, Tdat.fu1, Tdat.fu2, Tdat.M, Tdat.r, Tdat.epsilon);
+  AxFuns Ax_funs = {.Ax=dct_EMx_new,
+                    .Aty=dct_MtEty,
+                    .AtAx=dct_MtEt_EMx_new};
+
+  /* Setup the DCT */
+  dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
+
+  smax = find_max_step(Tdat.N, gd, Tdat.fu1, Tdat.fu2, Tdat.M, Tdat.r, DWORK,
+                       Tdat.epsilon, Ax_funs);
   ck_assert_double_eq_tol(Tdat.smax, smax,  TOL_DOUBLE);
 
 
@@ -373,7 +378,7 @@ START_TEST (test_find_max_step)
 END_TEST
 
 
-START_TEST(test_compute_descent)
+START_TEST(test_l1qc_descent_dir)
 {
   L1qcTestData Tdat;
   init_generic_data(&Tdat);
@@ -381,23 +386,25 @@ START_TEST(test_compute_descent)
   GradData gd;
   CgParams cgp = {.verbose=0, .max_iter=Tdat.cgmaxiter, .tol = Tdat.cgtol};
   CgResults cgr = {.cgres=0.0, .cgiter=0};
-  double *DWORK_6N;
+  double *DWORK_7N;
   int status=0;
 
   AxFuns Ax_funs = {.Ax=dct_EMx_new,
                     .Aty=dct_MtEty,
                     .AtAx=dct_MtEt_EMx_new};
+  /* Setup the DCT */
+  dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
 
-  DWORK_6N = malloc_double(6*Tdat.N);
+
+  DWORK_7N = malloc_double(7*Tdat.N);
   gd.w1p = malloc_double(Tdat.N);
   gd.dx = malloc_double(Tdat.N);
   gd.du = malloc_double(Tdat.N);
   gd.gradf = malloc_double(2*Tdat.N);
-  gd.Adx = malloc_double(2*Tdat.N);
   gd.sig11 = malloc_double(Tdat.N);
   gd.sig12 = malloc_double(Tdat.N);
   gd.ntgu = malloc_double(Tdat.N);
-  if ( (!DWORK_6N) | (!gd.w1p) | (!gd.dx) | (!gd.du) | (!gd.gradf) | (!gd.Adx)
+  if ( (!DWORK_7N) | (!gd.w1p) | (!gd.dx) | (!gd.du) | (!gd.gradf)
        |(!gd.sig11)| (!gd.sig12) |(!gd.ntgu) ){
     fprintf(stderr, "Error allocating memory in 'test_compute_descent'\n");
     status = L1C_OUT_OF_MEMORY;
@@ -407,8 +414,8 @@ START_TEST(test_compute_descent)
   /* Setup the DCT */
   dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
 
-  compute_descent(Tdat.N, Tdat.fu1, Tdat.fu2, Tdat.atr, Tdat.fe,
-                  Tdat.tau0, gd, DWORK_6N, cgp, &cgr, Ax_funs);
+  l1qc_descent_dir(Tdat.N, Tdat.fu1, Tdat.fu2, Tdat.r, Tdat.fe,
+                  Tdat.tau0, gd, DWORK_7N, cgp, &cgr, Ax_funs);
 
   /*The next three should already be checked by test_get_gradient, but we can
    do it here too, to make sure things are staying sane.*/
@@ -419,15 +426,15 @@ START_TEST(test_compute_descent)
   ck_assert_double_array_eq_tol(Tdat.N, Tdat.du, gd.du, TOL_DOUBLE*100);
 
 
+
   /* ----------------- Cleanup --------------- */
  exit:
 
-  free_double(DWORK_6N);
+  free_double(DWORK_7N);
   free_double(gd.w1p);
   free_double(gd.dx);
   free_double(gd.du);
   free_double(gd.gradf);
-  free_double(gd.Adx);
   free_double(gd.sig11);
   free_double(gd.sig12);
   free_double(gd.ntgu);
@@ -502,7 +509,7 @@ START_TEST(test_H11pfun)
 END_TEST
 
 
-START_TEST(test_get_gradient)
+START_TEST(test_l1qc_hess_grad)
 {
   L1qcTestData Tdat;
   init_generic_data(&Tdat);
@@ -524,7 +531,7 @@ START_TEST(test_get_gradient)
   }
 
   /*-------------- Compute --------------------------- */
-  get_gradient(Tdat.N, Tdat.fu1, Tdat.fu2, sigx, Tdat.atr, Tdat.fe, Tdat.tau0, gd);
+  l1qc_hess_grad(Tdat.N, Tdat.fu1, Tdat.fu2, sigx, Tdat.atr, Tdat.fe, Tdat.tau0, gd);
 
   /* ----- Check -------*/
   ck_assert_double_array_eq_tol(Tdat.N, Tdat.sig11, gd.sig11, TOL_DOUBLE_SUPER*100);
@@ -592,7 +599,6 @@ START_TEST(test_line_search)
 
   status +=extract_json_double_array(test_data_json, "dx", &dx, &N);
   status +=extract_json_double_array(test_data_json, "du", &du, &N);
-  //status +=extract_json_double_array(test_data_json, "Adx", &Adx, &M);
   status +=extract_json_double_array(test_data_json, "gradf", &gradf, &N2);
 
   status +=extract_json_double(test_data_json, "f", &f);
@@ -626,7 +632,6 @@ START_TEST(test_line_search)
   gd.dx = dx;
   gd.du = du;
   gd.gradf = gradf;
-  // gd.Adx = Adx;
 
   DWORK_5N = malloc_double(5*N);
   if(!DWORK_5N){
@@ -661,7 +666,6 @@ START_TEST(test_line_search)
   free_double(r);
   free_double(dx);
   free_double(du);
-  // free_double(Adx);
   free_double(gradf);
 
   free_double(xp_exp);
@@ -692,23 +696,34 @@ START_TEST(test_f_eval)
 {
   L1qcTestData Tdat;
   init_generic_data(&Tdat);
-  double *fu1, *fu2, fe, f;
+
+  double *r=NULL, *fu1=NULL, *fu2=NULL;
+  double fe=0, f=0;
   int status = 0;
+  AxFuns Ax_funs = {.Ax=dct_EMx_new,
+                    .Aty=dct_MtEty,
+                    .AtAx=dct_MtEt_EMx_new};
+
+  dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
 
   fu1 = malloc_double(Tdat.N);
   fu2 = malloc_double(Tdat.N);
-  if (!fu1 || !fu2){
+  r = malloc_double(Tdat.M);
+
+  if (!fu1 || !fu2 || !r){
     fprintf(stderr, "Error allocating memory in test_f_eval\n");
     status = L1C_OUT_OF_MEMORY;
     goto exit;
   }
-  f_eval(Tdat.N,  Tdat.x, Tdat.u, Tdat.M, Tdat.r, Tdat.tau0,
-         Tdat.epsilon, fu1, fu2, &fe, &f);
+
+  f_eval(Tdat.N,  Tdat.x, Tdat.u, Tdat.M, r, Tdat.b, Tdat.tau0,
+         Tdat.epsilon, fu1, fu2, &fe, &f, Ax_funs);
 
   /* ----- Now check -------*/
   ck_assert_double_eq_tol(Tdat.fe, fe, TOL_DOUBLE);
   ck_assert_double_array_eq_tol(Tdat.N, Tdat.fu1, fu1, TOL_DOUBLE);
   ck_assert_double_array_eq_tol(Tdat.N, Tdat.fu2, fu2, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Tdat.M, Tdat.r, r, TOL_DOUBLE);
 
   ck_assert_double_eq_tol(Tdat.f, f, TOL_DOUBLE);
 
@@ -717,7 +732,7 @@ START_TEST(test_f_eval)
  exit:
   free_double(fu1);
   free_double(fu2);
-
+  free_double(r);
   free_generic_data(Tdat);
 
 #ifdef _USEMKL_
@@ -757,8 +772,8 @@ Suite *l1qc_newton_suite(void)
   tcase_add_test(tc_linesearch, test_line_search);
 
   tc_gradient = tcase_create("l1qc_gradient");
-  tcase_add_test(tc_gradient, test_get_gradient);
-  tcase_add_test(tc_gradient, test_compute_descent);
+  tcase_add_test(tc_gradient, test_l1qc_hess_grad);
+  tcase_add_test(tc_gradient, test_l1qc_descent_dir);
 
   tc_h11p = tcase_create("h11p");
   tcase_add_test(tc_h11p, test_H11pfun);
