@@ -18,6 +18,33 @@
 #include "l1c_math.h"
 
 
+
+START_TEST(test_l1c_daxpy_z2)
+{
+  l1c_int N = 256*256;
+
+  double *xx = malloc_double(2*N);
+  double *yy = malloc_double(2*N);
+  double *zz_exp = malloc_double(2*N);
+  double *zz = malloc_double(2*N);
+
+  double alp = 4.5918;
+  for (int i=0; i<2*N; i++){
+    xx[i] = ((double) rand()) / 256 / 256;
+    yy[i] = ((double) rand()) / 256 / 256;
+  }
+
+  for (int i=0; i<2*N; i++){
+    zz_exp[i] = alp * xx[i] + yy[i];
+  }
+
+  l1c_daxpy_z(N, alp, xx, yy, zz);
+  l1c_daxpy_z(N, alp, xx+N, yy+N, zz+N);
+
+  ck_assert_double_array_eq_tol(N, zz_exp, zz, TOL_DOUBLE_SUPER);
+}
+END_TEST
+
 START_TEST(test_l1c_daxpy_z)
 {
   l1c_int N = 6;
@@ -102,6 +129,7 @@ Suite *l1c_math_suite(void)
 
   tc_l1c_math = tcase_create("l1qc_math_funs");
 
+  tcase_add_test(tc_l1c_math, test_l1c_daxpy_z2);
   tcase_add_test(tc_l1c_math, test_l1c_dxmuly_z);
   tcase_add_test(tc_l1c_math, test_l1c_daxpy_z);
   tcase_add_test(tc_l1c_math, test_l1c_dsum);
