@@ -7,13 +7,13 @@
 
 AUTOMAKE_OPTIONS = foreign 1.8 no-dependencies
 
-
+$(info "===============================srcdir: $(abs_srcdir)")
 AM_TESTS_FD_REDIRECT = 9>&1
 
 # ----------------------------------------------------------------------#
 # -------------------------------  ----------------------------------#
 # if compile_test
-TESTS = test_l1c
+TESTS = test_l1c test.sh
 check_PROGRAMS   = test_l1c
 
 test_l1c_SOURCES = TEST_cgsolve.c       \

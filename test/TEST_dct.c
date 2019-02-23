@@ -15,7 +15,6 @@
 #include <check.h>
 #include <fftw3.h>
 
-// #include "test_data.h"
 #include "dct.h"
 
 /* Tolerances and things */
