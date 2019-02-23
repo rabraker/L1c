@@ -348,6 +348,7 @@ AC_CHECK_HEADER([cjson/cJSON.h], [], [AC_MSG_ERROR("Cannot find CJSON.h")])
 AC_CHECK_HEADER([math.h], [], [AC_MSG_ERROR("Cannot find math.h")])
 
 AM_CONDITIONAL([compile_dct_example], [test x$with_mkl = xyes || test x$use_fftw3 = xyes])
+AM_CONDITIONAL([compile_with_mkl], [test x$with_mkl = xyes ])
 AM_CONDITIONAL([comp_with_mex], [test x$with_mex = xyes])
 
 
