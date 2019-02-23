@@ -3,6 +3,7 @@ from scipy.fftpack import dct
 import ipdb
 import json
 import codecs
+from collections import namedtuple
 
 
 test_data_path = "/home/arnold/matlab/l1c/test/test_data"
@@ -56,124 +57,6 @@ def build_Amats(N):
     return Amat, Atmat, pix_idx
 
 
-def build_h11p_data(A, pix_idx):
-    h11p_path = test_data_path+"/hp11_fun_data.json"
-
-    N = A.shape[1]
-    M = A.shape[0]
-
-    sigx = np.random.randn(N, 1)
-    z = np.random.randn(N, 1)
-    r = np.random.randn(M, 1)
-
-    atr = A.T.dot(r)
-    fe = np.random.rand(1)[0]
-    fe = -np.abs(fe)
-
-    h11p_z = H11p_fun(sigx, fe, A, atr, z)
-
-    data = {'z': z,
-            'atr': atr,
-            'fe': fe,
-            'sigx': sigx,
-            'y_exp': h11p_z,
-            'pix_idx': pix_idx}
-
-    data = jsonify(data)
-    save_json(data, h11p_path)
-
-
-def build_feval_data(x, u, b, Amat, epsilon, tau):
-    feval_path = test_data_path+"/f_eval_data.json"
-
-    xu = np.vstack((x, u))
-    r, f, fe, fu1, fu2 = f_fun(xu, b, Amat, epsilon, tau)
-
-    data = {'x': x,
-            'u': u,
-            'r': r,
-            'tau': tau,
-            'epsilon': epsilon,
-            'fu1_exp': fu1,
-            'fu2_exp': fu2,
-            'fe_exp': fe,
-            'f_exp': f}
-
-    data = jsonify(data)
-
-    save_json(data, feval_path)
-
-
-def find_max_step(dx, du, Adx, fu1, fu2, r, epsilon):
-    # ipdb.set_trace()
-    idx_fu1, = np.where((dx-du)[:, 0] > 0)
-    idx_fu2, = np.where((-dx-du)[:, 0] > 0)
-
-    aqe = Adx.T.dot(Adx)[0][0]
-    bqe = 2*r.T.dot(Adx)[0][0]
-    cqe = (r.T.dot(r) - epsilon**2)[0][0]
-
-    smax_f1 = np.min(-fu1[idx_fu1] / (dx[idx_fu1] - du[idx_fu1]))
-    smax_f2 = np.min(-fu2[idx_fu2] / (-dx[idx_fu2] - du[idx_fu2]))
-    smax_quad = (-bqe + np.sqrt(bqe**2 - 4*aqe*cqe)) / (2*aqe)
-
-    print(smax_f1)
-    print(smax_f2)
-    print(smax_quad)
-    smax = np.min([1, smax_f1, smax_f2, smax_quad])
-
-    return smax * 0.99
-
-
-def build_find_smax_data(dx, du, Adx, fu1, fu2, r, epsilon):
-    smax_path = test_data_path+"/find_max_step_data.json"
-
-    print(smax_path)
-    smax = find_max_step(dx, du, Adx, fu1, fu2, r, epsilon)
-
-    data = {'dx': dx,
-            'du': du,
-            'Adx': Adx,
-            'fu1': fu1,
-            'fu2': fu2,
-            'r': r,
-            'epsilon': epsilon,
-            'smax': smax}
-
-    data = jsonify(data)
-    save_json(data, smax_path)
-
-
-def newton_init(x0, lbtol, mu):
-    N = x0.shape[0]
-    u = (0.95)*np.abs(x0) + (0.10)*np.max(np.abs(x0))
-    ipdb.set_trace()
-    tmp = (2.0*N+1.0)/np.sum(np.abs(x0))
-    tau = np.max((tmp, 1))
-    lbiter = np.ceil((np.log(2.0*N+1.0)-np.log(lbtol)-np.log(tau))/np.log(mu))
-
-    return u, tau, lbiter
-
-
-def build_newton_init_data(x0, lbtol, mu, epsilon, b, pix_idx):
-    newton_init_path = test_data_path+"/newton_init_data.json"
-
-    u, tau, lbiter = newton_init(x0, lbtol, mu)
-
-    data = {'x': x,
-            'u': u,
-            'b': b,
-            'lbtol': lbtol,
-            'mu': mu,
-            'tau': tau,
-            'epsilon': epsilon,
-            'lbiter': lbiter,
-            'pix_idx': pix_idx}
-
-    data = jsonify(data)
-    save_json(data, newton_init_path)
-
-
 def f_fun(xu, b, Amat, epsilon, tau):
     n = int(len(xu)/2)
 
@@ -209,17 +92,9 @@ def gradf(Amat, r, fu1, fu2, fe, tau):
     return gradf, ntau_gradu, ntau_gradx
 
 
-def H11p_fun(sigx, fe, A, atr, z):
-    # Need the slash here, python will not continue the line on its own.
-    h11p_z = sigx*z + (-1.0/fe) * A.T.dot(A.dot(z)) + \
-             (1/fe**2) * (atr.T.dot(z))*atr
-
-    return h11p_z
-
-
 def Hess_gradf(fe, fu1, fu2, r, A):
 
-    gf, ntgu, ntgz = gradf(A, r, fu1, fu2, fe, tau)
+    # gf, ntgu, ntgz = gradf(A, r, fu1, fu2, fe, tau)
     atr = (A.T).dot(r)
 
     sig11 = (1.0/fu1**2) + (1.0/fu2**2)
@@ -231,62 +106,63 @@ def Hess_gradf(fe, fu1, fu2, r, A):
     H2 = np.hstack((np.diag(sig12[:, 0]), np.diag(sig11[:, 0])))
     H = np.vstack((H1, H2))
 
-    sigx = sig11 - (sig12**2)/sig11
-    w1p = ntgz - (sig12/sig11)*ntgu
-
-    H11_prime = np.diag(sigx[:, 0]) - (1.0/fe) * A.T.dot(A) + \
-        (1.0/fe**2) * atr.dot(atr.T)
-
-    dxdu = np.linalg.solve(H, np.vstack((ntgz, ntgu)))
-
-    _,s,_=np.linalg.svd(H11_prime)
-    print(np.max(s)/np.min(s))
-    dx = np.linalg.solve(H11_prime, w1p)
-    du = (1/sig11)*ntgu - (sig12/sig11)*dx
-
-    N = dx.shape[0]
-    print(dx - dxdu[0:N])
-    print(du - dxdu[N:])
-    return gf, ntgu, ntgz, atr, sig11, sig12, sigx, w1p, dxdu
+    return H, H1, H2
 
 
-def build_Hess_gradf_data(A, b, x, epsilon, tau):
-    hess_grad_path = test_data_path+"/descent_data.json"
+def grad_est(x0, h, fun):
+    """
+    Compute an estimate of the gradient of the functional fun via finite
+    difference.
+    """
+    N = len(x0)
 
-    r, f, fe, fu1, fu2 = f_fun(np.vstack((x, u)), b, Amat, epsilon, tau)
+    dx = np.zeros((N, 1))
+    ek = np.zeros((N, 1))
+    fx0 = fun(x0)
 
-    gf, ntgu, ntgx, atr, sig11, sig12, sigx, w1p, dxdu = Hess_gradf(fe,
-                                                                    fu1, fu2,
-                                                                    r, A)
-    N=int(dxdu.shape[0]/2)
-    dx = dxdu[0:N]
-    du = dxdu[N:]
-    ipdb.set_trace()
-    print(pix_idx)
-    data = {'dx0': dx*0,
-            'dx': dx,
-            'du': du,
-            'gradf': gf,
-            'fu1': fu1,
-            'fu2': fu2,
-            'r': r,
-            'atr': atr,
-            'ntgx': ntgx,
-            'ntgu': ntgu,
-            'sig11': sig11,
-            'sig12': sig12,
-            'w1p': w1p,
-            'sigx': sigx,
-            'pix_idx': pix_idx,
-            'fe': fe,
-            'tau': tau,
-            'cgtol': 1e-9,
-            'cgmaxiter': 500}
+    for k in range(0, N):
+        ek = ek*0
+        ek[k] = 1.0
+        dx[k] = (fun(x0 + ek*h) - fun(x0 - ek*h)) / (2.0*h)
 
-    data = jsonify(data)
-    save_json(data, hess_grad_path)
+    return dx
 
 
+def Hess_est(x0, h, fun):
+    """
+    Compute an estimate of the Hessian of the functional fun via finite
+    difference.
+    For a function of N variables, we have
+
+    d^2f       f(xj+h, xk+h) - f(xj, xk+h) - f(xj+h, xk) + f(xj, xk)
+    -------- =------------------------------------------------------ = H[j,k]
+    dxj dxk                   h^2
+
+    where for brevity, the variables with indeces not equal j,k are not shown
+    and stay constant.
+    """
+
+    N = len(x0)
+
+    H = np.zeros((N, N))
+    ek_row = np.zeros((N, 1))
+    ek_col = np.zeros((N, 1))
+    # fx0 = fun(x0)
+
+    for jcol in range(0, N):
+        for krow in range(0, N):
+            ek_row = ek_row*0
+            ek_col = ek_col*0
+            ek_row[krow] = 1.0
+            ek_col[jcol] = 1.0
+            f12p = fun(x0 + ek_col*h + ek_row*h)
+            f12m = fun(x0 - ek_col*h - ek_row*h)
+            f1 = fun(x0 + ek_col*h - ek_row*h)
+            f2 = fun(x0 - ek_col*h + ek_row*h)
+
+            H[jcol, krow] = ( (f12p+f12m) - (f1 + f2)) / (4.0*h*h)
+
+    return H
 
 
 np.random.seed(0)
@@ -295,153 +171,39 @@ tau = 10
 mu = 10
 lbtol = 1e-3
 epsilon = .1
-Amat, Atmat, pix_idx = build_Amats(N)
+h = 5e-6
+A, At, pix_idx = build_Amats(N)
+M = A.shape[0]
+xi = np.random.randn(N, 1)
 
-M = Amat.shape[0]
-xx = np.random.randn(N, 1)
-b = Amat.dot(xx) + np.random.randn(M, 1) * 0.015
-x = Atmat.dot(b) + np.random.randn(N, 1) * 0.0001
-u = (0.99)*np.abs(x) + (0.10)*np.max(np.abs(x))
-
-dx = np.random.randn(N, 1)
-du = np.random.randn(N, 1)
-Adx = Amat.dot(dx)
-
-r, f, fe, fu1, fu2 = f_fun(np.vstack((x, u)), b, Amat, epsilon, tau)
-
-build_Hess_gradf_data(Amat, b, x, epsilon, tau)
-
-# smax = find_max_step(dx, du, Adx, fu1, fu2, r, epsilon)
-
-# build_find_smax_data(dx, du, Adx, fu1, fu2, r, epsilon)
-
-# build_newton_init_data(x, lbtol, mu, epsilon, b, pix_idx)
+b = A.dot(xi) + np.random.randn(M, 1) * 0.015
+x = At.dot(b) + np.random.randn(N, 1) * 0.0001
 
 
-# # build_h11p_data(Amat, pix_idx)
-# # build_feval_data(x, u, b, Amat, epsilon, tau)
+u = (0.95)*np.abs(x) + (0.10)*np.max(np.abs(x))
 
-# print("||Ax-b||")
-# print(np.linalg.norm(Amat.dot(x) - b) )
-# ipdb.set_trace()
+xu = np.vstack((x, u))
+r, f, fe, fu1, fu2 = f_fun(xu, b, A, epsilon, tau)
 
-
-# xu = np.hstack((x, u))
-# r, f, fe, fu1, fu2 = f_fun(xu, b, Amat, epsilon, tau)
-
-# f_fun_handle = f_fun_fact(b, Amat, epsilon, tau)
+print(f)
+print(fe)
 
 
+f_fun_handle = f_fun_fact(b, A, epsilon, tau)
 
-# gf_true = gradf(Amat, r, fu1, fu2, fe, tau)
+gf_true = gradf(A, r, fu1, fu2, fe, tau)[0]
 
-
-
-
-# def grad_est(x0, h, fun):
-#     """
-#     Compute an estimate of the gradient of the functional fun via finite
-#     difference.
-#     """
-#     N = len(x0)
-
-#     dx = np.zeros(N)
-#     ek = np.zeros(N)
-#     fx0 = fun(x0)
-
-#     for k in range(0, N):
-#         ek = ek*0
-#         ek[k] = 1.0
-
-#         dx[k] = (fun(x0 + ek*h) - fun(x0 - ek*h)) / (2.0*h)
-
-#     return dx
+gf_est = grad_est(xu, h, f_fun_handle)
 
 
-# def Hess_est(x0, h, fun):
-#     """
-#     Compute an estimate of the Hessian of the functional fun via finite
-#     difference.
-#     For a function of N variables, we have
+print("gf_true    gf_est   error")
+print(np.hstack((gf_true,  gf_est, gf_true-gf_est)))
 
-#     d^2f       f(xj+h, xk+h) - f(xj, xk+h) - f(xj+h, xk) + f(xj, xk)
-#     -------- =------------------------------------------------------ = H[j,k]
-#     dxj dxk                   h^2
+H_est = Hess_est(xu, h, f_fun_handle)*tau
+H_true, H1, H2 = Hess_gradf(fe, fu1, fu2, r, A)
 
-#     where for brevity, the variables with indeces not equal j,k are not shown
-#     and stay constant.
-#     """
+np.set_printoptions(threshold=10000, linewidth=200, precision=4)
+print(H_est - H_true)
 
-#     N = len(x0)
+Herr = H_est - H_true
 
-#     H = np.zeros((N, N))
-#     ek_row = np.zeros(N)
-#     ek_col = np.zeros(N)
-#     # fx0 = fun(x0)
-
-#     for jcol in range(0, N):
-#         for krow in range(0, N):
-#             ek_row = ek_row*0
-#             ek_col = ek_col*0
-#             ek_row[krow] = 1.0
-#             ek_col[jcol] = 1.0
-#             f12p = fun(x0 + ek_col*h + ek_row*h)
-#             f12m = fun(x0 - ek_col*h - ek_row*h)
-#             f1 = fun(x0 + ek_col*h - ek_row*h)
-#             f2 = fun(x0 - ek_col*h + ek_row*h)
-
-#             H[jcol, krow] = ( (f12p+f12m) - (f1 + f2)) / (4.0*h*h)
-
-#     return H
-
-
-
-
-# # def f2(x, H):
-# #     # H = np.eye(len(x))
-# #     return x.dot(H).dot(x)
-
-
-# def f2_fact(H):
-#     def f2_fun(x):
-#         return 0.5*x.dot(H).dot(x)
-
-#     return f2_fun
-#
-
-# gf_est = grad_est(xu, h, f_fun_handle)
-
-# np.set_printoptions(linewidth=300, precision=3)
-# print(gf_est-gf_true)
-
-# H, H11 = Hess(fe, fu1, fu2, r, Amat)
-# Hest = tau*Hess_est(xu, h, f_fun_handle)
-
-
-# print(H11)
-# print("----------------------\n")
-# print(Hest[0:N, 0:N])
-
-# # print(H[0:N, 0:N] -Hest[0:N, 0:N])
-
-# print(np.max(np.abs(H-Hest))/np.max(np.abs(H)) )
-
-
-
-
-# #--------------------------------------------
-# HH = np.random.rand(N, N)
-# HH = HH.T.dot(HH) + 10*np.eye(N)
-
-# print(min(np.linalg.eigvals(HH)))
-
-# f2 = f2_fact(HH)
-# Hest_2 = Hess_est(x, h, f2)
-# print("\n\n----------------------HH est")
-# print(Hest_2 - HH)
-
-
-# # print("HH")
-# # print(HH)
-
-# ipdb.set_trace()
