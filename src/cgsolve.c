@@ -89,7 +89,7 @@ int cgsolve(double *x, double *b, l1c_int N, double *Dwork,
 
   /* Init
   x = zeros(n,1)
-  r = b;
+  r = b-A*x
   p = r;
   delta = r'*r;
   delta_0 = b'*b;
