@@ -19,6 +19,21 @@
 
 
 
+START_TEST(test_l1c_init_vec)
+{
+  l1c_int N = 6;
+  double a = 3.5;
+  double x[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+
+  l1c_init_vec(N, x, a);
+
+  for(int i=0; i<N; i++){
+    ck_assert_double_eq_tol(a, x[i], TOL_DOUBLE_SUPER);
+  }
+
+}
+END_TEST
+
 START_TEST(test_l1c_daxpy_z2)
 {
   l1c_int N = 256*256;
@@ -131,6 +146,7 @@ Suite *l1c_math_suite(void)
 
   tc_l1c_math = tcase_create("l1qc_math_funs");
 
+  tcase_add_test(tc_l1c_math, test_l1c_init_vec);
   tcase_add_test(tc_l1c_math, test_l1c_daxpy_z2);
   tcase_add_test(tc_l1c_math, test_l1c_dxmuly_z);
   tcase_add_test(tc_l1c_math, test_l1c_daxpy_z);

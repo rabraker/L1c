@@ -8,7 +8,7 @@
    Initialize a vector x of length N to alpha in all entries.
 */
 void l1c_init_vec(l1c_int N, double *x, double alpha){
-  for (int i=1; i<N; i++){
+  for (int i=0; i<N; i++){
     x[i] = alpha;
   }
 }
