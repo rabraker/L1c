@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+import os
 import numpy as np
 import json
 import codecs
@@ -9,7 +11,7 @@ def build_cgsolve_test_data(test_data_root):
     # The JSON file will be saved to test_data_root/''cgsolve_small01.json'
     #
 
-    cg_test_data_small_path = 'cgsolve_small01.json'
+    cg_test_data_small_path = test_data_root+"/cgsolve_small01.json"
     tol = 1e-9
     maxiter = 500
 
@@ -58,7 +60,7 @@ def build_cgsolve_test_data(test_data_root):
 
 
 def ax_sym_data(test_data_root):
-    ax_sym_path = 'ax_sym.json'
+    ax_sym_path = test_data_root+"/ax_sym.json"
     # ------------------------------------------------ #
     seed(1)
     N = 50
@@ -67,7 +69,6 @@ def ax_sym_data(test_data_root):
     A = A.dot(A.T) + 6*np.eye(N)
 
     assert(np.min(np.linalg.eigvals(A)) > 0)
-
 
     x = np.random.rand(N, 1)
 
@@ -85,17 +86,13 @@ def ax_sym_data(test_data_root):
     json.dump(data, codecs.open(ax_sym_path, 'w', encoding='utf-8'),
               separators=(',', ':'), sort_keys=True, indent=4)
 
-    # Arow = []
-    # for i=1:size(A, 1)
-    # Arow = [Arow, A(i,i:end)]
-    # end
 
-    # jopts.FileName = 'test_data/ax_sym.json'
-    # jopts.FloatFormat = '%.20f'
+srcdir = os.getenv("srcdir")
+if srcdir is None:
+    srcdir = "."
 
-    # savejson('', struct('A', Arow(:)', 'x', x(:)', 'y', y(:)'), jopts)
+data_dir = srcdir+"/test_data"
 
+build_cgsolve_test_data(data_dir)
 
-build_cgsolve_test_data('')
-
-ax_sym_data('')
+ax_sym_data(data_dir)

@@ -10,10 +10,17 @@ AUTOMAKE_OPTIONS = foreign 1.8 no-dependencies
 $(info "===============================srcdir: $(abs_srcdir)")
 AM_TESTS_FD_REDIRECT = 9>&1
 
+TEST_DATA_DIR="$(abs_srcdir)/test_data/"
+
 # ----------------------------------------------------------------------#
 # -------------------------------  ----------------------------------#
-# if compile_test
-TESTS = test_l1c test.sh
+
+TESTS = test_l1c.sh build_dct_data.py build_cgsolve_data.py build_l1qc_data.py
+TEST_EXTENSIONS = .py .sh
+
+# Expected failures
+XFAIL_TESTS=
+
 check_PROGRAMS   = test_l1c
 
 test_l1c_SOURCES = TEST_cgsolve.c       \
@@ -32,4 +39,4 @@ test_l1c_CFLAGS = $(L1CCFLAGS) -std=c11 $(WARNFLAGS)
 test_l1c_LDFLAGS = $(LDFLAGS)
 
 
-# endif
+test_l1c.log:build_dct_data.log build_cgsolve_data.log build_l1qc_data.log

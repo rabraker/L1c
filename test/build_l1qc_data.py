@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+import os
+import sys
 import numpy as np
 from scipy.fftpack import dct
 import ipdb
@@ -45,7 +48,6 @@ def build_Amats(N):
     pix_idx, = np.where(row_select > 0.7)
 
     E_mat = E_mat[pix_idx, :]
-    print(E_mat.shape)
 
     Amat = E_mat.dot(dct_mat.T)
     Atmat = Amat.T
@@ -54,7 +56,6 @@ def build_Amats(N):
 
 
 def find_max_step(dx, du, Adx, fu1, fu2, r, epsilon):
-    # ipdb.set_trace()
     idx_fu1, = np.where((dx-du)[:, 0] > 0)
     idx_fu2, = np.where((-dx-du)[:, 0] > 0)
 
@@ -66,9 +67,6 @@ def find_max_step(dx, du, Adx, fu1, fu2, r, epsilon):
     smax_f2 = np.min(-fu2[idx_fu2] / (-dx[idx_fu2] - du[idx_fu2]))
     smax_quad = (-bqe + np.sqrt(bqe**2 - 4*aqe*cqe)) / (2*aqe)
 
-    print(smax_f1)
-    print(smax_f2)
-    print(smax_quad)
     smax = np.min([1, smax_f1, smax_f2, smax_quad])
 
     return smax * 0.99
@@ -94,7 +92,6 @@ def f_fun(xu, b, Amat, epsilon, tau):
     fu1 = x-u
     fu2 = -x - u
     fe = (1.0/2.0) * (r.T.dot(r) - epsilon**2)
-    # ipdb.set_trace()
     f = np.sum(u) - (1.0/tau)*(np.sum(np.log(-fu1)) +
                                np.sum(np.log(-fu2)) + np.log(-fe))
 
@@ -151,14 +148,17 @@ def Hess_gradf(fe, fu1, fu2, atr, A):
 
     dx = np.linalg.solve(H11_prime, w1p)
     du = (1/sig11)*ntgu - (sig12/sig11)*dx
+    np.testing.assert_array_almost_equal(dx, dxdu[0:N])
+    np.testing.assert_array_almost_equal(du, dxdu[N:])
 
-    N = dx.shape[0]
-    print(dx - dxdu[0:N])
-    print(du - dxdu[N:])
     return gf, ntgu, ntgz, atr, sig11, sig12, sigx, w1p, dxdu
 
 
-test_data_path = "/home/arnold/matlab/l1c/test/test_data"
+srcdir = os.getenv("srcdir")
+if srcdir is None:
+    srcdir = "."
+
+test_data_path = srcdir+"/test_data"
 
 l1qc_data_path = test_data_path+"/l1qc_data.json"
 
@@ -181,7 +181,10 @@ u, tau_exp, lbiter = newton_init(x, lbtol, mu)
 xu = np.vstack((x, u))
 r, f, fe, fu1, fu2 = f_fun(xu, b, A, epsilon, tau)
 
-print(f, fe)
+if np.isnan(f) or np.isnan(fe):
+    print("Randomly generated test data is infeasible. ")
+    sys.exit(1)
+
 
 dx_rand1 = np.random.randn(N, 1)
 du_rand1 = np.random.randn(N, 1)
@@ -190,7 +193,8 @@ smax = find_max_step(dx_rand1, du_rand1, Adx_rand1, fu1, fu2, r, epsilon)
 
 atr = A.T.dot(r)
 gf, ntau_gradu, ntau_gradx = gradf(A, atr, fu1, fu2, fe, tau)
-gf, ntgu, ntgx, atr, sig11, sig12, sigx, w1p, dxdu = Hess_gradf(fe, fu1, fu2, atr, A)
+gf, ntgu, ntgx, atr, sig11, sig12, sigx, w1p, dxdu = Hess_gradf(fe, fu1,
+                                                                fu2, atr, A)
 
 sigx_rand = np.random.randn(N, 1)
 z_rand = np.random.randn(N, 1)
@@ -198,7 +202,7 @@ r_rand = np.random.randn(M, 1)
 at_rrand = A.T.dot(r)
 fe_rand = -np.abs(np.random.rand(1)[0])
 h11p_z = H11p_fun(sigx_rand, fe_rand, A, at_rrand, z_rand)
-ipdb.set_trace()
+
 l1qc_data = {'N': N,
              'M': M,
              'tau0': tau,
@@ -246,6 +250,5 @@ l1qc_data = {'N': N,
 
 
 l1qc_data_json = jsonify(l1qc_data)
-print(l1qc_data_path)
 
 save_json(l1qc_data, l1qc_data_path)

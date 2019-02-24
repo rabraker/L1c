@@ -45,6 +45,7 @@ START_TEST(test_l1c_daxpy_z2)
 }
 END_TEST
 
+
 START_TEST(test_l1c_daxpy_z)
 {
   l1c_int N = 6;
@@ -60,6 +61,7 @@ START_TEST(test_l1c_daxpy_z)
   ck_assert_double_array_eq_tol(N, z_exp, z, TOL_DOUBLE);
 }
 END_TEST
+
 
 START_TEST(test_l1c_dxmuly_z)
 {
