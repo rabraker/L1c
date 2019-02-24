@@ -16,23 +16,47 @@ This test suite uses the libcheck framework.
 #include <check.h>
 
 #include "l1c_common.h"
-
+#include "check_utils.h"
 #include <cjson/cJSON.h>
 #include "json_utils.h"
+
 #include "l1qc_newton.h"
 #include "dct.h"
 
 /* Tolerances and things */
 #include "test_constants.h"
 #include  "l1c_math.h"
-#include "check_utils.h"
 
-#ifdef _USE_MKL_
-#include "mkl.h"
-#endif
+// #ifdef _USE_MKL_
+// #include "mkl.h"
+// #endif
 
 static cJSON *test_data_json;
 
+/* Defined in test_l1c.c*/
+extern char* fullfile(char *base_path, char *name);
+extern char *test_data_dir;
+
+/* Initialize NewtParams struct. Even though for some tests
+   we dont need all of them set, we should set them to clean up the ouput
+   of valgrind when tracking down other problems.
+*/
+void init_newt_params(NewtParams *params){
+  // CgParams cgp ={.verbose=0, .max_iter=0, .tol=0};
+  params->epsilon=0;
+  params->tau=0;
+  params->mu=0;
+  params->newton_tol=0;
+  params->newton_max_iter=0;
+  params->lbiter=0;
+  params->lbtol=0;
+  params->l1_tol=0;
+  params->verbose=0;
+  params->cg_params.verbose=0;
+  params->cg_params.tol=0;
+  params->cg_params.max_iter=0;
+  params->warm_start_cg=0;
+}
 
 typedef struct L1qcTestData {
   l1c_int N;
@@ -81,11 +105,11 @@ typedef struct L1qcTestData {
 
 
 static void init_generic_data(L1qcTestData *dat){
-  char fpath[] = "test_data/l1qc_data.json";
+  char *fpath_generic = fullfile(test_data_dir, "l1qc_data.json");
   cJSON *json_data;
 
   int N_tmp=0, M_tmp=0, status=0;
-  if (load_file_to_json(fpath, &json_data)){
+  if (load_file_to_json(fpath_generic, &json_data)){
     fprintf(stderr, "Error loading data in test_l1qc_newton_1iter\n");
     ck_abort();
   }
@@ -139,6 +163,7 @@ static void init_generic_data(L1qcTestData *dat){
     fprintf(stderr, "Error initializing data\n");
     ck_abort();
   }
+  free(fpath_generic);
   cJSON_Delete(json_data);
 }
 
@@ -179,7 +204,7 @@ START_TEST (test_l1qc_newton_1iter)
 {
   CgParams cgp = {.verbose=0, .max_iter=0.0, .tol=0.0};
   NewtParams params;
-  char fpath[] = "test_data/lb_test_data_iter_2.json";
+  char *fpath_1iter = fullfile(test_data_dir, "lb_test_data_iter_2.json");
   double *x0=NULL, *b=NULL;
   double *x1_exp=NULL, *u1_exp=NULL;
 
@@ -193,7 +218,7 @@ START_TEST (test_l1qc_newton_1iter)
                     .Aty=dct_MtEty,
                     .AtAx=dct_MtEt_EMx_new};
 
-  if (load_file_to_json(fpath, &test_data_json)){
+  if (load_file_to_json(fpath_1iter, &test_data_json)){
     fprintf(stderr, "Error loading data in test_l1qc_newton_1iter\n");
     ck_abort();
   }
@@ -258,7 +283,7 @@ START_TEST (test_l1qc_newton_1iter)
   dct_destroy();
 
   cJSON_Delete(test_data_json);
-
+  free(fpath_1iter);
 #ifdef _USEMKL_
   mkl_free_buffers();
 #endif
@@ -275,7 +300,9 @@ END_TEST
 /*------------------------------------------ */
 START_TEST (test_newton_init_regres1)
 {
+
   NewtParams params;
+  init_newt_params(&params);
   l1c_int N=4;
 
   double x[] = {1.0, 2.0, 3.0, 4.0};
@@ -298,7 +325,6 @@ START_TEST (test_newton_init_regres1)
 
 }
 END_TEST
-
 
 
 START_TEST (test_newton_init)
@@ -345,38 +371,6 @@ START_TEST (test_newton_init)
 }
 END_TEST
 
-START_TEST (test_find_max_step)
-{
-  L1qcTestData Tdat;
-  init_generic_data(&Tdat);
-
-  GradData gd;
-  double smax= 0.0;
-
-  gd.dx = Tdat.dx_rand1;
-  gd.du = Tdat.du_rand1;
-  double *DWORK = malloc_double(Tdat.N);
-
-  AxFuns Ax_funs = {.Ax=dct_EMx_new,
-                    .Aty=dct_MtEty,
-                    .AtAx=dct_MtEt_EMx_new};
-
-  /* Setup the DCT */
-  dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
-
-  smax = find_max_step(Tdat.N, gd, Tdat.fu1, Tdat.fu2, Tdat.M, Tdat.r, DWORK,
-                       Tdat.epsilon, Ax_funs);
-  ck_assert_double_eq_tol(Tdat.smax, smax,  TOL_DOUBLE);
-
-
-  free_generic_data(Tdat);
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
-
-}
-END_TEST
-
 
 START_TEST(test_l1qc_descent_dir)
 {
@@ -392,9 +386,6 @@ START_TEST(test_l1qc_descent_dir)
   AxFuns Ax_funs = {.Ax=dct_EMx_new,
                     .Aty=dct_MtEty,
                     .AtAx=dct_MtEt_EMx_new};
-  /* Setup the DCT */
-  dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
-
 
   DWORK_7N = malloc_double(7*Tdat.N);
   gd.w1p = malloc_double(Tdat.N);
@@ -413,6 +404,9 @@ START_TEST(test_l1qc_descent_dir)
 
   /* Setup the DCT */
   dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
+
+  /* We must initialize gd.dx, because we have enabled warm starting*/
+  l1c_init_vec(Tdat.N, gd.dx, 0.0);
 
   l1qc_descent_dir(Tdat.N, Tdat.fu1, Tdat.fu2, Tdat.r, Tdat.fe,
                   Tdat.tau0, gd, DWORK_7N, cgp, &cgr, Ax_funs);
@@ -492,8 +486,10 @@ START_TEST(test_H11pfun)
 
   /* ----------------- Cleanup --------------- */
  exit:
-  free_double(h11p_data.Dwork_1N);
+  free_double(h11p_z);
   free_double(z_orig);
+  free_double(h11p_data.Dwork_1N);
+
   dct_destroy();
 
   free_generic_data(Tdat);
@@ -562,6 +558,39 @@ START_TEST(test_l1qc_hess_grad)
 END_TEST
 
 
+START_TEST (test_find_max_step)
+{
+  L1qcTestData Tdat;
+  init_generic_data(&Tdat);
+
+  GradData gd;
+  double smax= 0.0;
+
+  gd.dx = Tdat.dx_rand1;
+  gd.du = Tdat.du_rand1;
+  double *DWORK = malloc_double(Tdat.N);
+
+  AxFuns Ax_funs = {.Ax=dct_EMx_new,
+                    .Aty=dct_MtEty,
+                    .AtAx=dct_MtEt_EMx_new};
+
+  /* Setup the DCT */
+  dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
+
+  smax = find_max_step(Tdat.N, gd, Tdat.fu1, Tdat.fu2, Tdat.M, Tdat.r, DWORK,
+                       Tdat.epsilon, Ax_funs);
+  ck_assert_double_eq_tol(Tdat.smax, smax,  TOL_DOUBLE);
+
+  free_double(DWORK);
+  dct_destroy();
+  free_generic_data(Tdat);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
+
+}
+END_TEST
+
 
 START_TEST(test_line_search)
 {
@@ -583,9 +612,9 @@ START_TEST(test_line_search)
   //double sm;
   l1c_int N,N2, M, status=0;
   l1c_int *pix_idx=NULL;
-  char fpath[] = "test_data/line_search_data.json";
+  char *fpath_linesearch = fullfile(test_data_dir, "line_search_data.json");
 
-  if (load_file_to_json(fpath, &test_data_json)){
+  if (load_file_to_json(fpath_linesearch, &test_data_json)){
     fprintf(stderr, "Error loading data in test_line_search\n");
     ck_abort();
   }
@@ -664,6 +693,7 @@ START_TEST(test_line_search)
   free_double(x);
   free_double(u);
   free_double(r);
+  free_double(b);
   free_double(dx);
   free_double(du);
   free_double(gradf);
@@ -681,8 +711,9 @@ START_TEST(test_line_search)
 
   dct_destroy();
 
-
   cJSON_Delete(test_data_json);
+  free(fpath_linesearch);
+
 #ifdef _USEMKL_
   mkl_free_buffers();
 #endif
