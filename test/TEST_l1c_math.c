@@ -57,6 +57,12 @@ START_TEST(test_l1c_daxpy_z2)
   l1c_daxpy_z(N, alp, xx+N, yy+N, zz+N);
 
   ck_assert_double_array_eq_tol(N, zz_exp, zz, TOL_DOUBLE_SUPER);
+
+  free_double(xx);
+  free_double(yy);
+  free_double(zz_exp);
+  free_double(zz);
+
 }
 END_TEST
 

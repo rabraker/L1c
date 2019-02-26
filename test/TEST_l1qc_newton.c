@@ -27,9 +27,9 @@ This test suite uses the libcheck framework.
 #include "test_constants.h"
 #include  "l1c_math.h"
 
-// #ifdef _USE_MKL_
-// #include "mkl.h"
-// #endif
+#ifdef _USE_MKL_
+#include "mkl.h"
+#endif
 
 static cJSON *test_data_json;
 
@@ -704,6 +704,8 @@ START_TEST(test_line_search)
 
   free_double(fu1p_exp);
   free_double(fu2p_exp);
+  free(pix_idx);
+
   free_double(fu1p);
   free_double(fu2p);
 
@@ -764,6 +766,9 @@ START_TEST(test_f_eval)
   free_double(fu1);
   free_double(fu2);
   free_double(r);
+
+  dct_destroy();
+
   free_generic_data(Tdat);
 
 #ifdef _USEMKL_

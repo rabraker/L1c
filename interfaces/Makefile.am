@@ -11,10 +11,10 @@ clean-local:: clean-convenience-link
 bin_PROGRAMS    =
 lib_LTLIBRARIES =
 
-$(info "MATHLIBS = $(MATHLIBS)")
-$(info "LDFLAGS = $(LDFLAGS)")
-$(info "MEXCPP = $(MEXCPPFLAGS)")
-$(info "MEXLIBS = $(MEXLDLIBS)")
+# $(info "MATHLIBS = $(MATHLIBS)")
+# $(info "LDFLAGS = $(LDFLAGS)")
+# $(info "MEXCPP = $(MEXCPPFLAGS)")
+# $(info "MEXLIBS = $(MEXLDLIBS)")
 # ----------------------------------------------------------------------#
 # -------------------------------  ----------------------------------#
 if compile_dct_example
@@ -84,13 +84,15 @@ endif
 convenience-link: $(lib_LTLIBRARIES)
 	@echo "tlt libs $(lib_LTLIBRARIES)"
 	@for soname in `test -z $$^ || $(EGREP) "^dlname=" $^|sed -e "s/^.*=//g"|sed -e "s/'//g"`; do  \
-		echo "$$soname: creating convenience link from $(abs_builddir)/.libs to $(abs_builddir)"; \
-		new_soname=`echo $$soname|sed -e "s/so.*$$/so/g"`; \
-		echo "soname: $$soname";\
-		echo "new-soname: $$new_soname";\
-		rm -f $(abs_builddir)/$$soname ; \
-		test -e $(abs_builddir)/.libs/$$soname && \
-		$(LN_S) $(abs_builddir)/.libs/$$soname $$new_soname || echo "FAILED";\
+		if test -h "$$new_soname"; then                                                            \
+		echo "$$soname: creating convenience link from $(abs_builddir)/.libs to $(abs_builddir)";  \
+		new_soname=`echo $$soname|sed -e "s/so.*$$/so/g"`;                                         \
+		echo "soname: $$soname";                                                                   \
+		echo "new-soname: $$new_soname";                                                           \
+		rm -f $(abs_builddir)/$$soname ;                                                           \
+		test -e $(abs_builddir)/.libs/$$soname &&                                                  \
+		$(LN_S) $(abs_builddir)/.libs/$$soname $$new_soname || echo "FAILED";                      \
+		fi;                                                                                         \
 	done
 
 

@@ -7,15 +7,25 @@
 
 AUTOMAKE_OPTIONS = foreign 1.8 no-dependencies
 
-$(info "===============================srcdir: $(abs_srcdir)")
+# $(info "===============================srcdir: $(abs_srcdir)")
 AM_TESTS_FD_REDIRECT = 9>&1
+AM_TESTS_ENVIRONMENT = TOP_BUILDDIR='$(top_builddir)'; export TOP_BUILDDIR;
 
 TEST_DATA_DIR="$(abs_srcdir)/test_data/"
 
-# ----------------------------------------------------------------------#
-# -------------------------------  ----------------------------------#
+# -------------------------------------------------------------------------------#
+# The valgrind checks are not run by default because they take forever. To do so,
+# invoke
+# >>> with_valgrind=yes make check
+#
 
-TESTS = test_l1c.sh build_dct_data.py build_cgsolve_data.py build_l1qc_data.py
+TESTS = test_l1c.sh           \
+		build_dct_data.py     \
+		build_cgsolve_data.py \
+		build_l1qc_data.py    \
+		valgrind_wrapper.sh
+
+
 TEST_EXTENSIONS = .py .sh
 
 # Expected failures
@@ -40,3 +50,5 @@ test_l1c_LDFLAGS = $(LDFLAGS)
 
 
 test_l1c.log:build_dct_data.log build_cgsolve_data.log build_l1qc_data.log
+
+valgrind_wrapper.log:build_dct_data.log build_cgsolve_data.log build_l1qc_data.log
