@@ -84,9 +84,9 @@ endif
 convenience-link: $(lib_LTLIBRARIES)
 	@echo "tlt libs $(lib_LTLIBRARIES)"
 	@for soname in `test -z $$^ || $(EGREP) "^dlname=" $^|sed -e "s/^.*=//g"|sed -e "s/'//g"`; do  \
-		if test -h "$$new_soname"; then                                                            \
-		echo "$$soname: creating convenience link from $(abs_builddir)/.libs to $(abs_builddir)";  \
 		new_soname=`echo $$soname|sed -e "s/so.*$$/so/g"`;                                         \
+		if test ! -h "$$new_soname"; then                                                          \
+		echo "$$soname: creating convenience link from $(abs_builddir)/.libs to $(abs_builddir)";  \
 		echo "soname: $$soname";                                                                   \
 		echo "new-soname: $$new_soname";                                                           \
 		rm -f $(abs_builddir)/$$soname ;                                                           \
