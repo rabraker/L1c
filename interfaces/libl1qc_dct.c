@@ -23,9 +23,9 @@
 
 #include "dct.h"
 
-#define Ax_fun dct_EMx_new
+#define Ax_fun dct_EMx
 #define Aty_fun dct_MtEty
-#define AtAx_fun dct_MtEt_EMx_new
+#define AtAx_fun dct_MtEt_EMx
 #define ax_idct dct_idct
 #define ax_setup dct_setup
 #define ax_destroy dct_destroy

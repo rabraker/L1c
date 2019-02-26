@@ -214,9 +214,9 @@ START_TEST (test_l1qc_newton_1iter)
   l1c_int N=0, M=0, status=0, lbiter_exp=0;
   l1c_int *pix_idx=NULL;
 
-  AxFuns ax_funs = {.Ax=dct_EMx_new,
+  AxFuns ax_funs = {.Ax=dct_EMx,
                     .Aty=dct_MtEty,
-                    .AtAx=dct_MtEt_EMx_new};
+                    .AtAx=dct_MtEt_EMx};
 
   if (load_file_to_json(fpath_1iter, &test_data_json)){
     fprintf(stderr, "Error loading data in test_l1qc_newton_1iter\n");
@@ -383,9 +383,9 @@ START_TEST(test_l1qc_descent_dir)
   double *DWORK_7N;
   int status=0;
 
-  AxFuns Ax_funs = {.Ax=dct_EMx_new,
+  AxFuns Ax_funs = {.Ax=dct_EMx,
                     .Aty=dct_MtEty,
-                    .AtAx=dct_MtEt_EMx_new};
+                    .AtAx=dct_MtEt_EMx};
 
   DWORK_7N = malloc_double(7*Tdat.N);
   gd.w1p = malloc_double(Tdat.N);
@@ -470,7 +470,7 @@ START_TEST(test_H11pfun)
   h11p_data.atr = Tdat.at_rrand;
   h11p_data.sigx = Tdat.sigx_rand;
 
-  h11p_data.AtAx = dct_MtEt_EMx_new;
+  h11p_data.AtAx = dct_MtEt_EMx;
 
   cblas_dcopy(Tdat.N, Tdat.z_rand, 1, z_orig, 1);
 
@@ -570,9 +570,9 @@ START_TEST (test_find_max_step)
   gd.du = Tdat.du_rand1;
   double *DWORK = malloc_double(Tdat.N);
 
-  AxFuns Ax_funs = {.Ax=dct_EMx_new,
+  AxFuns Ax_funs = {.Ax=dct_EMx,
                     .Aty=dct_MtEty,
-                    .AtAx=dct_MtEt_EMx_new};
+                    .AtAx=dct_MtEt_EMx};
 
   /* Setup the DCT */
   dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
@@ -605,9 +605,9 @@ START_TEST(test_line_search)
   double *fu1p_exp, *fu2p_exp, fep_exp, fp_exp;
   double flx_exp=0, flu_exp=0, flin_exp=0;
 
-  AxFuns Ax_funs = {.Ax=dct_EMx_new,
+  AxFuns Ax_funs = {.Ax=dct_EMx,
                     .Aty=dct_MtEty,
-                    .AtAx=dct_MtEt_EMx_new};
+                    .AtAx=dct_MtEt_EMx};
 
   //double sm;
   l1c_int N,N2, M, status=0;
@@ -733,9 +733,9 @@ START_TEST(test_f_eval)
   double *r=NULL, *fu1=NULL, *fu2=NULL;
   double fe=0, f=0;
   int status = 0;
-  AxFuns Ax_funs = {.Ax=dct_EMx_new,
+  AxFuns Ax_funs = {.Ax=dct_EMx,
                     .Aty=dct_MtEty,
-                    .AtAx=dct_MtEt_EMx_new};
+                    .AtAx=dct_MtEt_EMx};
 
   dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
 

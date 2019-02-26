@@ -175,7 +175,7 @@ START_TEST(test_cgsolve_h11p){
   h11p_data.atr = atr;
   h11p_data.sigx = sigx;
   h11p_data.Dwork_1N = malloc_double(N);
-  h11p_data.AtAx = dct_MtEt_EMx_new;
+  h11p_data.AtAx = dct_MtEt_EMx;
 
   DWORK_4N = malloc_double(4*N);
   double *dx_by_nrm = malloc_double(4*N);

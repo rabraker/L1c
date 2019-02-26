@@ -82,9 +82,9 @@ int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
 }
 
 void dct_destroy(){
-  fftw_free(dct_Ety_sparse);
-  fftw_free(dct_x);
-  fftw_free(dct_y);
+  free_double(dct_Ety_sparse);
+  free_double(dct_x);
+  free_double(dct_y);
 
   fftw_destroy_plan(dct_plan_EMx);
   fftw_destroy_plan(dct_plan_MtEty);
@@ -108,7 +108,7 @@ void dct_idct(double *x){
 
 }
 
-void dct_EMx_new(double *x_fftw, double * restrict y){
+void dct_EMx(double *x_fftw, double * restrict y){
   /* Compute y = E * M *dct_x, where M is the IDCT, and E is the subsampling matrix.
 
      --x_fftw should have size dct_Nx.
@@ -168,7 +168,7 @@ void dct_MtEty( double * restrict y, double * restrict x){
 
 }
 
-void dct_MtEt_EMx_new(double * restrict x, double * restrict z){
+void dct_MtEt_EMx(double * restrict x, double * restrict z){
   /* Performs the Multiplication z = (EM)^T * (EM) * x
      on the supplied vector x.
 
@@ -176,7 +176,7 @@ void dct_MtEt_EMx_new(double * restrict x, double * restrict z){
      -- z should have dimension at least dct_Nx
    */
 
-  // dct_EMx_new(x, dct_y); //writes output y to global, which belongs to fftw.
+  // dct_EMx(x, dct_y); //writes output y to global, which belongs to fftw.
   // dct_MtEty(dct_y, z);
 
   /* It should be faster to implement E^T*Ex in shot

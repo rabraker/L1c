@@ -179,7 +179,7 @@ void teardown_pure(void){
 START_TEST(test_dct_MtEt_EMx_small)
 {
   /* Provided and freed by setup_small() and teardown_small()*/
-  dct_MtEt_EMx_new(dct_small_data->x_in, dct_small_data->MtEty_EMx_act);
+  dct_MtEt_EMx(dct_small_data->x_in, dct_small_data->MtEty_EMx_act);
 
   ck_assert_double_array_eq_tol(dct_small_data->Nx, dct_small_data->MtEty_EMx_exp,
                                 dct_small_data->MtEty_EMx_act, TOL_DOUBLE_SUPER);
@@ -200,7 +200,7 @@ END_TEST
 
 START_TEST(test_dct_EMx_new_small)
 {
-  dct_EMx_new(dct_small_data->x_in, dct_small_data->EMx_act);
+  dct_EMx(dct_small_data->x_in, dct_small_data->EMx_act);
 
   ck_assert_double_array_eq_tol(dct_small_data->Ny, dct_small_data->EMx_exp,
                                 dct_small_data->EMx_act, TOL_DOUBLE_SUPER);
@@ -216,7 +216,7 @@ END_TEST
 START_TEST(test_dct_MtEt_EMx_large)
 {
 
-  dct_MtEt_EMx_new(dct_large_data->x_in, dct_large_data->MtEty_EMx_act);
+  dct_MtEt_EMx(dct_large_data->x_in, dct_large_data->MtEty_EMx_act);
 
   ck_assert_double_array_eq_tol(dct_large_data->Nx, dct_large_data->MtEty_EMx_exp,
                                 dct_large_data->MtEty_EMx_act,  TOL_LARGE_DCT);
@@ -237,7 +237,7 @@ END_TEST
 START_TEST(test_dct_EMx_large)
 {
 
-  dct_EMx_new(dct_large_data->x_in, dct_large_data->EMx_act);
+  dct_EMx(dct_large_data->x_in, dct_large_data->EMx_act);
 
   ck_assert_double_array_eq_tol(dct_large_data->Ny, dct_large_data->EMx_exp,
                                 dct_large_data->EMx_act, TOL_LARGE_DCT);
@@ -254,7 +254,7 @@ with not sampling.
 START_TEST(test_dct_MtEt_EMx_pure)
 {
    /* Test the multiplication (EM)^T * (E*M) * x */
-  dct_MtEt_EMx_new(dct_pure_data->x_in, dct_pure_data->MtEty_EMx_act);
+  dct_MtEt_EMx(dct_pure_data->x_in, dct_pure_data->MtEty_EMx_act);
 
   ck_assert_double_array_eq_tol(dct_pure_data->Nx, dct_pure_data->MtEty_EMx_exp,
                                 dct_pure_data->MtEty_EMx_act, TOL_DOUBLE_SUPER);
@@ -280,7 +280,7 @@ END_TEST
 
 START_TEST(test_dct_EMx_new_pure)
 {
-  dct_EMx_new(dct_pure_data->x_in, dct_pure_data->EMx_act);
+  dct_EMx(dct_pure_data->x_in, dct_pure_data->EMx_act);
 
   ck_assert_double_array_eq_tol(dct_pure_data->Ny, dct_pure_data->EMx_exp,
                                 dct_pure_data->EMx_act, TOL_DOUBLE_SUPER);
