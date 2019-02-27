@@ -37,7 +37,6 @@ int main(void)
 {
   setup_tests();
 
-  printf("test_data_dir: %s\n", test_data_dir);
   /*
     Whether or not to fork: forkin is wont kill the whole program if a test segfaults etc,
     but is difficult to debug a failing test.
@@ -97,6 +96,7 @@ void setup_tests(void){
 void cleanup_tests(void){
   free(test_data_dir);
 }
+
 /*
   Joins base_path with name as a file path and returns the result (malloced within).
   That is, it returns

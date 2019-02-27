@@ -586,7 +586,9 @@ LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
 
       l1_prev = l1;
       if (rate < params.l1_tol){
-        printf("rate = %.9f < %.9f, stopping newton iteration\n", rate, params.l1_tol);
+        if(params.verbose > 0){
+          printf("rate = %.9f < %.9f, stopping newton iteration\n", rate, params.l1_tol);
+        }
         break;
       }
 
