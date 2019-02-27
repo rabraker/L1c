@@ -20,6 +20,7 @@ TEST_DATA_DIR="$(abs_srcdir)/test_data/"
 #
 
 TESTS = test_l1c.sh           \
+		build_dct2_data.py     \
 		build_dct_data.py     \
 		build_cgsolve_data.py \
 		build_l1qc_data.py    \
@@ -39,7 +40,8 @@ test_l1c_SOURCES = TEST_cgsolve.c       \
 					TEST_l1qc_newton.c  \
 					TEST_vcl_math.c     \
 					test_l1c.c          \
-					TEST_dct.c
+					TEST_dct.c          \
+					TEST_dct2.c
 
 test_l1c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la
 
@@ -49,6 +51,6 @@ test_l1c_CFLAGS = $(L1CCFLAGS) -std=c11 $(WARNFLAGS)
 test_l1c_LDFLAGS = $(LDFLAGS)
 
 
-test_l1c.log:build_dct_data.log build_cgsolve_data.log build_l1qc_data.log
+test_l1c.log:build_dct2_data.log build_dct_data.log build_cgsolve_data.log build_l1qc_data.log
 
-valgrind_wrapper.log:build_dct_data.log build_cgsolve_data.log build_l1qc_data.log
+valgrind_wrapper.log:build_dct2_data.log build_dct_data.log build_cgsolve_data.log build_l1qc_data.log

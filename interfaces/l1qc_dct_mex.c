@@ -17,7 +17,7 @@ typedef struct L1qcDctOpts{
   double mu;
   double lbtol;
   double tau;
-  double lbiter;
+  int lbiter;
   double newton_tol;
   int newton_max_iter;
   int verbose;
@@ -29,6 +29,10 @@ typedef struct L1qcDctOpts{
 
 int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
              L1qcDctOpts opts, LBResult *lb_res);
+
+int l1qc_dct2(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_idx,
+              L1qcDctOpts opts, LBResult *lb_res);
+
 
 #define NUMBER_OF_FIELDS(ST) (sizeof(ST)/sizeof(*ST))
 
@@ -62,6 +66,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
                                .newton_max_iter = 0,
                                .verbose = 0,
                                .l1_tol = 0,
+                               .lbiter = 0,
                                .cgtol = 0,
                                .cgmaxiter = 0,
                                .warm_start_cg=0};
@@ -69,15 +74,31 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
 
-  l1c_int i=0,N=0, M=0, npix=0;
+  l1c_int i=0,N=0, M=0,Nrow=0, Ncol=0, npix=0;
   double *pix_idx_double=NULL, *x_ours=NULL;
   l1c_int *pix_idx;
   // mwSize *dims;
 
-  if(nrhs != 4) {
+  if( (nrhs != 4) && (nrhs != 6)){
     mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:nrhs",
-                      "four inputs required.");
+                      "four or six inputs required.");
   }
+
+  if (nrhs == 6){
+    /* -------- Check Nrow -------------*/
+    if( !mxIsDouble(prhs[4]) || !mxIsScalar(prhs[4]) ) {
+      mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notDouble",
+                        "First Input vector must be type double.");
+    }
+    Nrow = (l1c_int) mxGetScalar(prhs[4]);
+    /* -------- Check Nrow -------------*/
+    if( !mxIsDouble(prhs[5]) || !mxIsScalar(prhs[5]) ) {
+      mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notDouble",
+                        "First Input vector must be type double.");
+    }
+    Ncol = (l1c_int) mxGetScalar(prhs[5]);
+  }
+
 
   if( !(nlhs > 0)) {
     mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:nlhs",
@@ -123,11 +144,16 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     npix = (l1c_int) ( mxGetM(prhs[2]) *  mxGetN(prhs[2]) );
   }
 
-  mexPrintf("N = %d", N);
  if ( !(N > M) | (M != npix) ){
    printf("N = %d, M=%d, npix = %d\n", N, M, npix);
    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:incompatible_dimensions",
                      "Must have length(x0) > length(b), and length(b) = length(pix_idx).");
+ }
+
+ if( (Nrow*Ncol !=0) && (Ncol*Nrow != N)){
+   printf("N = %d, Nrow=%d, Ncol = %d\n", N, Nrow, Ncol);
+   mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:incompatible_dimensions",
+                     "Must have length(x0) == Nrow*Ncol, or Ncol=Nrow=0.");
  }
 
  if ( !mxIsStruct(prhs[3])){
@@ -136,13 +162,13 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
  }
 
 
+
   int nfld = mxGetNumberOfFields(prhs[3]);
   // char *flds[]={ "verbose", "tau", "mu"};
   const char *name;
 
   mxArray *tmp;
   for (i=0; i<nfld; i++){
-    // tmp = mxGetField(prhs[3], 0, "verbose");
     tmp = mxGetFieldByNumber(prhs[3], 0, i);
     name =mxGetFieldNameByNumber(prhs[3], i);
     if (!tmp){
@@ -184,6 +210,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   }
 
+  mexPrintf("N = %d", N);
   if (l1qc_dct_opts.verbose > 1){
     printf("Input Parameters\n---------------\n");
     printf("   verbose:         %d\n", l1qc_dct_opts.verbose);
@@ -200,6 +227,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
     printf("NB: lbiter and tau usually generated automatically.\n");
   }
+
 
 
   b = mxGetPr(prhs[1]);
@@ -219,8 +247,11 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     pix_idx[i] = ((l1c_int) pix_idx_double[i]) - 1;
   }
 
-  l1qc_dct(N, x_ours, M, b, pix_idx, l1qc_dct_opts, &lb_res);
-
+  if (Nrow*Ncol == 0){
+    l1qc_dct(N, x_ours, M, b, pix_idx, l1qc_dct_opts, &lb_res);
+  }else{
+    l1qc_dct2(Nrow, Ncol, x_ours, M, b, pix_idx, l1qc_dct_opts, &lb_res);
+  }
 
 
   /* Prepare output data.

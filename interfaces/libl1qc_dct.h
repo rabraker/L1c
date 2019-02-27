@@ -26,3 +26,6 @@ typedef struct L1qcDctOpts{
 
 int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
              L1qcDctOpts opts, LBResult *lb_res);
+
+int l1qc_dct2(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_idx,
+              L1qcDctOpts opts, LBResult *lb_res);

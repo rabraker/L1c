@@ -70,7 +70,7 @@ DctData *dct_pure_data;
    the associated setup and teardown functions for each test case. This allows us
    to use a different file path for each.
  */
-void setup(DctData *dctd){
+static void setup(DctData *dctd){
   cJSON *test_data_json;
 
   int setup_status=0;
@@ -103,7 +103,7 @@ void setup(DctData *dctd){
   cJSON_Delete(test_data_json);
 }
 
-void teardown(DctData *dctd){
+static void teardown(DctData *dctd){
   free_double(dctd->x_in);
   free_double(dctd->y_in);
 
@@ -126,7 +126,7 @@ void teardown(DctData *dctd){
 
 }
 
-void setup_small(void){
+static void setup_small(void){
   dct_small_data = malloc(sizeof(DctData));
 
   char *fpath_dct_small = fullfile(test_data_dir, "dct_small.json");
@@ -137,13 +137,13 @@ void setup_small(void){
   free(fpath_dct_small);
 }
 
-void teardown_small(void){
+static void teardown_small(void){
   teardown(dct_small_data);
   free(dct_small_data);
 }
 
 /* */
-void setup_large(void){
+static void setup_large(void){
   dct_large_data = malloc(sizeof(DctData));
 
   char *fpath_dct_large = fullfile(test_data_dir, "dct_large.json");
@@ -154,12 +154,12 @@ void setup_large(void){
 
 }
 
-void teardown_large(void){
+static void teardown_large(void){
   teardown(dct_large_data);
   free(dct_large_data);
 }
 
-void setup_pure_dct(void){
+static void setup_pure_dct(void){
   dct_pure_data = malloc(sizeof(DctData));
 
   char *fpath_dct_pure = fullfile(test_data_dir, "dct_small_pure_dct.json");
@@ -169,7 +169,7 @@ void setup_pure_dct(void){
   free(fpath_dct_pure);
 }
 
-void teardown_pure(void){
+static void teardown_pure(void){
   teardown(dct_pure_data);
   free(dct_pure_data);
 
