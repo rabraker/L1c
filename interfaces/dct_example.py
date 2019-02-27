@@ -82,13 +82,13 @@ class l1qc_dct_params(Structure):
             "warm_start_cg   : %d" % self.warm_start_cg
 
 
-def l1qc_dct(eta_0, b, pix_idx, opts):
+def l1qc_dct(eta_0, b, pix_idx, opts, lib_dir=""):
     import numpy.ctypeslib as npct
 
     array_1d_double = npct.ndpointer(dtype=np.double, ndim=1, flags='CONTIGUOUS')
     array_1d_int = npct.ndpointer(dtype=np.int32, ndim=1, flags='CONTIGUOUS')
 
-    libl1c = npct.load_library("libl1qc_dct.so", ".")
+    libl1c = npct.load_library(lib_dir+"/libl1qc_dct.so", ".")
 
     libl1c.l1qc_dct.restype = np.int32
     libl1c.l1qc_dct.argtypes = [c_int, array_1d_double,
@@ -116,7 +116,7 @@ def remove_ticks(ax):
         labelright=False)   # labels along the right edge are off
 
 
-def dct_mkl_example(verbose=2, fpath='example_img_data.json', plot=False):
+def dct_example(verbose=2, fpath='example_img_data.json', plot=False, lib_dir=""):
     with open(fpath) as json_data:
         d = json.load(json_data)
 
@@ -143,7 +143,7 @@ def dct_mkl_example(verbose=2, fpath='example_img_data.json', plot=False):
 
         # Call the library wrapper.
         time0 = time.time()
-        x_recon, lb_result = l1qc_dct(x_orig, b, pix_idx, opts)
+        x_recon, lb_result = l1qc_dct(x_orig, b, pix_idx, opts, lib_dir=lib_dir)
         time_total = time.time() - time0
 
         print("Total python time: %f" % time_total)
@@ -177,6 +177,7 @@ def dct_mkl_example(verbose=2, fpath='example_img_data.json', plot=False):
 
 if __name__ == '__main__':
     import sys
+    import os
     plot = False
 
     if len(sys.argv) >= 2:
@@ -192,4 +193,8 @@ if __name__ == '__main__':
     if len(sys.argv) >= 4:
         plot = True
 
-    dct_mkl_example(verbose=verbose, fpath=fpath, plot=plot)
+    lib_dir = os.getenv("LIB_DIR")
+    if lib_dir is None:
+        lib_dir = ""
+
+    dct_example(verbose=verbose, fpath=fpath, plot=plot, lib_dir=lib_dir)

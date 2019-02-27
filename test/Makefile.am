@@ -7,9 +7,11 @@
 
 AUTOMAKE_OPTIONS = foreign 1.8 no-dependencies
 
-# $(info "===============================srcdir: $(abs_srcdir)")
 AM_TESTS_FD_REDIRECT = 9>&1
-AM_TESTS_ENVIRONMENT = TOP_BUILDDIR='$(top_builddir)'; export TOP_BUILDDIR;
+AM_TESTS_ENVIRONMENT = TOP_BUILDDIR='$(top_builddir)'; export TOP_BUILDDIR; \
+						ABS_TOP_BUILDDIR='$(abs_top_builddir)'; export ABS_TOP_BUILDDIR; \
+						ABS_TOP_SRCDIR='$(abs_top_srcdir)'; export ABS_TOP_SRCDIR;
+
 
 TEST_DATA_DIR="$(abs_srcdir)/test_data/"
 
@@ -19,7 +21,8 @@ TEST_DATA_DIR="$(abs_srcdir)/test_data/"
 # >>> with_valgrind=yes make check
 #
 
-TESTS = test_l1c.sh           \
+TESTS = test_integration.sh \
+		test_l1c.sh           \
 		build_dct2_data.py     \
 		build_dct_data.py     \
 		build_cgsolve_data.py \

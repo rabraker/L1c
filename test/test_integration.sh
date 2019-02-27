@@ -7,11 +7,17 @@ function cleanup(){
 }
 trap cleanup EXIT
 
-cd interfaces
-# cp libl1qc_dct.so.0 libl1qc_dct.so
+if test -z $verbose; then
+    verbose=0
+fi
 
-verbose=2
-data_path="example_img_data.json"
+
+
+LIB_DIR="${ABS_TOP_BUILDDIR}/interfaces"
+TEST_SRCDIR="${ABS_TOP_SRCDIR}/test"
+ml_script_dir="${TEST_SRCDIR}"
+data_path="${ABS_TOP_SRCDIR}/test/test_data/example_img_data.json"
+
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -27,12 +33,19 @@ function parse_status() {
 
 #
 function ml_cmd() {
+    # expect: $1=path we need to add (where mex and .so/.dll are located)
+    #         $2=path to test src dir, containing matlab scripts.
+    #         $2=function name
+    #         $3...$n=function arguments
+    #
     if test -z $1; then
         echo "Not enough input arguments"
         exit 1
     fi
+
     fcn=$1
-    shift # on to arguements
+    shift # on to arguments
+
     arg_str=
     for arg in $@; do
         arg_str="${arg_str} ${arg},"
@@ -40,6 +53,9 @@ function ml_cmd() {
     arg_str=$(echo $arg_str|sed -e 's/,$//')  #remove trailing comma
 
 cmd="try; \
+          addpath('${LIB_DIR}');
+          addpath('${ml_script_dir}');
+          addpath('${ABS_TOP_SRCDIR}/interfaces/');
           $fcn($arg_str); \
           exit(0); \
      catch ME;               \
@@ -50,27 +66,26 @@ echo $cmd
 }
 
 
-
-
-cmd=$(ml_cmd "test_l1qc_dct_dlopen" "'${data_path}'" "${verbose}")
+# Check the matlab dlopen interface
+cmd=$(ml_cmd  "test_l1qc_dct_dlopen" "'${data_path}'" "${verbose}")
 matlab -nojvm -r "${cmd}"
 parse_status $?
 matlab_dlopen_success=$parse_return
 
+# Check the mex interface
 cmd=$(ml_cmd "test_l1qc_dct_mex" "'${data_path}'" "${verbose}")
-echo $cmd
 matlab -nojvm -r "${cmd}"
 parse_status $?
 matlab_mex_success=$parse_return
 
-
-python3 dct_mkl_example.py "${data_path}" 0
+# check the python dlopen interface
+LIB_DIR="${LIB_DIR}" python3 "${ABS_TOP_SRCDIR}/interfaces/dct_example.py" "${data_path}" 0
 parse_status $?
 python_success=$parse_return
 
 
 
-./l1qc_dct_c > /dev/null
+"${LIB_DIR}/l1qc_dct_c" "${data_path}"> /dev/null
 parse_status $?
 c_success=$parse_return
 

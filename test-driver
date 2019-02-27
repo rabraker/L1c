@@ -1,7 +1,7 @@
 #! /bin/sh
 # test-driver - basic testsuite driver script.
 
-scriptversion=2019-02-26.03; # UTC
+scriptversion=2019-02-27.20; # UTC
 
 # Copyright (C) 2011-2014 Free Software Foundation, Inc.
 #
@@ -97,7 +97,7 @@ else
   red= grn= lgn= blu= mgn= std=
 fi
 
-do_exit='rm -f $log_file $trs_file; (exit $st); exit $st'
+do_exit='rm -f $log_file $trs_file; rm -f l1c_pipe; (exit $st); exit $st'
 trap "st=129; $do_exit" 1
 trap "st=130; $do_exit" 2
 trap "st=141; $do_exit" 13
