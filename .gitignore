@@ -64,3 +64,4 @@ CMakeLists.txt
 errors.log
 build-cmake/
 test/test_l1c
+build*

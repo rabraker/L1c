@@ -50,7 +50,11 @@ test_l1c_CPPFLAGS =-I$(top_srcdir)/include  \
 test_l1c_CFLAGS = $(L1CCFLAGS) -std=c11 $(WARNFLAGS)
 test_l1c_LDFLAGS = $(LDFLAGS)
 
+log_deps = 	build_dct2_data.log \
+		   	build_dct_data.log \
+		   	build_cgsolve_data.log \
+			build_l1qc_data.log
 
-test_l1c.log:build_dct2_data.log build_dct_data.log build_cgsolve_data.log build_l1qc_data.log
+test_l1c.log:$(log_deps)
 
-valgrind_wrapper.log:build_dct2_data.log build_dct_data.log build_cgsolve_data.log build_l1qc_data.log
+valgrind_wrapper.log:$(log_deps)
