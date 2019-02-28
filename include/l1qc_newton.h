@@ -99,6 +99,6 @@ int newton_init(l1c_int N, double *x, double *u,  NewtParams *params);
 void f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, double *b,
             double tau, double epsilon, double *fu1, double *fu2,
             double *fe, double *f, AxFuns Ax_funs);
-LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
+DLL_PUBLIC LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
                             NewtParams params, AxFuns Ax_funs);
 #endif

@@ -31,7 +31,7 @@ l1qc_dct_c_LDFLAGS = $(LDFLAGS)
 
 lib_LTLIBRARIES += libl1qc_dct.la
 libl1qc_dct_la_SOURCES	= libl1qc_dct.c
-libl1qc_dct_la_CPPFLAGS = -I$(top_srcdir)/include  \
+libl1qc_dct_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include  \
 							 $(L1CCPPFLAGS)
 libl1qc_dct_la_CFLAGS	=  $(L1CCFLAGS) -fPIC \
 							-std=c11 $(WARNFLAGS)
@@ -39,7 +39,7 @@ libl1qc_dct_la_LIBADD	= ../src/libl1c.la \
 						  ../src/vcl/libvcl_math.la
 
 
-libl1qc_dct_la_LDFLAGS	= $(LDFLAGS)\
+libl1qc_dct_la_LDFLAGS	= -no-undefined $(LDFLAGS)\
 							-Wl,--no-as-needed
 
 
@@ -57,9 +57,9 @@ if comp_with_mex
 lib_LTLIBRARIES += l1qc_dct_mex.la
 
 l1qc_dct_mex_la_SOURCES  = l1qc_dct_mex.c
-l1qc_dct_mex_la_LDFLAGS  = -module -avoid-version -shrext $(MEXEXT) $(LDFLAGS)
+l1qc_dct_mex_la_LDFLAGS  = -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
 
-l1qc_dct_mex_la_CPPFLAGS = -I$(top_srcdir)/include  \
+l1qc_dct_mex_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include  \
 								$(L1CCPPFLAGS) $(MEXCPPFLAGS)
 l1qc_dct_mex_la_CFLAGS   =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC \
 								-std=c11 $(WARNFLAGS)

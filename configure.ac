@@ -35,7 +35,7 @@ dnl AC_PROG_CPP
 AM_PROG_AR
 
 AC_PROG_INSTALL
-LT_INIT
+LT_INIT([win32-dll, dlopen])
 # callint LT_INIT means we dont need: AC_PROG_RANLIB, AM_PROG_LIBTOOL
 
 
@@ -49,9 +49,9 @@ dnl warnings like WARNING: check.h: accepted by the compiler, rejected by the pr
 AC_PROG_CPP
 
 AH_TEMPLATE([HAVE_SATLAS],
-    [Define to if you have libsatlas])
+    [Define to 1 if you have libsatlas])
 AH_TEMPLATE([HAVE_OPENBLAS],
-    [Define to if you have libopenblas])
+    [Define to 1 if you have libopenblas])
 
 
 AC_ARG_WITH(debug, [AS_HELP_STRING([--with-debug],[Compile with debugging support.])],

@@ -22,8 +22,9 @@ data_path="${ABS_TOP_SRCDIR}/test/test_data/example_img_data.json"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
-
+err_count=0
 function parse_status() {
+    err_count+=$1
     if test $1 -eq 0 ; then
         parse_return="${GREEN}success${NC}"
     else
@@ -95,3 +96,4 @@ echo -e "Matlab mex interface: $matlab_mex_success"
 echo -e "Python dlopen: $python_success"
 echo -e "C-code implementation: $c_success"
 
+exit $err_count

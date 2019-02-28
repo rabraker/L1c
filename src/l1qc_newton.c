@@ -463,7 +463,7 @@ int save_x(l1c_int N, double *x, char *fname){
   return 0;
 }
 
-LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
+DLL_PUBLIC LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
                      NewtParams params, AxFuns Ax_funs){
   LSStat ls_stat = {.flx=0, .flu = 0, .flin=0, .step=0, .status=0};
   CgParams cg_params = params.cg_params;
