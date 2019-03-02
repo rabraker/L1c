@@ -12,6 +12,8 @@ from ctypes import c_int
 from ctypes import c_double
 from ctypes import POINTER, byref
 
+src_dir = ""
+interface_dir = "."
 
 class LBResult(Structure):
     _fields_ = [("l1", c_double),
@@ -82,13 +84,13 @@ class l1qc_dct_params(Structure):
             "warm_start_cg   : %d" % self.warm_start_cg
 
 
-def l1qc_dct(eta_0, b, pix_idx, opts, lib_dir=""):
+def l1qc_dct(eta_0, b, pix_idx, opts, lib_dir="."):
     import numpy.ctypeslib as npct
 
     array_1d_double = npct.ndpointer(dtype=np.double, ndim=1, flags='CONTIGUOUS')
     array_1d_int = npct.ndpointer(dtype=np.int32, ndim=1, flags='CONTIGUOUS')
 
-    libl1c = npct.load_library(lib_dir+"/libl1qc_dct.dll", ".")
+    libl1c = npct.load_library(lib_dir+"/libl1qc_dct.dll", lib_dir)
 
     libl1c.l1qc_dct.restype = np.int32
     libl1c.l1qc_dct.argtypes = [c_int, array_1d_double,
@@ -116,7 +118,7 @@ def remove_ticks(ax):
         labelright=False)   # labels along the right edge are off
 
 
-def dct_example(verbose=2, fpath='example_img_data.json', plot=False, lib_dir=""):
+def dct_example(verbose=2, fpath='example_img_data.json', plot=False, lib_dir="."):
     with open(fpath) as json_data:
         d = json.load(json_data)
 
@@ -193,11 +195,20 @@ if __name__ == '__main__':
     if len(sys.argv) >= 4:
         plot = True
 
-    lib_dir = os.getenv("LIB_DIR")
-    if lib_dir is None:
-        lib_dir = ""
+
 
     if os.name == 'nt':
-        os.environ['PATH'] = lib_dir+";" + os.environ['PATH']
+        interface_dir = os.getenv("L1C_INTERFACE_DIR")
+        src_lib_dir = os.getenv("L1C_SRC_LIB_DIR")
 
-    dct_example(verbose=verbose, fpath=fpath, plot=plot, lib_dir=lib_dir)
+        if interface_dir is None:
+            interface_dir = "."
+        if src_lib_dir is None:
+            src_lib_dir = ""
+
+        os.environ['PATH'] = src_lib_dir+";" + os.environ['PATH']
+        os.environ['PATH'] = interface_dir+";" + os.environ['PATH']
+
+
+    print(os.environ['PATH'])
+    # dct_example(verbose=verbose, fpath=fpath, plot=plot, lib_dir=interface_dir)

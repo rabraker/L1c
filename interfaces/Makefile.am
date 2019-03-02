@@ -39,7 +39,7 @@ libl1qc_dct_la_LIBADD	= ../src/libl1c.la \
 						  ../src/vcl/libvcl_math.la
 
 
-libl1qc_dct_la_LDFLAGS	= -no-undefined $(LDFLAGS)\
+libl1qc_dct_la_LDFLAGS	= -avoid-version -no-undefined $(LDFLAGS)\
 							-Wl,--no-as-needed
 
 
@@ -97,7 +97,7 @@ convenience-link: $(lib_LTLIBRARIES)
 
 
 clean-convenience-link:
-	rm -f *.so* *.mexa64 *.o *.lo *.la
+	rm -f *.so* *.mexa64 *.o *.lo *.la *.dll *.mexw64
 
 
 all-local:: convenience-link

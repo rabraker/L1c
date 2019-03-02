@@ -284,7 +284,7 @@ echo "Compile with fftw3 threads? $have_fftw_threads"
 dnl -Werror
 AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused   \
                           -Wcast-qual -Wcast-align -Winit-self     \
-                          -Wfloat-equal -Wundef -Wshadow           \
+                          -Wfloat-equal -Wundef -Wshadow -Wstringop-truncation \
                           -Wswitch-enum -Wvla], [WARNFLAGS], [] [])
 AC_SUBST(WARNFLAGS, $WARNFLAGS)
 

@@ -28,7 +28,7 @@ TESTS = test_l1c           \
 		build_l1qc_data.py    \
 		test_matlab_dlopen.sh \
 		test_matlab_mex.sh \
-		test_python_interface.py \
+		test_python_interface.sh \
 		test_l1qc_dct_c.sh       \
 		valgrind_wrapper.sh
 
@@ -69,6 +69,6 @@ test_l1c.log:$(log_deps)
 
 test_matlab_dlopen.sh:$(log_deps)
 test_matlab_mex.sh:$(log_deps)
-test_python_interface.py:$(log_deps)
+test_python_interface.sh:$(log_deps)
 test_l1qc_dct_c.sh:$(log_deps)
 valgrind_wrapper.log:$(log_deps)

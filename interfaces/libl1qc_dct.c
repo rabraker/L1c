@@ -52,7 +52,7 @@ typedef struct L1qcDctOpts{
 
 
 
-DLL_PUBLIC int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
+int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
              L1qcDctOpts opts, LBResult *lb_res){
   int status = 0;
 
@@ -150,7 +150,7 @@ DLL_PUBLIC int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx
 
 /*--------------------------- Two-dimensional version ------------------------------*/
 
-DLL_PUBLIC int l1qc_dct2(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_idx,
+int l1qc_dct2(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_idx,
              L1qcDctOpts opts, LBResult *lb_res){
   int status = 0;
   int Ntot = Nrow*Ncol;
