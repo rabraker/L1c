@@ -37,8 +37,7 @@ AM_PROG_AR
 AC_PROG_INSTALL
 LT_INIT([win32-dll, dlopen])
 # callint LT_INIT means we dont need: AC_PROG_RANLIB, AM_PROG_LIBTOOL
-
-
+AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE
 
 AM_CONFIG_HEADER([config.h])
@@ -307,8 +306,10 @@ dnl -lmex to $LIBS, which will make the rest of the checks fail.
                  [AC_MSG_ERROR(Matlab libmx library not found.)])
     AC_CHECK_LIB([mwservices], [svMatlabRoot], [mex_ldlibs="$mex_ldlibs -lmwservices"],
                  [AC_MSG_ERROR(Matlab libmwservices library not found.)])
+    # This lib is not present on windows but seems to build fine. Should check
+    # if it is really needed on linux.
     AC_CHECK_LIB([mwbuiltinsutil], [_fini], [mex_ldlibs="$mex_ldlibs -lmwbuiltinsutil"],
-                 [AC_MSG_ERROR(Matlab libmwbuiltinsutil library not found.)])
+                 [])
 # Reset the user CFLAGS
     CFLAGS=$tmp_cflags
 
@@ -316,10 +317,13 @@ dnl -lmex to $LIBS, which will make the rest of the checks fail.
               mex_cflags="-fexceptions"
 
     if test -z $MEXEXT; then
-       MEXEXT=$(mexext)
+       case $host_os in
+            mingw*) MEXEXT=$(mexext.bat) ;;
+            *) MEXEXT=$(mexext) ;;
+       esac
        if test $? -ne 0; then
           AC_MSG_ERROR([Mathworks mexext must be on the system path, or you must export
-                    the proper mex file extension as an envrionmental variable.])
+                    the proper mex file extension as the envrionmental variable MEXEXT.])
        fi
     fi
     AC_SUBST(MEXEXT, [.$MEXEXT])
