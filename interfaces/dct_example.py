@@ -88,7 +88,7 @@ def l1qc_dct(eta_0, b, pix_idx, opts, lib_dir=""):
     array_1d_double = npct.ndpointer(dtype=np.double, ndim=1, flags='CONTIGUOUS')
     array_1d_int = npct.ndpointer(dtype=np.int32, ndim=1, flags='CONTIGUOUS')
 
-    libl1c = npct.load_library(lib_dir+"/libl1qc_dct.so", ".")
+    libl1c = npct.load_library(lib_dir+"/libl1qc_dct.dll", ".")
 
     libl1c.l1qc_dct.restype = np.int32
     libl1c.l1qc_dct.argtypes = [c_int, array_1d_double,
@@ -196,5 +196,8 @@ if __name__ == '__main__':
     lib_dir = os.getenv("LIB_DIR")
     if lib_dir is None:
         lib_dir = ""
+
+    if os.name == 'nt':
+        os.environ['PATH'] = lib_dir+";" + os.environ['PATH']
 
     dct_example(verbose=verbose, fpath=fpath, plot=plot, lib_dir=lib_dir)

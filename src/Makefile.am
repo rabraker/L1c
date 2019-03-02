@@ -29,7 +29,7 @@ endif
 
 libl1c_la_LIBADD	= ../src/vcl/libvcl_math.la
 
-libl1c_la_LDFLAGS	= $(LDFLAGS)\
+libl1c_la_LDFLAGS	= -no-undefined $(LDFLAGS)\
 					-Wl,--no-as-needed
 
 
