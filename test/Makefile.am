@@ -20,13 +20,16 @@ TEST_DATA_DIR="$(abs_srcdir)/test_data/"
 # invoke
 # >>> with_valgrind=yes make check
 #
-
-TESTS = test_integration.sh \
-		test_l1c.sh           \
+$(info "---------------------$(HOSTOS)")
+TESTS = test_l1c           \
 		build_dct2_data.py     \
 		build_dct_data.py     \
 		build_cgsolve_data.py \
 		build_l1qc_data.py    \
+		test_matlab_dlopen.sh \
+		test_matlab_mex.sh \
+		test_python_interface.py \
+		test_l1qc_dct_c.sh       \
 		valgrind_wrapper.sh
 
 
@@ -48,7 +51,8 @@ test_l1c_SOURCES = TEST_cgsolve.c       \
 
 test_l1c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la
 
-test_l1c_CPPFLAGS =-I$(top_srcdir)/include  \
+test_l1c_CPPFLAGS = -D_EXCLUDE_PUBLIC_ -I$(top_srcdir)/include  \
+					-I$(top_srcdir)/src \
 						 $(L1CCPPFLAGS)
 test_l1c_CFLAGS = $(L1CCFLAGS) -std=c11 $(WARNFLAGS)
 test_l1c_LDFLAGS = $(LDFLAGS)
@@ -58,6 +62,13 @@ log_deps = 	build_dct2_data.log \
 		   	build_cgsolve_data.log \
 			build_l1qc_data.log
 
+
 test_l1c.log:$(log_deps)
 
+
+
+test_matlab_dlopen.sh:$(log_deps)
+test_matlab_mex.sh:$(log_deps)
+test_python_interface.py:$(log_deps)
+test_l1qc_dct_c.sh:$(log_deps)
 valgrind_wrapper.log:$(log_deps)

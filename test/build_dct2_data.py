@@ -5,7 +5,6 @@ import codecs
 import os
 from numpy.random import seed, rand
 from scipy.fftpack import dct
-import ipdb
 
 
 def save_json(data, fname):
