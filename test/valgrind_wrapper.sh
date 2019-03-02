@@ -18,4 +18,6 @@ then
     VALGRIND_OPTS="--leak-check=full --errors-for-leak-kinds=definite --error-exitcode=1"
     # CK_RUN_CASE=l1qc_gradient
     $LT --mode=execute valgrind $VALGRIND_OPTS ./test_l1c
+else
+    exit 77
 fi

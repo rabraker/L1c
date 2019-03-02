@@ -30,7 +30,7 @@ endif
 libl1c_la_LIBADD	= ../src/vcl/libvcl_math.la
 
 libl1c_la_LDFLAGS	= -no-undefined $(LDFLAGS)\
-					-Wl,--export-all -Wl,--no-as-needed
+						$(WIN32LDFLAGS) -Wl,--no-as-needed
 
 
 # include_HEADERS = ../include/*.c

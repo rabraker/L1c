@@ -10,7 +10,8 @@ AUTOMAKE_OPTIONS = foreign 1.8 no-dependencies
 AM_TESTS_FD_REDIRECT = 9>&1
 AM_TESTS_ENVIRONMENT = TOP_BUILDDIR='$(top_builddir)'; export TOP_BUILDDIR; \
 						ABS_TOP_BUILDDIR='$(abs_top_builddir)'; export ABS_TOP_BUILDDIR; \
-						ABS_TOP_SRCDIR='$(abs_top_srcdir)'; export ABS_TOP_SRCDIR;
+						ABS_TOP_SRCDIR='$(abs_top_srcdir)'; export ABS_TOP_SRCDIR;  \
+						WITH_MEX='$(WITH_MEX)'; export WITH_MEX;
 
 
 TEST_DATA_DIR="$(abs_srcdir)/test_data/"

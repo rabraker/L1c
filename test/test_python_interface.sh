@@ -1,16 +1,16 @@
-#!/bin/sh
+#!/bin/bash
 
 source "${srcdir}/test_runner_utils.sh"
 
 cur_dir=$(pwd)
 
-function cleanup(){
+cleanup(){
     cd $cur_dir
 }
 trap cleanup EXIT
 
 if test -z $verbose; then
-    verbose=2
+    verbose=0
 fi
 
 

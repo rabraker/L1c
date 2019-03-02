@@ -103,6 +103,11 @@ mkl_cppflags=
 mkl_cflags=
 test_cppflags=
 test_cflags=
+win32_ldflags=
+
+# At least on my linux, this flag is not supported by ld, but is needed to
+# build on mingw
+AX_APPEND_LINK_FLAGS([-Wl,--export-all], [win32_ldflags], [], [])
 
 AC_CHECK_LIB([m], [sqrt], [], [])
 # ----------------------------------------------------------------------------------------- #
@@ -384,12 +389,13 @@ AC_SUBST(L1CCFLAGS, $l1c_cflags)
 AC_SUBST(MEXCPPFLAGS, $mex_cppflags)
 AC_SUBST(MEXCFLAGS, $mex_cflags)
 AC_SUBST(MEXLDLIBS, $mex_ldlibs)
-
+AC_SUBST(WITH_MEX, $with_mex)
 AC_SUBST(MKLCPPFLAGS, $mkl_cppflags)
 AC_SUBST(MKLCFLAGS, $mkl_cflags)
 
 AC_SUBST(TESTCPPFLAGS, $test_cppflags)
 AC_SUBST(TESTCFLAGS, $test_cflags)
+AC_SUBST(WIN32LDFLAGS, $win32_ldflags)
 
 AC_MSG_NOTICE(L1C will be built with l1c_cflags = $l1c_cflags")
 AC_MSG_NOTICE(L1C will be built with l1c_cppflags = $l1c_cppflags")

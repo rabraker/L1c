@@ -12,8 +12,6 @@ from ctypes import c_int
 from ctypes import c_double
 from ctypes import POINTER, byref
 
-src_dir = ""
-interface_dir = "."
 
 class LBResult(Structure):
     _fields_ = [("l1", c_double),
@@ -90,7 +88,7 @@ def l1qc_dct(eta_0, b, pix_idx, opts, lib_dir="."):
     array_1d_double = npct.ndpointer(dtype=np.double, ndim=1, flags='CONTIGUOUS')
     array_1d_int = npct.ndpointer(dtype=np.int32, ndim=1, flags='CONTIGUOUS')
 
-    libl1c = npct.load_library(lib_dir+"/libl1qc_dct.dll", lib_dir)
+    libl1c = npct.load_library(lib_dir+"/libl1qc_dct", lib_dir)
 
     libl1c.l1qc_dct.restype = np.int32
     libl1c.l1qc_dct.argtypes = [c_int, array_1d_double,
@@ -195,20 +193,15 @@ if __name__ == '__main__':
     if len(sys.argv) >= 4:
         plot = True
 
+    interface_dir = os.getenv("L1C_INTERFACE_DIR")
+    src_lib_dir = os.getenv("L1C_SRC_LIB_DIR")
 
-
-    if os.name == 'nt':
-        interface_dir = os.getenv("L1C_INTERFACE_DIR")
-        src_lib_dir = os.getenv("L1C_SRC_LIB_DIR")
-
-        if interface_dir is None:
-            interface_dir = "."
-        if src_lib_dir is None:
-            src_lib_dir = ""
-
-        os.environ['PATH'] = src_lib_dir+";" + os.environ['PATH']
+    if interface_dir is not None:
         os.environ['PATH'] = interface_dir+";" + os.environ['PATH']
+    else:
+        interface_dir = "."
 
+    if src_lib_dir is not None:
+        os.environ['PATH'] = src_lib_dir+";" + os.environ['PATH']
 
-    print(os.environ['PATH'])
-    # dct_example(verbose=verbose, fpath=fpath, plot=plot, lib_dir=interface_dir)
+    dct_example(verbose=verbose, fpath=fpath, plot=plot, lib_dir=interface_dir)

@@ -18,8 +18,7 @@ function ml_cmd() {
     #         $2=function name
     #         $3...$n=function arguments
     #
-    echo "========================$1"
-    if test -z $1; then
+    if test "$#" -le 3; then
         echo "Not enough input arguments"
         exit 1
     fi
@@ -41,8 +40,8 @@ function ml_cmd() {
           addpath('${matlab_script_dir}');
           addpath('${ABS_TOP_SRCDIR}/interfaces/');
           $fcn($arg_str); \
-          exit(0); \
-     catch ME;               \
+          exit(0);\
+     catch ME;\
           fprintf('%s\n', ME.message); \
           exit(1);
      end"
