@@ -66,6 +66,8 @@ l1qc_dct_mex_la_CFLAGS   =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC \
 
 l1qc_dct_mex_la_LIBADD   =	libl1qc_dct.la \
 							$(MEXLDLIBS)
+l1qc_dct_mexdir = $(libdir)
+dist_l1qc_dct_mex_DATA     = l1qc_dct_opts.m
 endif
 endif
 
