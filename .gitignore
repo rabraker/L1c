@@ -65,3 +65,12 @@ errors.log
 build-cmake/
 test/test_l1c
 build*
+config-fftw-ob.sh
+config-fftw-atlas.sh
+config-mkl.sh
+makefile2
+config-mkl-mex.sh
+doxygen.conf
+make_dct
+run_dct.c
+makefile_pylib
