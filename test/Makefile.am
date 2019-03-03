@@ -46,9 +46,13 @@ test_l1c_SOURCES = TEST_cgsolve.c       \
 					TEST_l1c_common.c   \
 					TEST_l1qc_newton.c  \
 					TEST_vcl_math.c     \
-					test_l1c.c          \
-					TEST_dct.c          \
-					TEST_dct2.c
+					test_l1c.c
+
+if compile_with_mkl
+test_l1c_SOURCES +=	TEST_dct.c
+else
+test_l1c_SOURCES +=	TEST_dct.c TEST_dct2.c
+endif
 
 test_l1c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la
 

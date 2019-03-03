@@ -2,33 +2,6 @@
 #define _L1QC_COMMON_
 #include "config.h"
 
-// #if defined _WIN32 || defined __CYGWIN__ || defined __MINGW32__
-//    #ifdef BUILDING_DLL
-//       #ifdef __GNUC__
-//          #define DLL_PUBLIC __attribute__ ((dllexport))
-//       #else
-//          #define DLL_PUBLIC __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
-//       #endif
-//    #else
-//       #ifdef __GNUC__
-//          #define DLL_PUBLIC __attribute__ ((dllimport))
-//       #else
-//          #define DLL_PUBLIC __declspec(dllimport) // Note: actually gcc seems to also supports this syntax.
-//       #endif
-//    #endif
-//    #define DLL_LOCAL
-// #else
-//    #if __GNUC__ >= 4
-//       #define DLL_PUBLIC __attribute__ ((visibility ("default")))
-//       #define DLL_LOCAL  __attribute__ ((visibility ("hidden")))
-//    #else
-//       #define DLL_PUBLIC
-//       #define DLL_LOCAL
-//    #endif
-// #endif
-
-
-
 #define DALIGN  64
 #define ALIGNMENT_DOUBLE DALIGN
 
@@ -38,46 +11,37 @@
 typedef int l1c_int;
 
 #if defined(_USEMKL_)
-
-#include "mkl.h"
-#define free_double(x) mkl_free(x)
-// parenthesis around N are crucial here.
-#define malloc_double(N) (double*)mkl_malloc((size_t)(N) *sizeof(double), DALIGN)
-
+   #include "mkl.h"
 #else
-/* If we dont have MKL, use standard cblas.h. Try to use a
-   different aligned allocator.
-*/
-
-#include "cblas.h"
+   /* If we dont have MKL, use standard cblas.h. */
+   #include "cblas.h"
+#endif // _USE_MKL
 
 #if defined(_HAVE_POSIX_MEMALIGN_)
-// #define _POSIX_C_SOURCE  200112L
-#include <stdlib.h>
+   // #define _POSIX_C_SOURCE  200112L
+   #include <stdlib.h>
 
-static inline double* malloc_double(int N){
-  void *dptr;
-  /*DALIGN must be multiple of sizeof(double) and power of two.
-   This is satisfired for DALIGN=64 and sizeof(double)=8.
-  */
-  if(posix_memalign(&dptr, DALIGN, (size_t)(N) * sizeof(double))){
-    return NULL; // We could check the value,
+   static inline double* malloc_double(int N){
+     void *dptr;
+     /*DALIGN must be multiple of sizeof(double) and power of two.
+       This is satisfired for DALIGN=64 and sizeof(double)=8.
+     */
+     if(posix_memalign(&dptr, DALIGN, (size_t)(N) * sizeof(double))){
+       return NULL; // We could check the value,
                  // it's different for out of Mem, vs unacceptable DALIGN.
-  }else{
-    return (double*) dptr;
-  }
-}
-#define free_double(x) free(x)
+     }else{
+       return (double*) dptr;
+     }
+   }
 
+   #define free_double(x) free(x)
 #elif defined(_HAVE_MM_MALLOC_)
-
-#include <xmmintrin.h>
-#define malloc_double(N) (double*) _mm_malloc((size_t)(N) * sizeof(double), DALIGN)
-#define free_double(x) _mm_free(x)
-
+   #include <xmmintrin.h>
+   #define malloc_double(N) (double*) _mm_malloc((size_t)(N) * sizeof(double), DALIGN)
+   #define free_double(x) _mm_free(x)
 #endif //_HAVE_POSIX_MEMALIGN_
 
-#endif // _USE_MKL
+
 
 
 /*

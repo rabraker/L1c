@@ -17,7 +17,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
   3. use gdb as normal
  */
 
-
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -54,7 +54,10 @@ int main(void)
 
   // Only need to do this for ADDITIONAL suites. Otherwise it will run twice.
 
+
+#if !defined(_USEMKL_)
   srunner_add_suite(sr, dct2_suite());
+#endif
   srunner_add_suite(sr, cgsolve_suite());
   srunner_add_suite(sr, l1qc_newton_suite());
   srunner_add_suite(sr, vcl_math_suite());

@@ -91,7 +91,9 @@ def l1qc_dct(eta_0, b, pix_idx, opts, lib_dir="."):
     libl1c = npct.load_library(lib_dir+"/libl1qc_dct", lib_dir)
 
     libl1c.l1qc_dct.restype = np.int32
-    libl1c.l1qc_dct.argtypes = [c_int, array_1d_double,
+    # l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_idx,
+    #          L1qcDctOpts opts, LBResult *lb_res)
+    libl1c.l1qc_dct.argtypes = [c_int, c_int, array_1d_double,
                                 c_int, array_1d_double, array_1d_int,
                                 l1qc_dct_params, POINTER(LBResult)]
 
@@ -99,7 +101,9 @@ def l1qc_dct(eta_0, b, pix_idx, opts, lib_dir="."):
     M = len(b)
     eta_out = np.zeros(N)
     lb_res = LBResult()
-    libl1c.l1qc_dct(N, eta_out, M, b, pix_idx, opts, byref(lb_res))
+    stat = libl1c.l1qc_dct(N, 1, eta_out, M, b, pix_idx, opts, byref(lb_res))
+    if stat > 0:
+        raise Exception("Error in libl1qc.l1qc_dct")
 
     return (eta_out, lb_res)
 

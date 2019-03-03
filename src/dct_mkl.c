@@ -107,7 +107,7 @@ void dct_idct(double * restrict x){
 
 }
 
-void dct_EMx_new(double * restrict x, double * restrict y){
+void dct_EMx(double * restrict x, double * restrict y){
   /* Compute y = E * M *dct_x, where M is the IDCT, and E is the subsampling matrix.
 
      -- x should have size dct_Nx.
@@ -169,7 +169,7 @@ void dct_MtEty( double * restrict y, double * restrict x){
 }
 
 
-void dct_MtEt_EMx_new(double *x_fftw, double *z){
+void dct_MtEt_EMx(double *x_fftw, double *z){
   /* Performs the Multiplication z = (EM)^T * (EM) * x
      on the supplied vector x.
 
@@ -177,7 +177,7 @@ void dct_MtEt_EMx_new(double *x_fftw, double *z){
      -- z should have dimension at least dct_Nx
   */
 
-  dct_EMx_new(x_fftw, dct_tmp_y); //writes output y to global, which belongs to fftw.
+  dct_EMx(x_fftw, dct_tmp_y); //writes output y to global, which belongs to fftw.
   dct_MtEty(dct_tmp_y, z);
 
 

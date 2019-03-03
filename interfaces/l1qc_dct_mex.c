@@ -27,10 +27,10 @@ typedef struct L1qcDctOpts{
   int warm_start_cg;
 }L1qcDctOpts;
 
-int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
-             L1qcDctOpts opts, LBResult *lb_res);
+// int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
+//              L1qcDctOpts opts, LBResult *lb_res);
 
-int l1qc_dct2(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_idx,
+int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_idx,
               L1qcDctOpts opts, LBResult *lb_res);
 
 
@@ -48,11 +48,6 @@ int l1qc_dct2(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_
  */
 void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 {
-  /* Ensure intel doesnt fuck us.*/
-#if defined(HAVE_LIBMKL_RT)
-  mkl_set_interface_layer(MKL_INTERFACE_ILP64);
-  mkl_set_threading_layer(MKL_THREADING_GNU);
-#endif
   // l1qc(x0, b, pix_idx, params);
   /* inputs */
 
@@ -74,109 +69,99 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
 
-  l1c_int i=0,N=0, M=0,Nrow=0, Ncol=0, npix=0;
+  l1c_int i=0, M=0,Nrow=0, Ncol=1, npix=0;
   double *pix_idx_double=NULL, *x_ours=NULL;
   l1c_int *pix_idx;
   // mwSize *dims;
-
-  if( (nrhs != 4) && (nrhs != 6)){
-    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:nrhs",
-                      "four or six inputs required.");
-  }
-
-  if (nrhs == 6){
-    /* -------- Check Nrow -------------*/
-    if( !mxIsDouble(prhs[4]) || !mxIsScalar(prhs[4]) ) {
-      mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notDouble",
-                        "First Input vector must be type double.");
-    }
-    Nrow = (l1c_int) mxGetScalar(prhs[4]);
-    /* -------- Check Nrow -------------*/
-    if( !mxIsDouble(prhs[5]) || !mxIsScalar(prhs[5]) ) {
-      mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notDouble",
-                        "First Input vector must be type double.");
-    }
-    Ncol = (l1c_int) mxGetScalar(prhs[5]);
-  }
-
-
   if( !(nlhs > 0)) {
     mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:nlhs",
                       "One output required.");
   }
 
-  /* -------- Check N -------------*/
+  if( (nrhs != 5) ){
+    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:nrhs",
+                      "five inputs required.");
+  }
+
+
+  /* -------- Check Nrow -------------*/
   if( !mxIsDouble(prhs[0]) || !mxIsScalar(prhs[0]) ) {
-      mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notDouble",
+    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notDouble",
                       "First Input vector must be type double.");
   }
+  Nrow = (l1c_int) mxGetScalar(prhs[0]);
+
+
+  /* -------- Check Ncol -------------*/
+  if( !mxIsDouble(prhs[1]) || !mxIsScalar(prhs[1]) ) {
+    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notDouble",
+                      "First Input vector must be type double.");
+  }
+  Ncol = (l1c_int) mxGetScalar(prhs[1]);
 
 
   /* -------- Check b -------------*/
-  if( !mxIsDouble(prhs[1]) ) {
+  if( !mxIsDouble(prhs[2]) ) {
     mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notDouble",
                       "Second Input vector must be type double.");
   }
-  N = (l1c_int) mxGetScalar(prhs[0]);
 
-  /* check that second input argument is vector */
-  if( (mxGetN(prhs[1]) > 1)  & (mxGetM(prhs[1]) >1) ){
+  /* check that b is vector */
+  if( (mxGetN(prhs[2]) > 1)  & (mxGetM(prhs[2]) >1) ){
     printf("num dim = %d\n", mxGetNumberOfDimensions(prhs[1]));
     mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notVector",
                       "Second Input must be a vector.");
   }else{
-    M = (l1c_int) ( mxGetM(prhs[1]) *  mxGetN(prhs[1]) );
+    M = (l1c_int) ( mxGetM(prhs[2]) *  mxGetN(prhs[2]) );
   }
+
+  b = mxGetPr(prhs[2]);
 
 
   /* -------- Check pix_idx -------------*/
-  if( !mxIsDouble(prhs[2]) ) {
+  if( !mxIsDouble(prhs[3]) ) {
     mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notDouble",
                       "pix_idx vector must be type double.");
   }
 
   /* check that pix_idx input argument is vector */
-  if( (mxGetN(prhs[2]) > 1)  & (mxGetM(prhs[2]) >1) ){
+  if( (mxGetN(prhs[3]) > 1)  & (mxGetM(prhs[3]) >1) ){
     printf("num dim = %d\n", mxGetNumberOfDimensions(prhs[1]));
     mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notVector",
                       "Third Input must be a vector.");
   }else{
-    npix = (l1c_int) ( mxGetM(prhs[2]) *  mxGetN(prhs[2]) );
+    npix = (l1c_int) ( mxGetM(prhs[3]) *  mxGetN(prhs[3]) );
   }
 
- if ( !(N > M) | (M != npix) ){
-   printf("N = %d, M=%d, npix = %d\n", N, M, npix);
-   mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:incompatible_dimensions",
-                     "Must have length(x0) > length(b), and length(b) = length(pix_idx).");
- }
+  pix_idx_double = mxGetPr(prhs[3]);
 
- if( (Nrow*Ncol !=0) && (Ncol*Nrow != N)){
-   printf("N = %d, Nrow=%d, Ncol = %d\n", N, Nrow, Ncol);
-   mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:incompatible_dimensions",
-                     "Must have length(x0) == Nrow*Ncol, or Ncol=Nrow=0.");
- }
-
- if ( !mxIsStruct(prhs[3])){
-   mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notStruct",
-                     "params must be a struct.");
- }
+  if ( !(Nrow*Ncol > M) || (M != npix) || Nrow <=0 || Ncol <=0){
+    printf("Nrow = %d, Ncol=%d, M=%d, npix = %d\n", Nrow, Ncol, M, npix);
+    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:incompatible_dimensions",
+                      "Must have length(x0) > length(b), and length(b) = length(pix_idx).");
+  }
 
 
+  /* -------- Check params struct -------------*/
+  if ( !mxIsStruct(prhs[4])){
+    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notStruct",
+                      "params must be a struct.");
+  }
 
-  int nfld = mxGetNumberOfFields(prhs[3]);
+  int nfld = mxGetNumberOfFields(prhs[4]);
   // char *flds[]={ "verbose", "tau", "mu"};
   const char *name;
 
   mxArray *tmp;
   for (i=0; i<nfld; i++){
-    tmp = mxGetFieldByNumber(prhs[3], 0, i);
-    name =mxGetFieldNameByNumber(prhs[3], i);
+    tmp = mxGetFieldByNumber(prhs[4], 0, i);
+    name =mxGetFieldNameByNumber(prhs[4], i);
     if (!tmp){
       mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:norverbose",
                         "Error loading field '%s'.", name);
     }else if( !mxIsScalar(tmp) | !mxIsNumeric(tmp) ){
-        mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:norverbose",
-                          "Bad data in field '%s'. Fields in params struct must be numeric scalars.", name);
+      mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:norverbose",
+                        "Bad data in field '%s'. Fields in params struct must be numeric scalars.", name);
     }
 
     if ( strcmp(name, "epsilon") == 0){
@@ -210,7 +195,6 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   }
 
-  mexPrintf("N = %d", N);
   if (l1qc_dct_opts.verbose > 1){
     printf("Input Parameters\n---------------\n");
     printf("   verbose:         %d\n", l1qc_dct_opts.verbose);
@@ -230,37 +214,37 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
 
 
-  b = mxGetPr(prhs[1]);
-  pix_idx_double = mxGetPr(prhs[2]);
+
 
   /* We are going to change x, so we must allocate and make a copy, so we
      dont change data in Matlabs workspace.
   */
-  x_ours = malloc_double(N);
+  x_ours = malloc_double(Nrow*Ncol);
   /*
     pix_idx will naturally be a double we supplied from matlab
     and will have 1-based indexing. Convert to integers and
     shift to 0-based indexing.
-   */
+  */
   pix_idx = calloc(M, sizeof(l1c_int));
   for (i=0; i<M; i++){
     pix_idx[i] = ((l1c_int) pix_idx_double[i]) - 1;
   }
 
-  if (Nrow*Ncol == 0){
-    l1qc_dct(N, x_ours, M, b, pix_idx, l1qc_dct_opts, &lb_res);
-  }else{
-    l1qc_dct2(Nrow, Ncol, x_ours, M, b, pix_idx, l1qc_dct_opts, &lb_res);
+  mexPrintf("Nrow = %d, Ncol=%d\n", Nrow, Ncol);
+  mexPrintf("------------Ncol = %d\n", Ncol);
+  int stat = l1qc_dct(Nrow, Ncol, x_ours, M, b, pix_idx, l1qc_dct_opts, &lb_res);
+  if (stat){
+    lb_res.status = stat;
   }
 
 
   /* Prepare output data.
    */
-  plhs[0] = mxCreateDoubleMatrix((mwSize)N, 1, mxREAL);
+  plhs[0] = mxCreateDoubleMatrix((mwSize)Nrow * (mwSize)Ncol, 1, mxREAL);
 
   x_out =  mxGetPr(plhs[0]);
 
-  for (i=0; i<N; i++){
+  for (i=0; i<Nrow*Ncol; i++){
     x_out[i] = x_ours[i];
   }
 
@@ -291,8 +275,8 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     mxSetField(plhs[1], 0, "status", status_mex_pr);
   }
 
-  free(pix_idx);
+ free(pix_idx);
 #if defined(_USEMKL_)
-  mkl_free_buffers();
+ mkl_free_buffers();
 #endif
 } /* ------- mexFunction ends here ----- */

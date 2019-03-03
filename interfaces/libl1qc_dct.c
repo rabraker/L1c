@@ -22,15 +22,61 @@
 */
 
 #include "dct.h"
+
+#if defined(_USEMKL_)
+#define dct2_EMx dct_EMx
+#define dct2_MtEty dct_MtEty
+#define dct2_MtEt_EMx dct_MtEt_EMx
+#define dct2_idct dct_idct
+#define dct2_setup dct_setup_compat
+#define  dct2_destroy dct_destroy
+#else
 #include "dct2.h"
+#endif
 
-#define Ax_fun dct_EMx
-#define Aty_fun dct_MtEty
-#define AtAx_fun dct_MtEt_EMx
-#define ax_idct dct_idct
-#define ax_setup dct_setup
-#define ax_destroy dct_destroy
+int dct_setup_compat(l1c_int N, l1c_int M, l1c_int Ny, l1c_int *pix_mask_idx){
+  // Placeholder, eventually dct_setup should be common to both 1 and 2d transforms.
+  (void) M;
+  return dct_setup(N, Ny, pix_mask_idx);
+}
 
+typedef struct XFormPack {
+  AxFuns Ax_funs;
+  void(*M)(double *x);
+  // int(*setup)(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx);
+  int(*setup)(l1c_int N, l1c_int M, l1c_int Ny, l1c_int *pix_mask_idx);
+
+  // int(*setup)(l1c_int Nrow, l1c_int Ncol, l1c_int M, l1c_int *pix_idx);
+  void(*destroy)(void);
+
+}XFormPack;
+
+
+
+int get_transform_funcs(int Ncol, XFormPack *xforms){
+
+  if (Ncol > 1){
+    xforms-> Ax_funs.Ax=dct2_EMx;
+    xforms-> Ax_funs.Aty=dct2_MtEty;
+    xforms-> Ax_funs.AtAx=dct2_MtEt_EMx;
+    xforms->M = dct2_idct;
+    xforms->setup = dct2_setup;
+    xforms->destroy = dct2_destroy;
+  }else if(Ncol == 1){
+    xforms-> Ax_funs.Ax=dct_EMx;
+    xforms-> Ax_funs.Aty=dct_MtEty;
+    xforms-> Ax_funs.AtAx=dct_MtEt_EMx;
+    xforms->M = dct_idct;
+    xforms->setup = dct_setup_compat;
+    xforms->destroy = dct_destroy;
+  }else{
+    fprintf(stderr, "Ncol=%d makes no sense.\n", Ncol);
+    return 1;
+  }
+
+  return 0;
+
+}
 
 
 
@@ -52,105 +98,9 @@ typedef struct L1qcDctOpts{
 
 
 
-int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
-             L1qcDctOpts opts, LBResult *lb_res){
-  int status = 0;
-
-  long start, end;
-  struct timeval timecheck;
-  gettimeofday(&timecheck, NULL);
-  start = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;
-
-#if defined(HAVE_LIBMKL_RT)
-  /* Ensure intel doesnt fuck us.*/
-  mkl_set_interface_layer(MKL_INTERFACE_ILP64);
-  mkl_set_threading_layer(MKL_THREADING_GNU);
-#endif
-
-  /*
-    Pointers to the transform functions that define A*x and A^T *y
-  */
-  AxFuns Ax_funs = {.Ax=Ax_fun,
-                    .Aty=Aty_fun,
-                    .AtAx=AtAx_fun};
-
-  NewtParams params = {.epsilon = opts.epsilon,
-                       .tau = opts.tau,
-                       .mu = opts.mu,
-                       .newton_tol = opts.newton_tol,
-                       .newton_max_iter = opts.newton_max_iter,
-                       .lbiter = 0,
-                       .l1_tol = opts.l1_tol,
-                       .lbtol = opts.lbtol,
-                       .verbose = opts.verbose,
-                       .cg_params.max_iter = opts.cgmaxiter,
-                       .cg_params.tol = opts.cgtol,
-                       .warm_start_cg=opts.warm_start_cg};
-
-  // LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
-
-
-  /* Allocate memory for x and b, which is aligned to DALIGN.
-     Pointer address from caller probably wont be properly aligned.
-   */
-  printf("N = %d, M=%d\n", N, M);
-  double *eta_0 = malloc_double(N);
-  double *b_ours = malloc_double(M);
-
-  if ( !b_ours || !eta_0){
-    fprintf(stderr, "Memory Allocation failure\n");
-    status =  L1C_OUT_OF_MEMORY;
-    goto fail;
-  }
-
-  cblas_dcopy(M, b, 1, b_ours, 1);
-
-  if (ax_setup(N, M, (l1c_int*)pix_idx)){
-    status = L1C_DCT_INIT_FAILURE;
-    goto fail;
-  }
-  Ax_funs.Aty(b, eta_0);
-
-  *lb_res = l1qc_newton(N, eta_0, M, b, params, Ax_funs);
-
-  /* We solved for eta in the DCT domain. Transform back to
-     standard coorbbdinates.
-  */
-  ax_idct(eta_0);
-
-  cblas_dcopy(N, eta_0, 1, x_out, 1);
-
-
-
-
-  gettimeofday(&timecheck, NULL);
-  end = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;
-
-  double time_total = ((double)(end -start)) / 1000.0;
-
-  printf("total c time: %f\n", time_total);
-  printf("total-newton-iter: %d\n", lb_res->total_newton_iter);
-  printf("total-cg-iter: %d\n", lb_res->total_cg_iter);
-  printf("time per cg iter: %g\n", time_total / (double) lb_res->total_cg_iter);
-
-
-  ax_destroy(); // Should not call this if ax_setup() failed.
-
- fail:
-  /* Cleanup our mess. */
-  free_double(b_ours);
-  free_double(eta_0);
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
-
-  return status;
-}
-
-
 /*--------------------------- Two-dimensional version ------------------------------*/
 
-int l1qc_dct2(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_idx,
+int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_idx,
              L1qcDctOpts opts, LBResult *lb_res){
   int status = 0;
   int Ntot = Nrow*Ncol;
@@ -159,13 +109,17 @@ int l1qc_dct2(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_
   gettimeofday(&timecheck, NULL);
   start = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;
 
+  XFormPack xforms;
 
+  if (get_transform_funcs(Ncol, &xforms)){
+    fprintf(stderr, "Exiting...............\n");
+    return 1;
+  }
+  AxFuns Ax_funs = xforms.Ax_funs;
   /*
     Pointers to the transform functions that define A*x and A^T *y
   */
-  AxFuns Ax_funs = {.Ax=dct2_EMx,
-                    .Aty=dct2_MtEty,
-                    .AtAx=dct2_MtEt_EMx};
+
 
   NewtParams params = {.epsilon = opts.epsilon,
                        .tau = opts.tau,
@@ -198,18 +152,18 @@ int l1qc_dct2(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_
 
   cblas_dcopy(M, b, 1, b_ours, 1);
 
-  if (dct2_setup(Nrow, Ncol, M, (l1c_int*)pix_idx)){
+  if (xforms.setup(Nrow, Ncol, M, (l1c_int*)pix_idx)){
     status = L1C_DCT_INIT_FAILURE;
     goto fail;
   }
-  dct2_MtEty(b, eta_0);
+  Ax_funs.Aty(b, eta_0);
 
   *lb_res = l1qc_newton(Ntot, eta_0, M, b, params, Ax_funs);
 
   /* We solved for eta in the DCT domain. Transform back to
      standard coorbbdinates.
   */
-  dct2_idct(eta_0);
+  xforms.M(eta_0);
 
   cblas_dcopy(Ntot, eta_0, 1, x_out, 1);
 
@@ -227,7 +181,7 @@ int l1qc_dct2(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_
   printf("time per cg iter: %g\n", time_total / (double) lb_res->total_cg_iter);
 
 
-  dct2_destroy(); // Should not call this if ax_setup() failed.
+  xforms.destroy(); // Should not call this if ax_setup() failed.
 
  fail:
   /* Cleanup our mess. */
@@ -236,3 +190,4 @@ int l1qc_dct2(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_
 
   return status;
 }
+

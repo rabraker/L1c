@@ -110,6 +110,37 @@ win32_ldflags=
 AX_APPEND_LINK_FLAGS([-Wl,--export-all], [win32_ldflags], [], [])
 
 AC_CHECK_LIB([m], [sqrt], [], [])
+
+
+# Check for posix_memalign or _mm_malloc
+AC_CHECK_FUNC(posix_memalign, [have_posix_mem=yes], [])
+
+AC_LANG([C])
+
+# ------------------------------ How can we align memory?----------------------------------- #
+# _mm_malloc is an inline function in mm_malloc.h, included by xmmintrin.h
+# Should not need a header check, since if xmmintrin.h is not found, this should fail.
+AC_MSG_CHECKING([checking for _mm_malloc])
+AC_LINK_IFELSE([AC_LANG_SOURCE([[
+#include <xmmintrin.h>
+void main(){
+     double *x=_mm_malloc(10*sizeof(double), 64);
+}]])], [have_mm_malloc=yes
+       AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
+
+if test x$have_posix_mem = xyes;
+then
+    AC_DEFINE([_POSIX_C_SOURCE], [200112L], [Unlocks posix_memalign in stdlib.h.])
+    AC_DEFINE([_HAVE_POSIX_MEMALIGN_], [1], [We have posix_memalign.])
+
+elif test x$have_mm_malloc = xyes;
+then
+     AC_DEFINE(_HAVE_MM_MALLOC_, [1], [We have _mm_malloc])
+else
+    AC_MSG_ERROR(This program requires either posix_memalign() or _mm_malloc in the standard library.);
+fi
+
+
 # ----------------------------------------------------------------------------------------- #
 # ------------------------------ Checks for MKL ------------------------------------------- #
 if test "x$with_mkl" = "xyes";
@@ -199,35 +230,6 @@ else
   if test x$have_daxpby = xno; then
      AC_MSG_ERROR(BLAS library with cblas_daxpby is required for this program)
   fi
-
-
-    # Check for posix_memalign or _mm_malloc
-    AC_CHECK_FUNC(posix_memalign, [have_posix_mem=yes], [])
-
-    AC_LANG([C])
-
-    # _mm_malloc is an inline function in mm_malloc.h, included by xmmintrin.h
-    # Should not need a header check, since if xmmintrin.h is not found, this should fail.
-    AC_MSG_CHECKING([checking for _mm_malloc])
-    AC_LINK_IFELSE([AC_LANG_SOURCE([[
-    #include <xmmintrin.h>
-    void main(){
-         double *x=_mm_malloc(10*sizeof(double), 64);
-    }]])], [have_mm_malloc=yes
-           AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
-
-
-    if test x$have_posix_mem = xyes;
-    then
-        AC_DEFINE([_POSIX_C_SOURCE], [200112L], [Unlocks posix_memalign in stdlib.h.])
-        AC_DEFINE([_HAVE_POSIX_MEMALIGN_], [1], [We have posix_memalign.])
-
-    elif test x$have_mm_malloc = xyes;
-    then
-         AC_DEFINE(_HAVE_MM_MALLOC_, [1], [We have _mm_malloc])
-    else
-        AC_MSG_ERROR(This program requires either posix_memalign() or _mm_malloc in the standard library or MKL);
-    fi
 
 fi
 

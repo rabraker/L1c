@@ -27,7 +27,7 @@ typedef struct L1qcDctOpts{
   int warm_start_cg;
 }L1qcDctOpts;
 
-int l1qc_dct(int N, double *x_out, int M, double *b, l1c_int *pix_idx,
+int l1qc_dct(int Nrow, int Mcol, double *x_out, int M, double *b, l1c_int *pix_idx,
              L1qcDctOpts opts, LBResult *lb_res);
 
 
@@ -93,7 +93,7 @@ int main(int argc, char **argv){
   }
   // time_t start = time(NULL);
 
-  l1qc_dct(N, x, M, b, pix_idx, l1qc_dct_opts, &lb_res);
+  l1qc_dct(N, 1, x, M, b, pix_idx, l1qc_dct_opts, &lb_res);
 
  exit:
   free(fpath);
