@@ -92,7 +92,7 @@ START_TEST(test_cgsolve)
   CgParams cgp;
   CgResults cgr;
 
-  double *A, *x, *x_exp, *b, *Dwork;
+  double *A=NULL, *x=NULL, *x_exp=NULL, *b=NULL, *Dwork=NULL;
   int status = 0;
   l1c_int N=0, na= 0;
   if (load_small_data(&A, &x_exp, &b, &N, &na, &max_iter, &tol)){
@@ -104,15 +104,17 @@ START_TEST(test_cgsolve)
   cgp.max_iter = max_iter;
 
   x = malloc_double(N);
+  Dwork = malloc_double(N*4);
+  if (!Dwork || !x){
+    status +=1;
+    goto exit;
+  }
+
   /* Must initialize x now, with warm starting. */
   for(int i=0; i<N; i++){
     x[i] = 0.0;
   }
-  Dwork = malloc_double(N*4);
-  if (!Dwork){
-    status +=1;
-    goto exit;
-  }
+
   cgsolve(x, b, N, Dwork, Ax_sym, A, &cgr, cgp);
 
   ck_assert_double_array_eq_tol(N, x_exp, x, TOL_DOUBLE);
@@ -231,7 +233,7 @@ START_TEST(test_cgsolve_h11p){
 END_TEST
 
 
-
+/* Test the matrix multiplication function, Ax_sym.*/
 START_TEST(test_cgsolve_Ax_sym){
 
   char *fpath = fullfile(test_data_dir, "ax_sym.json");
@@ -286,25 +288,83 @@ START_TEST(test_cgsolve_Ax_sym){
 }
 END_TEST
 
+/* ----------------------------- cgsolve_diag_precond--------------------------------*/
+
+START_TEST(test_cgsolve_diag_precond)
+{
+  double tol =0.0; //= 1e-6;
+  l1c_int max_iter;
+  CgParams cgp;
+  CgResults cgr;
+
+  double *A=NULL, *x=NULL, *x_exp=NULL, *b=NULL;
+  double *Dwork=NULL, *M_inv_diag=NULL;
+  int status = 0;
+  l1c_int N=0, na= 0;
+  if (load_small_data(&A, &x_exp, &b, &N, &na, &max_iter, &tol)){
+    ck_abort_msg("Errory Loading test data\n");
+  }
+
+  cgp.verbose = 0;
+  cgp.tol = tol;
+  cgp.max_iter = max_iter;
+
+  x = malloc_double(N);
+  M_inv_diag = malloc_double(N);
+  Dwork = malloc_double(N*5);
+  if (!Dwork || !x || !M_inv_diag){
+    status +=1;
+    goto exit;
+  }
+
+  /* Must initialize x now, with warm starting. */
+  for(int i=0; i<N; i++){
+    x[i] = 0.0;
+    M_inv_diag[i] = 1.0;
+  }
+  cgsolve_diag_precond(x, b, M_inv_diag, N, Dwork, Ax_sym, A, &cgr, cgp);
+
+  ck_assert_double_array_eq_tol(N, x_exp, x, TOL_DOUBLE);
+  goto exit;
+
+ exit:
+  free_double(A);
+  free_double(x);
+  free_double(x_exp);
+  free_double(b);
+  free_double(Dwork);
+  free_double(M_inv_diag);
+
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
+  if (status){
+    ck_abort();
+  }
+
+}
+END_TEST
+
 /* Add all the test cases to our suite
  */
 Suite *cgsolve_suite(void)
 {
   Suite *s;
 
-  TCase *tc_small, *tc_hp11, *tc_Ax;
+  TCase *tc_cgsolve, *tc_cgsolve_precond;
   s = suite_create("cgsolve");
-  tc_small = tcase_create("cg_small");
-  tc_hp11 = tcase_create("cg_hp11");
-  tc_Ax = tcase_create("cg_Ax");
 
-  tcase_add_test(tc_small, test_cgsolve);
-  tcase_add_test(tc_hp11, test_cgsolve_h11p);
-  tcase_add_test(tc_Ax, test_cgsolve_Ax_sym);
+  tc_cgsolve = tcase_create("cgsolve");
+  tcase_add_test(tc_cgsolve, test_cgsolve);
+  tcase_add_test(tc_cgsolve, test_cgsolve_h11p);
+  tcase_add_test(tc_cgsolve, test_cgsolve_Ax_sym);
+  suite_add_tcase(s, tc_cgsolve);
 
-  suite_add_tcase(s, tc_small);
-  suite_add_tcase(s, tc_hp11);
-  suite_add_tcase(s, tc_Ax);
+  tc_cgsolve_precond = tcase_create("cgsolve_precond");
+  tcase_add_test(tc_cgsolve_precond, test_cgsolve_diag_precond);
+
+  suite_add_tcase(s, tc_cgsolve_precond);
 
   return s;
 
