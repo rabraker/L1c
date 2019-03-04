@@ -1,3 +1,5 @@
+#include "config.h"
+
 #define CK_FLOATING_DIG 20
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,6 +18,55 @@
 #include "l1c_math.h"
 
 
+
+START_TEST(test_l1c_init_vec)
+{
+  l1c_int N = 6;
+  double a = 3.5;
+  double x[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+
+  l1c_init_vec(N, x, a);
+
+  for(int i=0; i<N; i++){
+    ck_assert_double_eq_tol(a, x[i], TOL_DOUBLE_SUPER);
+  }
+
+}
+END_TEST
+
+START_TEST(test_l1c_daxpy_z2)
+{
+  l1c_int N = 256*256;
+
+  double *xx = malloc_double(2*N);
+  double *yy = malloc_double(2*N);
+  double *zz_exp = malloc_double(2*N);
+  double *zz = malloc_double(2*N);
+
+  double alp = 4.5918;
+  for (int i=0; i<2*N; i++){
+    xx[i] = ((double) rand()) / 256 / 256;
+    yy[i] = ((double) rand()) / 256 / 256;
+  }
+
+  for (int i=0; i<2*N; i++){
+    zz_exp[i] = alp * xx[i] + yy[i];
+  }
+
+  l1c_daxpy_z(N, alp, xx, yy, zz);
+  l1c_daxpy_z(N, alp, xx+N, yy+N, zz+N);
+
+  ck_assert_double_array_eq_tol(N, zz_exp, zz, TOL_DOUBLE_SUPER);
+
+  free_double(xx);
+  free_double(yy);
+  free_double(zz_exp);
+  free_double(zz);
+
+}
+END_TEST
+
+
 START_TEST(test_l1c_daxpy_z)
 {
   l1c_int N = 6;
@@ -31,6 +82,7 @@ START_TEST(test_l1c_daxpy_z)
   ck_assert_double_array_eq_tol(N, z_exp, z, TOL_DOUBLE);
 }
 END_TEST
+
 
 START_TEST(test_l1c_dxmuly_z)
 {
@@ -100,6 +152,8 @@ Suite *l1c_math_suite(void)
 
   tc_l1c_math = tcase_create("l1qc_math_funs");
 
+  tcase_add_test(tc_l1c_math, test_l1c_init_vec);
+  tcase_add_test(tc_l1c_math, test_l1c_daxpy_z2);
   tcase_add_test(tc_l1c_math, test_l1c_dxmuly_z);
   tcase_add_test(tc_l1c_math, test_l1c_daxpy_z);
   tcase_add_test(tc_l1c_math, test_l1c_dsum);

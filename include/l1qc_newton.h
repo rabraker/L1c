@@ -4,6 +4,7 @@
 
 #ifndef _L1QC_NEWTON_
 #define _L1QC_NEWTON_
+#include "config.h"
 
 #include "cgsolve.h"
 #include "l1c_common.h"
@@ -49,9 +50,6 @@ typedef struct GradData{
   double *sig12;
   double *ntgu;
   double *gradf;
-  double *Adx;
-
-
 }GradData;
 
 typedef struct NewtParams{
@@ -79,29 +77,28 @@ typedef struct LBResult{
 
 
 double find_max_step(l1c_int N, GradData gd, double *fu1,
-                     double *fu2, int M, double *r, double epsilon);
+                     double *fu2, int M, double *r, double *DWORK,
+                     double epsilon, AxFuns Ax_funs);
 
 LSStat line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double *b,
                    double *fu1, double *fu2, GradData gd,
                    LSParams ls_params, double *DWORK_5N, double *fe, double *f, AxFuns Ax_funs);
 
-void get_gradient(l1c_int N, double *fu1, double *fu2, double *sigx, double *atr,
-                  double fe,  double tau, GradData gd);
-int compute_descent(l1c_int N, double *fu1, double *fu2, double *atr, double fe, double tau,
-                    GradData gd, double *Dwork_6N, CgParams cg_params, CgResults *cg_result,
+void l1qc_hess_grad(l1c_int N, double *fu1, double *fu2, double *sigx, double *atr,
+                    double fe,  double tau, GradData gd);
+int l1qc_descent_dir(l1c_int N, double *fu1, double *fu2, double *r, double fe, double tau,
+                    GradData gd, double *Dwork_7N, CgParams cg_params, CgResults *cg_result,
                     AxFuns AxFuns);
 
 void H11pfun(l1c_int N, double *z, double *y,  void *hess_data_in);
 
 int newton_init(l1c_int N, double *x, double *u,  NewtParams *params);
 
-/*
-int get_gradient(int N, double *fu1, double *fu2, double fe,  double tau, double *gradf);
-*/
 
 /* Evalutes the value function */
-extern void f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, double tau, double epsilon,
-                   double *fu1, double *fu2, double *fe, double *f);
-extern LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
+void f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, double *b,
+            double tau, double epsilon, double *fu1, double *fu2,
+            double *fe, double *f, AxFuns Ax_funs);
+LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
                             NewtParams params, AxFuns Ax_funs);
 #endif

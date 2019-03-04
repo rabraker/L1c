@@ -5,6 +5,7 @@
   https://libcheck.github.io/
 
  */
+#include "config.h"
 
 #define CK_FLOATING_DIG 20
 
@@ -28,13 +29,18 @@
 #include "check_utils.h"
 
 cJSON *test_data_json;
+/* Defined in test_l1c.c*/
+extern char* fullfile(char *base_path, char *name);
+extern char *test_data_dir;
+
 
 int load_small_data(double **A, double **x, double **b, l1c_int *N, l1c_int *na,
                     l1c_int *max_iter, double *tol){
-
-  if(load_file_to_json("test_data/cgsolve_small01.json", &test_data_json) ){
+  char *fpath = fullfile(test_data_dir, "cgsolve_small01.json");
+  if(load_file_to_json(fpath, &test_data_json) ){
     return 1;
   }
+  free(fpath);
 
   if( extract_json_int(test_data_json, "max_iter", max_iter) )
     return 1;
@@ -132,8 +138,7 @@ START_TEST(test_cgsolve)
 END_TEST
 
 START_TEST(test_cgsolve_h11p){
-
-  char fpath[] = "test_data/descent_data.json";
+  char *fpath = fullfile(test_data_dir, "descent_data.json");
 
   Hess_data h11p_data;
   double *atr=NULL, *sigx=NULL, *dx0=NULL, *dx_exp=NULL;
@@ -170,7 +175,7 @@ START_TEST(test_cgsolve_h11p){
   h11p_data.atr = atr;
   h11p_data.sigx = sigx;
   h11p_data.Dwork_1N = malloc_double(N);
-  h11p_data.AtAx = dct_MtEt_EMx_new;
+  h11p_data.AtAx = dct_MtEt_EMx;
 
   DWORK_4N = malloc_double(4*N);
   double *dx_by_nrm = malloc_double(4*N);
@@ -211,6 +216,7 @@ START_TEST(test_cgsolve_h11p){
   free_double(h11p_data.Dwork_1N);
   dct_destroy();
 
+  free(fpath);
 
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
@@ -228,7 +234,7 @@ END_TEST
 
 START_TEST(test_cgsolve_Ax_sym){
 
-  char fpath[] = "test_data/ax_sym.json";
+  char *fpath = fullfile(test_data_dir, "ax_sym.json");
 
   double *A, *x, *y_exp, *y;
 
@@ -268,7 +274,7 @@ START_TEST(test_cgsolve_Ax_sym){
   free_double(y_exp);
   free_double(y);
 
-
+  free(fpath);
   cJSON_Delete(test_data_json);
 #ifdef _USEMKL_
   mkl_free_buffers();

@@ -1,0 +1,46 @@
+#
+#******************************************************************************
+# If configure is run with --with-debug, then
+#        OPT = -O0 -ggdb and OPT = ''.
+# Otherwise,
+#       DBG = '' and OPT = -O3 -march=native -mtune=native
+
+AM_CFLAGS =	 $(MAT_DEF)
+
+# libl1cinclude_HEADERS =../include/l1qc_newton.h
+# Using noinst_LTLLIBRARIES instead of noinst_LIBRARIES prevents the warning
+# about linking against a static library when we compile and link the interfaces
+
+lib_LTLIBRARIES = libl1c.la
+
+# noinst_LTLIBRARIES = libl1c.la
+
+libl1c_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include $(L1CCPPFLAGS)
+libl1c_la_CFLAGS = $(L1CCFLAGS)  -fPIC $(WARNFLAGS)
+libl1c_la_SOURCES = l1qc_newton.c \
+					l1c_math.c \
+					cgsolve.c  \
+					json_utils.c
+if compile_with_mkl
+libl1c_la_SOURCES += dct_mkl.c
+else
+libl1c_la_SOURCES += dct.c dct2.c
+endif
+
+libl1c_la_LIBADD	= ../src/vcl/libvcl_math.la
+
+libl1c_la_LDFLAGS	= -no-undefined $(LDFLAGS)\
+						$(WIN32LDFLAGS) -Wl,--no-as-needed
+
+
+# include_HEADERS = ../include/*.c
+
+# 					../include/cgsolve.h \
+# 					../include/l1qc_newton.h    \
+# 					../include/l1c_common.h \
+# 					../include/l1c_math.h \
+# 					../include/dct.h \
+# 					../include/dct_mkl.h
+
+
+AM_CPPFLAGS = $(MKL_INCLUDE)

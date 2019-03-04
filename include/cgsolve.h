@@ -1,5 +1,6 @@
 #ifndef _CGSOLVE_
 #define _CGSOLVE_
+#include "config.h"
 
 #include <stddef.h>
 #include "l1c_common.h"

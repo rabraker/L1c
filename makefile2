@@ -70,7 +70,7 @@ else
 BUILD_DIR      = $(NATIVE_BUILD_DIR)
 APP_LIB_DIR    = $(NATIVE_LIB_DIR)
 endif
-MEX_SRC        = $(ML_INTERFACE)/l1qc_dct.c
+MEX_SRC        = $(ML_INTERFACE)/l1qc_dct_mex.c
 MEX_OBJ        = $(MEX_SRC:.c=.o)
 
 # ML_MEX         = $(MEX_SRC:.c=.mexa64)
@@ -123,7 +123,7 @@ OPT            = -O3 -march=native -mtune=native
 VCL_OPT        = -O3 -march=native -mtune=native
 endif
 # check header files are in /usr/local/include
-INCLUDE        = -I/usr/include                \
+INCLUDE        = -I./ -I/usr/include                \
 				 -I/usr/local/include          \
 	           	 -Iinclude
 
@@ -153,9 +153,11 @@ CFLAGS         =  $(OPT) $(DBG) -fopenmp -fPIC $(WARN_FLAGS) \
 CPP_VCL_FLAGS  =  -Iinclude/vcl $(DBG) $(VCL_OPT) $(WARN_FLAGS) -fabi-version=0 -fPIC
 
 ifeq (${USE_OPENBLAS},1)
+# MATH_CFLAGS    = -D_HAVE_MM_MALLOC_
+MATH_CFLAGS    = -D_POSIX_C_SOURCE=200112L -D_HAVE_POSIX_MEMALIGN_
 MATH_INCLUDE   =  -I/usr/local/OpenBlas/include
 MATH_LDIR      =  -L/usr/local/OpenBlas/lib
-MATH_LIBS      =  -lfftw3 -lopenblas -lm
+MATH_LIBS      =  -lfftw3 -lgomp -lopenblas -lm
 
 else
 MATH_INCLUDE   =  -I${MKLROOT}/include
@@ -208,8 +210,11 @@ help:
 
 mex: $(MEX_NAME)
 
-$(MEX_NAME):$(MEX_OBJ)
-	${LD} -shared -o $(MEX_NAME) $< ${LDFLAGS}
+example:
+	cd interfaces && make -f makefile_pylib
+
+$(MEX_NAME):$(MEX_OBJ) example
+	${LD} -shared -o $(MEX_NAME) $< -ll1qc_dct ${LDFLAGS} -Wl,-rpath,/home/arnold/matlab/l1c/interfaces/ -L./interfaces
 
 $(MEX_OBJ):$(MEX_SRC) $(APP_ARCHIVE) $(VCL_ARCHIVE)
 	${CC} ${INCLUDE} ${CFLAGS} -shared -c -o $@ $<

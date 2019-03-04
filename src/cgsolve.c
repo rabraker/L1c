@@ -2,19 +2,20 @@
 This contains the conjugate gradient solver, cgsolve. The two small routines Ax and Ax_sym illustrate how the user function AX_func can parse the input void *AX_data.
 
 */
+#include "config.h"
 
 #ifdef _USEMKL_
-#include "mkl.h"
+#include "mkl_cblas.h"
 #else
 #include "cblas.h"
 #endif
-// #include "clapack.h"
+
 #include <stdlib.h>
 #include <math.h>
-// #include <stdio.h>
+
 #include "cgsolve.h"
 #include "l1c_common.h"
-
+#include "l1c_math.h"
 
 void cg_report(int iter,
                double best_rel_res,
@@ -88,7 +89,7 @@ int cgsolve(double *x, double *b, l1c_int N, double *Dwork,
 
   /* Init
   x = zeros(n,1)
-  r = b;
+  r = b-A*x
   p = r;
   delta = r'*r;
   delta_0 = b'*b;
