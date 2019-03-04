@@ -21,8 +21,9 @@ TEST_DATA_DIR="$(abs_srcdir)/test_data/"
 # invoke
 # >>> with_valgrind=yes make check
 #
-$(info "---------------------$(HOSTOS)")
+
 TESTS = test_l1c           \
+		build_CS20NG_example_data.py \
 		build_dct2_data.py     \
 		build_dct_data.py     \
 		build_cgsolve_data.py \
@@ -62,7 +63,8 @@ test_l1c_CPPFLAGS = -D_EXCLUDE_PUBLIC_ -I$(top_srcdir)/include  \
 test_l1c_CFLAGS = $(L1CCFLAGS) -std=c11 $(WARNFLAGS)
 test_l1c_LDFLAGS = $(LDFLAGS)
 
-log_deps = 	build_dct2_data.log \
+log_deps = 	build_CS20NG_example_data.py \
+			build_dct2_data.log \
 		   	build_dct_data.log \
 		   	build_cgsolve_data.log \
 			build_l1qc_data.log

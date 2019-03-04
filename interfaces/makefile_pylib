@@ -5,30 +5,27 @@
 # Locating the root directory
 #
 
-MKLROOT        = /opt/intel/compilers_and_libraries_2019.1.144/linux/mkl
+NP_INCL = /home/arnold/.virtualenvs/rabraker-com-342/lib/python3.4/site-packages/numpy/core/include
 
-OPT            = -O3 -march=native -mtune=native
-MATH_INCLUDE   =  -I${MKLROOT}/include
-MATH_CFLAGS    =  -DMKL_ILP64  -D_USEMKL_  -m64
 
 CFLAGS         =  $(OPT) $(DBG) -fopenmp -fPIC $(WARN_FLAGS) \
 					-std=c11 $(MAT_DEF)
-CFLAGS        +=   -I../ -I../include $(MATH_INCLUDE) $(MATH_CFLAGS)
+CPPFLAGS        +=   -I../build -I../include -I/usr/local/include \
+					-I/usr/include/python2.7
 
-MATH_LIBS      = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_rt -lpthread -lm -ldl \
-					-lfftw3 -lgomp
+LDLIBS      =   -ll1qc_dct -lpython2.7
+# -lm -lopenblas -lfftw3 -lgomp -ll1qc_dct -lpython
+
+LDFLAGS       = -L../build/interfaces \
+				-L/usr/lib/python2.7/config-x86_64-linux-gnu/libpython2.7 \
+				-Wl,--rpath,../build/interfaces
 
 
-LDFLAGS       += -Wl,--start-group $(MATH_ARCHIVE) \
-			../lib/libl1qc.a ../lib/libvcl_math.a -Wl,--end-group \
-			$(MATH_LDIR) $(MATH_LIBS)
+lib: l1cPy.o
+	$(CC)  -shared l1cPy.o -o l1cPy.so $(LDFLAGS) $(LDLIBS)
 
-
-lib: libl1qc_dct.o
-	$(CC)  -shared libl1qc_dct.o -o libl1qc_dct.so $(LDFLAGS)
-
-libl1qc_dct.o:libl1qc_dct.c
-	gcc $(CFLAGS) -c -o libl1qc_dct.o libl1qc_dct.c
+l1cPy.o:l1cPy.c
+	gcc $(CFLAGS) $(CPPFLAGS) -c -o l1cPy.o l1cPy.c
 
 clean:
-	rm libl1qc_dct.so
+	rm l1qc_dct_py.so

@@ -1,13 +1,13 @@
 
 typedef int l1c_int;
 
-typedef struct LBResult{
-  double l1;
-  int    total_newton_iter;
-  int    total_cg_iter;
-  int    status;
+// typedef struct LBResult{
+//   double l1;
+//   int    total_newton_iter;
+//   int    total_cg_iter;
+//   int    status;
 
-}LBResult;
+// }LBResult;
 
 typedef struct L1qcDctOpts{
   double epsilon;
