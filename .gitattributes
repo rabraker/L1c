@@ -1,0 +1,3 @@
+include/vcl/*.h          linguist-vendored=true
+include/check_utils.h    linguist-language=C
+include/l1c_math.h    linguist-language=C
