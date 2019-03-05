@@ -5,7 +5,6 @@ sandbox/
 doc/
 *.html
 readme.md
-test_l1qc
 bench
 BregmanData/
 
@@ -48,7 +47,7 @@ stamp-h1
 *.lo
 *.json
 *.m4
-*.pyc
+#*.pyc
 .libs
 *.so.0*
 l1qc_dct_c
@@ -63,8 +62,6 @@ l1qc_dct_c_fftw
 CMakeLists.txt
 errors.log
 build-cmake/
-test/test_l1c
-build*
 config-fftw-ob.sh
 config-fftw-atlas.sh
 config-mkl.sh
@@ -74,3 +71,5 @@ doxygen.conf
 make_dct
 run_dct.c
 makefile_pylib
+*.pyc
+__pycache__/

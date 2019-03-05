@@ -1,17 +1,12 @@
+#include "config.h"
 #include <math.h>
-#include "mkl.h"
 #include "l1c_common.h"
 #include "bregman.h"
+#include "TV.h"
 #include <stdio.h>
+
+
 /* Forward declarations */
-static void breg_DyT(l1c_int n, l1c_int m, double alpha, double *A, double *dyt);
-
-static void breg_DyTDy(l1c_int n, l1c_int m, double alpha, double *A, double *dytdy);
-
-static void breg_Dx(l1c_int n, l1c_int m, double *X, double *Dx);
-
-static void breg_Dy(l1c_int n, l1c_int m, double *X, double *Dy);
-
 static void breg_shrink1(l1c_int N, double *x, double *d, double gamma);
 
 static void breg_mxpy_z(l1c_int N, double * restrict x, double * restrict y, double *z);
@@ -21,97 +16,13 @@ static void breg_mxpy_z(l1c_int N, double * restrict x, double * restrict y, dou
    For unit tests, exports a table of function pointers.
  */
 BregFuncs breg_get_functions(){
-  BregFuncs bfun = {.breg_Dx = breg_Dx,
-                    .breg_Dy = breg_Dy,
+  BregFuncs bfun = {
                     .breg_shrink1 = breg_shrink1,
-                    .breg_mxpy_z = breg_mxpy_z,
-                    .breg_DyTDy = breg_DyTDy,
-                    .breg_DyT = breg_DyT};
+                    .breg_mxpy_z = breg_mxpy_z};
 
   return bfun;
 }
 
-/*
-  Given an m by n matrix A, computes lambda*Del_y^T*A. We assume A is stored
-  in the 1-D vector A, in row major order. For a 3 x 4 matrix, Del_y^T has
-  the matrix representation
-
- -1     0     0     0     0     0     0     0     0     0     0     0
-  0    -1     0     0     0     0     0     0     0     0     0     0
-  0     0    -1     0     0     0     0     0     0     0     0     0
-  1     0     0    -1     0     0     0     0     0     0     0     0
-  0     1     0     0    -1     0     0     0     0     0     0     0
-  0     0     1     0     0    -1     0     0     0     0     0     0
-  0     0     0     1     0     0    -1     0     0     0     0     0
-  0     0     0     0     1     0     0    -1     0     0     0     0
-  0     0     0     0     0     1     0     0    -1     0     0     0
-  0     0     0     0     0     0     1     0     0     0     0     0
-  0     0     0     0     0     0     0     1     0     0     0     0
-  0     0     0     0     0     0     0     0     1     0     0     0
-
- */
-static void breg_DyT(l1c_int n, l1c_int m, double alpha, double *A, double *dyt){
-
-  double Ai = 0, Ai_min_m = 0;
-  int i=0, Len=n*m;
-
-  for (i=0; i<Len; i++){
-    Ai = i<(m-1)*n ? A[i] : 0;
-    Ai_min_m = i < m ? 0 : A[i-m];
-    dyt[i] = alpha * (Ai_min_m - Ai);
-  }
-}
-
-/*
-  Given an m by n matrix A, computes lambda*(Del_y^T*Del_y)*A.
-  We assume A is stored in the 1-D vector A, in row major order.
-  For a 3 x 4 matrix, Del_y^T*Del_y has the matrix representation:
-
-  1     0     0    -1     0     0     0     0     0     0     0     0
-  0     1     0     0    -1     0     0     0     0     0     0     0
-  0     0     1     0     0    -1     0     0     0     0     0     0
- -1     0     0     2     0     0    -1     0     0     0     0     0
-  0    -1     0     0     2     0     0    -1     0     0     0     0
-  0     0    -1     0     0     2     0     0    -1     0     0     0
-  0     0     0    -1     0     0     2     0     0    -1     0     0
-  0     0     0     0    -1     0     0     2     0     0    -1     0
-  0     0     0     0     0    -1     0     0     2     0     0    -1
-  0     0     0     0     0     0    -1     0     0     1     0     0
-  0     0     0     0     0     0     0    -1     0     0     1     0
-  0     0     0     0     0     0     0     0    -1     0     0     1
- */
-static void breg_DyTDy(l1c_int n, l1c_int m, double alpha, double *A, double *dytdy){
-
-  double Ai_min_m=0, D_ii_Ai = 0, Ai_p_m=0;
-  int i=0, Len=n*m;
-
-  for (i=0; i<Len; i++){
-    Ai_min_m = i<m ? 0 : A[i-m];
-    D_ii_Ai = (i<m || i > (m-1)*n) ? A[i] : 2 * A[i];
-    Ai_p_m = i < Len-m ? A[i+m] : 0;
-
-    dytdy[i] = alpha * (-Ai_min_m + D_ii_Ai - Ai_p_m);
-  }
-
-}
-static void breg_Dx(l1c_int n, l1c_int m, double *X, double *Dx){
-  int row=0, col=0;
-  for (row=0; row<n; row++){
-    for (col=row*m; col<(row+1)*m-1; col++){
-      Dx[col] = X[col+1] - X[col];
-    }
-  }
-
-}
-
-static void breg_Dy(l1c_int n, l1c_int m, double *X, double *Dy){
-  int row=0, col=0;
-  for (row=0; row<n-1; row++){
-    for(col = row * m; col < (row+1) * m; col++){
-      Dy[col] = X[col+m] - X[col];
-    }
-  }
-}
 
 
 
@@ -136,7 +47,6 @@ void breg_mxpy_z(l1c_int N, double * restrict x, double * restrict y, double *z)
   double *z_ = __builtin_assume_aligned(z, DALIGN);
 
   for (int i=0; i<N; i++){
-
     z_[i] = -x_[i] + y_[i];
   }
 
@@ -191,7 +101,7 @@ int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double lambda, double t
   b_y = malloc_double(N);
   Dxu_b = malloc_double(N);
   Dyu_b = malloc_double(N);
-  if (!uk_1 | !d_x | !d_y | !b_x | !b_y | !Dxu_b | !Dyu_b){
+  if (!uk_1 || !d_x || !d_y || !b_x || !b_y || !Dxu_b || !Dyu_b){
     status = 1;
   goto exit;
   }
@@ -202,8 +112,8 @@ int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double lambda, double t
 
     /*Compute Dxu_b = Del_x*u + b */
     /*Compute Dyu_b = Del_y*u + b */
-    breg_Dx(n, m, uk, Dxu_b);
-    breg_Dy(n, m, uk, Dyu_b);
+    l1c_Dx(n, m, uk, Dxu_b);
+    l1c_Dy(n, m, uk, Dyu_b);
     cblas_daxpy(N, 1.0, b_x, 1, Dxu_b, 1);
     cblas_daxpy(N, 1.0, b_y, 1, Dyu_b, 1);
 
