@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import numpy as np
 import numpy.testing as npt
 import TestDataUtils as TDU
@@ -41,23 +42,57 @@ def DyMatRep(n, m):
 
 
 def Dy(x_vec, n, m):
-    dy = np.zeros((n*m, 1))
+    """
+[[-1. -0. -0.  1.  0.  0.  0.  0.  0.  0.  0.  0.]
+ [-0. -1. -0.  0.  1.  0.  0.  0.  0.  0.  0.  0.]
+ [-0. -0. -1.  0.  0.  1.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0. -1. -0. -0.  1.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0. -0. -1. -0.  0.  1.  0.  0.  0.  0.]
+ [ 0.  0.  0. -0. -0. -1.  0.  0.  1.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0. -1. -0. -0.  1.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0. -0. -1. -0.  0.  1.  0.]
+ [ 0.  0.  0.  0.  0.  0. -0. -0. -1.  0.  0.  1.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]]
+    """
+
+    dy = np.zeros((n*m, 1)) + 1  # Ensure everything is set right.
 
     for row in range(0, n-1):  # n-2 inclusive
         for col in range(row*m, (row+1)*m):  # (row+1)*m-1 inclusive
             i = col
             dy[i] = x_vec[i+m] - x_vec[i]
+
+    for i in range((n-1)*m, n*m):
+        dy[i] = 0
     return dy
 
 
 def Dx(x_vec, n, m):
-    dx = np.zeros((n*m, 1))
+    """
+    4 by 3
+[[-1.  1.  0. -0.  0.  0. -0.  0.  0. -0.  0.  0.]
+ [ 0. -1.  1.  0. -0.  0.  0. -0.  0.  0. -0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+ [-0.  0.  0. -1.  1.  0. -0.  0.  0. -0.  0.  0.]
+ [ 0. -0.  0.  0. -1.  1.  0. -0.  0.  0. -0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+ [-0.  0.  0. -0.  0.  0. -1.  1.  0. -0.  0.  0.]
+ [ 0. -0.  0.  0. -0.  0.  0. -1.  1.  0. -0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+ [-0.  0.  0. -0.  0.  0. -0.  0.  0. -1.  1.  0.]
+ [ 0. -0.  0.  0. -0.  0.  0. -0.  0.  0. -1.  1.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]]
+    """
+    dx = np.zeros((n*m, 1))+ 1  # Ensure everything is set right.
 
     for row in range(0, n):  # n-1 inclusive
         for col in range(row*m, (row+1)*m - 1):  # (row+1)*m - 1 inclusive
             i = col  # row*m +col + 1
             dx[i] = x_vec[i+1] - x_vec[i]
 
+        dx[i+1] = 0
     return dx
 
 
@@ -80,7 +115,7 @@ def DyTDy(A_vec, alpha, n, m):
   0     0     0     0     0     0     0    -1     0     0     1     0
   0     0     0     0     0     0     0     0    -1     0     0     1
     """
-    dytdy = A_vec*0
+    dytdy = A_vec*0 + 1  # Ensure everything is set right.
 
     # First, do the diagonal and upper diagonal
     for i in range(0, m*n):
@@ -120,7 +155,7 @@ def DxTDx(A_vec, alpha, n, m):
  [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0. -1.  1.]]
     """
 
-    dxtdx = A_vec*0
+    dxtdx = A_vec*0 + 1  # Ensure everything is set right.
 
     for row in range(0, n):
         for col in range(0, m):
@@ -161,9 +196,10 @@ def check_Dy(A, N, M):
     a_vec = np.reshape(A, (N*M, 1), order='C')
     Dy_vec_exp = Dy_as_diff(a_vec, N, M)
     Dy_loop = Dy(a_vec, N, M)
+    DyMat = DyMatRep(N, M)
+
     npt.assert_array_almost_equal(Dy_vec_exp, Dy_loop, decimal=14)
 
-    DyMat = DyMatRep(N, M)
     npt.assert_array_almost_equal(Dy_vec_exp, DyMat.dot(a_vec), decimal=14)
     npt.assert_array_almost_equal(Dy_loop, DyMat.dot(a_vec), decimal=14)
 
@@ -174,6 +210,7 @@ def check_DxTDx(A, N, M):
     dxTdx = DxTDx(a_vec, alpha, N, M)
 
     DxMat = DxMatRep(N, M)
+
     dxTdx_exp = alpha*DxMat.T.dot(DxMat).dot(a_vec)
     npt.assert_array_almost_equal(dxTdx, dxTdx_exp, decimal=14)
 
@@ -200,8 +237,10 @@ def check_DyTDy(A, N, M):
 
 
 def build_TV_data(N, M):
-    alpha = 2.567
-    A = np.random.rand(N, M)
+    alpha = 2.67
+    # A = np.random.rand(N, M)
+    A = np.random.randint(1, high=100, size=(N,M))
+    A = np.double(A)
     check_Dx(A, N, M)
     check_Dy(A, N, M)
     check_DxTDx(A, N, M)
@@ -219,7 +258,6 @@ def build_TV_data(N, M):
 
     dxTdxA = alpha*DxMat.T.dot(DxMat).dot(a_vec)
     dyTdyA = alpha*DyMat.T.dot(DyMat).dot(a_vec)
-
     data = {'A': a_vec,
             'DxA': dxA,
             'DyA': dyA,
@@ -254,6 +292,19 @@ if __name__ == '__main__':
     TDU.save_json(data, fname_square)
 
 
+    N = 16
+    M = 13
+    data = build_TV_data(N, M)
+    fname_square = data_dir+"/TV_data_tall_skinny.json"
+    print(fname_square)
+    TDU.save_json(data, fname_square)
+
+    N = 13
+    M = 16
+    data = build_TV_data(N, M)
+    fname_square = data_dir+"/TV_data_short_wide.json"
+    print(fname_square)
+    TDU.save_json(data, fname_square)
 
 # """
 # typedef struct ImDiffData{
