@@ -101,6 +101,14 @@ static void setup(ImgDiffData *ddat){
 }
 
 static void teardown(ImgDiffData *ddat){
+  free_double(ddat->A);
+  free_double(ddat->DxA_exp);
+  free_double(ddat->DyA_exp);
+  free_double(ddat->DxTA_exp);
+  free_double(ddat->DyTA_exp);
+  free_double(ddat->DxTDxA_exp);
+  free_double(ddat->DyTDyA_exp);
+
   free_double(ddat->DxA_act);
   free_double(ddat->DyA_act);
   free_double(ddat->DxTA_act);
@@ -110,37 +118,42 @@ static void teardown(ImgDiffData *ddat){
   free_double(ddat->DyTDyA_act);
 }
 
-void setup_square(void){
+static void setup_square(void){
   dd = malloc(sizeof(ImgDiffData));
 
   char *fpath_dd = fullfile(test_data_dir, "TV_data_square_small.json");
 
   sprintf(dd->fpath, "%s", fpath_dd);
   setup(dd);
+
+  free(fpath_dd);
+
 }
 
-void teardown_square(void){
+static void teardown_square(void){
   teardown(dd);
   free(dd);
 }
 
-void setup_tall(void){
+static void setup_tall(void){
   dd = malloc(sizeof(ImgDiffData));
 
   char *fpath_dd = fullfile(test_data_dir, "TV_data_tall_skinny.json");
 
   sprintf(dd->fpath, "%s", fpath_dd);
   setup(dd);
+
+  free(fpath_dd);
 }
 
 
-void teardown_tall(void){
+static void teardown_tall(void){
   teardown(dd);
   free(dd);
 }
 
 
-void setup_short(void){
+static void setup_short(void){
   dd = malloc(sizeof(ImgDiffData));
 
   char *fpath_dd = fullfile(test_data_dir, "TV_data_short_wide.json");
@@ -149,7 +162,7 @@ void setup_short(void){
   setup(dd);
 }
 
-void teardown_short(void){
+static void teardown_short(void){
   teardown(dd);
   free(dd);
 }

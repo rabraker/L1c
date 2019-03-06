@@ -3,6 +3,7 @@
 #include "l1c_common.h"
 #include "bregman.h"
 #include "TV.h"
+#include "cgsolve.h"
 #include <stdio.h>
 
 
@@ -22,8 +23,6 @@ BregFuncs breg_get_functions(){
 
   return bfun;
 }
-
-
 
 
 void breg_shrink1(l1c_int N, double *x, double *d, double gamma){
@@ -87,12 +86,45 @@ double l1c_norm2_err(l1c_int N, double * restrict x, double * restrict y){
 
 // }
 
+void breg_hess_eval(l1c_int N, double *x, double *y, void *hess_data){
+  BregTVHessData *BRD =  (BregTVHessData*) hess_data;
+  (void)N;
+  l1c_int n = BRD->n;
+  l1c_int m = BRD->m;
 
-int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double lambda, double tol, l1c_int max_iter){
+  l1c_DyTDy(n, m, -BRD->lambda, x, BRD->dwork1);
+  l1c_DxTDx(n, m, -BRD->lambda, x, BRD->dwork2);
+
+  for(int i=0; i<n*m; i++){
+    y[i] = BRD->mu + BRD->dwork1[i] + BRD->dwork2[i];
+  }
+}
+
+void breg_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, double *dy, double *by,
+              double *rhs, double mu, double lambda, double *dwork1, double *dwork2){
+
+  l1c_int N = n*m;
+  // RHS = mu*f + lam*Delx^T*(dxk-bxk) + lam*Dely^T(dyk - byk)
+  breg_mxpy_z(N, by, dy, dwork1);
+  l1c_DyT(n, m, lambda, dwork1, dwork2);    //dwork2 = lam*Dely^T(dyk - byk)
+  breg_mxpy_z(N, bx, dx, dwork1);
+  l1c_DxT(n, m, lambda, dwork1, rhs);       //rhs = lam*Delx^T(xyk - bxk)
+
+  cblas_daxpy(N, mu, f, 1, dwork2, 1);      //dwork2 = mu*f + lam*Dely^T(dyk - byk)
+  cblas_daxpy(N, 1.0, dwork2, 1, rhs, 1);   //RHS
+
+}
+
+int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
+                       double lambda, double tol, l1c_int max_iter){
   int iter=0, N=n*m, status=0;
-
+  double mu = 0.5*lambda;
   double *uk_1=NULL, *d_x=NULL, *d_y = NULL, *b_x=NULL, *b_y=NULL;
+  double *dwork1=NULL, *dwork2=NULL, *rhs=NULL, *dwork4N;
   double *Dxu_b=NULL, *Dyu_b=NULL;
+  CgResults cgr;
+  CgParams cgp = {.verbose=0, .max_iter=5, .tol=1e-3};
+  BregTVHessData BHD = {.n=n, .m=m, .dwork1=dwork1, .dwork2=dwork2, .mu=mu, .lambda=lambda};
 
   uk_1 = malloc_double(N);
   d_x = malloc_double(N);
@@ -101,14 +133,20 @@ int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double lambda, double t
   b_y = malloc_double(N);
   Dxu_b = malloc_double(N);
   Dyu_b = malloc_double(N);
-  if (!uk_1 || !d_x || !d_y || !b_x || !b_y || !Dxu_b || !Dyu_b){
+  dwork1 = malloc_double(N);
+  dwork2 = malloc_double(N);
+  rhs = malloc_double(N);
+  dwork4N = malloc_double(N*4);
+  if (!uk_1 || !d_x || !d_y || !b_x || !b_y || !Dxu_b || !Dyu_b ||!dwork1 || !dwork2){
     status = 1;
   goto exit;
   }
 
   for (iter=1; iter<=max_iter; iter++){
 
+    breg_rhs(n, m, f, d_x, b_x, d_y, b_y, rhs, mu, lambda, dwork1, dwork2);
     //uk_1 = G^k
+    cgsolve(uk, rhs, N, dwork4N, breg_hess_eval, &BHD, &cgr, cgp);
 
     /*Compute Dxu_b = Del_x*u + b */
     /*Compute Dyu_b = Del_y*u + b */
