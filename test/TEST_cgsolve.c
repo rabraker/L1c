@@ -36,49 +36,36 @@ extern char *test_data_dir;
 
 int load_small_data(double **A, double **x, double **b, l1c_int *N, l1c_int *na,
                     l1c_int *max_iter, double *tol){
+  l1c_int Nx=0, Nb= 0, status=0;
   char *fpath = fullfile(test_data_dir, "cgsolve_small01.json");
   if(load_file_to_json(fpath, &test_data_json) ){
-    return 1;
+    ck_abort();
   }
   free(fpath);
 
-  if( extract_json_int(test_data_json, "max_iter", max_iter) )
-    return 1;
-  if ( extract_json_double(test_data_json, "tol", tol) )
-    return 1;
+  status += extract_json_int(test_data_json, "max_iter", max_iter);
+  status += extract_json_double(test_data_json, "tol", tol);
 
-  l1c_int Nx=0, Nb= 0;
-  if (extract_json_double_array(test_data_json, "x", x, &Nx) ){
-    perror("Error Loading x\n");
-    return 1;
+  status +=extract_json_double_array(test_data_json, "x", x, &Nx);
+  status +=extract_json_double_array(test_data_json, "b", b, &Nb);
+  status += extract_json_double_array(test_data_json, "A", A, na);
+
+  if (status){
+    fprintf(stderr, "Error loading json data\n");
+    goto fail;
   }
-
-  if (extract_json_double_array(test_data_json, "b", b, &Nb) ){
-    perror("Error Loading b\n");
-    goto end0;
-  }
-
-  if (extract_json_double_array(test_data_json, "A", A, na) ){
-    perror("Error Loading A\n");
-    goto end1;
-  }
-
   *N = Nx;
 
   if ( (Nx != Nb) || ( (l1c_int)(Nb* (Nb +1)/2) != *na) ){
-    perror("Error: Array size mismatch. Aborting\n");
-    goto end2; // We allocated all, but their sizes don't match.
+    fprintf(stderr, "Error: Array size mismatch. Aborting\n");
+    goto fail;
   }
 
   return 0;
 
- end2:
+ fail:
   free_double(*A);
-  goto end1;
- end1:
   free_double(*b);
-  goto end0;
- end0:
   free_double(*x);
   return 1;
 
@@ -153,8 +140,7 @@ START_TEST(test_cgsolve_h11p){
   l1c_int *pix_idx;
 
   if (load_file_to_json(fpath, &test_data_json)){
-    perror("Error loading data in test_get_gradient\n");
-    ck_abort();
+    ck_abort_msg("Error loading data in test_cgsolve_h11p\n");
   }
 
   // Inputs to get_gradient
@@ -254,7 +240,7 @@ START_TEST(test_cgsolve_Ax_sym){
 
   y = malloc_double(N);
   if ( (!y) | status){
-    perror("error allocating memory\n");
+    fprintf(stderr, "Error allocating memory\n");
     status +=1;
     goto exit;
   }

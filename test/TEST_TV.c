@@ -49,7 +49,7 @@ typedef struct ImDiffData{
   int N;
   int M;
   int NM;
-  char fpath[256];
+  char *fpath;
 }ImgDiffData;
 
 ImgDiffData *dd;
@@ -121,49 +121,43 @@ static void teardown(ImgDiffData *ddat){
 static void setup_square(void){
   dd = malloc(sizeof(ImgDiffData));
 
-  char *fpath_dd = fullfile(test_data_dir, "TV_data_square_small.json");
+  dd->fpath = fullfile(test_data_dir, "TV_data_square_small.json");
 
-  sprintf(dd->fpath, "%s", fpath_dd);
+  // sprintf(dd->fpath, "%s", fpath_dd);
   setup(dd);
-
-  free(fpath_dd);
 
 }
 
 static void teardown_square(void){
   teardown(dd);
+  free(dd->fpath);
   free(dd);
 }
 
 static void setup_tall(void){
   dd = malloc(sizeof(ImgDiffData));
-
-  char *fpath_dd = fullfile(test_data_dir, "TV_data_tall_skinny.json");
-
-  sprintf(dd->fpath, "%s", fpath_dd);
+  dd->fpath = fullfile(test_data_dir, "TV_data_tall_skinny.json");
   setup(dd);
 
-  free(fpath_dd);
 }
 
 
 static void teardown_tall(void){
   teardown(dd);
+  free(dd->fpath);
   free(dd);
 }
 
 
 static void setup_short(void){
   dd = malloc(sizeof(ImgDiffData));
-
-  char *fpath_dd = fullfile(test_data_dir, "TV_data_short_wide.json");
-
-  sprintf(dd->fpath, "%s", fpath_dd);
+  dd->fpath = fullfile(test_data_dir, "TV_data_short_wide.json");
   setup(dd);
 }
 
 static void teardown_short(void){
   teardown(dd);
+  free(dd->fpath);
   free(dd);
 }
 
