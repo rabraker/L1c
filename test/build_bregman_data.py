@@ -15,9 +15,10 @@ def shrink1(x, gamma):
 
 def norm2_err(x, y):
 
+    y_nrm = y.T.dot(y)
     err = x - y
-
-    return err.T.dot(err)
+    err_nrm = err.T.dot(err)
+    return np.sqrt(err_nrm/y_nrm)
 
 
 def breg_rhs(n, m, lam, mu, f, dx, bx, dy, by):
@@ -29,6 +30,7 @@ def breg_rhs(n, m, lam, mu, f, dx, bx, dy, by):
 
     return mu*f + dxx + dyy
 
+
 def breg_hess_eval(n, m, mu, lam, x):
     DxMat = TV.DxMatRep(n, m)
     DyMat = TV.DyMatRep(n, m)
@@ -37,7 +39,20 @@ def breg_hess_eval(n, m, mu, lam, x):
     dyy = DyMat.T.dot(DyMat).dot(x)
 
     # ipdb.set_trace()
-    return mu - lam*(dxx + dyy)
+    return mu*x + lam*(dxx + dyy)
+
+
+def Hess_diag(N, M, mu, lam):
+    import build_TV_data
+    DyMat = build_TV_data.DyMatRep(N, M)
+    DxMat = build_TV_data.DxMatRep(N, M)
+
+    H = DyMat.T.dot(DyMat) + DxMat.T.dot(DxMat)
+    I = np.eye(N*M)
+    H = mu*I + lam*H
+    H = np.diag(H)
+    H = 1/H
+    return H
 
 
 def build_data(fname):
@@ -46,9 +61,12 @@ def build_data(fname):
     m = 4
     N = n*m
 
+
     gamma = .53
-    lam = 1
-    mu = 1
+    mu = 10
+    lam = 2*mu
+
+    hdiag = Hess_diag(n, m, mu, lam)
 
     x = np.random.rand(N, 1)
     y = np.random.rand(N, 1)
@@ -84,6 +102,7 @@ def build_data(fname):
             'mu': mu,
             'rhs': rhs,
             'Hessx': Hess_x,
+            'H_diag': hdiag,
             'x_shrunk': x_shrunk,
             'nrm2': nrm2}
 

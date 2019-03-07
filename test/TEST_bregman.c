@@ -47,6 +47,7 @@ typedef struct BregData {
   double *f;
   double *rhs_exp;
   double *Hessx;
+  double *H_diag_exp;
   double gamma;
   double mu;
   double lam;
@@ -79,6 +80,7 @@ static void setup(void){
   setup_status +=extract_json_double_array(td_json, "f", &BD->f, &tmp);
   setup_status +=extract_json_double_array(td_json, "rhs", &BD->rhs_exp, &tmp);
   setup_status +=extract_json_double_array(td_json, "Hessx", &BD->Hessx, &tmp);
+  setup_status +=extract_json_double_array(td_json, "H_diag", &BD->H_diag_exp, &tmp);
 
   setup_status +=extract_json_double(td_json, "gamma", &BD->gamma);
   setup_status +=extract_json_double(td_json, "mu", &BD->mu);
@@ -162,7 +164,31 @@ START_TEST(test_breg_rhs){
   free_double(dwork1);
   free_double(dwork2);
 
-  // cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
+
+}
+END_TEST
+
+START_TEST(test_breg_hess_inv_diag){
+
+  double *D;
+
+  D = malloc_double(BD->NM);
+  if ( (!D) ){
+    fprintf(stderr, "error allocating memory\n");
+    ck_abort();
+  }
+
+  hess_inv_diag(BD->n, BD->m, BD->mu, BD->lam, D);
+
+  ck_assert_double_array_eq_tol(BD->NM, BD->H_diag_exp, D, TOL_DOUBLE_SUPER*10);
+
+
+  free_double(D);
+
+
 #ifdef _USEMKL_
   mkl_free_buffers();
 #endif
@@ -249,7 +275,7 @@ Suite *bregman_suite(void)
   tcase_add_test(tc_breg, test_breg_mxpy_z);
   tcase_add_test(tc_breg, test_breg_rhs);
   tcase_add_test(tc_breg, test_hess_eval);
-
+  tcase_add_test(tc_breg, test_breg_hess_inv_diag);
   suite_add_tcase(s, tc_breg);
 
   return s;

@@ -32,10 +32,12 @@ BregFuncs breg_get_functions();
 void breg_minx_y_z(l1c_int N, double * restrict x, double * restrict y, double *z);
 
 int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
-                       double lambda, double tol, l1c_int max_iter);
+                       double mu, double tol, l1c_int max_iter);
 
 void breg_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, double *dy, double *by,
               double *rhs, double mu, double lambda, double *dwork1, double *dwork2);
 
 void breg_hess_eval(l1c_int N, double *x, double *y, void *hess_data);
+
+void hess_inv_diag(l1c_int n, l1c_int m, double mu, double lambda, double *D);
 #endif
