@@ -288,22 +288,18 @@ if __name__ == '__main__':
     M = 16
     data = build_TV_data(N, M)
     fname_square = data_dir+"/TV_data_square_small.json"
-    print(fname_square)
     TDU.save_json(data, fname_square)
-
 
     N = 16
     M = 13
     data = build_TV_data(N, M)
     fname_square = data_dir+"/TV_data_tall_skinny.json"
-    print(fname_square)
     TDU.save_json(data, fname_square)
 
     N = 13
     M = 16
     data = build_TV_data(N, M)
     fname_square = data_dir+"/TV_data_short_wide.json"
-    print(fname_square)
     TDU.save_json(data, fname_square)
 
 # """
