@@ -85,7 +85,8 @@ def Dx(x_vec, n, m):
  [ 0. -0.  0.  0. -0.  0.  0. -0.  0.  0. -1.  1.]
  [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]]
     """
-    dx = np.zeros((n*m, 1))+ 1  # Ensure everything is set right.
+
+    dx = np.zeros((n*m, 1)) + 1  # Ensure everything is set right.
 
     for row in range(0, n):  # n-1 inclusive
         for col in range(row*m, (row+1)*m - 1):  # (row+1)*m - 1 inclusive

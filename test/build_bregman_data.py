@@ -42,6 +42,18 @@ def breg_hess_eval(n, m, mu, lam, x):
     return mu*x + lam*(dxx + dyy)
 
 
+def breg_hess_solve(n, m, mu, lam, b):
+    DxMat = TV.DxMatRep(n, m)
+    DyMat = TV.DyMatRep(n, m)
+
+    Dxx = DxMat.T.dot(DxMat)
+    Dyy = DyMat.T.dot(DyMat)
+    I = np.eye(n*m)
+
+    H = mu*I + lam*(Dxx + Dyy)
+    return np.linalg.solve(H, b)
+
+
 def Hess_diag(N, M, mu, lam):
     import build_TV_data
     DyMat = build_TV_data.DyMatRep(N, M)
@@ -57,8 +69,8 @@ def Hess_diag(N, M, mu, lam):
 
 def build_data(fname):
     np.random.seed(0)
-    n = 4
-    m = 4
+    n = 16
+    m = 16
     N = n*m
 
 
@@ -76,6 +88,8 @@ def build_data(fname):
     dy = np.random.rand(N, 1)
     by = np.random.rand(N, 1)
     f = np.random.rand(N, 1)
+    b = np.random.rand(N, 1)
+    Hsolve_b = breg_hess_solve(n, m, mu, lam, b)
 
     rhs = breg_rhs(n, m, lam, mu, f, dx, bx, dy, by)
 
@@ -101,6 +115,8 @@ def build_data(fname):
             'lam': lam,
             'mu': mu,
             'rhs': rhs,
+            'b': b,
+            'Hsolveb': Hsolve_b,
             'Hessx': Hess_x,
             'H_diag': hdiag,
             'x_shrunk': x_shrunk,

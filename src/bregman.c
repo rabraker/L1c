@@ -5,27 +5,42 @@
 #include "TV.h"
 #include "cgsolve.h"
 #include <stdio.h>
-#include <sys/time.h>
-#include <unistd.h>
 #include "l1c_math.h"
 
+#define PI 3.141592653589793
 /* Forward declarations */
-static void breg_shrink1(l1c_int N, double *x, double *d, double gamma);
+static inline void breg_shrink1(l1c_int N, double *x, double *d, double gamma);
 
-static void breg_mxpy_z(l1c_int N, double * restrict x, double * restrict y, double *z);
+static inline void breg_mxpy_z(l1c_int N, double * restrict x, double * restrict y, double *z);
 
+static double l1c_norm2_err(l1c_int N, double * restrict x, double * restrict y);
+
+static void breg_anis_jacobi(int n, int m, double* uk_1, double *uk, double *rhs, double *D,
+                             double lambda);
+
+static void breg_anis_guass_seidel(int n, int m, double *u, double *rhs,
+                       double mu, double lambda);
+
+static void breg_anis_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, double *dy, double *by,
+              double *rhs, double mu, double lambda, double *dwork1, double *dwork2);
+
+static void hess_inv_diag(l1c_int n, l1c_int m, double mu, double lambda, double *D);
 
 /**
    For unit tests, exports a table of function pointers.
  */
+
 BregFuncs breg_get_functions(){
-  BregFuncs bfun = {
-                    .breg_shrink1 = breg_shrink1,
-                    .breg_mxpy_z = breg_mxpy_z};
+  BregFuncs bfun = {.breg_shrink1 = breg_shrink1,
+                    .breg_mxpy_z = breg_mxpy_z,
+                    .l1c_norm2_err = l1c_norm2_err,
+                    .breg_anis_guass_seidel = breg_anis_guass_seidel,
+                    .breg_anis_rhs = breg_anis_rhs,
+                    .hess_inv_diag = hess_inv_diag,
+                    .breg_anis_jacobi = breg_anis_jacobi};
 
   return bfun;
 }
-
 
 void breg_shrink1(l1c_int N, double * restrict x, double * restrict d, double gamma){
   double *x_ = __builtin_assume_aligned(x, DALIGN);
@@ -77,11 +92,24 @@ double l1c_norm2_err(l1c_int N, double * restrict x, double * restrict y){
   return sqrt(nrm/ynrm);
 }
 
+
+void breg_hess_eval(l1c_int n, l1c_int m, double *x, double *y, double mu, double lambda,
+                    double *dwork1, double *dwork2){
+
+  l1c_DyTDy(n, m, lambda, x, dwork1);
+  l1c_DxTDx(n, m, lambda, x, dwork2);
+  for(int i=0; i<n*m; i++){
+    y[i] = mu*x[i] + dwork1[i] + dwork2[i];
+  }
+}
+
 /*
-for n=5, m=4,
-D = [2. 3. 3. 2. 3. 4. 4. 3. 3. 4. 4. 3. 3. 4. 4. 3. 2. 3. 3. 2.]
-      row
- */
+  Not currently using this, but I think it could be useful, especially if I decide to try
+  Jacobi iteration instead of guass seidel.
+  for n=5, m=4,
+  D = [2. 3. 3. 2. 3. 4. 4. 3. 3. 4. 4. 3. 3. 4. 4. 3. 2. 3. 3. 2.]
+  row
+*/
 void hess_inv_diag(l1c_int n, l1c_int m, double mu, double lambda, double *D){
   l1c_int k=0, j=0;
 
@@ -115,22 +143,162 @@ void hess_inv_diag(l1c_int n, l1c_int m, double mu, double lambda, double *D){
   D[m*n-1] = mu_2lam;
 }
 
+/* ---------------- JACOBI -----------------------------------------------
 
-void breg_hess_eval(l1c_int N, double *x, double *y, void *hess_data){
-  BregTVHessData *BRD =  (BregTVHessData*) hess_data;
-  (void)N;
-  l1c_int n = BRD->n;
-  l1c_int m = BRD->m;
+DxTDx (4 by 3) (w/o diagonal.):
 
-  l1c_DyTDy(n, m, BRD->lambda, x, BRD->dwork1);
-  l1c_DxTDx(n, m, BRD->lambda, x, BRD->dwork2);
-#pragma omp parallel for
-  for(int i=0; i<n*m; i++){
-    y[i] = BRD->mu*x[i] + BRD->dwork1[i] + BRD->dwork2[i];
-  }
+4 by 3:
+[[ 0. -1.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+[-1.  0. -1.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+[ 0. -1.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+[ 0.  0.  0.  0. -1.  0.  0.  0.  0.  0.  0.  0.]
+[ 0.  0.  0. -1.  0. -1.  0.  0.  0.  0.  0.  0.]
+[ 0.  0.  0.  0. -1.  0.  0.  0.  0.  0.  0.  0.]
+[ 0.  0.  0.  0.  0.  0.  0. -1.  0.  0.  0.  0.]
+[ 0.  0.  0.  0.  0.  0. -1.  0. -1.  0.  0.  0.]
+[ 0.  0.  0.  0.  0.  0.  0. -1.  0.  0.  0.  0.]
+[ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0. -1.  0.]
+[ 0.  0.  0.  0.  0.  0.  0.  0.  0. -1.  0. -1.]
+[ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0. -1.  0.]]
+
+DyTDy (4
+*/
+
+void breg_anis_jacobi(int n, int m, double* uk, double *dwork, double *rhs, double *D,
+                      double lambda){
+
+  double ui_min_m=0, ui_p_m=0;
+  int i=0, Len=n*m, j=0;
+    /* From l1c_DyTDy, with diagonal removed.*/
+    // #pragma omp parallel for private(ui_min_m, ui_p_m, i)
+    for (i=0; i<Len; i++){
+      ui_min_m = i<m ? 0 : uk[i-m];
+      ui_p_m = i < Len-m ? uk[i+m] : 0;
+      dwork[i] = rhs[i] - lambda * (-ui_min_m - ui_p_m);
+    }
+    /* From l1c_DxTDx, with diagonal removed.*/
+    // #pragma omp parallel for
+      for (i=0; i<n; i++){
+        dwork[i*m] +=  lambda*uk[i*m+1];
+        for (j=i*m+1; j<(i+1)*m-1; j++){
+          dwork[j] += -lambda * (-uk[j-1] - uk[j+1]);
+        }
+        // We now have col=(row+1)*m
+        dwork[j] += -lambda * (-uk[j-1]);
+      }
+
+      l1c_dxmuly_z(Len, D, dwork, uk);
+
 }
 
-void breg_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, double *dy, double *by,
+/*
+  According to https://en.wikipedia.org/wiki/Gauss%E2%80%93Seidel_method,
+  Guass-seidel needs to be done sequentially, and u is updated in place.
+  Thus, the ordering below is very specific (and assumes that the image data
+  in u is stored in row major order): we start the top left corner (i,j=0),
+  move across the top row, to the top right pixel (i=0, j=m), the do each row, taking
+  special account of the first and last column.
+
+  This is similar to the guass-seidel example on page 357 of "Matrix Computations" by Golub
+  and Val Loan. Their example is of the discretized Poisson equation: the difference here is
+  in the boundary condition.
+
+  For a 4 by 3 image concatenated in row-major order, the Hessian can be decomposed, for the
+  purposes of guass-seidel as
+
+  [ 0., -1.,  0., -1.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.]
+  [-1.,  0., -1.,  0., -1.,  0.,  0.,  0.,  0.,  0.,  0.,  0.]
+  [ 0., -1.,  0.,  0.,  0., -1.,  0.,  0.,  0.,  0.,  0.,  0.]
+  [-1.,  0.,  0.,  0., -1.,  0., -1.,  0.,  0.,  0.,  0.,  0.]
+  [ 0., -1.,  0., -1.,  0., -1.,  0., -1.,  0.,  0.,  0.,  0.]
+  [ 0.,  0., -1.,  0., -1.,  0.,  0.,  0., -1.,  0.,  0.,  0.]
+  [ 0.,  0.,  0., -1.,  0.,  0.,  0., -1.,  0., -1.,  0.,  0.] * lambda + mu*I + lambd*D,
+  [ 0.,  0.,  0.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0.]
+  [ 0.,  0.,  0.,  0.,  0., -1.,  0., -1.,  0.,  0.,  0., -1.]
+  [ 0.,  0.,  0.,  0.,  0.,  0., -1.,  0.,  0.,  0., -1.,  0.]
+  [ 0.,  0.,  0.,  0.,  0.,  0.,  0., -1.,  0., -1.,  0., -1.]
+  [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0., -1.,  0., -1.,  0.]
+
+  where D = diag([2., 3., 2., 3., 4., 3., 3., 4., 3., 2., 3., 2.]).
+
+  We want to solve
+
+  H*u = b.
+
+  The guass-seidel update is given by the recursion
+
+           1
+   u_i =  -----    [ b_i - \sum_{j~=i} (H_ij * u_j)  ]
+          H_(ii)
+
+ */
+void breg_anis_guass_seidel(int n, int m, double *u, double *rhs,
+                       double mu, double lambda){
+
+  const double one_by_mu_4lam = 1.0/(mu + 4*lambda);
+  const double one_by_mu_3lam = 1.0/(mu + 3*lambda);
+  const double one_by_mu_2lam = 1.0/(mu + 2*lambda);
+  double tmp;
+  int j=0, i=0;
+
+  /* Top left left. */
+  tmp = rhs[i*m+j] + (u[i*m+j+1] + u[(i+1)*m+j]) * lambda;
+  u[i*m+j] = tmp * one_by_mu_2lam;
+
+  /* The top row. */
+  i=0;
+  for(j=1; j< m-1; j++){
+    tmp = rhs[i*m+j] + (u[i*m+j+1] + u[i*m+j-1] + u[(i+1)*m+j]) * lambda;
+    u[i*m+j] = tmp * one_by_mu_3lam;
+  }
+  /* The top, right corner.*/
+  j=m-1; i=0;
+  tmp = rhs[i*m+j] + (u[i*m+j-1] + u[(i+1)*m+j]) * lambda;
+  u[i*m+j] = tmp * one_by_mu_2lam;
+
+
+  /* The central pixels. The element in the first column
+     should be done before the middle of the row, and the last column
+     should be done after the middle row.
+  */
+  for(i=1; i<n-1; i++){
+    /* The left pixel in row i.*/
+    j=0;
+    tmp = rhs[i*m+j] + (u[i*m+j+1] + u[(i+1)*m+j] + u[(i-1)*m+j]) * lambda;
+    u[i*m+j] = tmp * one_by_mu_3lam;
+    /* Across the i-th row. */
+    for(j=1; j<m-1; j++){
+      tmp = rhs[i*m+j] + (u[i*m+j+1] + u[i*m+j-1] + u[(i+1)*m+j] + u[(i-1)*m+j])*lambda;
+      u[i*m+j] =  tmp*one_by_mu_4lam;
+    }
+    /* Last column in row i. */
+    j=m-1;
+    tmp = rhs[i*m+j] + (u[i*m+j-1] + u[(i+1)*m+j] + u[(i-1)*m+j]) * lambda;
+    u[i*m+j] = tmp * one_by_mu_3lam;
+  }
+
+  /* The bottom left corner.*/
+  j = 0;
+  i = n-1;
+  tmp =  rhs[i*m+j] + (u[i*m+j+1] + u[(i-1)*m+j]) * lambda;
+  u[i*m+j] = tmp * one_by_mu_2lam;
+
+  /* The bottom row, excluding corners*/
+  i = n-1;
+  for(j=1; j<m-1; j++){
+    tmp = rhs[i*m+j] + (u[i*m+j+1] + u[i*m+j-1] + u[(i-1)*m+j]) * lambda;
+    u[i*m+j] = tmp * one_by_mu_3lam;
+  }
+
+  /* The bottom right corner.*/
+  j = m-1;
+  i = n-1;
+  tmp = rhs[i*m+j] + (u[i*m+j-1] + u[(i-1)*m+j]) * lambda;
+  u[i*m+j] = tmp * one_by_mu_2lam;
+}
+
+
+void breg_anis_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, double *dy, double *by,
               double *rhs, double mu, double lambda, double *dwork1, double *dwork2){
 
   l1c_int N = n*m;
@@ -146,91 +314,72 @@ void breg_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, double *d
 }
 
 int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
-                       double mu, double tol, l1c_int max_iter){
-  long start, end;
-  struct timeval timecheck;
-  gettimeofday(&timecheck, NULL);
-  start = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;
-
+                       double mu, double tol, int max_iter, int max_jac_iter){
 
   int iter=0, N=n*m, status=0;
-  double lambda = 2*mu;
+  double lambda = 2*mu, dnrm_err = 0;
   double *uk_1=NULL, *d_x=NULL, *d_y = NULL, *b_x=NULL, *b_y=NULL;
-  double *dwork1=NULL, *dwork2=NULL, *rhs=NULL, *dwork5N;
-  double *Dxu_b=NULL, *Dyu_b=NULL, *D=NULL;
-  double dnrm_err = 0;
-  double alp;
+  double *dwork1=NULL, *dwork2=NULL, *rhs=NULL, *D=NULL;
+  double *Dxu_b=NULL, *Dyu_b=NULL;
+
   uk_1 = malloc_double(N);
   d_x = malloc_double(N);
   d_y = malloc_double(N);
   b_x = malloc_double(N);
   b_y = malloc_double(N);
-  Dxu_b = malloc_double(N);
-  Dyu_b = malloc_double(N);
   dwork1 = malloc_double(N);
   dwork2 = malloc_double(N);
+
+  /* Convenience handles. Note below that usage is separated.*/
+  Dxu_b = dwork1;
+  Dyu_b = dwork2;
   rhs = malloc_double(N);
   D = malloc_double(N);
-  dwork5N = malloc_double(N*5);
-  double *r = dwork5N;
-  double *z = dwork5N + N;
-  double *q = dwork5N + 2*N;
-  if (!uk_1 || !d_x || !d_y || !b_x || !b_y || !Dxu_b || !Dyu_b ||!dwork1 || !dwork2||!rhs ||!D){
+
+
+  if (!uk_1 || !d_x || !d_y || !b_x || !b_y ||!dwork1 || !dwork2||!rhs ||!D){
     status = 1;
-  goto exit;
+    goto exit;
   }
 
   hess_inv_diag(n, m, mu, lambda, D);
-
-
-  BregTVHessData BHD = {.n=n, .m=m, .dwork1=dwork1, .dwork2=dwork2, .mu=mu, .lambda=lambda};
   cblas_dcopy(N, f, 1, uk, 1);
-  for (int i=0; i<N; i++){
-    uk_1[i] = 0.0;
-  }
+
+  dnrm_err = INFINITY;
+
   for (iter=1; iter<=max_iter; iter++){
 
-    // for (int i=0; i<10; i++){
-    breg_rhs(n, m, f, d_x, b_x, d_y, b_y, rhs, mu, lambda, dwork1, dwork2);
+    breg_anis_rhs(n, m, f, d_x, b_x, d_y, b_y, rhs, mu, lambda, dwork1, dwork2);
 
-    //uk_1 = G^k
-    /*Single step of conjugate gradient:*/
-    // z0 = M^-1 * r0
-    breg_hess_eval(N, uk, r, &BHD);
-    cblas_daxpby(N, 1.0, rhs, 1, -1.0, r, 1);       /* r = 1*b + (-1)*Ax           */
-    l1c_dxmuly_z(N, r, D, z);
-    breg_hess_eval(N, z, q, &BHD);
-    alp = cblas_ddot(N, r, 1, z, 1) / cblas_ddot(N, z, 1, q, 1);
-    cblas_daxpy(N, alp, z, 1, uk, 1);
 
-    /*Compute Dyu_b = Del_y*u + b */
+    for (int k=1; k<=max_jac_iter; k++){
+      // breg_anis_jacobi(n, m, uk, dwork3, rhs, D, lambda);
+      breg_anis_guass_seidel(n, m, uk, rhs, mu, lambda);
+      }
+    dnrm_err = l1c_norm2_err(N, uk, uk_1);
+    printf("in-iter: %d, lambda: %f, dnrm_err: %f\n", iter, lambda, dnrm_err);
+
+    /* Compute Dyu_b = Del_y*u + b. */
     l1c_Dx(n, m, uk, Dxu_b);
     cblas_daxpy(N, 1.0, b_x, 1, Dxu_b, 1);
-    /*  Dxu_b = Del_x*u + b */
+    /*  Dxu_b = Del_x*u + b. */
     l1c_Dy(n, m, uk, Dyu_b);
     cblas_daxpy(N, 1.0, b_y, 1, Dyu_b, 1);
 
-    /*Apply shrink operators */
+    /* Apply shrink operators. */
     breg_shrink1(N, Dxu_b, d_x, 1.0/lambda);
     breg_shrink1(N, Dyu_b, d_y, 1.0/lambda);
-    // }
-    /*Bregman update */
+
+    /* Bregman update. */
     breg_mxpy_z(N, d_x, Dxu_b, b_x);
     breg_mxpy_z(N, d_y, Dyu_b, b_y);
 
-    dnrm_err = l1c_norm2_err(N, uk, uk_1);
-    printf("lambda: %f, dnrm_err: %f\n", lambda, dnrm_err);
+    cblas_dcopy(N, uk, 1, uk_1, 1);
     if (dnrm_err < tol){
       break;
     }
 
-    cblas_dcopy(N, uk, 1, uk_1, 1);
   }
-
-  gettimeofday(&timecheck, NULL);
-  end = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;
-  double time_total = ((double)(end -start)) / 1000.0;
-  printf("total c time: %f\n", time_total);
 
   /*Cleanup before exit. */
 
@@ -240,13 +389,10 @@ int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
   free_double(d_y);
   free_double(b_x);
   free_double(b_y);
-  free_double(Dxu_b);
-  free_double(Dyu_b);
 
   free_double(dwork1);
   free_double(dwork2);
   free_double(rhs);
   free_double(D);
-  free_double(dwork5N);
   return status;
 }

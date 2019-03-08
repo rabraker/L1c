@@ -46,6 +46,8 @@ typedef struct BregData {
   double *by;
   double *f;
   double *rhs_exp;
+  double *b;
+  double *Hsolveb;
   double *Hessx;
   double *H_diag_exp;
   double gamma;
@@ -79,6 +81,8 @@ static void setup(void){
   setup_status +=extract_json_double_array(td_json, "by", &BD->by, &tmp);
   setup_status +=extract_json_double_array(td_json, "f", &BD->f, &tmp);
   setup_status +=extract_json_double_array(td_json, "rhs", &BD->rhs_exp, &tmp);
+  setup_status +=extract_json_double_array(td_json, "b", &BD->b, &tmp);
+  setup_status +=extract_json_double_array(td_json, "Hsolveb", &BD->Hsolveb, &tmp);
   setup_status +=extract_json_double_array(td_json, "Hessx", &BD->Hessx, &tmp);
   setup_status +=extract_json_double_array(td_json, "H_diag", &BD->H_diag_exp, &tmp);
 
@@ -109,10 +113,46 @@ static void teardown(void){
   free_double(BD->by);
   free_double(BD->f);
   free_double(BD->rhs_exp);
+  free_double(BD->b);
+  free_double(BD->Hsolveb);
   free_double(BD->Hessx);
 
   free(BD);
 }
+
+START_TEST(test_breg_anis_jacobi){
+  BregFuncs bfuncs = breg_get_functions();
+
+  double *uk = malloc_double(BD->NM);
+  double *dwork = malloc_double(BD->NM);
+  double *D =  malloc_double(BD->NM);
+
+  bfuncs.hess_inv_diag(BD->n, BD->m, BD->mu, BD->lam, D);
+
+  for (int i=0; i<(BD->NM); i++){
+    bfuncs.breg_anis_jacobi(BD->n, BD->m, uk, dwork, BD->b, D, BD->lam);
+  }
+
+  ck_assert_double_array_eq_tol(BD->NM, BD->Hsolveb, uk, TOL_DOUBLE);
+  free_double(uk);
+}
+END_TEST
+
+
+START_TEST(test_breg_anis_guass_seidel){
+  BregFuncs bfuncs = breg_get_functions();
+
+  double *uk = malloc_double(BD->NM);
+  cblas_dcopy(BD->NM, BD->b, 1, uk, 1);
+
+  for (int i=0; i<(BD->NM); i++){
+    bfuncs.breg_anis_guass_seidel(BD->n, BD->m, uk, BD->b, BD->mu, BD->lam);
+  }
+
+  ck_assert_double_array_eq_tol(BD->NM, BD->Hsolveb, uk, TOL_DOUBLE);
+  free_double(uk);
+}
+END_TEST
 
 START_TEST(test_breg_shrink1){
 
@@ -145,7 +185,7 @@ START_TEST(test_breg_shrink1){
 END_TEST
 
 START_TEST(test_breg_rhs){
-
+  BregFuncs bfuncs = breg_get_functions();
   double *dwork1, *dwork2, *rhs;
 
   rhs = malloc_double(BD->NM);
@@ -155,7 +195,7 @@ START_TEST(test_breg_rhs){
     fprintf(stderr, "error allocating memory\n");
     ck_abort();
   }
-  breg_rhs(BD->n, BD->m, BD->f, BD->dx, BD->bx, BD->dy,
+  bfuncs.breg_anis_rhs(BD->n, BD->m, BD->f, BD->dx, BD->bx, BD->dy,
            BD->by, rhs, BD->mu, BD->lam, dwork1, dwork2);
   ck_assert_double_array_eq_tol(BD->NM, BD->rhs_exp, rhs, TOL_DOUBLE_SUPER*10);
 
@@ -171,8 +211,9 @@ START_TEST(test_breg_rhs){
 }
 END_TEST
 
-START_TEST(test_breg_hess_inv_diag){
 
+START_TEST(test_breg_hess_inv_diag){
+  BregFuncs bfuncs = breg_get_functions();
   double *D;
 
   D = malloc_double(BD->NM);
@@ -181,7 +222,7 @@ START_TEST(test_breg_hess_inv_diag){
     ck_abort();
   }
 
-  hess_inv_diag(BD->n, BD->m, BD->mu, BD->lam, D);
+  bfuncs.hess_inv_diag(BD->n, BD->m, BD->mu, BD->lam, D);
 
   ck_assert_double_array_eq_tol(BD->NM, BD->H_diag_exp, D, TOL_DOUBLE_SUPER*10);
 
@@ -227,39 +268,6 @@ START_TEST(test_breg_mxpy_z){
 END_TEST
 
 
-
-START_TEST(test_hess_eval){
-
-  double *dwork1, *dwork2, *y;
-  y = malloc_double(BD->NM);
-  dwork1 = malloc_double(BD->NM);
-  dwork2 = malloc_double(BD->NM);
-  if ( (!y || !dwork1 || !dwork2) ){
-    fprintf(stderr, "error allocating memory\n");
-    ck_abort();
-  }
-  BregTVHessData hess_data = {.n=BD->n, .m=BD->m,
-                              .dwork1=dwork1, .dwork2=dwork2,
-                              .mu=BD->mu, .lambda=BD->lam};
-
-  breg_hess_eval(BD->NM, BD->x, y, (void*)(&hess_data));
-
-  ck_assert_double_array_eq_tol(BD->NM, BD->Hessx, y, TOL_DOUBLE_SUPER*10);
-
-
-  free_double(y);
-  free_double(dwork1);
-  free_double(dwork2);
-
-  // cJSON_Delete(test_data_json);
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
-
-}
-END_TEST
-
-
 /* Add all the test cases to our suite
  */
 Suite *bregman_suite(void)
@@ -273,9 +281,10 @@ Suite *bregman_suite(void)
 
   tcase_add_test(tc_breg, test_breg_shrink1);
   tcase_add_test(tc_breg, test_breg_mxpy_z);
-  tcase_add_test(tc_breg, test_breg_rhs);
-  tcase_add_test(tc_breg, test_hess_eval);
   tcase_add_test(tc_breg, test_breg_hess_inv_diag);
+  tcase_add_test(tc_breg, test_breg_rhs);
+  tcase_add_test(tc_breg, test_breg_anis_guass_seidel);
+  tcase_add_test(tc_breg, test_breg_anis_jacobi);
   suite_add_tcase(s, tc_breg);
 
   return s;
