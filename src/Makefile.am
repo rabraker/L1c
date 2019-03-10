@@ -20,7 +20,9 @@ libl1c_la_CFLAGS = $(L1CCFLAGS)  -fPIC $(WARNFLAGS)
 libl1c_la_SOURCES = l1qc_newton.c \
 					l1c_math.c \
 					cgsolve.c  \
-					json_utils.c
+					json_utils.c \
+					l1qc_dct.c
+
 if compile_with_mkl
 libl1c_la_SOURCES += dct_mkl.c
 else
