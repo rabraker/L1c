@@ -64,7 +64,7 @@ CMakeLists.txt
 errors.log
 build-cmake/
 test/test_l1c
-build*
+build-*/
 config-fftw-ob.sh
 config-fftw-atlas.sh
 config-mkl.sh
