@@ -7,7 +7,14 @@
 #include <stdio.h>
 #include "l1c_math.h"
 
-#define PI 3.141592653589793
+/*
+  This file contains implementations from "The Split Bregman Method
+  for L1-Regularized Problems," by Tom Goldstein and Stanley Osher.
+
+  Currently, only the Anistropic TV denoising problem is implemented.
+
+ */
+
 /* Forward declarations */
 static inline void breg_shrink1(l1c_int N, double *x, double *d, double gamma);
 
@@ -312,6 +319,20 @@ void breg_anis_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, doub
   cblas_daxpy(N, 1.0, dwork2, 1, rhs, 1);   //RHS
 
 }
+
+
+
+/*
+  Given an n by m image f, solves the anistropic TV denoising problem
+
+  min ||\nabla_x u||_1 + ||\nabla_y||_1 + 0.5\mu ||u - f||_2
+   u
+
+  using the Bregman Splitting. This algorithm is developed in the paper
+  "The Split Bregman Method for L1-Regularized Problems," by Tom
+  Goldstein and Stanley Osher.
+
+ */
 
 int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
                        double mu, double tol, int max_iter, int max_jac_iter){
