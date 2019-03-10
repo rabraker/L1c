@@ -17,7 +17,6 @@ lib_LTLIBRARIES =
 # $(info "MEXLIBS = $(MEXLDLIBS)")
 # ----------------------------------------------------------------------#
 # -------------------------------  ----------------------------------#
-if compile_dct_example
 
 bin_PROGRAMS +=l1qc_dct_c
 l1qc_dct_c_SOURCES = l1qc_dct_c.c libl1qc_dct.c
@@ -66,11 +65,35 @@ l1qc_dct_mex_la_CFLAGS   =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC \
 
 l1qc_dct_mex_la_LIBADD   =	libl1qc_dct.la \
 							$(MEXLDLIBS)
-l1qc_dct_mexdir = $(libdir)
-dist_l1qc_dct_mex_DATA     = l1qc_dct_opts.m
-endif
 endif
 
+
+if ENABLE_PYTHON
+# LIBEXT
+# NOTES:
+# https://www.gnu.org/software/libtool/manual/html_node/Link-mode.html
+#
+# To pass options to libtool, we use LDFLAGS.
+#    -module makes it so we dont have to have the 'lib' prefix
+#    -shrext .mexa64 lets us get a library without the .so, and with
+#                    matlabs required extension.
+
+
+lib_LTLIBRARIES += l1cPy.la
+
+l1cPy_la_SOURCES  = l1cPy.c
+l1cPy_la_LDFLAGS  = -module -avoid-version -no-undefined $(LDFLAGS) $(PYTHON_LIBS)
+
+l1cPy_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include  \
+					 $(L1CCPPFLAGS) $(PYTHON_CPPFLAGS) $(NPY_CPPFLAGS)
+
+l1cPy_la_CFLAGS   =  $(L1CCFLAGS) -fPIC \
+						-std=c11 $(WARNFLAGS)
+
+l1cPy_la_LIBADD   =	libl1qc_dct.la \
+					../src/libl1c.la
+
+endif
 
 
 # Rules to copy the libs .libs into the current directory

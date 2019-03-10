@@ -38,7 +38,13 @@ static struct PyModuleDef mod_l1cPy = {
     module_docstring, /* module documentation */
     -1,               /* size of per-interpreter state of the module,
                          or -1 if the module keeps state in global variables. */
-    l1cPy_methods
+    l1cPy_methods,    /* m_methods */
+    /* Zero the rest to avoid warnings. */
+    NULL,             /* m_slots*/
+    0,                /* traverseproc, int in object.h*/
+    0,                /* m_clear*/
+    NULL,             /* m_free*/
+
   };
 
 PyMODINIT_FUNC PyInit_l1cPy(void)
@@ -50,10 +56,10 @@ PyMODINIT_FUNC PyInit_l1cPy(void)
 
 static PyObject *
 l1qc_dct_py(PyObject *self, PyObject *args, PyObject *kw){
-
+  (void)self;
   double *x_ours=NULL, *b=NULL;
 
-  PyObject *x_obj=NULL, *b_obj=NULL, *pix_idx_obj=NULL, *x_out_npA=NULL;
+  PyObject *b_obj=NULL, *pix_idx_obj=NULL, *x_out_npA=NULL;
   PyObject *lb_res_obj=NULL, *ret_val=NULL;
   PyArrayObject *b_npA=NULL;
   PyArrayObject *pix_idx_npA=NULL;
@@ -90,7 +96,10 @@ l1qc_dct_py(PyObject *self, PyObject *args, PyObject *kw){
     return NULL;
   }
 
-  /* Interpret the input objects as numpy arrays. */
+  /* Interpret the input objects as numpy arrays.
+     N.B: NPY_ARRAY_IN_ARRAY = PY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_ALIGNED
+   */
+
   b_npA =(PyArrayObject*)PyArray_FROM_OTF(b_obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
   pix_idx_npA =(PyArrayObject*)PyArray_FROM_OTF(pix_idx_obj, NPY_INT, NPY_ARRAY_IN_ARRAY);
 
@@ -126,19 +135,14 @@ l1qc_dct_py(PyObject *self, PyObject *args, PyObject *kw){
   if (!x_ours){
     fprintf(stderr, "Memory Allocation failure\n");
     PyErr_SetString(PyExc_MemoryError, "Failed to allocation memory");
+    goto fail;
   }
 
   for(i=0; i<N; i++){
     x_ours[i] = 0;
   }
 
-
   status = l1qc_dct(N, 1, x_ours, M, b, pix_idx, opts, &lb_res);
-
-
-  /* Clean up. */
-  Py_DECREF(b_npA);
-  Py_DECREF(pix_idx_npA);
 
   /* Build the output tuple */
   npy_intp dims[] = {N};
@@ -147,7 +151,11 @@ l1qc_dct_py(PyObject *self, PyObject *args, PyObject *kw){
                                        "l1", lb_res.l1,
                                        "total_newton_iter", lb_res.total_newton_iter,
                                        "total_cg_iter", lb_res.total_cg_iter,
-                                       "status", lb_res.status);
+                                       "status", lb_res.status|status);
+
+  /* Clean up. */
+  Py_DECREF(b_npA);
+  Py_DECREF(pix_idx_npA);
 
   ret_val = Py_BuildValue("OO", x_out_npA, lb_res_obj);
   return ret_val;
@@ -155,10 +163,9 @@ l1qc_dct_py(PyObject *self, PyObject *args, PyObject *kw){
 
   /* If we failed, clean up more things */
  fail:
-  Py_DECREF(b_npA);
-  Py_DECREF(pix_idx_npA);
+  Py_XDECREF(b_npA);
+  Py_XDECREF(pix_idx_npA);
 
-  // Py_XDECREF(x_ours);
   printf("INSIDE\n");
   return NULL;
 
