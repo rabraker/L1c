@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+import numpy as np
+import json
+import codecs
+
+
+def jsonify(data):
+
+    for key, value in data.items():
+        if type(value) is np.ndarray:
+            if len(value.flatten()) == 1:
+                data[key] = value.flatten()[0]
+            else:
+                data[key] = value.flatten().tolist()
+
+    return data
+
+
+def save_json(data, file_path):
+
+    json.dump(data, codecs.open(file_path, 'w'),
+              separators=(',', ':'), sort_keys=True, indent=4)

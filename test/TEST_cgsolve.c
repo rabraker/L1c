@@ -36,49 +36,36 @@ extern char *test_data_dir;
 
 int load_small_data(double **A, double **x, double **b, l1c_int *N, l1c_int *na,
                     l1c_int *max_iter, double *tol){
+  l1c_int Nx=0, Nb= 0, status=0;
   char *fpath = fullfile(test_data_dir, "cgsolve_small01.json");
   if(load_file_to_json(fpath, &test_data_json) ){
-    return 1;
+    ck_abort();
   }
   free(fpath);
 
-  if( extract_json_int(test_data_json, "max_iter", max_iter) )
-    return 1;
-  if ( extract_json_double(test_data_json, "tol", tol) )
-    return 1;
+  status += extract_json_int(test_data_json, "max_iter", max_iter);
+  status += extract_json_double(test_data_json, "tol", tol);
 
-  l1c_int Nx=0, Nb= 0;
-  if (extract_json_double_array(test_data_json, "x", x, &Nx) ){
-    perror("Error Loading x\n");
-    return 1;
+  status +=extract_json_double_array(test_data_json, "x", x, &Nx);
+  status +=extract_json_double_array(test_data_json, "b", b, &Nb);
+  status += extract_json_double_array(test_data_json, "A", A, na);
+
+  if (status){
+    fprintf(stderr, "Error loading json data\n");
+    goto fail;
   }
-
-  if (extract_json_double_array(test_data_json, "b", b, &Nb) ){
-    perror("Error Loading b\n");
-    goto end0;
-  }
-
-  if (extract_json_double_array(test_data_json, "A", A, na) ){
-    perror("Error Loading A\n");
-    goto end1;
-  }
-
   *N = Nx;
 
   if ( (Nx != Nb) || ( (l1c_int)(Nb* (Nb +1)/2) != *na) ){
-    perror("Error: Array size mismatch. Aborting\n");
-    goto end2; // We allocated all, but their sizes don't match.
+    fprintf(stderr, "Error: Array size mismatch. Aborting\n");
+    goto fail;
   }
 
   return 0;
 
- end2:
+ fail:
   free_double(*A);
-  goto end1;
- end1:
   free_double(*b);
-  goto end0;
- end0:
   free_double(*x);
   return 1;
 
@@ -92,7 +79,7 @@ START_TEST(test_cgsolve)
   CgParams cgp;
   CgResults cgr;
 
-  double *A, *x, *x_exp, *b, *Dwork;
+  double *A=NULL, *x=NULL, *x_exp=NULL, *b=NULL, *Dwork=NULL;
   int status = 0;
   l1c_int N=0, na= 0;
   if (load_small_data(&A, &x_exp, &b, &N, &na, &max_iter, &tol)){
@@ -104,15 +91,17 @@ START_TEST(test_cgsolve)
   cgp.max_iter = max_iter;
 
   x = malloc_double(N);
+  Dwork = malloc_double(N*4);
+  if (!Dwork || !x){
+    status +=1;
+    goto exit;
+  }
+
   /* Must initialize x now, with warm starting. */
   for(int i=0; i<N; i++){
     x[i] = 0.0;
   }
-  Dwork = malloc_double(N*4);
-  if (!Dwork){
-    status +=1;
-    goto exit;
-  }
+
   cgsolve(x, b, N, Dwork, Ax_sym, A, &cgr, cgp);
 
   ck_assert_double_array_eq_tol(N, x_exp, x, TOL_DOUBLE);
@@ -151,8 +140,7 @@ START_TEST(test_cgsolve_h11p){
   l1c_int *pix_idx;
 
   if (load_file_to_json(fpath, &test_data_json)){
-    perror("Error loading data in test_get_gradient\n");
-    ck_abort();
+    ck_abort_msg("Error loading data in test_cgsolve_h11p\n");
   }
 
   // Inputs to get_gradient
@@ -231,7 +219,7 @@ START_TEST(test_cgsolve_h11p){
 END_TEST
 
 
-
+/* Test the matrix multiplication function, Ax_sym.*/
 START_TEST(test_cgsolve_Ax_sym){
 
   char *fpath = fullfile(test_data_dir, "ax_sym.json");
@@ -252,7 +240,7 @@ START_TEST(test_cgsolve_Ax_sym){
 
   y = malloc_double(N);
   if ( (!y) | status){
-    perror("error allocating memory\n");
+    fprintf(stderr, "Error allocating memory\n");
     status +=1;
     goto exit;
   }
@@ -286,25 +274,83 @@ START_TEST(test_cgsolve_Ax_sym){
 }
 END_TEST
 
+/* ----------------------------- cgsolve_diag_precond--------------------------------*/
+
+START_TEST(test_cgsolve_diag_precond)
+{
+  double tol =0.0; //= 1e-6;
+  l1c_int max_iter;
+  CgParams cgp;
+  CgResults cgr;
+
+  double *A=NULL, *x=NULL, *x_exp=NULL, *b=NULL;
+  double *Dwork=NULL, *M_inv_diag=NULL;
+  int status = 0;
+  l1c_int N=0, na= 0;
+  if (load_small_data(&A, &x_exp, &b, &N, &na, &max_iter, &tol)){
+    ck_abort_msg("Errory Loading test data\n");
+  }
+
+  cgp.verbose = 0;
+  cgp.tol = tol;
+  cgp.max_iter = max_iter;
+
+  x = malloc_double(N);
+  M_inv_diag = malloc_double(N);
+  Dwork = malloc_double(N*5);
+  if (!Dwork || !x || !M_inv_diag){
+    status +=1;
+    goto exit;
+  }
+
+  /* Must initialize x now, with warm starting. */
+  for(int i=0; i<N; i++){
+    x[i] = 0.0;
+    M_inv_diag[i] = 1.0;
+  }
+  cgsolve_diag_precond(x, b, M_inv_diag, N, Dwork, Ax_sym, A, &cgr, cgp);
+
+  ck_assert_double_array_eq_tol(N, x_exp, x, TOL_DOUBLE);
+  goto exit;
+
+ exit:
+  free_double(A);
+  free_double(x);
+  free_double(x_exp);
+  free_double(b);
+  free_double(Dwork);
+  free_double(M_inv_diag);
+
+  cJSON_Delete(test_data_json);
+#ifdef _USEMKL_
+  mkl_free_buffers();
+#endif
+  if (status){
+    ck_abort();
+  }
+
+}
+END_TEST
+
 /* Add all the test cases to our suite
  */
 Suite *cgsolve_suite(void)
 {
   Suite *s;
 
-  TCase *tc_small, *tc_hp11, *tc_Ax;
+  TCase *tc_cgsolve, *tc_cgsolve_precond;
   s = suite_create("cgsolve");
-  tc_small = tcase_create("cg_small");
-  tc_hp11 = tcase_create("cg_hp11");
-  tc_Ax = tcase_create("cg_Ax");
 
-  tcase_add_test(tc_small, test_cgsolve);
-  tcase_add_test(tc_hp11, test_cgsolve_h11p);
-  tcase_add_test(tc_Ax, test_cgsolve_Ax_sym);
+  tc_cgsolve = tcase_create("cgsolve");
+  tcase_add_test(tc_cgsolve, test_cgsolve);
+  tcase_add_test(tc_cgsolve, test_cgsolve_h11p);
+  tcase_add_test(tc_cgsolve, test_cgsolve_Ax_sym);
+  suite_add_tcase(s, tc_cgsolve);
 
-  suite_add_tcase(s, tc_small);
-  suite_add_tcase(s, tc_hp11);
-  suite_add_tcase(s, tc_Ax);
+  tc_cgsolve_precond = tcase_create("cgsolve_precond");
+  tcase_add_test(tc_cgsolve_precond, test_cgsolve_diag_precond);
+
+  suite_add_tcase(s, tc_cgsolve_precond);
 
   return s;
 

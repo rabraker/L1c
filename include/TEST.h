@@ -15,6 +15,10 @@ Suite * dct_mkl_suite(void);
 
 Suite *vcl_math_suite(void);
 
+Suite *bregman_suite(void);
+
+Suite *TV_suite(void);
+
 Suite *l1c_math_suite(void);
 
 Suite *l1c_common_suite(void);

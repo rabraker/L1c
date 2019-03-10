@@ -27,6 +27,8 @@ TESTS = test_l1c           \
 		build_dct_data.py     \
 		build_cgsolve_data.py \
 		build_l1qc_data.py    \
+		build_TV_data.py      \
+		build_bregman_data.py \
 		test_matlab_dlopen.sh \
 		test_matlab_mex.sh \
 		test_python_interface.sh \
@@ -46,6 +48,8 @@ test_l1c_SOURCES = TEST_cgsolve.c       \
 					TEST_l1c_common.c   \
 					TEST_l1qc_newton.c  \
 					TEST_vcl_math.c     \
+					TEST_bregman.c      \
+					TEST_TV.c           \
 					test_l1c.c
 
 if compile_with_mkl
@@ -65,7 +69,9 @@ test_l1c_LDFLAGS = $(LDFLAGS)
 log_deps = 	build_dct2_data.log \
 		   	build_dct_data.log \
 		   	build_cgsolve_data.log \
-			build_l1qc_data.log
+			build_l1qc_data.log    \
+			build_TV_data.log      \
+			build_bregman_data.log
 
 
 test_l1c.log:$(log_deps)
