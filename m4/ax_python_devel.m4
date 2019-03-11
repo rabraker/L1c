@@ -119,7 +119,6 @@ to something else than an empty string.
 		ac_supports_python_ver=`$PYTHON -c "import sys; \
 			ver = sys.version.split ()[[0]]; \
 			print (ver $1)"`
-        echo "$ac_supports_python_ver"
 		if test "$ac_supports_python_ver" = "True"; then
 		   AC_MSG_RESULT([yes])
 		else

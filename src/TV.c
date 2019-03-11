@@ -1,5 +1,6 @@
 #include "config.h"
 #include "l1c_common.h"
+#include "l1c_memory.h"
 #include <math.h>
 #include <stdio.h>
 

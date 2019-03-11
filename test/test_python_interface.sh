@@ -17,11 +17,10 @@ fi
 data_path="${ABS_TOP_SRCDIR}/test/test_data/example_img_data.json"
 
 
-# host_os=$(get_os)
-# if test $host_os = windows;
-# then
-#     exit 77
-# fi
+if test x$WITH_PYTHON = xno;
+then
+    exit 77
+fi
 
 
 

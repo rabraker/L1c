@@ -125,7 +125,6 @@ print(inc_dirs);"`
       echo $PYTHON_CPPFLAGS
       echo $PYTHON_LIBS
       echo $PYTHON_EXTRA_LDFLAGS
-      echo $NPY_CPPFLAGS
       AC_SUBST(PYTHONDIR,$pythondir)
       AC_SUBST(PKGPYTHONDIR,$pkgpythondir)
       AC_SUBST(PYEXECDIR,$pyexecdir)
@@ -441,6 +440,9 @@ AC_SUBST(MEXCPPFLAGS, $mex_cppflags)
 AC_SUBST(MEXCFLAGS, $mex_cflags)
 AC_SUBST(MEXLDLIBS, $mex_ldlibs)
 AC_SUBST(WITH_MEX, $with_mex)
+
+AC_SUBST(WITH_PYTHON, $enable_python)
+
 AC_SUBST(MKLCPPFLAGS, $mkl_cppflags)
 AC_SUBST(MKLCFLAGS, $mkl_cflags)
 

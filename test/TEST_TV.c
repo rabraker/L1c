@@ -18,6 +18,7 @@
 #include "json_utils.h"
 
 #include "l1c_common.h"
+#include "l1c_memory.h"
 #include "TV.h"
 #include "check_utils.h"
 

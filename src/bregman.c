@@ -1,10 +1,11 @@
 #include "config.h"
+#include <stdio.h>
 #include <math.h>
+
 #include "l1c_common.h"
+#include "l1c_memory.h"
 #include "bregman.h"
 #include "TV.h"
-#include "cgsolve.h"
-#include <stdio.h>
 #include "l1c_math.h"
 
 /*
