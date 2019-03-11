@@ -17,10 +17,9 @@ lib_LTLIBRARIES =
 # $(info "MEXLIBS = $(MEXLDLIBS)")
 # ----------------------------------------------------------------------#
 # -------------------------------  ----------------------------------#
-if compile_dct_example
 
 bin_PROGRAMS +=l1qc_dct_c
-l1qc_dct_c_SOURCES = l1qc_dct_c.c libl1qc_dct.c
+l1qc_dct_c_SOURCES = l1qc_dct_c.c
 l1qc_dct_c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la
 
 l1qc_dct_c_CPPFLAGS =-I$(top_srcdir)/include  \
@@ -28,19 +27,6 @@ l1qc_dct_c_CPPFLAGS =-I$(top_srcdir)/include  \
 l1qc_dct_c_CFLAGS = $(L1CCFLAGS) -std=c11 $(WARNFLAGS)
 l1qc_dct_c_LDFLAGS = $(LDFLAGS)
 
-
-lib_LTLIBRARIES += libl1qc_dct.la
-libl1qc_dct_la_SOURCES	= libl1qc_dct.c
-libl1qc_dct_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include  \
-							 $(L1CCPPFLAGS)
-libl1qc_dct_la_CFLAGS	=  $(L1CCFLAGS) -fPIC \
-							-std=c11 $(WARNFLAGS)
-libl1qc_dct_la_LIBADD	= ../src/libl1c.la \
-						  ../src/vcl/libvcl_math.la
-
-
-libl1qc_dct_la_LDFLAGS	= -avoid-version -no-undefined $(LDFLAGS)\
-							-Wl,--no-as-needed
 
 
 if comp_with_mex
@@ -53,7 +39,6 @@ if comp_with_mex
 #    -shrext .mexa64 lets us get a library without the .so, and with
 #                    matlabs required extension.
 
-
 lib_LTLIBRARIES += l1qc_dct_mex.la
 
 l1qc_dct_mex_la_SOURCES  = l1qc_dct_mex.c
@@ -64,13 +49,27 @@ l1qc_dct_mex_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include  \
 l1qc_dct_mex_la_CFLAGS   =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC \
 								-std=c11 $(WARNFLAGS)
 
-l1qc_dct_mex_la_LIBADD   =	libl1qc_dct.la \
+l1qc_dct_mex_la_LIBADD   =	../src/libl1c.la \
 							$(MEXLDLIBS)
-l1qc_dct_mexdir = $(libdir)
-dist_l1qc_dct_mex_DATA     = l1qc_dct_opts.m
-endif
 endif
 
+
+if ENABLE_PYTHON
+
+lib_LTLIBRARIES += l1cPy.la
+
+l1cPy_la_SOURCES  = l1cPy.c
+l1cPy_la_LDFLAGS  = -module -avoid-version -no-undefined $(LDFLAGS) $(PYTHON_LIBS)
+
+l1cPy_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include  \
+					 $(L1CCPPFLAGS) $(PYTHON_CPPFLAGS) $(NPY_CPPFLAGS)
+
+l1cPy_la_CFLAGS   =  $(L1CCFLAGS) -fPIC \
+						-std=c11 $(WARNFLAGS)
+
+l1cPy_la_LIBADD   = ../src/libl1c.la
+
+endif
 
 
 # Rules to copy the libs .libs into the current directory

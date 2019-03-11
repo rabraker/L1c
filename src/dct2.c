@@ -7,6 +7,7 @@
 #include <math.h>
 #include <cblas.h>
 #include "l1c_common.h"
+#include "l1c_memory.h"
 
 
 

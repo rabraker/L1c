@@ -68,14 +68,19 @@ AC_ARG_WITH(mex, [AS_HELP_STRING([--with-mex],
                  CPPLAGS contains -I${MATLABROOT}/extern/include and that
                  LDFLAGS contains -L${MATLABROOT}/bin/(glnxa64|win64)/])], [
                  with_mex=yes], [with_mex=no])
+
 AC_ARG_WITH(fftw3, [AS_HELP_STRING([--with-fftw3], [Compile example with FFTW])], [
                  use_fftw3=yes], [use_fftw3=no])
+
 AC_ARG_WITH(fftw3_threads, [AS_HELP_STRING(
                  [--with-fftw3-threads=@<:@combined@:>@@<:@omp@:>@@<:@threads@:>@@<:@yes@:>@@<:@no@:>@],
                    [Compile example with FFTW threading. By default, searches for combined, then omp
                    then threads. The default is to compile with threads. Threading can be
                    disabled by setting ARG=no])], [], [with_fftw3_threads=yes   ])
 
+AC_ARG_ENABLE([python],[AS_HELP_STRING([--enable-python],
+                [build with python bindings])],
+                [enable_python=$enableval],[enable_python=no])
 
 if test x$with_debug = xyes;
 then
@@ -87,6 +92,49 @@ then
     AX_APPEND_COMPILE_FLAGS([-O3 -march=native -mtune=native], [l1c_cflags], [], [])
     AX_APPEND_COMPILE_FLAGS([-O3 -march=native -mtune=native], [l1c_cxxflags], [], [])
 fi
+
+# ----------------------------------------------------------------------------------------- #
+# ------------------------------ Checks python bindings ----------------------------------- #
+VALID_PYTHON=
+if test x$enable_python != xno; then
+   AM_PATH_PYTHON([3], [PYTHON_FOUND=true],[])
+   if test $PYTHON_FOUND = true; then
+      AX_PYTHON_DEVEL([>= '3'])
+      if test "x$PYTHON" = x ; then
+         AC_MSG_ERROR([Incomplete python development package])
+         VALID_PYTHON=no
+      else
+        VALID_PYTHON=yes
+      fi
+      pythondir=$PYTHON_SITE_PKG
+      pyexecdir=$PYTHON_SITE_PKG_EXEC
+
+# look for the numpy include directory. DO NOT INDENT THIS.
+npy_cppflags=`$PYTHON -c "import numpy.distutils as npd; \
+inc_dirs='';
+for dir in npd.misc_util.get_numpy_include_dirs():
+    inc_dirs = ' -I'+dir;
+print(inc_dirs);"`
+
+      echo $npy_cppflags
+      echo $enable_python
+      echo $PYTHON
+      echo $PYTHON_VERSION
+      echo $pythondir
+      echo $PYTHON_SITE_PKG
+      echo $PYTHON_CPPFLAGS
+      echo $PYTHON_LIBS
+      echo $PYTHON_EXTRA_LDFLAGS
+      echo $NPY_CPPFLAGS
+      AC_SUBST(PYTHONDIR,$pythondir)
+      AC_SUBST(PKGPYTHONDIR,$pkgpythondir)
+      AC_SUBST(PYEXECDIR,$pyexecdir)
+      AC_SUBST(PKGPYEXECDIR,$pkgpyexecdir)
+      AC_SUBST(NPYCPPFLAGS, $npy_cppflags)
+   fi
+fi
+
+AM_CONDITIONAL([ENABLE_PYTHON],[test x$VALID_PYTHON = xyes])
 
 
 # --------------------------------------------------------------------------------------- #
@@ -234,7 +282,8 @@ else
 fi
 
 # ------------------------------ Checks for FFTW ---------------------------------------- #
-if test x$use_fftw3 = xyes;
+# x$use_fftw3 = xyes;
+if test "x$with_mkl" != "xyes";
 then
    AC_CHECK_HEADER([fftw3.h], [], [AC_MSG_ERROR("Cannot find fftw3.h")])
 
@@ -337,6 +386,7 @@ dnl -lmex to $LIBS, which will make the rest of the checks fail.
 fi  # checks for mex
 
 
+
 # Checks for programs.
 
 # Checks for libraries.
@@ -359,7 +409,6 @@ AC_CHECK_HEADER([check.h], [], [AC_MSG_ERROR("Cannot find check.h")], [])
 AC_CHECK_HEADER([cjson/cJSON.h], [], [AC_MSG_ERROR("Cannot find CJSON.h")])
 AC_CHECK_HEADER([math.h], [], [AC_MSG_ERROR("Cannot find math.h")])
 
-AM_CONDITIONAL([compile_dct_example], [test x$with_mkl = xyes || test x$use_fftw3 = xyes])
 AM_CONDITIONAL([compile_with_mkl], [test x$with_mkl = xyes ])
 AM_CONDITIONAL([comp_with_mex], [test x$with_mex = xyes])
 
@@ -399,11 +448,13 @@ AC_SUBST(TESTCPPFLAGS, $test_cppflags)
 AC_SUBST(TESTCFLAGS, $test_cflags)
 AC_SUBST(WIN32LDFLAGS, $win32_ldflags)
 
-AC_MSG_NOTICE(L1C will be built with l1c_cflags = $l1c_cflags")
-AC_MSG_NOTICE(L1C will be built with l1c_cppflags = $l1c_cppflags")
-AC_MSG_NOTICE(Compile with MKL? $with_mkl)
-AC_MSG_NOTICE(Compile with FFTW? $use_fftw3)
-AC_MSG_NOTICE(Using mex linkage $mex_ldlibs)
 
 AC_CONFIG_FILES([Makefile  test/Makefile src/Makefile src/vcl/Makefile interfaces/Makefile])
 AC_OUTPUT
+
+AC_MSG_NOTICE(L1C will be built with l1c_cflags = $l1c_cflags)
+AC_MSG_NOTICE(L1C will be built with l1c_cppflags = $l1c_cppflags)
+AC_MSG_NOTICE(Compile with MKL? $with_mkl)
+AC_MSG_NOTICE(Compile with FFTW? $use_fftw3)
+AC_MSG_NOTICE(Using mex linkage $mex_ldlibs)
+AC_MSG_NOTICE(Compile python bindings? $enable_python)

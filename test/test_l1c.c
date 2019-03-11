@@ -63,9 +63,9 @@ int main(void)
   srunner_add_suite(sr, vcl_math_suite());
 
   srunner_add_suite(sr, l1c_math_suite());
-  srunner_add_suite(sr, l1c_common_suite());
   srunner_add_suite(sr, TV_suite());
   srunner_add_suite(sr, bregman_suite());
+  srunner_add_suite(sr, l1c_memory_suite());
 
   /* Run the tests */
   srunner_run_all(sr, CK_VERBOSE);

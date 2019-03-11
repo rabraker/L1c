@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include "l1qc_newton.h"
 #include "l1c_common.h"
+#include "l1c_memory.h"
 #include <math.h>
 
 
@@ -74,19 +75,19 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   l1c_int *pix_idx;
   // mwSize *dims;
   if( !(nlhs > 0)) {
-    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:nlhs",
+    mexErrMsgIdAndTxt("l1c:l1qc_dct:nlhs",
                       "One output required.");
   }
 
   if( (nrhs != 5) ){
-    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:nrhs",
+    mexErrMsgIdAndTxt("l1c:l1qc_dct:nrhs",
                       "five inputs required.");
   }
 
 
   /* -------- Check Nrow -------------*/
   if( !mxIsDouble(prhs[0]) || !mxIsScalar(prhs[0]) ) {
-    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notDouble",
+    mexErrMsgIdAndTxt("l1c:l1qc_dct:notDouble",
                       "First Input vector must be type double.");
   }
   Nrow = (l1c_int) mxGetScalar(prhs[0]);
@@ -94,7 +95,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   /* -------- Check Ncol -------------*/
   if( !mxIsDouble(prhs[1]) || !mxIsScalar(prhs[1]) ) {
-    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notDouble",
+    mexErrMsgIdAndTxt("l1c:l1qc_dct:notDouble",
                       "First Input vector must be type double.");
   }
   Ncol = (l1c_int) mxGetScalar(prhs[1]);
@@ -102,14 +103,14 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   /* -------- Check b -------------*/
   if( !mxIsDouble(prhs[2]) ) {
-    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notDouble",
+    mexErrMsgIdAndTxt("l1c:l1qc_dct:notDouble",
                       "Second Input vector must be type double.");
   }
 
   /* check that b is vector */
   if( (mxGetN(prhs[2]) > 1)  & (mxGetM(prhs[2]) >1) ){
     printf("num dim = %d\n", mxGetNumberOfDimensions(prhs[1]));
-    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notVector",
+    mexErrMsgIdAndTxt("l1c:l1qc_dct:notVector",
                       "Second Input must be a vector.");
   }else{
     M = (l1c_int) ( mxGetM(prhs[2]) *  mxGetN(prhs[2]) );
@@ -120,14 +121,14 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   /* -------- Check pix_idx -------------*/
   if( !mxIsDouble(prhs[3]) ) {
-    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notDouble",
+    mexErrMsgIdAndTxt("l1c:l1qc_dct:notDouble",
                       "pix_idx vector must be type double.");
   }
 
   /* check that pix_idx input argument is vector */
   if( (mxGetN(prhs[3]) > 1)  & (mxGetM(prhs[3]) >1) ){
     printf("num dim = %d\n", mxGetNumberOfDimensions(prhs[1]));
-    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notVector",
+    mexErrMsgIdAndTxt("l1c:l1qc_dct:notVector",
                       "Third Input must be a vector.");
   }else{
     npix = (l1c_int) ( mxGetM(prhs[3]) *  mxGetN(prhs[3]) );
@@ -137,14 +138,14 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   if ( !(Nrow*Ncol > M) || (M != npix) || Nrow <=0 || Ncol <=0){
     printf("Nrow = %d, Ncol=%d, M=%d, npix = %d\n", Nrow, Ncol, M, npix);
-    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:incompatible_dimensions",
+    mexErrMsgIdAndTxt("l1c:l1qc_dct:incompatible_dimensions",
                       "Must have length(x0) > length(b), and length(b) = length(pix_idx).");
   }
 
 
   /* -------- Check params struct -------------*/
   if ( !mxIsStruct(prhs[4])){
-    mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:notStruct",
+    mexErrMsgIdAndTxt("l1c:l1qc_dct:notStruct",
                       "params must be a struct.");
   }
 
@@ -157,10 +158,10 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     tmp = mxGetFieldByNumber(prhs[4], 0, i);
     name =mxGetFieldNameByNumber(prhs[4], i);
     if (!tmp){
-      mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:norverbose",
+      mexErrMsgIdAndTxt("l1c:l1qc_dct:norverbose",
                         "Error loading field '%s'.", name);
     }else if( !mxIsScalar(tmp) | !mxIsNumeric(tmp) ){
-      mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:norverbose",
+      mexErrMsgIdAndTxt("l1c:l1qc_dct:norverbose",
                         "Bad data in field '%s'. Fields in params struct must be numeric scalars.", name);
     }
 
@@ -189,7 +190,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     }else if ( strcmp(name, "verbose") == 0){
       l1qc_dct_opts.verbose= (int) mxGetScalar(tmp);
     }else{
-      mexErrMsgIdAndTxt("l1qc:l1qc_log_barrier:norverbose",
+      mexErrMsgIdAndTxt("l1c:l1qc_dct:norverbose",
                         "Unrecognized field '%s' in params struct.", name);
     }
 
@@ -226,12 +227,15 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     shift to 0-based indexing.
   */
   pix_idx = calloc(M, sizeof(l1c_int));
+  if (!x_ours || !pix_idx){
+    mexErrMsgIdAndTxt("l1c:l1qc_dct:outofmemory",
+                      "Error Allocating memory.");
+  }
+
   for (i=0; i<M; i++){
     pix_idx[i] = ((l1c_int) pix_idx_double[i]) - 1;
   }
 
-  mexPrintf("Nrow = %d, Ncol=%d\n", Nrow, Ncol);
-  mexPrintf("------------Ncol = %d\n", Ncol);
   int stat = l1qc_dct(Nrow, Ncol, x_ours, M, b, pix_idx, l1qc_dct_opts, &lb_res);
   if (stat){
     lb_res.status = stat;
@@ -247,7 +251,6 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   for (i=0; i<Nrow*Ncol; i++){
     x_out[i] = x_ours[i];
   }
-
   /* Only build the output struct if there is more than 1 output.*/
   if (nlhs == 2){
     const char *fnames[] = {"l1",
@@ -276,6 +279,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   }
 
  free(pix_idx);
+ free_double(x_ours);
 #if defined(_USEMKL_)
  mkl_free_buffers();
 #endif

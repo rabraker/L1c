@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <math.h>
 #include "l1c_common.h"
+#include "l1c_memory.h"
+
 #include "l1qc_newton.h"
 #include "omp.h"
 #include <sys/time.h>
@@ -147,27 +149,28 @@ int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_i
   if ( !b_ours || !eta_0){
     fprintf(stderr, "Memory Allocation failure\n");
     status =  L1C_OUT_OF_MEMORY;
-    goto fail;
+    goto exit1;
   }
 
   cblas_dcopy(M, b, 1, b_ours, 1);
 
   if (xforms.setup(Nrow, Ncol, M, (l1c_int*)pix_idx)){
     status = L1C_DCT_INIT_FAILURE;
-    goto fail;
+    goto exit1;
   }
-  Ax_funs.Aty(b, eta_0);
+  Ax_funs.Aty(b_ours, eta_0);
 
-  *lb_res = l1qc_newton(Ntot, eta_0, M, b, params, Ax_funs);
-
+  *lb_res = l1qc_newton(Ntot, eta_0, M, b_ours, params, Ax_funs);
+  if (lb_res->status){
+    status = lb_res->status;
+    goto exit2;
+  }
   /* We solved for eta in the DCT domain. Transform back to
      standard coorbbdinates.
   */
   xforms.M(eta_0);
 
   cblas_dcopy(Ntot, eta_0, 1, x_out, 1);
-
-
 
 
   gettimeofday(&timecheck, NULL);
@@ -180,14 +183,12 @@ int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_i
   printf("total-cg-iter: %d\n", lb_res->total_cg_iter);
   printf("time per cg iter: %g\n", time_total / (double) lb_res->total_cg_iter);
 
-
+ exit2:
   xforms.destroy(); // Should not call this if ax_setup() failed.
-
- fail:
+ exit1:
   /* Cleanup our mess. */
   free_double(b_ours);
   free_double(eta_0);
-
   return status;
 }
 

@@ -24,6 +24,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 #include <check.h>
 
 #include "l1c_common.h"
+#include "l1c_memory.h"
 
 #include <cjson/cJSON.h>
 #include "json_utils.h"

@@ -24,6 +24,7 @@
 #include "json_utils.h"
 #include "check_utils.h"
 #include "l1c_common.h"
+#include "l1c_memory.h"
 
 #ifdef _USEMKL_
 #define TOL_LARGE_DCT 1e-10

@@ -31,6 +31,6 @@ data_path="${ABS_TOP_SRCDIR}/test/test_data/example_img_data.json"
 export L1C_INTERFACE_DIR="${ABS_TOP_BUILDDIR}/interfaces"
 export L1C_SRC_LIB_DIR="${ABS_TOP_BUILDDIR}/src/.libs"
 
-python3 "${ABS_TOP_SRCDIR}/interfaces/dct_example.py" "${data_path}" 0
+python3 "${ABS_TOP_SRCDIR}/interfaces/dct_example.py" "${data_path}"
 
 exit $?

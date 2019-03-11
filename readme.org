@@ -225,16 +225,15 @@ I have made a few changes (improvements?) to the original ~~l1-magic~ algorithm,
 * To-Dos
 1. Enable detection hyperthreading, and set ~omp_num_threads~ to half the number of reported cores.
 2. Figure out the license. This may mean re-working all the test code because ~l1-magic~ doesn't come with an explicit license.
-3. Make it build on windows, at least using cygwin or mingw.
-4. We need different prefix targets for the shared library and the interfaces modules.
-5. Other optimization routines. On the list are
+3. We need different prefix targets for the shared library and the interfaces modules.
+4. Other optimization routines. On the list are
    - The isotropic TV-denoising problem using Bregman iteration. 
    - [[https://web.stanford.edu/~boyd/l1_ls/][l1-ls]] from Stephen Boyd's research group.
    - NESTA, which from my cursory inspection, seems to depend on l1-ls.
 
-6. Generalize the backtracking line search. There is really no reason that it needs to be specific to the l1qc algorithm. All it needs is a way to evaluate the functional and gradient at different step sizes.
+5. Generalize the backtracking line search. There is really no reason that it needs to be specific to the l1qc algorithm. All it needs is a way to evaluate the functional and gradient at different step sizes.
 
-7. With a bit of work, it should be possible to generalize the entire set of log-barrier and newton iterations, so that it is not specific the quadratically constrained l1 problem. Basically, all that is required is
+6. With a bit of work, it should be possible to generalize the entire set of log-barrier and newton iterations, so that it is not specific the quadratically constrained l1 problem. Basically, all that is required is
    - A function to evaluate the functional
    - A function to compute the descent direction
    - A function to compute the linear approximation for the linesearch

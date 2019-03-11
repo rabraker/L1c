@@ -10,7 +10,7 @@
 
 #include "dct.h"
 #include "l1c_common.h"
-
+#include "l1c_memory.h"
 
 static fftw_plan dct_plan_MtEty;
 static fftw_plan dct_plan_EMx;
@@ -84,7 +84,6 @@ void dct_destroy(){
   free_double(dct_Ety_sparse);
   free_double(dct_x);
   free_double(dct_y);
-
   fftw_destroy_plan(dct_plan_EMx);
   fftw_destroy_plan(dct_plan_MtEty);
 #if defined(HAVE_FFTW3_THREADS)
