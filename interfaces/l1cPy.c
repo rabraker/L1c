@@ -9,8 +9,8 @@
 #include <numpy/arrayobject.h>
 #include <numpy/ndarraytypes.h>
 
-#include "l1qc_newton.h"
-#include "libl1qc_dct.h"
+#include "l1c_memory.h"
+#include "l1c.h"
 
 
 /* Function declartion */

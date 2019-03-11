@@ -6,6 +6,7 @@
 #include "l1qc_newton.h"
 #include "cgsolve.h"
 #include "l1c_common.h"
+#include "l1c_memory.h"
 #include "vcl_math.h"
 #include "l1c_math.h"
 

@@ -1,6 +1,8 @@
 #include "config.h"
 
 #include "l1c_common.h"
+#include "l1c_memory.h"
+
 #include <check.h>
 #include <stdint.h>
 
@@ -45,13 +47,13 @@ END_TEST
 
 /* Add all the test cases to our suite
  */
-Suite *l1c_common_suite(void)
+Suite *l1c_memory_suite(void)
 {
   Suite *s;
 
   TCase *tc_common;
-  s = suite_create("l1c_common");
-  tc_common = tcase_create("l1c_common");
+  s = suite_create("l1c_memory");
+  tc_common = tcase_create("l1c_memory");
 
   tcase_add_test(tc_common,test_malloc_double);
 

@@ -7,6 +7,7 @@
 #include "mkl_service.h"
 #include "mkl_trig_transforms.h"
 #include "l1c_common.h"
+#include "l1c_memory.h"
 
 DFTI_DESCRIPTOR_HANDLE mkl_dct_handle=0;
 

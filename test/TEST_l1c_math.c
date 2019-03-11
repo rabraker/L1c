@@ -16,6 +16,7 @@
 #include "test_constants.h"
 #include "check_utils.h"
 #include "l1c_math.h"
+#include "l1c_memory.h"
 
 
 

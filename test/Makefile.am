@@ -28,12 +28,12 @@ TESTS = test_l1c           \
 		build_dct_data.py     \
 		build_cgsolve_data.py \
 		build_l1qc_data.py    \
-		test_matlab_dlopen.sh \
 		test_matlab_mex.sh \
 		test_python_interface.sh \
 		test_l1qc_dct_c.sh       \
 		valgrind_wrapper.sh
 
+# test_matlab_dlopen.sh
 
 TEST_EXTENSIONS = .py .sh
 
@@ -44,7 +44,7 @@ check_PROGRAMS   = test_l1c
 
 test_l1c_SOURCES = TEST_cgsolve.c       \
 					TEST_l1c_math.c     \
-					TEST_l1c_common.c   \
+					TEST_l1c_memory.c   \
 					TEST_l1qc_newton.c  \
 					TEST_vcl_math.c     \
 					test_l1c.c
@@ -63,7 +63,7 @@ test_l1c_CPPFLAGS = -D_EXCLUDE_PUBLIC_ -I$(top_srcdir)/include  \
 test_l1c_CFLAGS = $(L1CCFLAGS) -std=c11 $(WARNFLAGS)
 test_l1c_LDFLAGS = $(LDFLAGS)
 
-log_deps = 	build_CS20NG_example_data.py \
+log_deps = 	build_CS20NG_example_data.log \
 			build_dct2_data.log \
 		   	build_dct_data.log \
 		   	build_cgsolve_data.log \
@@ -74,7 +74,8 @@ test_l1c.log:$(log_deps)
 
 
 
-test_matlab_dlopen.sh:$(log_deps)
+# test_matlab_dlopen.sh:$(log_deps)
+
 test_matlab_mex.sh:$(log_deps)
 test_python_interface.sh:$(log_deps)
 test_l1qc_dct_c.sh:$(log_deps)

@@ -1,13 +1,15 @@
-
+#ifndef __L1C__
+#define __L1C__
+// #include "config.h"
 typedef int l1c_int;
 
-// typedef struct LBResult{
-//   double l1;
-//   int    total_newton_iter;
-//   int    total_cg_iter;
-//   int    status;
+typedef struct LBResult{
+  double l1;
+  int    total_newton_iter;
+  int    total_cg_iter;
+  int    status;
 
-// }LBResult;
+}LBResult;
 
 typedef struct L1qcDctOpts{
   double epsilon;
@@ -27,3 +29,5 @@ typedef struct L1qcDctOpts{
 
 int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_idx,
               L1qcDctOpts opts, LBResult *lb_res);
+
+#endif

@@ -8,6 +8,7 @@
 
 #include "json_utils.h"
 #include "l1c_common.h"
+#include "l1c_memory.h"
 
 
 /* Utility functions */

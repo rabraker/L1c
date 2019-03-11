@@ -88,7 +88,8 @@ def build_cs20ng_test_data(npix, data_path=None):
             'nrow': img.shape[0],
             'ncol': img.shape[1],
             'b': img.flatten()[pix_idx],
-            'pix_idx': pix_idx}
+            'pix_idx': pix_idx,
+            'one_based_index': 0}
 
     data = L1cTestDataUtils.jsonify(data)
 

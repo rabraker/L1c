@@ -26,6 +26,7 @@
 #include "dct.h"
 
 #include "l1c_common.h"
+#include "l1c_memory.h"
 #include "check_utils.h"
 
 cJSON *test_data_json;

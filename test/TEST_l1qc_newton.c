@@ -16,6 +16,7 @@ This test suite uses the libcheck framework.
 #include <check.h>
 
 #include "l1c_common.h"
+#include "l1c_memory.h"
 #include "check_utils.h"
 #include <cjson/cJSON.h>
 #include "json_utils.h"

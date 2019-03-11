@@ -4,32 +4,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "l1c_common.h"
-#include "l1qc_newton.h"
 #include "omp.h"
 #include <cjson/cJSON.h>
+
 #include "json_utils.h"
-
-
-
-typedef struct L1qcDctOpts{
-  double epsilon;
-  double mu;
-  double lbtol;
-  double tau;
-  double lbiter;
-  double newton_tol;
-  int newton_max_iter;
-  int verbose;
-  double l1_tol;
-  double cgtol;
-  int cgmaxiter;
-  int warm_start_cg;
-}L1qcDctOpts;
-
-int l1qc_dct(int Nrow, int Mcol, double *x_out, int M, double *b, l1c_int *pix_idx,
-             L1qcDctOpts opts, LBResult *lb_res);
-
+#include "l1c_memory.h"
+#include "l1c.h"
 
 
 int main(int argc, char **argv){
