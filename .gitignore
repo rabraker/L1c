@@ -75,3 +75,4 @@ make_dct
 run_dct.c
 makefile_pylib
 .dir-locals.el
+deprecated/

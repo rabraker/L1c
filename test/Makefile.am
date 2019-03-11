@@ -33,7 +33,6 @@ TESTS = test_l1c           \
 		test_l1qc_dct_c.sh       \
 		valgrind_wrapper.sh
 
-# test_matlab_dlopen.sh
 
 TEST_EXTENSIONS = .py .sh
 
