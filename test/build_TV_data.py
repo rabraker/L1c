@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import numpy.testing as npt
-import TestDataUtils as TDU
+import L1cTestDataUtils as TDU
 import ipdb
 
 

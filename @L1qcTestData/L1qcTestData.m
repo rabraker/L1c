@@ -15,12 +15,6 @@ classdef L1qcTestData
       % Make us a test image to work with.
       L1qcTestData.make_test_image(test_data_root);
       
-      % data for checking the newton_init() routine.
-      L1qcTestData.build_newton_init_data(test_data_root);
-      
-      L1qcTestData.build_feval_test_data(test_data_root);
-      % L1qcTestData.build_cgsolve_test_data(test_data_root);
-      % L1qcTestData.build_dct_test_data(test_data_root);
       L1qcTestData.build_l1qc_newton_test_data(test_data_root);
 
       L1qcTestData.build_logbarrier_test_data(test_data_root);
@@ -40,16 +34,10 @@ classdef L1qcTestData
     end
     
     xp = build_logbarrier_test_data(data_root, lbiter);
-    build_newton_init_data(test_data_root);
-     
+         
     build_l1qc_newton_test_data(test_data_root);
     
-    build_cgsolve_test_data(test_data_root);
-    
-    build_dct_test_data(test_data_root);
-    
-    build_feval_test_data(data_root) 
-    
+            
     [x, res, iter] = cgsolve(A, b, tol, maxiter, verbose, x0);
     [xp, up, niter, cgit_tot] = l1qc_newton(x0, u0, A, At, b, epsilon, tau, newtontol,...
       newtonmaxiter, cgtol, cgmaxiter, Tii, verbose, warm_start_cg);
