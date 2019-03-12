@@ -1,9 +1,6 @@
 /*
   Tests for the conjugate gradient solver.
 
-  Libcheck availible at
-  https://libcheck.github.io/
-
  */
 #include "config.h"
 
@@ -126,6 +123,7 @@ START_TEST(test_cgsolve)
 
 }
 END_TEST
+
 
 START_TEST(test_cgsolve_h11p){
   char *fpath = fullfile(test_data_dir, "descent_data.json");
@@ -275,8 +273,8 @@ START_TEST(test_cgsolve_Ax_sym){
 }
 END_TEST
 
-/* ----------------------------- cgsolve_diag_precond--------------------------------*/
 
+/* ----------------------------- cgsolve_diag_precond--------------------------------*/
 START_TEST(test_cgsolve_diag_precond)
 {
   double tol =0.0; //= 1e-6;
@@ -333,6 +331,7 @@ START_TEST(test_cgsolve_diag_precond)
 }
 END_TEST
 
+
 /* Add all the test cases to our suite
  */
 Suite *cgsolve_suite(void)
@@ -350,7 +349,6 @@ Suite *cgsolve_suite(void)
 
   tc_cgsolve_precond = tcase_create("cgsolve_precond");
   tcase_add_test(tc_cgsolve_precond, test_cgsolve_diag_precond);
-
   suite_add_tcase(s, tc_cgsolve_precond);
 
   return s;

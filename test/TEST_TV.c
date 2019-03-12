@@ -101,6 +101,7 @@ static void setup(ImgDiffData *ddat){
   cJSON_Delete(test_data_json);
 }
 
+
 static void teardown(ImgDiffData *ddat){
   free_double(ddat->A);
   free_double(ddat->DxA_exp);
@@ -119,6 +120,7 @@ static void teardown(ImgDiffData *ddat){
   free_double(ddat->DyTDyA_act);
 }
 
+
 static void setup_square(void){
   dd = malloc(sizeof(ImgDiffData));
 
@@ -129,11 +131,13 @@ static void setup_square(void){
 
 }
 
+
 static void teardown_square(void){
   teardown(dd);
   free(dd->fpath);
   free(dd);
 }
+
 
 static void setup_tall(void){
   dd = malloc(sizeof(ImgDiffData));
@@ -179,6 +183,7 @@ START_TEST(test_l1c_Dx){
 }
 END_TEST
 
+
 START_TEST(test_l1c_DxT){
 
   l1c_int N = dd->N;
@@ -194,6 +199,7 @@ START_TEST(test_l1c_DxT){
                                 dd->DxTA_act, TOL_DOUBLE_SUPER*10);
 }
 END_TEST
+
 
 START_TEST(test_l1c_DxTDx){
 
@@ -226,7 +232,6 @@ START_TEST(test_l1c_Dy){
                                 dd->DyA_act, TOL_DOUBLE_SUPER*10);
 }
 END_TEST
-
 
 
 START_TEST(test_l1c_DyT){

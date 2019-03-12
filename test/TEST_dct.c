@@ -1,8 +1,5 @@
 /*
-  Tests for the conjugate gradient solver.
-
-  Libcheck availible at
-  https://libcheck.github.io/
+  Tests for the 1D DCT-based transforms.
 
  */
 #include "config.h"
@@ -60,7 +57,6 @@ typedef struct DctData{
    a simulation image, the third is is also random with Nx=50, but pix_idx corresonds to
    the Nx x Nx identity.
  */
-
 DctData *dct_small_data;
 DctData *dct_large_data;
 DctData *dct_pure_data;
@@ -104,6 +100,7 @@ static void setup(DctData *dctd){
   cJSON_Delete(test_data_json);
 }
 
+
 static void teardown(DctData *dctd){
   free_double(dctd->x_in);
   free_double(dctd->y_in);
@@ -127,6 +124,7 @@ static void teardown(DctData *dctd){
 
 }
 
+
 static void setup_small(void){
   dct_small_data = malloc(sizeof(DctData));
 
@@ -138,10 +136,12 @@ static void setup_small(void){
   free(fpath_dct_small);
 }
 
+
 static void teardown_small(void){
   teardown(dct_small_data);
   free(dct_small_data);
 }
+
 
 /* */
 static void setup_large(void){
@@ -155,10 +155,12 @@ static void setup_large(void){
 
 }
 
+
 static void teardown_large(void){
   teardown(dct_large_data);
   free(dct_large_data);
 }
+
 
 static void setup_pure_dct(void){
   dct_pure_data = malloc(sizeof(DctData));
@@ -169,6 +171,7 @@ static void setup_pure_dct(void){
 
   free(fpath_dct_pure);
 }
+
 
 static void teardown_pure(void){
   teardown(dct_pure_data);
@@ -199,6 +202,7 @@ START_TEST(test_dct_MtEty_small)
 }
 END_TEST
 
+
 START_TEST(test_dct_EMx_new_small)
 {
   dct_EMx(dct_small_data->x_in, dct_small_data->EMx_act);
@@ -213,7 +217,6 @@ END_TEST
 /* -----------------------------------------------------------
  --------------- The large set, from an actual image ---------
  */
-
 START_TEST(test_dct_MtEt_EMx_large)
 {
 
@@ -235,6 +238,7 @@ START_TEST(test_dct_MtEty_large)
 }
 END_TEST
 
+
 START_TEST(test_dct_EMx_large)
 {
 
@@ -245,7 +249,6 @@ START_TEST(test_dct_EMx_large)
 
 }
 END_TEST
-
 
 
 /* The next three tests check what happens when pix_idx is all ones, ie,
@@ -277,8 +280,6 @@ START_TEST(test_dct_MtEty_pure)
 END_TEST
 
 
-
-
 START_TEST(test_dct_EMx_new_pure)
 {
   dct_EMx(dct_pure_data->x_in, dct_pure_data->EMx_act);
@@ -288,8 +289,6 @@ START_TEST(test_dct_EMx_new_pure)
 
 }
 END_TEST
-
-
 
 
 /* Add all the test cases to our suite
@@ -302,7 +301,6 @@ Suite *dct_suite(void)
   // TCase  *tc_dct_small;
   s = suite_create("dct");
 
-
   tc_dct_small = tcase_create("dct_small");
   tcase_add_checked_fixture(tc_dct_small, setup_small, teardown_small);
   tcase_add_test(tc_dct_small, test_dct_MtEt_EMx_small);
@@ -310,13 +308,11 @@ Suite *dct_suite(void)
   tcase_add_test(tc_dct_small, test_dct_EMx_new_small);
   suite_add_tcase(s, tc_dct_small);
 
-
   tc_dct_large = tcase_create("dct_large");
   tcase_add_checked_fixture(tc_dct_large, setup_large, teardown_large);
   tcase_add_test(tc_dct_large,test_dct_MtEt_EMx_large);
   tcase_add_test(tc_dct_large, test_dct_MtEty_large);
   tcase_add_test(tc_dct_large, test_dct_EMx_large);
-
   suite_add_tcase(s, tc_dct_large);
 
   tc_dct_pure = tcase_create("dct_pure");
@@ -324,11 +320,7 @@ Suite *dct_suite(void)
   tcase_add_test(tc_dct_pure, test_dct_MtEt_EMx_pure);
   tcase_add_test(tc_dct_pure, test_dct_EMx_new_pure);
   tcase_add_test(tc_dct_pure, test_dct_MtEty_pure);
-
   suite_add_tcase(s, tc_dct_pure);
-
-
-
 
   return s;
 

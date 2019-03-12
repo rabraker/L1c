@@ -1,8 +1,5 @@
 /*
-  Tests for the conjugate gradient solver.
-
-  Libcheck availible at
-  https://libcheck.github.io/
+  Tests for the 1D DCT-based transforms.
 
  */
 #include "config.h"

@@ -1,20 +1,7 @@
 /*
-This is a test suite for the
 
-This test suite uses the libcheck framework. On my computer, this got installed
-into /usr/local/lib, which was not by default found by the system. Thus, I have
-to do
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
+  Entry point for the L1c test suite.
 
-
---Reference for multiple test suites:
-  https://libcheck.github.io/check/doc/check_html/check_4.html#Multiple-Suites-in-one-SRunner
-
--- To without forking the address space:
-  1. switch comments on fstat in main()
-  2. in command line, run
-      #: export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/arnold/gradschool/sysID/sweptSines_lib"
-  3. use gdb as normal
  */
 
 #include "config.h"

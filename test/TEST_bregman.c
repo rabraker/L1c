@@ -1,8 +1,5 @@
 /*
-  Tests for the conjugate gradient solver.
-
-  Libcheck availible at
-  https://libcheck.github.io/
+  Tests for the Bregman Splitting optimizations.
 
  */
 #include "config.h"
@@ -13,12 +10,10 @@
 #include <math.h> //Constants
 #include <check.h>
 
-// #include "test_data.h"
 #include "cgsolve.h"
 
 /* Tolerances and things */
 #include "test_constants.h"
-/* To read in test data */
 #include <cjson/cJSON.h>
 #include "json_utils.h"
 
@@ -30,8 +25,8 @@
 extern char* fullfile(char *base_path, char *name);
 extern char *test_data_dir;
 
-
 cJSON *test_data_json;
+
 
 typedef struct BregData {
   l1c_int NM;
@@ -58,6 +53,7 @@ typedef struct BregData {
 }BregData;
 
 BregData *BD;
+
 
 static void setup(void){
   BD = malloc(sizeof(BregData));
@@ -121,6 +117,7 @@ static void teardown(void){
   free(BD);
 }
 
+
 START_TEST(test_breg_anis_jacobi){
   BregFuncs bfuncs = breg_get_functions();
 
@@ -155,6 +152,7 @@ START_TEST(test_breg_anis_guass_seidel){
 }
 END_TEST
 
+
 START_TEST(test_breg_shrink1){
 
   BregFuncs bfuncs = breg_get_functions();
@@ -184,6 +182,7 @@ START_TEST(test_breg_shrink1){
 
 }
 END_TEST
+
 
 START_TEST(test_breg_rhs){
   BregFuncs bfuncs = breg_get_functions();

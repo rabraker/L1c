@@ -1,10 +1,6 @@
 /*
 This is a test suite for the l1qc_newton library.
 
-This test suite uses the libcheck framework.
-  https://libcheck
-  .github.io/check/doc/check_html/check_4.html#No-Fork-Mode
-
  */
 #include "config.h"
 

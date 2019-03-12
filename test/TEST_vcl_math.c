@@ -1,18 +1,5 @@
 /*
-This is a test suite for the fourier integration functions contained in
-../src/ss_fourier_functions.c. The data used to test these functions is
-contained in the header file test_data_ss_ff.h, which defines several global
-variables. The header file is generated from the matlab script called
-generate_test_data.m
-
-This test suite uses the libcheck framework. On my computer, this got installed
-into /usr/local/lib, which was not by default found by the system. Thus, I have
-to do
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
-
-
-  https://libcheck.github.io/check/doc/check_html/check_4.html#No-Fork-Mode
-
+  Tests for the vcl_math functions.
  */
 #include "config.h"
 

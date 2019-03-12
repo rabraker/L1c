@@ -21,15 +21,19 @@ The goal of this project is to provide a c library that is useful for the applic
 ** Features
 Present capabilites and features include
 - Solving the basis pursuit denoising problem
+
 \begin{equation}
     \min_{x} ||x||_{1}  \quad \text{s.t.} \quad ||Ax -b||_{2} < \epsilon,
 \end{equation}
+
 using a log-barrier algorithm, which is based on the implementation in [[https://statweb.stanford.edu/~candes/l1magic/][l1-magic]],  [[sec:l1qc_mod][with a few modifications]]. Currently, the code *only* operates in large-scale mode, which means that the transformation $Ax$ (and the adjoint, $A^Ty$) are performed by user supplied functions, rather than an explicit matrix-vector multiplication. This also means that solving for the descent direction is always done via conjugate gradients.
 
 - Solving the Anistropic Total Variation (TV) denoising using  [[https://www.ece.rice.edu/~tag7/Tom_Goldstein/Split_Bregman.html][Bregman Splitting]]. Given a noisy $n$ by $m$ image $f$, this solves the problem
+
   \begin{equation}
     \min_{u} ||\nabla_{x}||_{1} + ||\nabla_{y}||_{1} + ||u-f||_{2}.
   \end{equation}
+
 - 1D and 2D discrete cosine transforms (using FFTW).
 
 * Building
@@ -96,7 +100,7 @@ On my machine, ~FFTW3~, ~cJSON~, and ~check~ are installed in ~/usr/local~. ATLA
 #+BEGIN_SRC bash
 CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include" \
          LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib" \
-         ./configure --with-fftw3 --with-fftw3-threads=omp 
+./configure --with-fftw3 --with-fftw3-threads=omp 
 #+END_SRC
 
 
@@ -104,7 +108,7 @@ Alternatively, you can export ~CPPFLAGS~ and ~LDFLAGS~:
 #+BEGIN_SRC bash
 export CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include"
 export LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib"
- ./configure --with-fftw3 --with-fftw3-threads=omp 
+./configure --with-fftw3 --with-fftw3-threads=omp 
 #+END_SRC
 
 **** mex bindings
@@ -114,7 +118,8 @@ export CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include \
                  -I/usr/local/MATLAB/R2018b/extern/include"
 export LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib  \
                 -L/usr/local/MATLAB/R2018b/bin/glnxa64"
-./configure --with-fftw3 --with-fftw3-threads=omp --enable-mex \   --with-mex-prefix=/home/arnold/matlab/l1c
+./configure --with-fftw3 --with-fftw3-threads=omp --enable-mex \  
+            --with-mex-prefix=/home/arnold/matlab/l1c
 #+END_SRC
 
 Note that on my system, the command ~mexext~ is located in ~/usr/local/MATLAB/R2018b/bin/~, which is symlinked to ~/usr/local/bin/mexext~, which is on my path. If this is not the case, then in addition to above you can, e.g., ~export MEXEXT=mexa64~. You can get the appropriate value to export by typing ~mexext~ at the matlab command prompt.
@@ -124,7 +129,7 @@ To build the python bindings, use ~--enable-python~:
 #+BEGIN_SRC bash
 export CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include"
 export LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib"
- ./configure --with-fftw3 --with-fftw3-threads=omp --enable-python
+./configure --with-fftw3 --with-fftw3-threads=omp --enable-python
 #+END_SRC
 
 Building python bindings is supported for Python 3 (tested with 3.5). The proper compilation and linking flags as well as the installation location are obtained from the python3 on your path (via distutils.sysconfig). On linux, the typical install location will default to something like ~/usr/lib/python3/dist-packages~. These values can be modified via the environmental variables:
@@ -225,17 +230,20 @@ The struct ~AxFuns~ contains pointers to your user-defined functions which compu
 I have made a few changes (improvements?) to the original ~~l1-magic~ algorithm, both pertaining to the line search. These changes address issues with numerical, rather than mathematical, problems. As the ~l1-magic~ authors note, in the later stages of the optimziation, numerical difficulties arise and the line search can fail. These modifications help to push that point into the future, enabling more iterations.
 
 1. In the original code, I noticed that at some point, the data become complex when it should have been purely real. One of the places where this occures is in the code which computes the maximum step-size which still satisfies the constraints (i.e., lines XX in the original code). In particular, the code which computes the largest number $s$ such such that, for $x_{k+1}= x_{k} + sd_{x_k}$, $||Ax_{k+1}-b||<\epsilon$ still holds. To do this, we expand into a scalar equation quadratic in $s$
+
    \begin{align}
    ||A(x+sd_{x})-b||^{2} - \epsilon^{2} &=0 \\
-   s^{2}(d_x^{T}A^{T}Ad_x) + 2r^{T}Ad_x + r^{T}r - \epsilon^{2} &= 0\\
+   s^{2}(d_x^{T}A^{T}Ad_x) + 2r^{T}Ad_x + r^{T}r - \epsilon^{2} &= 0
    \end{align}
 
    where $r = Ax - b$. Although the roots should always be real, due to either computing $d_{x}$ with insufficient accuracy (which accomplished via conjugate gradient) or otherwise, the roots become complex in the later stages. In matlab, the promation to a complex type happens silently and we start optimizing complex data, which is undersirable. In c, the ~sqrt~ operation simply returns NaN, which is also undersirable. When this happens, the modification is to set $s=1$ and let the line search deal with. This will work fine in c because taking the log of a negative number results in NaN. In Matlab, we need something like ~log(max(0, a))~.
 
 2. The goal of the line-search is to find (approximitaly) the largest step-size $s$ such that
+
    \begin{equation}
    f(z + sd_{z}) < f(z) + \alpha s \nabla f\cdot d_{z}
    \end{equation}
+
    In the original code, the functional $f(z)$ is only evaluated explicitly at the start of each log-barrier iteration and the value of $f(z_{i})$ is updated from derived values, e.g., $r_{k+1}= r_{k} + sAd_{x}$. Mathematically, this is fine. Numerically, it is problematic because after enough iterations the explicit value of $f(z_{k})$ becomes infinite (due to the barrier functions) even though the putative value is finite. Thus, although it is less efficient, this code evaluates the functional explicitly at each iteration of the line-search and this value is then passed to the next Newton iteration.
 
 * To-Dos
