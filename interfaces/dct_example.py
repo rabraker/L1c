@@ -39,7 +39,7 @@ def dct_example(verbose=2, fpath='example_img_data.json', plot=False):
 
     # Call the library wrapper.
     time0 = time.time()
-    x_recon, p = l1cPy.l1qc_dct_py(N*N, 1, b, pix_idx, epsilon=0.01,
+    x_recon, p = l1cPy.l1qc_dct(N*N, 1, b, pix_idx, epsilon=0.01,
                                    l1_tol=0, cgmaxiter=200, verbose=verbose)
 
     # x_recon, lb_result = l1qc_dct(x_orig, b, pix_idx, opts, lib_dir=lib_dir)

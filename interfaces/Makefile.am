@@ -7,7 +7,6 @@
 
 AUTOMAKE_OPTIONS = foreign 1.8 no-dependencies
 clean-local:: clean-convenience-link
-
 bin_PROGRAMS    =
 lib_LTLIBRARIES =
 
@@ -15,7 +14,7 @@ lib_LTLIBRARIES =
 # $(info "LDFLAGS = $(LDFLAGS)")
 # $(info "MEXCPP = $(MEXCPPFLAGS)")
 # $(info "MEXLIBS = $(MEXLDLIBS)")
-# ----------------------------------------------------------------------#
+# -------------------------------------------------------------------#
 # -------------------------------  ----------------------------------#
 
 bin_PROGRAMS +=l1qc_dct_c
@@ -28,7 +27,9 @@ l1qc_dct_c_CFLAGS = $(L1CCFLAGS) -std=c11 $(WARNFLAGS)
 l1qc_dct_c_LDFLAGS = $(LDFLAGS)
 
 
-
+$(info "prefix= $(prefix)")
+$(info "pyexecdir= $(pyexecdir)")
+$(info "pyexecdir= $(PYEXECDIR)")
 if comp_with_mex
 # LIBEXT
 # NOTES:
@@ -39,7 +40,8 @@ if comp_with_mex
 #    -shrext .mexa64 lets us get a library without the .so, and with
 #                    matlabs required extension.
 
-lib_LTLIBRARIES += l1qc_dct_mex.la
+mexdir = $(MEX_PREFIX)
+mex_LTLIBRARIES = l1qc_dct_mex.la
 
 l1qc_dct_mex_la_SOURCES  = l1qc_dct_mex.c
 l1qc_dct_mex_la_LDFLAGS  = -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
@@ -51,40 +53,47 @@ l1qc_dct_mex_la_CFLAGS   =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC \
 
 l1qc_dct_mex_la_LIBADD   =	../src/libl1c.la \
 							$(MEXLDLIBS)
+
+mex_DATA = l1qc_dct_opts.m l1qc_dct.m
 endif
 
 
 if ENABLE_PYTHON
+# if $(pyexecdir) is empty, this will fail with
+# libtool:   error: only absolute run-paths are allowed
+python_PYTHON = __init__.py
+pyexec_LTLIBRARIES = _l1cPy_module.la
 
-lib_LTLIBRARIES += l1cPy.la
+_l1cPy_module_la_SOURCES  = l1cPy.c
+_l1cPy_module_la_LDFLAGS  = -module -avoid-version $(LDFLAGS) $(PYTHON_LIBS)
 
-l1cPy_la_SOURCES  = l1cPy.c
-l1cPy_la_LDFLAGS  = -module -avoid-version -no-undefined $(LDFLAGS) $(PYTHON_LIBS)
-
-l1cPy_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include  \
+_l1cPy_module_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include  \
 					 $(L1CCPPFLAGS) $(PYTHON_CPPFLAGS) $(NPY_CPPFLAGS)
 
-l1cPy_la_CFLAGS   =  $(L1CCFLAGS) -fPIC \
+_l1cPy_module_la_CFLAGS   =  $(L1CCFLAGS) -fPIC \
 						-std=c11 $(WARNFLAGS)
-
-l1cPy_la_LIBADD   = ../src/libl1c.la
+_l1cPy_module_la_LIBADD   = $(top_builddir)/src/libl1c.la
 
 endif
+
 
 
 # Rules to copy the libs .libs into the current directory
 # Idea from here:
 # https://stackoverflow.com/questions/13948916/how-to-build-so-module-in-automake-and-a-libtool-using-project
 # but modified because his regexp doesnt work.
+all_libs = $(lib_LTLIBRARIES) $(mex_LTLIBRARIES) $(pyexec_LTLIBRARIES)
+
 
 .PHONY: convenience-link clean-convenience-link
 
 # We need to ensure that we dont grep if lib_LTLTLIBRARIES is empty.
 # Also, need to replace things like .so.0 with .so, so matlab can read it.
 # lib_LTLLIBRARIES contains the .la files, which are just text descriptions.
-convenience-link: $(lib_LTLIBRARIES)
-	@echo "tlt libs $(lib_LTLIBRARIES)"
-	@for soname in `test -z $$^ || $(EGREP) "^dlname=" $^|sed -e "s/^.*=//g"|sed -e "s/'//g"`; do  \
+convenience-link: $(all_libs)
+	@echo "----tlt libs $(all_libs)"
+	@if test ! -z "$(all_libs)"; then \
+	for soname in `test -z $$^ || $(EGREP) "^dlname=" $^|sed -e "s/^.*=//g"|sed -e "s/'//g"`; do  \
 		new_soname=`echo $$soname|sed -e "s/so.*$$/so/g"`;                                         \
 		if test ! -h "$$new_soname"; then                                                          \
 		echo "$$soname: creating convenience link from $(abs_builddir)/.libs to $(abs_builddir)";  \
@@ -94,11 +103,12 @@ convenience-link: $(lib_LTLIBRARIES)
 		test -e $(abs_builddir)/.libs/$$soname &&                                                  \
 		$(LN_S) $(abs_builddir)/.libs/$$soname $$new_soname || echo "FAILED";                      \
 		fi;                                                                                         \
-	done
+	done; \
+	fi
 
 
 clean-convenience-link:
-	rm -f *.so* *.mexa64 *.o *.lo *.la *.dll *.mexw64
+	rm -f *.so* *.mexa64 *.o *.lo *.la *.dll *.mexw64 *.pyc
 
 
 all-local:: convenience-link

@@ -63,11 +63,10 @@ AC_ARG_WITH(opt, [AS_HELP_STRING([--without-opt],[Compile optimizations off.])],
 AC_ARG_WITH(mkl, [AS_HELP_STRING([--with-mkl], [Compile using Intel Math Kernel Library])], [
                  with_mkl=yes], [with_mkl=no])
 
-AC_ARG_WITH(mex, [AS_HELP_STRING([--with-mex],
-                 [Compile matlab interface mex functions. This requires that
-                 CPPLAGS contains -I${MATLABROOT}/extern/include and that
-                 LDFLAGS contains -L${MATLABROOT}/bin/(glnxa64|win64)/])], [
-                 with_mex=yes], [with_mex=no])
+AC_ARG_WITH(mex-prefix, [AS_HELP_STRING([--with-mex-prefix=/path/to/mex/installation],
+                 [Location to install the mex bindings in. Ignored if --with-mex is
+                 not also given. By default, the bindings will be installed in ${prefix}/lib.])],
+                 [mex_prefix=$withval], [mex_prefix=no])
 
 AC_ARG_WITH(fftw3, [AS_HELP_STRING([--with-fftw3], [Compile example with FFTW])], [
                  use_fftw3=yes], [use_fftw3=no])
@@ -78,9 +77,24 @@ AC_ARG_WITH(fftw3_threads, [AS_HELP_STRING(
                    then threads. The default is to compile with threads. Threading can be
                    disabled by setting ARG=no])], [], [with_fftw3_threads=yes   ])
 
+AC_ARG_ENABLE(mex, [AS_HELP_STRING([--enable-mex],
+                 [Compile matlab interface mex bindings. This requires that
+                 CPPLAGS contains -I${MATLABROOT}/extern/include and that
+                 LDFLAGS contains -L${MATLABROOT}/bin/(glnxa64|win64)/])], [
+                 enable_mex=yes], [enable_mex=no])
+
 AC_ARG_ENABLE([python],[AS_HELP_STRING([--enable-python],
                 [build with python bindings])],
                 [enable_python=$enableval],[enable_python=no])
+
+if test x$mex_prefix = xno; then
+   mex_prefix=$libdir
+else
+# Remove any trailing slash the user may have provided,
+# because this breaks the install with libtool, and will result in, e.g.,
+#  libtool: error: cannot install 'l1qc_dct_mex.la' to a directory not ending in /home/arnold/matlab/l1c-mex-test/.
+    mex_prefix=`echo $mex_prefix|sed 's,\/$,,'`
+fi
 
 if test x$with_debug = xyes;
 then
@@ -94,7 +108,7 @@ then
 fi
 
 # ----------------------------------------------------------------------------------------- #
-# ------------------------------ Checks python bindings ----------------------------------- #
+# ---------------------------- Checks building python bindings ---------------------------- #
 VALID_PYTHON=
 if test x$enable_python != xno; then
    AM_PATH_PYTHON([3], [PYTHON_FOUND=true],[])
@@ -106,8 +120,13 @@ if test x$enable_python != xno; then
       else
         VALID_PYTHON=yes
       fi
-      pythondir=$PYTHON_SITE_PKG
-      pyexecdir=$PYTHON_SITE_PKG_EXEC
+      pythondir="${PYTHON_SITE_PKG}/${PACKAGE}Py"
+      pyexecdir="${PYTHON_SITE_PKG_EXEC}/${PACKAGE}Py"
+      echo "pyexecdir $pyexecdir"
+      if test -z $pyexecdir;
+      then
+        AC_MSG_ERROR(Could not locate PYTHON_EXEC_DIR)
+      fi
 
 # look for the numpy include directory. DO NOT INDENT THIS.
 npy_cppflags=`$PYTHON -c "import numpy.distutils as npd; \
@@ -116,15 +135,17 @@ for dir in npd.misc_util.get_numpy_include_dirs():
     inc_dirs = ' -I'+dir;
 print(inc_dirs);"`
 
-      echo $npy_cppflags
-      echo $enable_python
-      echo $PYTHON
-      echo $PYTHON_VERSION
-      echo $pythondir
-      echo $PYTHON_SITE_PKG
-      echo $PYTHON_CPPFLAGS
-      echo $PYTHON_LIBS
-      echo $PYTHON_EXTRA_LDFLAGS
+      dnl echo $pyexecdir
+      dnl echo $pythondir
+      dnl echo $PYTHON_SITE_PKG
+      dnl echo $PYTHON_SITE_PKG_EXEC
+      dnl echo $npy_cppflags
+      dnl echo $enable_python
+      dnl echo $PYTHON
+      dnl echo $PYTHON_VERSION
+      dnl echo $PYTHON_CPPFLAGS
+      dnl echo $PYTHON_LIBS
+      dnl echo $PYTHON_EXTRA_LDFLAGS
       AC_SUBST(PYTHONDIR,$pythondir)
       AC_SUBST(PKGPYTHONDIR,$pkgpythondir)
       AC_SUBST(PYEXECDIR,$pyexecdir)
@@ -134,7 +155,6 @@ print(inc_dirs);"`
 fi
 
 AM_CONDITIONAL([ENABLE_PYTHON],[test x$VALID_PYTHON = xyes])
-
 
 # --------------------------------------------------------------------------------------- #
 # We will build these flags up as we go, and AC_SUBST them at the bottom.
@@ -346,7 +366,7 @@ AC_SUBST(WARNFLAGS, $WARNFLAGS)
 # ----------------------------------------------------------------------------------------- #
 # ------------------------------ Checks for matlab MEX------------------------------------- #
 
-if test x$with_mex = xyes;
+if test x$enable_mex = xyes;
 then
 
 dnl The compilation check for matlabs libs will fail if we dont try to compile
@@ -409,7 +429,7 @@ AC_CHECK_HEADER([cjson/cJSON.h], [], [AC_MSG_ERROR("Cannot find CJSON.h")])
 AC_CHECK_HEADER([math.h], [], [AC_MSG_ERROR("Cannot find math.h")])
 
 AM_CONDITIONAL([compile_with_mkl], [test x$with_mkl = xyes ])
-AM_CONDITIONAL([comp_with_mex], [test x$with_mex = xyes])
+AM_CONDITIONAL([comp_with_mex], [test x$enable_mex = xyes])
 
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -439,8 +459,8 @@ AC_SUBST(L1CCFLAGS, $l1c_cflags)
 AC_SUBST(MEXCPPFLAGS, $mex_cppflags)
 AC_SUBST(MEXCFLAGS, $mex_cflags)
 AC_SUBST(MEXLDLIBS, $mex_ldlibs)
-AC_SUBST(WITH_MEX, $with_mex)
-
+AC_SUBST(WITH_MEX, $enable_mex)
+AC_SUBST(MEX_PREFIX, $mex_prefix)
 AC_SUBST(WITH_PYTHON, $enable_python)
 
 AC_SUBST(MKLCPPFLAGS, $mkl_cppflags)
@@ -453,10 +473,21 @@ AC_SUBST(WIN32LDFLAGS, $win32_ldflags)
 
 AC_CONFIG_FILES([Makefile  test/Makefile src/Makefile src/vcl/Makefile interfaces/Makefile])
 AC_OUTPUT
-
+echo "  "
+echo "================================================================================================="
+AC_MSG_NOTICE(Configuration summary:)
 AC_MSG_NOTICE(L1C will be built with l1c_cflags = $l1c_cflags)
 AC_MSG_NOTICE(L1C will be built with l1c_cppflags = $l1c_cppflags)
 AC_MSG_NOTICE(Compile with MKL? $with_mkl)
 AC_MSG_NOTICE(Compile with FFTW? $use_fftw3)
-AC_MSG_NOTICE(Using mex linkage $mex_ldlibs)
 AC_MSG_NOTICE(Compile python bindings? $enable_python)
+AC_MSG_NOTICE(Compile mex bindings? $enable_mex)
+
+AC_MSG_NOTICE(libl1c will be installed into: ${prefix})
+if test x$enable_python != xno; then
+   AC_MSG_NOTICE(Python bindings will be installed in: $pyexecdir)
+fi
+if test x$enable_mex != xno; then
+   AC_MSG_NOTICE(Using mex linkage $mex_ldlibs)
+   AC_MSG_NOTICE(Mex bindings will be installed in: $mex_prefix)
+fi

@@ -78,3 +78,4 @@ makefile_pylib
 deprecated/
 __pycache__/
 
+py-compile

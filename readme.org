@@ -107,16 +107,32 @@ export LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib"
  ./configure --with-fftw3 --with-fftw3-threads=omp 
 #+END_SRC
 
-If we also we want to compile with the mex interface, we need to add Matlab's ~lib~ and ~include~ directories. These are in non-stanard locations:
+**** mex bindings
+If we also we want to compile with the mex bindings, we need to add Matlab's ~lib~ and ~include~ directories. These are in non-stanard locations, so they must be added to ~CPPFLAGS~ and ~LDFLAGS~. By default, the mex modules will get installed into ~${prefix}/lib/~, which is probably not what you want. Specify a different location with ~--with-mex-prefix=/path/to/mex~:
 #+BEGIN_SRC bash
 export CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include \
                  -I/usr/local/MATLAB/R2018b/extern/include"
 export LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib  \
                 -L/usr/local/MATLAB/R2018b/bin/glnxa64"
- ./configure --with-fftw3 --with-fftw3-threads=omp --with-mex
+./configure --with-fftw3 --with-fftw3-threads=omp --enable-mex \   --with-mex-prefix=/home/arnold/matlab/l1c
 #+END_SRC
 
 Note that on my system, the command ~mexext~ is located in ~/usr/local/MATLAB/R2018b/bin/~, which is symlinked to ~/usr/local/bin/mexext~, which is on my path. If this is not the case, then in addition to above you can, e.g., ~export MEXEXT=mexa64~. You can get the appropriate value to export by typing ~mexext~ at the matlab command prompt.
+
+**** Python bindings
+To build the python bindings, use ~--enable-python~:
+#+BEGIN_SRC bash
+export CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include"
+export LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib"
+ ./configure --with-fftw3 --with-fftw3-threads=omp --enable-python
+#+END_SRC
+
+Building python bindings is supported for Python 3 (tested with 3.5). The proper compilation and linking flags as well as the installation location are obtained from the python3 on your path (via distutils.sysconfig). On linux, the typical install location will default to something like ~/usr/lib/python3/dist-packages~. These values can be modified via the environmental variables:
+#+BEGIN_SRC bash
+PYTHON_CPPFLAGS        # Should contain Python.h
+PYTHON_LIBS            # e.g., -lpython3.5m
+PYTHON_SITE_PKG_EXEC   # e.g., /home/user/.local/lib/python3.5/site-packages
+#+END_SRC
 
 
 # *** Cautions with MKL
