@@ -14,8 +14,8 @@
 
 
 /* Function declartion */
-static PyObject *l1qc_dct_py(PyObject *self, PyObject *args, PyObject *kw);
-PyMODINIT_FUNC PyInit_l1cPy(void);
+static PyObject *_l1qc_dct(PyObject *self, PyObject *args, PyObject *kw);
+PyMODINIT_FUNC PyInit__l1cPy_module(void);
 
 
 /* Doc-strings */
@@ -26,28 +26,28 @@ static char l1qc_docstring[] =  "Minimize ||x||_1 s.t. ||Ax-b|| < epsilon";
 
 
 /* Specify members of the module */
-static PyMethodDef l1cPy_methods[] = {
-  {"l1qc_dct_py", (PyCFunction)l1qc_dct_py, METH_KEYWORDS|METH_VARARGS, l1qc_docstring},
+static PyMethodDef _l1cPy_module_methods[] = {
+  {"l1qc_dct", (PyCFunction)_l1qc_dct, METH_KEYWORDS|METH_VARARGS, l1qc_docstring},
   {NULL, NULL, 0, NULL}
 };
 
 
 static struct PyModuleDef mod_l1cPy = {
     PyModuleDef_HEAD_INIT,
-    "l1cPy",          /* name of module */
-    module_docstring, /* module documentation */
-    -1,               /* size of per-interpreter state of the module,
-                         or -1 if the module keeps state in global variables. */
-    l1cPy_methods,    /* m_methods */
+    "_l1cPy_module",          /* name of module */
+    module_docstring,         /* module documentation */
+    -1,                       /* size of per-interpreter state of the module,
+                               or -1 if the module keeps state in global variables. */
+    _l1cPy_module_methods,    /* m_methods */
     /* Zero the rest to avoid warnings. */
-    NULL,             /* m_slots*/
-    0,                /* traverseproc, int in object.h*/
-    0,                /* m_clear*/
-    NULL,             /* m_free*/
+    NULL,                     /* m_slots*/
+    0,                        /* traverseproc, int in object.h*/
+    0,                        /* m_clear*/
+    NULL,                     /* m_free*/
 
   };
 
-PyMODINIT_FUNC PyInit_l1cPy(void)
+PyMODINIT_FUNC PyInit__l1cPy_module(void)
 {
   import_array();
   return PyModule_Create(&mod_l1cPy);
@@ -55,7 +55,7 @@ PyMODINIT_FUNC PyInit_l1cPy(void)
 
 
 static PyObject *
-l1qc_dct_py(PyObject *self, PyObject *args, PyObject *kw){
+_l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
   (void)self;
   double *x_ours=NULL, *b=NULL;
 

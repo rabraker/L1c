@@ -66,7 +66,8 @@
 #   Macro released by the Autoconf Archive. When you make and distribute a
 #   modified version of the Autoconf Macro, you may extend this special
 #   exception to the GPL to apply to your modified version as well.
-
+#
+# Modified by R.A. Braker.
 #serial 21
 
 AU_ALIAS([AC_PYTHON_DEVEL], [AX_PYTHON_DEVEL])
@@ -100,8 +101,8 @@ This version of the AC@&t@_PYTHON_DEVEL macro
 doesn't work properly with versions of Python before
 2.1.0. You may need to re-run configure, setting the
 variables PYTHON_CPPFLAGS, PYTHON_LIBS, PYTHON_SITE_PKG,
-PYTHON_EXTRA_LIBS and PYTHON_EXTRA_LDFLAGS by hand.
-Moreover, to disable this check, set PYTHON_NOVERSIONCHECK
+PYTHON_SITE_PKG_EXEC, PYTHON_EXTRA_LIBS and PYTHON_EXTRA_LDFLAGS
+by hand. Moreover, to disable this check, set PYTHON_NOVERSIONCHECK
 to something else than an empty string.
 ])
 		else
@@ -248,16 +249,28 @@ EOD`
 	AC_SUBST([PYTHON_LIBS])
 
 	#
-	# Check for site packages
+	# Check for site packages. This is where pure python modules should go.
 	#
 	AC_MSG_CHECKING([for Python site-packages path])
 	if test -z "$PYTHON_SITE_PKG"; then
 		PYTHON_SITE_PKG=`$PYTHON -c "import distutils.sysconfig; \
-			print (distutils.sysconfig.get_python_lib(0,0));"`
+		   print (distutils.sysconfig.get_python_lib(0,0));"`
 	fi
 	AC_MSG_RESULT([$PYTHON_SITE_PKG])
 	AC_SUBST([PYTHON_SITE_PKG])
-	#
+
+    #
+    # Check for site exec packages. This is where c-extension modules should go
+    #
+    AC_MSG_CHECKING([for Python site-packages extension modules path])
+    if test -z "$PYTHON_SITE_PKG_EXEC"; then
+       PYTHON_SITE_PKG_EXEC=`$PYTHON -c "import distutils.sysconfig; \
+                print (distutils.sysconfig.get_python_lib(1,0));"`
+    fi
+    AC_MSG_RESULT([$PYTHON_SITE_PKG_EXEC])
+    AC_SUBST([PYTHON_SITE_PKG_EXEC])
+
+    #
 	# libraries which must be linked in when embedding
 	#
 	AC_MSG_CHECKING(python extra libraries)
