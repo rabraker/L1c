@@ -87,7 +87,6 @@ AC_ARG_ENABLE([python],[AS_HELP_STRING([--enable-python],
                 [build with python bindings])],
                 [enable_python=$enableval],[enable_python=no])
 
-echo "$libdir"
 if test x$mex_prefix = xno; then
    mex_prefix=$libdir
 else
@@ -136,19 +135,17 @@ for dir in npd.misc_util.get_numpy_include_dirs():
     inc_dirs = ' -I'+dir;
 print(inc_dirs);"`
 
-        echo $pyexecdir
-        echo $pythondir
-        echo $PYTHON_SITE_PKG
-        echo $PYTHON_SITE_PKG_EXEC
-
-
-      echo $npy_cppflags
-      echo $enable_python
-      echo $PYTHON
-      echo $PYTHON_VERSION
-      echo $PYTHON_CPPFLAGS
-      echo $PYTHON_LIBS
-      echo $PYTHON_EXTRA_LDFLAGS
+      dnl echo $pyexecdir
+      dnl echo $pythondir
+      dnl echo $PYTHON_SITE_PKG
+      dnl echo $PYTHON_SITE_PKG_EXEC
+      dnl echo $npy_cppflags
+      dnl echo $enable_python
+      dnl echo $PYTHON
+      dnl echo $PYTHON_VERSION
+      dnl echo $PYTHON_CPPFLAGS
+      dnl echo $PYTHON_LIBS
+      dnl echo $PYTHON_EXTRA_LDFLAGS
       AC_SUBST(PYTHONDIR,$pythondir)
       AC_SUBST(PKGPYTHONDIR,$pkgpythondir)
       AC_SUBST(PYEXECDIR,$pyexecdir)
