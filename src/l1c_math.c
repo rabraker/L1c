@@ -7,9 +7,11 @@
 /**
    Initialize a vector x of length N to alpha in all entries.
 */
-void l1c_init_vec(l1c_int N, double *x, double alpha){
+void l1c_init_vec(l1c_int N, double * restrict x, double alpha){
+  double *x_ = __builtin_assume_aligned(x, DALIGN);
+#pragma omp parallel for
   for (int i=0; i<N; i++){
-    x[i] = alpha;
+    x_[i] = alpha;
   }
 }
 

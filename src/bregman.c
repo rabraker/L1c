@@ -8,6 +8,9 @@
 #include "TV.h"
 #include "l1c_math.h"
 
+#include <sys/time.h>
+#include <unistd.h>
+
 /*
   This file contains implementations from "The Split Bregman Method
   for L1-Regularized Problems," by Tom Goldstein and Stanley Osher.
@@ -337,6 +340,10 @@ void breg_anis_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, doub
 
 int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
                        double mu, double tol, int max_iter, int max_jac_iter){
+  long start, end;
+  struct timeval timecheck;
+  gettimeofday(&timecheck, NULL);
+  start = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;
 
   int iter=0, N=n*m, status=0;
   double lambda = 2*mu, dnrm_err = 0;
@@ -417,6 +424,11 @@ int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
   free_double(dwork1);
   free_double(dwork2);
   free_double(rhs);
+
+  gettimeofday(&timecheck, NULL);
+  end = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;
+  double time_total = ((double)(end -start)) / 1000.0;
+  printf("total c time: %f\n", time_total);
 
   return status;
 }

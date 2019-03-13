@@ -3,10 +3,9 @@ This is a lot easier than writing a custom wrapper.
 
 https://www.scipy-lectures.org/advanced/interfacing_with_c/interfacing_with_c.html
 """
-import matplotlib.pyplot as plt
 import json
-import time
 import numpy as np
+import time
 
 
 def remove_ticks(ax):
@@ -38,20 +37,20 @@ def dct_example(verbose=2, fpath='example_img_data.json', plot=False):
     N = int(np.sqrt(len(x_orig)))
 
     # Call the library wrapper.
-    time0 = time.time()
+    time0 = time.process_time()
     x_recon, p = l1cPy.l1qc_dct(N*N, 1, b, pix_idx, epsilon=0.01,
-                                   l1_tol=0, cgmaxiter=200, verbose=verbose)
+                                l1_tol=0, cgmaxiter=200, verbose=verbose)
 
-    # x_recon, lb_result = l1qc_dct(x_orig, b, pix_idx, opts, lib_dir=lib_dir)
-    time_total = time.time() - time0
-
+    time_total = time.process_time() - time0
     print("Total python time: %f" % time_total)
-    # Turn the vectors back into matrices so we can show them as an image.
 
-    X_orig_mat = np.reshape(x_orig, (N, N))
-    X_recon_mat = np.reshape(x_recon, (N, N))
-    X_masked_mat = np.reshape(x_masked, (N, N))
     if plot:
+        import matplotlib.pyplot as plt
+        # Turn the vectors back into matrices so we can show them as an image.
+        X_orig_mat = np.reshape(x_orig, (N, N))
+        X_recon_mat = np.reshape(x_recon, (N, N))
+        X_masked_mat = np.reshape(x_masked, (N, N))
+
         plt.figure(num=1, figsize=(12, 4))
 
         ax1 = plt.subplot(131)
@@ -73,7 +72,6 @@ def dct_example(verbose=2, fpath='example_img_data.json', plot=False):
         plt.show()
 
 
-
 def breg_anisTV_example(fpath='example_img_data.json', plot=False):
     import _l1cPy_module as l1cPy
     with open(fpath) as json_data:
@@ -82,19 +80,23 @@ def breg_anisTV_example(fpath='example_img_data.json', plot=False):
     x_orig = np.array(d['x_orig'], ndmin=1)
     n = int(np.sqrt(len(x_orig)))
     m = n
-    # ipdb.set_trace()
+
     np.random.seed(0)
     x_noisy = x_orig + np.random.rand(n*m)
     X_noisy_mat = np.reshape(x_noisy, (n, m))
 
+    start = time.process_time()
     xclean = l1cPy.breg_anistropic_TV(X_noisy_mat,
-                                      max_iter=100, max_jac_iter=3,
+                                      max_iter=100, max_jac_iter=1,
                                       tol=0.001, mu=5)
-
-    X_noisy_mat = np.reshape(x_noisy, (n, m))
-    Xclean_mat = np.reshape(xclean, (n, m), order='C')
+    end = time.process_time()
+    print("Python time = %f" % (end - start))
 
     if plot:
+        import matplotlib.pyplot as plt
+        X_noisy_mat = np.reshape(x_noisy, (n, m))
+        Xclean_mat = np.reshape(xclean, (n, m), order='C')
+
         plt.figure(num=1, figsize=(8, 4))
 
         ax1 = plt.subplot(121)
@@ -129,6 +131,8 @@ if __name__ == '__main__':
     fpath = args.fpath
     verbose = args.verbose
 
+    print("plot = %s" % plot)
+    print("verbose = %d" % verbose)
     interface_dir = os.getenv("L1C_INTERFACE_DIR")
     src_lib_dir = os.getenv("L1C_SRC_LIB_DIR")
 
@@ -139,5 +143,5 @@ if __name__ == '__main__':
         os.environ['PATH'] = src_lib_dir+";" + os.environ['PATH']
         lib_dir = src_lib_dir
 
-    dct_example(verbose=verbose, fpath=fpath, plot=plot)
+    # dct_example(verbose=verbose, fpath=fpath, plot=plot)
     breg_anisTV_example(plot=plot, fpath=fpath)
