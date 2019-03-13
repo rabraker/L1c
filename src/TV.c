@@ -51,7 +51,7 @@ void l1c_Dx(l1c_int n, l1c_int m, double * restrict X, double * restrict Dx){
   double *Dx_ = __builtin_assume_aligned(Dx, DALIGN);
 
   int row=0, col=0;
-#pragma omp parallel for private(row, col)
+#pragma omp parallel for private(col)
   for (row=0; row<n; row++){
     for (col=row*m; col<(row+1)*m-1; col++){
       Dx_[col] = X_[col+1] - X_[col];
@@ -83,7 +83,7 @@ void l1c_DxT(l1c_int n, l1c_int m, double alpha,
   double *dxt_ = __builtin_assume_aligned(dxt, DALIGN);
 
   int row, col;
-#pragma omp parallel for private(row, col)
+#pragma omp parallel for private(col)
   for (row=0; row<n; row++){
     dxt_[row*m] = -alpha * A_[row*m];
     for (col=row*m+1; col<(row+1)*m-1; col++){
@@ -117,7 +117,7 @@ void l1c_DxTDx(l1c_int n, l1c_int m, double alpha,
   double *dxtdx_ = __builtin_assume_aligned(dxtdx, DALIGN);
   int row, col;
 
-#pragma omp parallel for
+#pragma omp parallel for private(col)
   for (row=0; row<n; row++){
     dxtdx_[row*m] = alpha * (A_[row*m] -A_[row*m+1]);
     for (col=row*m+1; col<(row+1)*m-1; col++){
@@ -148,7 +148,7 @@ void l1c_Dy(l1c_int n, l1c_int m, double * restrict X, double * restrict Dy){
   double *Dy_ = __builtin_assume_aligned(Dy, DALIGN);
   int row=0, col=0;
 
-#pragma omp parallel for
+#pragma omp parallel for private(col)
   for (row=0; row<n-1; row++){
     for(col = row * m; col < (row+1) * m; col++){
       Dy_[col] = X_[col+m] - X_[col];
