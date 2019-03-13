@@ -341,7 +341,7 @@ int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
   int iter=0, N=n*m, status=0;
   double lambda = 2*mu, dnrm_err = 0;
   double *uk_1=NULL, *d_x=NULL, *d_y = NULL, *b_x=NULL, *b_y=NULL;
-  double *dwork1=NULL, *dwork2=NULL, *rhs=NULL, *D=NULL;
+  double *dwork1=NULL, *dwork2=NULL, *rhs=NULL;
   double *Dxu_b=NULL, *Dyu_b=NULL;
 
   uk_1 = malloc_double(N);
@@ -356,15 +356,19 @@ int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
   Dxu_b = dwork1;
   Dyu_b = dwork2;
   rhs = malloc_double(N);
-  D = malloc_double(N);
 
+  /* Must initialize these. */
+  l1c_init_vec(N, uk_1, 0);
+  l1c_init_vec(N, d_x, 0);
+  l1c_init_vec(N, d_y, 0);
+  l1c_init_vec(N, b_x, 0);
+  l1c_init_vec(N, b_y, 0);
 
-  if (!uk_1 || !d_x || !d_y || !b_x || !b_y ||!dwork1 || !dwork2||!rhs ||!D){
-    status = 1;
+  if (!uk_1 || !d_x || !d_y || !b_x || !b_y ||!dwork1 || !dwork2||!rhs){
+    status = L1C_OUT_OF_MEMORY;
     goto exit;
   }
 
-  hess_inv_diag(n, m, mu, lambda, D);
   cblas_dcopy(N, f, 1, uk, 1);
 
   dnrm_err = INFINITY;
@@ -373,9 +377,7 @@ int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
 
     breg_anis_rhs(n, m, f, d_x, b_x, d_y, b_y, rhs, mu, lambda, dwork1, dwork2);
 
-
     for (int k=1; k<=max_jac_iter; k++){
-      // breg_anis_jacobi(n, m, uk, dwork3, rhs, D, lambda);
       breg_anis_guass_seidel(n, m, uk, rhs, mu, lambda);
       }
     dnrm_err = l1c_norm2_err(N, uk, uk_1);
@@ -415,6 +417,6 @@ int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
   free_double(dwork1);
   free_double(dwork2);
   free_double(rhs);
-  free_double(D);
+
   return status;
 }

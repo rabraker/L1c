@@ -66,7 +66,6 @@ static void setup(void){
     fprintf(stderr, "Error loading data in TV_suite\n");
     ck_abort();
   }
-  free(BD->fpath);
 
   setup_status +=extract_json_double_array(td_json, "x", &BD->x, &BD->NM);
   setup_status +=extract_json_double_array(td_json, "y", &BD->y, &tmp);
@@ -113,7 +112,8 @@ static void teardown(void){
   free_double(BD->b);
   free_double(BD->Hsolveb);
   free_double(BD->Hessx);
-
+  free_double(BD->H_diag_exp);
+  free(BD->fpath);
   free(BD);
 }
 
@@ -124,15 +124,22 @@ START_TEST(test_breg_anis_jacobi){
   double *uk = malloc_double(BD->NM);
   double *dwork = malloc_double(BD->NM);
   double *D =  malloc_double(BD->NM);
+  int i = 0;
 
+  // Must initialize uk, becuase it used recursively in breg_anis_jacobi.
+  for (i=0; i<BD->NM; i++){
+    uk[i] = BD->b[i];
+  }
   bfuncs.hess_inv_diag(BD->n, BD->m, BD->mu, BD->lam, D);
 
-  for (int i=0; i<(BD->NM); i++){
+  for (i=0; i<(BD->NM); i++){
     bfuncs.breg_anis_jacobi(BD->n, BD->m, uk, dwork, BD->b, D, BD->lam);
   }
 
   ck_assert_double_array_eq_tol(BD->NM, BD->Hsolveb, uk, TOL_DOUBLE);
   free_double(uk);
+  free_double(dwork);
+  free_double(D);
 }
 END_TEST
 
@@ -268,13 +275,55 @@ START_TEST(test_breg_mxpy_z){
 END_TEST
 
 
+/*
+  This test doesnt do much (not sure what to check), but
+  is here so we can run valgrind on the function.
+ */
+START_TEST(test_breg_anis_TV){
+  char *fpath;
+  cJSON *img_json;
+  int setup_status=0;
+  int n=0, m=0, NM=0;
+  double *uk=NULL, *img_vec=NULL;
+  double mu=5, tol=0.001;
+  int max_iter=100, max_jac_iter=1, status=0;
+
+  fpath = fullfile(test_data_dir, "bregman_img.json");
+
+  if (load_file_to_json(fpath, &img_json)){
+    fprintf(stderr, "Error loading data in TV_suite:test_breg_anis.\n");
+    ck_abort();
+  }
+  status +=extract_json_double_array(img_json, "img_vec", &img_vec, &NM);
+  status +=extract_json_int(img_json, "n", &n);
+  status +=extract_json_int(img_json, "m", &m);
+
+  uk = malloc_double(n*m);
+  if (setup_status || !uk){
+    fprintf(stderr, "Error allocating memory in test_breg_ans_TV\n");
+    ck_abort();
+  }
+  for(int i=0; i<n*m; i++){
+    uk[i]=0;
+  }
+  int ret = breg_anistropic_TV(n, m, uk, img_vec, mu, tol, max_iter, max_jac_iter);
+
+  ck_assert_int_eq(ret, 0);
+
+  free_double(uk);
+  free_double(img_vec);
+  free(fpath);
+  cJSON_Delete(img_json);
+}
+END_TEST
+
 /* Add all the test cases to our suite
  */
 Suite *bregman_suite(void)
 {
   Suite *s;
 
-  TCase *tc_breg;
+  TCase *tc_breg, *tc_breg_anisTV;
   s = suite_create("bregman");
   tc_breg = tcase_create("breg");
   tcase_add_checked_fixture(tc_breg, setup, teardown);
@@ -287,6 +336,9 @@ Suite *bregman_suite(void)
   tcase_add_test(tc_breg, test_breg_anis_jacobi);
   suite_add_tcase(s, tc_breg);
 
+  tc_breg_anisTV= tcase_create("breg_anisTV");
+  tcase_add_test(tc_breg_anisTV, test_breg_anis_TV);
+  suite_add_tcase(s, tc_breg_anisTV);
   return s;
 
 }

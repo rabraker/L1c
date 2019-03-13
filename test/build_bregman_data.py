@@ -127,6 +127,24 @@ def build_data(fname):
     TDU.save_json(data, fname)
 
 
+def build_breg_img_data(fname):
+    import build_CS20NG_example_data as CS20
+    n = 256
+    m = n
+    img = CS20.make_CS20NG(n)
+
+    img_vec = img.flatten() + np.random.rand(n*m)
+
+    data = {'img_vec': img_vec,
+            'n': n,
+            'm': m,
+            'mu': 5}
+
+    data = TDU.jsonify(data)
+
+    TDU.save_json(data, fname)
+
+
 if __name__ == '__main__':
     import os
 
@@ -139,3 +157,5 @@ if __name__ == '__main__':
     fname = data_dir+"/bregman.json"
 
     build_data(fname)
+
+    build_breg_img_data(data_dir+"/bregman_img.json")
