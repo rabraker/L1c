@@ -1,5 +1,8 @@
 #include "config.h"
 #include "l1c_common.h"
+#include "l1c_memory.h"
+#include "l1c.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -8,9 +11,6 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 #include <numpy/ndarraytypes.h>
-
-#include "l1c_memory.h"
-#include "l1c.h"
 
 
 /* Function declartion */
@@ -265,14 +265,15 @@ _breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw){
     goto fail2;
   }
   /* Build the output tuple */
-  npy_intp dims[] = {n*m};
-  uk_out_npA = PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, uk);
+  npy_intp dims[] = {n, m};
+  uk_out_npA = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, uk);
 
   /* Clean up. */
   Py_DECREF(f_npA);
   free_double(f_ours);
 
   ret_val = Py_BuildValue("O", uk_out_npA);
+
   return ret_val;
 
   /* If we failed, clean up more things. Note the fall through. */

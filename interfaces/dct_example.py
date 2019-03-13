@@ -86,7 +86,7 @@ def breg_anisTV_example(fpath='example_img_data.json', plot=False):
     X_noisy_mat = np.reshape(x_noisy, (n, m))
 
     start = time.process_time()
-    xclean = l1cPy.breg_anistropic_TV(X_noisy_mat,
+    Xclean_mat = l1cPy.breg_anistropic_TV(X_noisy_mat,
                                       max_iter=100, max_jac_iter=1,
                                       tol=0.001, mu=5)
     end = time.process_time()
@@ -94,8 +94,6 @@ def breg_anisTV_example(fpath='example_img_data.json', plot=False):
 
     if plot:
         import matplotlib.pyplot as plt
-        X_noisy_mat = np.reshape(x_noisy, (n, m))
-        Xclean_mat = np.reshape(xclean, (n, m), order='C')
 
         plt.figure(num=1, figsize=(8, 4))
 
