@@ -15,19 +15,38 @@
 
 /* Function declartion */
 static PyObject *_l1qc_dct(PyObject *self, PyObject *args, PyObject *kw);
+static PyObject *_breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw);
+
 PyMODINIT_FUNC PyInit__l1cPy_module(void);
 
 
 /* Doc-strings */
 static char module_docstring[] =
   "This module provides an interface for solving a l1 optimization problems in c.";
-static char l1qc_docstring[] =  "Minimize ||x||_1 s.t. ||Ax-b|| < epsilon";
-
+static char l1qc_dct_docstring[] =  "Minimize ||x||_1 s.t. ||Ax-b|| < epsilon";
+static char
+breg_anistropic_TV_docstring[] = "Given an n by m image f, solves the anistropic TV denoising problem \n"
+  "f_denoised = breg_anistropic_TV(f, mu=10, tol=0.001, max_iter=1000, max_jac_iter=1)\n"
+  " \n"
+  "min ||\\nabla_x u||_1 + ||\\nabla_y||_1 + 0.5\\mu ||u - f||_2 \n"
+   "u \n"
+  " \n"
+  "using the Bregman Splitting. This algorithm is developed in the paper \n"
+  "\"The Split Bregman Method for L1-Regularized Problems,\" by Tom Goldstein and Stanley Osher. ";
 
 
 /* Specify members of the module */
 static PyMethodDef _l1cPy_module_methods[] = {
-  {"l1qc_dct", (PyCFunction)_l1qc_dct, METH_KEYWORDS|METH_VARARGS, l1qc_docstring},
+  {"l1qc_dct",
+   (PyCFunction)_l1qc_dct,
+   METH_KEYWORDS|METH_VARARGS,
+   l1qc_dct_docstring},
+
+  {"breg_anistropic_TV",
+   (PyCFunction)_breg_anistropic_TV,
+   METH_KEYWORDS|METH_VARARGS,
+   breg_anistropic_TV_docstring},
+
   {NULL, NULL, 0, NULL}
 };
 
@@ -171,3 +190,100 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
 
 }
 
+
+
+static PyObject *
+_breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw){
+  (void)self;
+
+  PyObject *f_obj=NULL, *uk_out_npA=NULL;
+  PyObject *ret_val=NULL;
+  PyArrayObject *f_npA=NULL;
+  double *uk=NULL, *f=NULL, *f_ours=NULL;
+  int i=0, status=0, n=0, m=0;
+
+  double tol=0.001, mu=10;
+  l1c_int max_iter = 1000;
+  l1c_int max_jac_iter = 1;
+
+  char *keywords[] = {"",
+                      "mu", "tol",
+                      "max_iter", "max_jac_iter",
+                      NULL};
+
+  /* Parse the input tuple O=object, d=double, i=int*/
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|ddii", keywords,
+                                   &f_obj,
+                                   &mu, &tol, &max_iter,&max_jac_iter)){
+    fprintf(stderr, "Parsing input arguments failed.\n");
+    return NULL;
+  }
+  /* Interpret the input objects as numpy arrays.
+     N.B: NPY_ARRAY_IN_ARRAY = PY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_ALIGNED
+   */
+  f_npA =(PyArrayObject*)PyArray_FROM_OTF(f_obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+
+  /* If that didn't work, throw an exception. */
+  if ( f_npA == NULL){
+    PyErr_SetString(PyExc_RuntimeError, "Failed to initialize arrays");
+    goto fail1;
+  }
+
+  /*--------------- Check number of Dimensions ----------------- */
+  if (PyArray_NDIM(f_npA) != 2){
+    PyErr_SetString(PyExc_IndexError, "f must have exactly 2 dimensions.");
+    goto fail1;
+  }
+
+  /*--------------- Check Sizes ----------------- */
+  n = PyArray_DIM(f_npA, 0);
+  m = PyArray_DIM(f_npA, 1);
+  if ( n <3 || m <3 ){
+    PyErr_SetString(PyExc_ValueError, "Must have both dimensions of f greater than 2.");
+    goto fail1;
+  }
+
+  /* Get pointers to the data as C-types. */
+  f  = (double*)PyArray_DATA(f_npA);
+
+  /* Allocate memory for M*xk=f */
+  f_ours = malloc_double(n*m);
+  uk = malloc_double(n*m);
+  if (!f_ours || !uk){
+    fprintf(stderr, "Memory Allocation failure\n");
+    PyErr_SetString(PyExc_MemoryError, "Failed to allocation memory");
+    goto fail1;
+  }
+
+  for(i=0; i<n*m; i++){
+    f_ours[i] = f[i];
+  }
+
+  status = breg_anistropic_TV(n, m, uk, f_ours, mu, tol, max_iter, max_jac_iter);
+  if (status){
+    PyErr_SetString(PyExc_MemoryError, "Failed to allocation memory");
+    goto fail2;
+  }
+  /* Build the output tuple */
+  npy_intp dims[] = {n*m};
+  uk_out_npA = PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, uk);
+
+  /* Clean up. */
+  Py_DECREF(f_npA);
+  free_double(f_ours);
+
+  ret_val = Py_BuildValue("O", uk_out_npA);
+  return ret_val;
+
+  /* If we failed, clean up more things. Note the fall through. */
+ fail2:
+  printf("INSIDE fail2\n");
+  free_double(f_ours);
+  free_double(uk);
+ fail1:
+  printf("INSIDE fail1\n");
+  Py_XDECREF(f_npA);
+
+  return NULL;
+
+}

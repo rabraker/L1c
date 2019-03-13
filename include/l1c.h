@@ -30,4 +30,6 @@ typedef struct L1qcDctOpts{
 int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_idx,
               L1qcDctOpts opts, LBResult *lb_res);
 
+int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
+                       double mu, double tol, int max_iter, int max_jac_iter);
 #endif

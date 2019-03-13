@@ -22,7 +22,7 @@ def remove_ticks(ax):
 
 
 def dct_example(verbose=2, fpath='example_img_data.json', plot=False):
-    import l1cPy
+    import _l1cPy_module as l1cPy
 
     with open(fpath) as json_data:
         d = json.load(json_data)
@@ -73,6 +73,44 @@ def dct_example(verbose=2, fpath='example_img_data.json', plot=False):
         plt.show()
 
 
+
+def breg_anisTV_example(fpath='example_img_data.json', plot=False):
+    import _l1cPy_module as l1cPy
+    with open(fpath) as json_data:
+        d = json.load(json_data)
+
+    x_orig = np.array(d['x_orig'], ndmin=1)
+    n = int(np.sqrt(len(x_orig)))
+    m = n
+    # ipdb.set_trace()
+    np.random.seed(0)
+    x_noisy = x_orig + np.random.rand(n*m)
+    X_noisy_mat = np.reshape(x_noisy, (n, m))
+
+    xclean = l1cPy.breg_anistropic_TV(X_noisy_mat,
+                                      max_iter=100, max_jac_iter=3,
+                                      tol=0.001, mu=5)
+
+    X_noisy_mat = np.reshape(x_noisy, (n, m))
+    Xclean_mat = np.reshape(xclean, (n, m), order='C')
+
+    if plot:
+        plt.figure(num=1, figsize=(8, 4))
+
+        ax1 = plt.subplot(121)
+        remove_ticks(ax1)
+        ax1.set_title("Original Image")
+        ax1.imshow(X_noisy_mat, cmap='gray')
+        remove_ticks(ax1)
+
+        ax2 = plt.subplot(122)
+        ax2.imshow(Xclean_mat, cmap='gray')
+        ax2.set_title("Anistropic TV denoised")
+        remove_ticks(ax2)
+
+        plt.show()
+
+
 if __name__ == '__main__':
     import sys
     import os
@@ -102,3 +140,4 @@ if __name__ == '__main__':
         lib_dir = src_lib_dir
 
     dct_example(verbose=verbose, fpath=fpath, plot=plot)
+    breg_anisTV_example(plot=plot, fpath=fpath)
