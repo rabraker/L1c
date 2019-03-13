@@ -2,7 +2,6 @@
 import numpy as np
 import numpy.testing as npt
 import L1cTestDataUtils as TDU
-import ipdb
 
 
 def Dy_as_diff(x_vec, n, m):

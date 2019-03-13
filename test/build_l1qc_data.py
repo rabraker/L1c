@@ -5,24 +5,7 @@ import numpy as np
 from scipy.fftpack import dct
 import json
 import codecs
-
-
-def jsonify(data):
-
-    for key, value in data.items():
-        if type(value) is np.ndarray:
-            if len(value.flatten()) == 1:
-                data[key] = value.flatten()[0]
-            else:
-                data[key] = value.flatten().tolist()
-
-    return data
-
-
-def save_json(data, file_path):
-
-    json.dump(data, codecs.open(file_path, 'w'),
-              separators=(',', ':'), sort_keys=True, indent=4)
+import L1cTestDataUtils as TDU
 
 
 def build_dct_mat(N):
@@ -248,6 +231,6 @@ l1qc_data = {'N': N,
              'du': dxdu[N:]}
 
 
-l1qc_data_json = jsonify(l1qc_data)
+l1qc_data_json = TDU.jsonify(l1qc_data)
 
-save_json(l1qc_data, l1qc_data_path)
+TDU.save_json(l1qc_data, l1qc_data_path)

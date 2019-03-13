@@ -5,11 +5,7 @@ import codecs
 import os
 from numpy.random import seed, rand
 from scipy.fftpack import dct
-
-
-def save_json(data, fname):
-    json.dump(data, codecs.open(fname, 'w', encoding='utf-8'),
-              separators=(',', ':'), sort_keys=True, indent=4)
+import L1cTestDataUtils as TDU
 
 
 def Adct_factory(pix_idx):
@@ -57,7 +53,7 @@ def build_dct_rand_test_data(fname, pix_idx, Nx):
             'MtEty': MtEty.tolist(),
             'MtEt_EMx': MtEt_EMx.tolist()}
 
-    save_json(data, fname)
+    TDU.save_json(data, fname)
 
 
 srcdir = os.getenv("srcdir")

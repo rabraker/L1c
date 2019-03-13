@@ -3,7 +3,6 @@ import numpy as np
 import numpy.testing as npt
 import L1cTestDataUtils as TDU
 import build_TV_data as TV
-import ipdb
 
 
 def shrink1(x, gamma):
@@ -38,7 +37,6 @@ def breg_hess_eval(n, m, mu, lam, x):
     dxx = DxMat.T.dot(DxMat).dot(x)
     dyy = DyMat.T.dot(DyMat).dot(x)
 
-    # ipdb.set_trace()
     return mu*x + lam*(dxx + dyy)
 
 

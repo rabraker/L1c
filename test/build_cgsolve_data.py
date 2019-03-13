@@ -3,6 +3,7 @@ import os
 import numpy as np
 import json
 import codecs
+import L1cTestDataUtils as TDU
 
 from numpy.random import seed
 def build_cgsolve_test_data(test_data_root):
@@ -55,8 +56,7 @@ def build_cgsolve_test_data(test_data_root):
             'tol': tol,
             'max_iter': maxiter}
 
-    json.dump(data, codecs.open(cg_test_data_small_path, 'w', encoding='utf-8'),
-              separators=(',', ':'), sort_keys=True, indent=4)
+    TDU.save_json(data, cg_test_data_small_path)
 
 
 def ax_sym_data(test_data_root):
@@ -83,8 +83,7 @@ def ax_sym_data(test_data_root):
             'y': y.tolist(),
             'x': x.tolist()}
 
-    json.dump(data, codecs.open(ax_sym_path, 'w', encoding='utf-8'),
-              separators=(',', ':'), sort_keys=True, indent=4)
+    TDU.save_json(data, ax_sym_path)
 
 
 srcdir = os.getenv("srcdir")
