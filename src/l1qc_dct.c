@@ -1,5 +1,5 @@
 #include "config.h"
-
+#include "l1c_timing.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -8,8 +8,6 @@
 
 #include "l1qc_newton.h"
 #include "omp.h"
-#include <sys/time.h>
-#include <unistd.h>
 
 /* dct_mkl.h defines the Ax and Aty operations.
    To adapt this file to a different set of transformations,
@@ -104,12 +102,11 @@ typedef struct L1qcDctOpts{
 
 int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_idx,
              L1qcDctOpts opts, LBResult *lb_res){
+  struct timeval tv_start, tv_end;
+  tv_start = l1c_get_time();
+
   int status = 0;
   int Ntot = Nrow*Ncol;
-  long start, end;
-  struct timeval timecheck;
-  gettimeofday(&timecheck, NULL);
-  start = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;
 
   XFormPack xforms;
 
@@ -173,10 +170,9 @@ int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_i
   cblas_dcopy(Ntot, eta_0, 1, x_out, 1);
 
 
-  gettimeofday(&timecheck, NULL);
-  end = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec/1000;
+  tv_end = l1c_get_time();
 
-  double time_total = ((double)(end -start)) / 1000.0;
+  double time_total = l1c_get_time_diff(tv_start, tv_end);
 
   printf("total c time: %f\n", time_total);
   printf("total-newton-iter: %d\n", lb_res->total_newton_iter);
