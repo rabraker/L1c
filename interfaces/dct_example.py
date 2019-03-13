@@ -143,5 +143,5 @@ if __name__ == '__main__':
         os.environ['PATH'] = src_lib_dir+";" + os.environ['PATH']
         lib_dir = src_lib_dir
 
-    # dct_example(verbose=verbose, fpath=fpath, plot=plot)
+    dct_example(verbose=verbose, fpath=fpath, plot=plot)
     breg_anisTV_example(plot=plot, fpath=fpath)
