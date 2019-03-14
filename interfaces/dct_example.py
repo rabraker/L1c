@@ -37,12 +37,12 @@ def dct_example(verbose=2, fpath='example_img_data.json', plot=False):
     N = int(np.sqrt(len(x_orig)))
 
     # Call the library wrapper.
-    time0 = time.process_time()
+    time0 = time.perf_counter()
     x_recon, p = l1cPy.l1qc_dct(N*N, 1, b, pix_idx, epsilon=0.01,
                                 l1_tol=0, cgmaxiter=200, verbose=verbose)
 
-    time_total = time.process_time() - time0
-    print("Total python time: %f" % time_total)
+    time_total = time.perf_counter() - time0
+    print("(l1qc_dct) Total python time: %f" % time_total)
 
     if plot:
         import matplotlib.pyplot as plt
@@ -85,12 +85,12 @@ def breg_anisTV_example(fpath='example_img_data.json', plot=False):
     x_noisy = x_orig + np.random.rand(n*m)
     X_noisy_mat = np.reshape(x_noisy, (n, m))
 
-    start = time.process_time()
+    start = time.perf_counter()
     Xclean_mat = l1cPy.breg_anistropic_TV(X_noisy_mat,
-                                      max_iter=100, max_jac_iter=1,
-                                      tol=0.001, mu=5)
-    end = time.process_time()
-    print("Python time = %f" % (end - start))
+                                          max_iter=100, max_jac_iter=1,
+                                          tol=0.001, mu=5)
+    end = time.perf_counter()
+    print("(breg_anistropic_TV) Python time = %f" % (end - start))
 
     if plot:
         import matplotlib.pyplot as plt

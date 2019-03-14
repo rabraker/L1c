@@ -386,7 +386,7 @@ int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
       breg_anis_guass_seidel(n, m, uk, rhs, mu, lambda);
       }
     dnrm_err = l1c_norm2_err(N, uk, uk_1);
-    printf("in-iter: %d, lambda: %f, dnrm_err: %f\n", iter, lambda, dnrm_err);
+    // printf("in-iter: %d, lambda: %f, dnrm_err: %f\n", iter, lambda, dnrm_err);
 
     /* Compute Dyu_b = Del_y*u + b. */
     l1c_Dx(n, m, uk, Dxu_b);
