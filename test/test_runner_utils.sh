@@ -34,11 +34,13 @@ function ml_cmd() {
         arg_str="${arg_str} ${arg},"
     done
     arg_str=$(echo $arg_str|sed -e 's/,$//')  #remove trailing comma
-
+    # It is important that the interfaces get added first, and lib_dir last,
+    # so that matlab will find the mex function when it searches lib_dir first,
+    # not the help file in interfaces (only relevant for VPATH builds).
     cmd="try; \
-          addpath('${lib_dir}');
-          addpath('${matlab_script_dir}');
           addpath('${ABS_TOP_SRCDIR}/interfaces/');
+          addpath('${matlab_script_dir}');
+          addpath('${lib_dir}');
           $fcn($arg_str); \
           exit(0);\
      catch ME;\

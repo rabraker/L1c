@@ -9,7 +9,7 @@ function [tm_mex, x_est, LBRes] = test_l1qc_dct_mex(fpath, verbose)
   else
     pix_idx = dat.pix_idx+1;
   end
-  [x_est, LBRes]= l1qc_dct_mex(dat.N, 1, dat.b, pix_idx, opts);
+  [x_est, LBRes]= l1qc_dct(dat.N, 1, dat.b, pix_idx, opts);
   tm_mex = toc;
   fprintf('mex file time: %.4f\n', tm_mex);
 

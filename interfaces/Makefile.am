@@ -30,6 +30,7 @@ l1qc_dct_c_LDFLAGS = $(LDFLAGS)
 $(info "prefix= $(prefix)")
 $(info "pyexecdir= $(pyexecdir)")
 $(info "pyexecdir= $(PYEXECDIR)")
+
 if comp_with_mex
 # LIBEXT
 # NOTES:
@@ -41,20 +42,30 @@ if comp_with_mex
 #                    matlabs required extension.
 
 mexdir = $(MEX_PREFIX)
-mex_LTLIBRARIES = l1qc_dct_mex.la
+mex_LTLIBRARIES = l1qc_dct.la \
+				  breg_anistropic_TV.la
 
-l1qc_dct_mex_la_SOURCES  = l1qc_dct_mex.c
-l1qc_dct_mex_la_LDFLAGS  = -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
-
-l1qc_dct_mex_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include  \
+l1qc_dct_la_SOURCES  = l1qc_dct_mex.c
+l1qc_dct_la_LDFLAGS  = -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
+l1qc_dct_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include  \
 								$(L1CCPPFLAGS) $(MEXCPPFLAGS)
-l1qc_dct_mex_la_CFLAGS   =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC \
+l1qc_dct_la_CFLAGS   =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC \
 								-std=c11 $(WARNFLAGS)
-
-l1qc_dct_mex_la_LIBADD   =	../src/libl1c.la \
+l1qc_dct_la_LIBADD   =	../src/libl1c.la \
 							$(MEXLDLIBS)
 
-mex_DATA = l1qc_dct_opts.m l1qc_dct.m
+
+breg_anistropic_TV_la_SOURCES  = breg_anistropic_TV_mex.c
+breg_anistropic_TV_la_LDFLAGS  = -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
+breg_anistropic_TV_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include  \
+									$(L1CCPPFLAGS) $(MEXCPPFLAGS)
+breg_anistropic_TV_la_CFLAGS   =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC \
+									-std=c11 $(WARNFLAGS)
+breg_anistropic_TV_la_LIBADD   = ../src/libl1c.la \
+									$(MEXLDLIBS)
+
+
+mex_DATA = l1qc_dct_opts.m l1qc_dct.m breg_anistropic_TV.m
 endif
 
 
