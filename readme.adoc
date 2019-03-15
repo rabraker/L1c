@@ -1,0 +1,274 @@
+= l1C: Compressed Sensing in c =
+R.A. Braker
+
+
+
+
+== Introduction ==
+The goal of this project is to provide a c library that is useful for the application of compressed sensing and related L1-regularized problems. To date, lots of research has been produced that develops methods to efficiently solve various formulations of the compressed sensing problem. To their great credit, many of those reasearchers have released code along with their publications. See, for example, https://statweb.stanford.edu/\~candes/l1magic[l1-magic], http://statweb.stanford.edu/\~candes/nesta[NESTA], https://sparselab.stanford.edu[SparseLab], and https://www.ece.rice.edu/~tag7/Tom_Goldstein/Split_Bregman.html[Split Bregman]. So, a good question is, why re-do it in c?
+
+* Much of the published code is written in Matlab. This means if you want to use the code in a Python or R or Julia or a c/c++ project, you must translate the Matlab code to your language. By contrast, c is something like the langua franca of computing. It is relatively straigtforward to interface c code with most languages, including Matlab.
+
+* CS optimizations are computationally intensive. Thus, for those who wish to *apply* CS to real world problems, it is beneficial to write optimized implementations of those optimizations and c fits that requirement (Fortran might be better, but I have forgotten it).
+
+* c is fun (probably the main reason).
+
+
+
+=== Features ===
+Present capabilites and features include
+
+* Solving the basis pursuit denoising problem
++
+latexmath:[\min_{x} ||x||_{1}  \quad \text{s.t.} \quad ||Ax -b||_{2} < \epsilon,]
++
+using a log-barrier algorithm, which is based on the implementation in https://statweb.stanford.edu/\~candes/l1magic/[l1-magic],  <<sec:l1qc_mod, with a few modifications>>. 
+
+* Solving the Anistropic Total Variation (TV) denoising using  https://www.ece.rice.edu/~tag7/Tom_Goldstein/Split_Bregman.html[Bregman Splitting]. Given a noisy latexmath:[n] by latexmath:[m] image latexmath:[f], this solves the problem
++
+latexmath:[\min_{u} ||\nabla_{x}||_{1} + ||\nabla_{y}||_{1} + ||u-f||_{2}. ]
+
+* 1D and 2D discrete cosine transforms (using FFTW).
+
+* Python and Matlab bindings for the high-level optimization routines.
+
+== Building ==
+This project uses the GNU Autotools build system. Considering that we are still at "version 0.0", there is not a release tarball yet, so you will need Autotools installed. I typically test on Debian Linux. I have also succesfully built the project on Windows 7 with MinGW64.
+
+The four steps are 
+[source,bash]
+----
+git clone git@ggitlab.com:rabraker/L1c.git L1c && cd L1c
+./bootsrap                   # requires autotools
+./configure [--with-fftw3 [--with-fftw3-threads=[ARG]]] [--with-mkl] [--with-mex]
+make && make install
+----
+
+Running `./configure --help` will give you a list of options. Depending on where the dependencies were installed, it may be necessary to augment the `./configure` step with the right environment variables. 
+
+
+=== Dependencies ===
+Running the full build requires the following dependencies
+
+* https://github.com/xianyi/OpenBLAS[OpenBlas] or http://math-atlas.sourceforge.net/[ATLAS]
+* http://fftw.org/[FFTW3]
+* https://github.com/libcheck/check[libcheck] (used for unit tests)
+* https://github.com/DaveGamble/cJSON[cJSON] (used for unit tests and example program). 
+* GNU OpenMP (`libgomp`) 
+* Python3, Numpy, and Scipy.
+* Valgrind (optional) to run the memory leak tests.
+* Two test cases still rely on matlab to produce the required data. If matlab is unavailible, you can run the tests anyway but 
+`test_line_search` and `test_l1qc_newton_1iter` will fail.
+Details and suggestions follow. Or run `./configure --help` if this is old hat to you. 
+
+Presently, the configure script will not finish if it does not find `cJSON` or `check`.
+
+==== Core Code ====
+The core code with examples requires FFTW and either OpenBlas or ATLAS. 
+In my experiments, if OpenBlas/Atlas and FFTW3 are compiled with support for threading and the avx and sse instruction sets, these combinations have slightly better performance than MKL. It is likely desirable (certainly for ATLAS) to compile these yourself, since the libraries availible through your distribution may be older or not have been compiled with full optimization. For ATLAS, the compilation optimizes the binary for your specific computer, so it makes no sense to obtain a library built by somebody else. 
+
+By default, the configure script will search for first OpenBlas, then ATLAS. If you have both installed, you can instruct `configure` to choose one over the other by setting the envirnmental variable `BLAS_LIB=[openblas][satlas]`. The key requirement for the BLAS library is that it has the extension `cblas_daxpby`, or in the case of ATLAS, `catlas_daxpby`. Thus, in principle, you can use another BLAS library with this extension, though that is untested.
+
+FFTW3 threading comes in three flavors: (1) OpenMP threading (`libfftw_omp`), (2) POSIX threads (`libfftw3_threads`) and (3), as a single, combined library. To choose a particular threading version, use the flag `--with-fftw3-threads=[combined][omp][threads][yes][no]`. The `yes` option will search over all three possibilities. On Windows with MinGW, FFTW3 only compiles threading into a combined library.
+
+To enable compiling a Matlab mex functions, use `--with-mex`. This requires that the Mathworks  script `mexext` is on your path, or that you export the environmental variable `MEXEXT` with the proper mex extension for your platform.
+
+In general, it is likely (almost certain for mex) that these libraries will not be on your default search path, so you must tell `configure` where they are by defining them in the `CPPFLAGS` and `LDFLAGS` environmental variables. See the example below. 
+
+==== Example Builds ====
+On my machine, `FFTW3`, `cJSON`, and `check` are installed in `/usr/local`. ATLAS is installed in `/usr/local/ATLAS` and OpenBlas is in `/usr/local/openblas`. Matlab is installed in `/usr/local/MATLAB/R2018b/`. In general (with MATLAB being an exception), each of these directories should contain a `lib` and `include` directory. You should point `LDFLAGS` to the `lib` directory and `CPPFLAGS` to the `include` directory. Thus, to configure with FFTW3 and OpenBlas, we run (as one line)
+[source,bash]
+----
+CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include" \
+         LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib" \
+./configure --with-fftw3 --with-fftw3-threads=omp 
+----
+
+
+Alternatively, you can export `CPPFLAGS` and `LDFLAGS`:
+[source,bash]
+----
+export CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include"
+export LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib"
+./configure --with-fftw3 --with-fftw3-threads=omp 
+----
+
+
+===== mex bindings =====
+If we also we want to compile with the mex bindings, we need to add Matlab's `lib` and `include` directories. These are in non-stanard locations, so they must be added to `CPPFLAGS` and `LDFLAGS`. By default, the mex modules will get installed into `${prefix}/lib/`, which is probably not what you want. Specify a different location with `--with-mex-prefix=/path/to/mex`:
+[source,bash]
+----
+export CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include \
+                 -I/usr/local/MATLAB/R2018b/extern/include"
+export LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib  \
+                -L/usr/local/MATLAB/R2018b/bin/glnxa64"
+./configure --with-fftw3 --with-fftw3-threads=omp --enable-mex \  
+            --with-mex-prefix=/home/arnold/matlab/l1c
+----
+
+Note that on my system, the command `mexext` is located in `/usr/local/MATLAB/R2018b/bin/`, which is symlinked to `/usr/local/bin/mexext`, which is on my path. If this is not the case, then in addition to above you can, e.g., `export MEXEXT=mexa64`. You can get the appropriate value to export by typing `mexext` at the matlab command prompt.
+
+
+===== Python bindings =====
+To build the python bindings, use `--enable-python`:
+[source,bash]
+----
+export CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include"
+export LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib"
+./configure --with-fftw3 --with-fftw3-threads=omp --enable-python
+----
+
+Building python bindings is supported for Python 3 (tested with 3.5). The proper compilation and linking flags as well as the installation location are obtained from the python3 on your path (via distutils.sysconfig). On linux, the typical install location will default to something like `/usr/lib/python3/dist-packages`. These values can be modified via the environmental variables:
+[source,bash]
+----
+PYTHON_CPPFLAGS        # Should contain Python.h
+PYTHON_LIBS            # e.g., -lpython3.5m
+PYTHON_SITE_PKG_EXEC   # e.g., /home/user/.local/lib/python3.5/site-packages
+----
+
+
+
+==== Unit Tests ====
+Almost all of the test data is generated in python and saved as json files in `$(build_dir)/test/test_data/`.
+To run the test suite, execute 
+
+`make check`
+
+By default, this will skip the memory leak test, which is very time consuming. To run this also, execute
+
+`with_valgrind=yes make check`
+
+
+
+==== TODO: Remove dependency on Matlab ====
+The data for the line search still relies on Matlab. 
+It remains an outstanding goal to remove the dependency on Matlab for the test data.
+
+
+
+
+== Performance ==
+So far, using `l1C` gives me a speed increase of between 2 and 7 times faster compared to the original matlab code, depending on the problem and computer I run it on.
+
+If you compile with FFTW+OpenBlas, it is important that both libraries are compiled with openmp. I don't quite understand what happens, but if this is not the case, I see only single processor being used and performance suffers dramatically. 
+
+If you have a CPU with hyperthreading, it is important to export the environmental variable
+
+`export OMP_NUM_THREADS=N`
+
+where N is the number of *physical* cores. Essentially, if you have HT, this is half the the number of processors you see in a resource monitor, which shows the number of *logical* cores. The code currently can not detect this, and for number crunching applications like this one, HT is detrimental.
+
+Setting `OMP_BIND_PROC=true` seems to cost us about 1 second.
+
+
+
+== Usage ==
+The following is incomplete and only describes the main library interface to the `l1qc` solver. 
+
+As a user, the primary function you need to worry about is
+[source,c]
+----
+
+/*l1qc_newton.h */
+LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
+                            NewtParams params, AxFuns Ax_funs);
+
+----
+
+* `int N`. The length of `x` and `u`.
+* `double *x`. On entry, this should be an array of doubles length N, allocated on a 64-byte boundary (see below). On exit, x contains the result of the optimization.
+* `double *u` On entry, this should contain an array with length N. On exit, it will contain the auxilary u (See above about the conversion from an l1 optimization to a linear program).
+* `int M`. The length b.
+* `double *b`. On entry, contains the 'measured data' (see above). In general, we expect M <N.
+* `NewtParams params` is a struct containing parameters (e.g., tolerances and iteration number bounds). Will be described fully below.
+* `AxFuns Ax_funs` is a struct containing pointers to the functions which perform the transformations.
+
+
+*Important*: The array inputs of doubles (*x, *u, *b) to `l1qc_newton` must be aligned on a 64-byte boundary, otherwise segfaults may occur. To faciliate this, you may use the functions 
+
+[source,c]
+----
+/*l1c_common.h */
+void* malloc_double(N);
+void* free_double(N);
+----
+The function `malloc_double(N)` will allocate memory for `N` doubles, aligned on a 64-byte boundary and `free_double` will free it.
+
+
+The data structures are defined as
+[source,c]
+----
+//l1qc_newton.h
+typedef struct LBResult{
+  double l1;                // Final value of functional, ||x||_1
+  int    total_newton_iter; // Total number of newton iterations.
+  int    status;            // 0 if completed with no errors, 1 otherwise
+
+}LBResult;
+
+typedef struct NewtParams{
+  double epsilon;
+  double tau;
+  double mu;
+  double newton_tol;
+  int newton_max_iter;
+  int lbiter;
+  double lbtol;
+  int verbose;
+  CgParams cg_params;
+
+}NewtParams;
+
+typedef struct AxFuns {
+  void(*Ax)(double *x, double *y);
+  void(*Aty)(double *y, double *x);
+  void(*AtAx)(double *x, double *z);
+}AxFuns;
+----
+
+The struct `AxFuns` contains pointers to your user-defined functions which compute latexmath:[Ax] and latexmath:[A^{T}y] For an example, see the mex-interface file `l1qc_mex.c` (in `interfaces/`) and either `dct.c` or `dct_mkl.c`. Note that although the mex interface looks long and complicated, almost all of this is boiler-plate parsing of Matlab's input to the function. The amount of code to modify for a different set of transform functions is only a few lines.
+
+
+== Modifications from the original algorithms ==
+[[sec:l1qc_mod]]
+
+I have made a few changes (improvements?) to the original `\~l1-magic` algorithm, both pertaining to the line search. These changes address issues with numerical, rather than mathematical, problems. As the `l1-magic` authors note, in the later stages of the optimziation, numerical difficulties arise and the line search can fail. These modifications help to push that point into the future, enabling more iterations.
+
+. In the original code, I noticed that at some point, the data become complex when it should have been purely real. One of the places where this occures is in the code which computes the maximum step-size which still satisfies the constraints (i.e., lines XX in the original code). In particular, the code which computes the largest number latexmath:[s] such such that, for latexmath:[x_{k+1}= x_{k} + sd_{x_k}], latexmath:[||Ax_{k+1}-b||<\epsilon] still holds. To do this, we expand into a scalar equation quadratic in latexmath:[s]
++
+latexmath:[
+\begin{aligned}
+||A(x+sd_{x})-b||^{2} - \epsilon^{2} &=0 \\
+s^{2}(d_x^{T}A^{T}Ad_x) + 2r^{T}Ad_x + r^{T}r - \epsilon^{2} &= 0
+\end{aligned}]
++
+where latexmath:[r = Ax - b]. Although the roots should always be real, due to either computing latexmath:[d_{x}] with insufficient accuracy (which accomplished via conjugate gradient) or otherwise, the roots become complex in the later stages. In matlab, the promation to a complex type happens silently and we start optimizing complex data, which is undersirable. In c, the `sqrt` operation simply returns NaN, which is also undersirable. When this happens, the modification is to set latexmath:[s=1] and let the line search deal with. This will work fine in c because taking the log of a negative number results in NaN. In Matlab, we need something like `log(max(0, x))`.
+
+. The goal of the line-search is to find (approximitaly) the largest step-size latexmath:[s] such that
++
+latexmath:[
+   f(z + sd_{z}) < f(z) + \alpha s \nabla f\cdot d_{z}
+]
++
+In the original code, the functional latexmath:[f(z)] is only evaluated explicitly at the start of each log-barrier iteration and the value of latexmath:[f(z_{i})] is updated from derived values, e.g., latexmath:[r_{k+1}= r_{k} + sAd_{x}]. Mathematically, this is fine. Numerically, it is problematic because after enough iterations the explicit value of latexmath:[f(z_{k})] becomes infinite (due to the barrier functions) even though the putative value is finite. Thus, although it is less efficient, this code evaluates the functional explicitly at each iteration of the line-search and this value is then passed to the next Newton iteration.
+
+
+== To-Dos ==
+. Enable detection hyperthreading, and set `omp_num_threads` to half the number of reported cores.
+. Figure out the license. This may mean re-working all the test code because `l1-magic` doesn't come with an explicit license.
+. Add a replacement for `cblas_daxpby` so that any BLAS library can be used.
+. Documentation!
+. Examples via the bindings.
+. Other optimization routines. On the list are
+** The isotropic TV-denoising problem using Bregman iteration. 
+** https://web.stanford.edu/~boyd/l1_ls/[l1-ls] from Stephen Boyd's research group.
+** NESTA, which from my cursory inspection, seems to depend on l1-ls.
+
+. Generalize the backtracking line search. There is really no reason that it needs to be specific to the l1qc algorithm. All it needs is a way to evaluate the functional and gradient at different step sizes.
+
+. With a bit of work, it should be possible to generalize the entire set of log-barrier and newton iterations, so that it is not specific the quadratically constrained l1 problem. Basically, all that is required is
+** A function to evaluate the functional
+** A function to compute the descent direction
+** A function to compute the linear approximation for the linesearch
+** A function to compute the max-step size. This seems like the main difference to a standard Newton descent algorithm and this one with barrier functions.
+** A function to compute the stopping criteria.
