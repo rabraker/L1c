@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 cur_dir=$(pwd)
 
@@ -12,10 +12,25 @@ if test -z $verbose; then
 fi
 
 
+failures=0
 
 LIB_DIR="${ABS_TOP_BUILDDIR}/interfaces"
-data_path="${ABS_TOP_SRCDIR}/test/test_data/example_img_data.json"
+data_path="${ABS_TOP_SRCDIR}/test/test_data/example_img_data.json" >/dev/null
 
-"${LIB_DIR}/l1qc_dct_c" "${data_path}"> /dev/null
+"${LIB_DIR}/l1qc_dct_c" "${data_path}"
 
-exit $?
+failures+=$?
+
+LIB_DIR="${ABS_TOP_BUILDDIR}/interfaces"
+data_path="${ABS_TOP_SRCDIR}/test/test_data/example_img_data127.json"
+
+"${LIB_DIR}/l1qc_dct_c" "${data_path}"
+# Right now, we expect this to fail.
+
+failures=$?
+# echo "stat = $stat"
+# if test $stat -eq 0; then
+#     failures+=1
+# fi
+# echo "---- $failures"
+exit $failures

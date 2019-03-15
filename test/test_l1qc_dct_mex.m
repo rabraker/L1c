@@ -1,4 +1,4 @@
-% This will generate an opts struct suitible for passing to l1qc(). 
+% Helper function for autotools testsuite.
 function [tm_mex, x_est, LBRes] = test_l1qc_dct_mex(fpath, verbose)
   
   dat=loadjson(fpath);

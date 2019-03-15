@@ -111,6 +111,10 @@ if __name__ == "__main__":
 
     build_cs20ng_test_data(256, data_path=image_data_path)
 
+    #Regression Test: This size caused segfaults, due to alignment.
+    image_data_path_127 = test_data_path+"/example_img_data127.json"
+    build_cs20ng_test_data(127, data_path=image_data_path_127)
+
 
 # plt.figure(1)
 # plt.imshow(img)
