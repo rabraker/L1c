@@ -102,8 +102,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   // printf("   max_iter_jac: %d\n", max_jac_iter);
 
 
-  /* We are going to change x, so we must allocate and make a copy, so we
-     dont change data in Matlabs workspace.
+  /* We require that f is aligned on a DALIGN byte boundary. Matlab does not guarantee this.
   */
   f_ours = malloc_double(N*M);
   uk = malloc_double(N*M);

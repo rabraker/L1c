@@ -37,11 +37,27 @@ int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_i
 
 #define NUMBER_OF_FIELDS(ST) (sizeof(ST)/sizeof(*ST))
 
+int check_input_size(l1c_int N){
+  /* Prevent segfault from bug in l1qc_newton, with splitting up DWORK.
+     We can allow 512*512, but not 511*511.
+
+     Is there a cleaner way to check this?
+  */
+  double divisor = (double) DALIGN / (double)sizeof(double); // e.g., 8
+  double maybe_div = (double)N / divisor;
+
+  if ((int)maybe_div == N/((int)DALIGN/(int)sizeof(double))){
+    return 0;
+  }
+
+  return 1;
+}
+
 /*
  *	m e x F u n c t i o n
 
  The matlab protype is
- [x, LBRes] = l1qc_dct(N, b, pix_idx, opts),
+ [x, LBRes] = l1qc_dct(N, M, b, pix_idx, opts),
  where
  b has length m
  pix_idx has length m
@@ -70,9 +86,10 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
 
-  l1c_int i=0, M=0,Nrow=0, Ncol=1, npix=0;
+  l1c_int i=0, M=0,Nrow=0, Ncol=1, npix=0, NM=0, idx=0;
   double *pix_idx_double=NULL, *x_ours=NULL;
   l1c_int *pix_idx;
+  int status=0;
   // mwSize *dims;
   if( !(nlhs > 0)) {
     mexErrMsgIdAndTxt("l1c:l1qc_dct:nlhs",
@@ -99,7 +116,14 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
                       "First Input vector must be type double.");
   }
   Ncol = (l1c_int) mxGetScalar(prhs[1]);
+  NM = Ncol * Nrow;
 
+  /* Until I fix the DWORK/DALIGN issue, check that NM is divisible by DALIGN/sizeof(double)*/
+
+  if (check_input_size(NM)){
+    mexErrMsgIdAndTxt("l1c:l1qc_dct:not_align-able",
+                      "l1qc_dct currently requires N*M be divisible by %d.", DALIGN/sizeof(double));
+  }
 
   /* -------- Check b -------------*/
   if( !mxIsDouble(prhs[2]) ) {
@@ -228,12 +252,17 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   */
   pix_idx = calloc(M, sizeof(l1c_int));
   if (!x_ours || !pix_idx){
-    mexErrMsgIdAndTxt("l1c:l1qc_dct:outofmemory",
-                      "Error Allocating memory.");
+    status = L1C_OUT_OF_MEMORY;
+    goto exit;
   }
-
+  /* We need to validate pix_idx.*/
   for (i=0; i<M; i++){
-    pix_idx[i] = ((l1c_int) pix_idx_double[i]) - 1;
+    idx = ((l1c_int) pix_idx_double[i]) - 1;
+    if (idx <0 || idx > NM-1){
+      status = L1C_INVALID_ARGUMENT;
+      goto exit;
+    }
+    pix_idx[i] = idx;
   }
 
   int stat = l1qc_dct(Nrow, Ncol, x_ours, M, b, pix_idx, l1qc_dct_opts, &lb_res);
@@ -278,9 +307,25 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     mxSetField(plhs[1], 0, "status", status_mex_pr);
   }
 
- free(pix_idx);
- free_double(x_ours);
+ exit:
+  free(pix_idx);
+  free_double(x_ours);
 #if defined(_USEMKL_)
- mkl_free_buffers();
+  mkl_free_buffers();
 #endif
+
+  switch (status){
+  case L1C_OUT_OF_MEMORY:
+    mexErrMsgIdAndTxt("l1c:l1qc_dct:outofmemory",
+                      "Error Allocating memory.");
+    break;
+  case L1C_INVALID_ARGUMENT:
+    mexErrMsgIdAndTxt("l1c:l1qc_dct:bad_index",
+                      "pix_idx contained invalid value(s).");
+    break;
+
+  default:
+    break;
+  }
+
 } /* ------- mexFunction ends here ----- */

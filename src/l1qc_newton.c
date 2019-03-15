@@ -479,6 +479,7 @@ LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
                  .sig12=NULL, .ntgu=NULL, .gradf=NULL};
 
   double *u   = malloc_double(N);
+  /* ----- THIS CAUSES A SEGFAULT IF N IS NOT DIVISIBLE BY (DALIGN/sizeof(double)) -------*/
   double *DWORK_7N = malloc_double(7*N);
   double *r = malloc_double(M);
   double *fu1 = malloc_double(N);

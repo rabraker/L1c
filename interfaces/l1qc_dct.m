@@ -1,4 +1,4 @@
-% function [x, LBRes] = l1qc_dct(x0, b, pix_idx, opts)
+% function [x, LBRes] = l1qc_dct(N, M, b, pix_idx, opts)
 %
 % Solves the Denoising Basis Pursuit problem with a DCT sparsifying
 % basis. Consider given a true signal $z$, and a subsampled vector
@@ -50,10 +50,11 @@
 %     .l1_tol:  The newton iterations will stop if the relative
 %               difference in the l1-norms of $x$ between newton
 %               iterations falls below l1_tol. That is, if
-%                 ||x_k||_1 - ||x_k-1||_1 
-%                  -------------------------- < l1_tol
+%                | ||x_k||_1 - ||x_{k-1}||_1 |
+%                ------------------------------ < l1_tol
 %                            ||x_k||_1 
-%               The default is 0, which will match the Matlab code.
+%               The default is 0, which means this criteria will
+%               never be exercised.
 % 
 %     .newton_tol : The Newton iterations terminate when the 
 %                   newton decrement < newton_tol (try newton_tol = lbtol).
@@ -62,7 +63,7 @@
 %                        Default is 50.
 % 
 %     .cgtol:   tolerance for the conjugate gradient (CG) solver.
-%           Default is 1e-8.
+%               Default is 1e-8.
 % 
 %     .cgmaxiter: maximum iterations for the CG solver. Default is 200.
 % 
