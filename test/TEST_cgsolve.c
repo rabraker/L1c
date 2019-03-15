@@ -77,7 +77,7 @@ START_TEST(test_cgsolve)
   CgParams cgp;
   CgResults cgr;
 
-  double *A=NULL, *x=NULL, *x_exp=NULL, *b=NULL, *Dwork=NULL;
+  double *A=NULL, *x=NULL, *x_exp=NULL, *b=NULL, **Dwork=NULL;
   int status = 0;
   l1c_int N=0, na= 0;
   if (load_small_data(&A, &x_exp, &b, &N, &na, &max_iter, &tol)){
@@ -89,7 +89,7 @@ START_TEST(test_cgsolve)
   cgp.max_iter = max_iter;
 
   x = malloc_double(N);
-  Dwork = malloc_double(N*4);
+  Dwork = malloc_double_2D(4, N);
   if (!Dwork || !x){
     status +=1;
     goto exit;
@@ -100,7 +100,7 @@ START_TEST(test_cgsolve)
     x[i] = 0.0;
   }
 
-  cgsolve(x, b, N, Dwork, Ax_sym, A, &cgr, cgp);
+  cgsolve(N, x, b, Dwork, Ax_sym, A, &cgr, cgp);
 
   ck_assert_double_array_eq_tol(N, x_exp, x, TOL_DOUBLE);
   goto exit;
@@ -110,7 +110,7 @@ START_TEST(test_cgsolve)
   free_double(x);
   free_double(x_exp);
   free_double(b);
-  free_double(Dwork);
+  free_double_2D(4, Dwork);
 
 
   cJSON_Delete(test_data_json);
@@ -130,7 +130,7 @@ START_TEST(test_cgsolve_h11p){
 
   Hess_data h11p_data;
   double *atr=NULL, *sigx=NULL, *dx0=NULL, *dx_exp=NULL;
-  double *w1p=NULL, *DWORK_4N=NULL;
+  double *w1p=NULL, **DWORK4=NULL;
   double  fe,cgtol,tau = 0;
   CgResults cgr;
   CgParams cgp = {.verbose=0, .max_iter=0, .tol=0};
@@ -164,11 +164,11 @@ START_TEST(test_cgsolve_h11p){
   h11p_data.Dwork_1N = malloc_double(N);
   h11p_data.AtAx = dct_MtEt_EMx;
 
-  DWORK_4N = malloc_double(4*N);
+  DWORK4 = malloc_double_2D(4, N);
   double *dx_by_nrm = malloc_double(4*N);
   double *dx_by_nrm_exp = malloc_double(4*N);
-  if ( status || !DWORK_4N || !dx_by_nrm || !dx_by_nrm_exp){
-    perror("error allocating memory or reading JSON data in test_cgsolve_h11p\n");
+  if ( status || !DWORK4 || !dx_by_nrm || !dx_by_nrm_exp){
+    fprintf(stderr, "error allocating memory or reading JSON data in test_cgsolve_h11p\n");
     status +=1;
     goto exit;
   }
@@ -178,7 +178,7 @@ START_TEST(test_cgsolve_h11p){
   cgp.tol = cgtol;
   cgp.verbose = 0;
 
-  cgsolve(dx0, w1p, N, DWORK_4N, H11pfun, &h11p_data, &cgr, cgp);
+  cgsolve(N, dx0, w1p, DWORK4, H11pfun, &h11p_data, &cgr, cgp);
   double nrm_exp = cblas_dnrm2(N, dx_exp, 1);
   double nrm = cblas_dnrm2(N, dx0, 1);
   printf("M=%d, norm exp: %.10f, nrm: %.10f\n", (int)M, nrm_exp, nrm);
@@ -187,8 +187,6 @@ START_TEST(test_cgsolve_h11p){
     dx_by_nrm[i] = dx0[i]/nrm;
   }
   ck_assert_double_array_eq_tol(N, dx_by_nrm_exp, dx_by_nrm, TOL_DOUBLE*10);
-
-  goto exit;
 
  exit:
   free_double(dx_by_nrm_exp);
@@ -199,7 +197,7 @@ START_TEST(test_cgsolve_h11p){
   free_double(dx_exp);
   free(pix_idx);
   free_double(dx0);
-  free_double(DWORK_4N);
+  free_double_2D(4, DWORK4);
   free_double(h11p_data.Dwork_1N);
   dct_destroy();
 
@@ -283,7 +281,7 @@ START_TEST(test_cgsolve_diag_precond)
   CgResults cgr;
 
   double *A=NULL, *x=NULL, *x_exp=NULL, *b=NULL;
-  double *Dwork=NULL, *M_inv_diag=NULL;
+  double **Dwork=NULL, *M_inv_diag=NULL;
   int status = 0;
   l1c_int N=0, na= 0;
   if (load_small_data(&A, &x_exp, &b, &N, &na, &max_iter, &tol)){
@@ -296,7 +294,7 @@ START_TEST(test_cgsolve_diag_precond)
 
   x = malloc_double(N);
   M_inv_diag = malloc_double(N);
-  Dwork = malloc_double(N*5);
+  Dwork = malloc_double_2D(5, N);
   if (!Dwork || !x || !M_inv_diag){
     status +=1;
     goto exit;
@@ -307,7 +305,7 @@ START_TEST(test_cgsolve_diag_precond)
     x[i] = 0.0;
     M_inv_diag[i] = 1.0;
   }
-  cgsolve_diag_precond(x, b, M_inv_diag, N, Dwork, Ax_sym, A, &cgr, cgp);
+  cgsolve_diag_precond(N, x, b, M_inv_diag, Dwork, Ax_sym, A, &cgr, cgp);
 
   ck_assert_double_array_eq_tol(N, x_exp, x, TOL_DOUBLE);
   goto exit;
@@ -317,7 +315,7 @@ START_TEST(test_cgsolve_diag_precond)
   free_double(x);
   free_double(x_exp);
   free_double(b);
-  free_double(Dwork);
+  free_double_2D(5, Dwork);
   free_double(M_inv_diag);
 
   cJSON_Delete(test_data_json);

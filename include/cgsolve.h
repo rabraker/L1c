@@ -18,11 +18,11 @@ typedef struct CgParams_{
 } CgParams;
 
 
-extern int cgsolve(double *x, double *b, l1c_int N,  double *Dwork,
+extern int cgsolve(l1c_int N, double *x, double *b, double **Dwork,
             void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data),
             void *AX_data, CgResults *cg_result, CgParams cg_params);
 
-int cgsolve_diag_precond(double *x, double *b, double *M_inv_diag, l1c_int N, double *Dwork,
+int cgsolve_diag_precond(l1c_int N, double *x, double *b, double *M_inv_diag, double **Dwork,
                          void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
                          CgResults *cg_result, CgParams cg_params);
 

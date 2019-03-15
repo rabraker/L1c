@@ -82,12 +82,12 @@ double find_max_step(l1c_int N, GradData gd, double *fu1,
 
 LSStat line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double *b,
                    double *fu1, double *fu2, GradData gd,
-                   LSParams ls_params, double *DWORK_5N, double *fe, double *f, AxFuns Ax_funs);
+                   LSParams ls_params, double **DWORK5, double *fe, double *f, AxFuns Ax_funs);
 
 void l1qc_hess_grad(l1c_int N, double *fu1, double *fu2, double *sigx, double *atr,
                     double fe,  double tau, GradData gd);
 int l1qc_descent_dir(l1c_int N, double *fu1, double *fu2, double *r, double fe, double tau,
-                    GradData gd, double *Dwork_7N, CgParams cg_params, CgResults *cg_result,
+                    GradData gd, double **Dwork7, CgParams cg_params, CgResults *cg_result,
                     AxFuns AxFuns);
 
 void H11pfun(l1c_int N, double *z, double *y,  void *hess_data_in);

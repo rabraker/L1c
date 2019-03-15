@@ -36,3 +36,44 @@ void free_double(double *x){
   _mm_free(x);
 }
 #endif //_HAVE_POSIX_MEMALIGN_
+
+
+/* This is primarily for the DWORK arrays. */
+double** malloc_double_2D(l1c_int nrow, l1c_int ncol){
+  int k;
+  double **dwork = malloc(nrow*sizeof(double*));
+  if (!dwork){
+    goto fail1;
+  }
+
+  for (k=0; k<nrow; k++){
+    dwork[k] = NULL;
+  }
+
+  for (k=0; k<nrow; k++){
+    dwork[k] = malloc_double(ncol);
+    if (!dwork[k]){
+      goto fail2;
+    }
+  }
+
+  return dwork;
+
+ fail2:
+  for (k=0; k<nrow; k++){
+    free_double(dwork[k]);
+  }
+ fail1:
+  free(dwork);
+
+  return dwork;
+
+}
+
+void free_double_2D(int nrow, double **dwork){
+
+  for (int k=0; k<nrow; k++){
+    free_double(dwork[k]);
+  }
+  free(dwork);
+}

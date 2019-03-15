@@ -377,14 +377,14 @@ START_TEST(test_l1qc_descent_dir)
   GradData gd;
   CgParams cgp = {.verbose=0, .max_iter=Tdat.cgmaxiter, .tol = Tdat.cgtol};
   CgResults cgr = {.cgres=0.0, .cgiter=0};
-  double *DWORK_7N;
+  double **DWORK7;
   int status=0;
 
   AxFuns Ax_funs = {.Ax=dct_EMx,
                     .Aty=dct_MtEty,
                     .AtAx=dct_MtEt_EMx};
 
-  DWORK_7N = malloc_double(7*Tdat.N);
+  DWORK7 = malloc_double_2D(7, Tdat.N);
   gd.w1p = malloc_double(Tdat.N);
   gd.dx = malloc_double(Tdat.N);
   gd.du = malloc_double(Tdat.N);
@@ -392,7 +392,7 @@ START_TEST(test_l1qc_descent_dir)
   gd.sig11 = malloc_double(Tdat.N);
   gd.sig12 = malloc_double(Tdat.N);
   gd.ntgu = malloc_double(Tdat.N);
-  if ( (!DWORK_7N) | (!gd.w1p) | (!gd.dx) | (!gd.du) | (!gd.gradf)
+  if ( (!DWORK7) | (!gd.w1p) | (!gd.dx) | (!gd.du) | (!gd.gradf)
        |(!gd.sig11)| (!gd.sig12) |(!gd.ntgu) ){
     fprintf(stderr, "Error allocating memory in 'test_compute_descent'\n");
     status = L1C_OUT_OF_MEMORY;
@@ -406,7 +406,7 @@ START_TEST(test_l1qc_descent_dir)
   l1c_init_vec(Tdat.N, gd.dx, 0.0);
 
   l1qc_descent_dir(Tdat.N, Tdat.fu1, Tdat.fu2, Tdat.r, Tdat.fe,
-                  Tdat.tau0, gd, DWORK_7N, cgp, &cgr, Ax_funs);
+                  Tdat.tau0, gd, DWORK7, cgp, &cgr, Ax_funs);
 
   /*The next three should already be checked by test_get_gradient, but we can
    do it here too, to make sure things are staying sane.*/
@@ -421,7 +421,7 @@ START_TEST(test_l1qc_descent_dir)
   /* ----------------- Cleanup --------------- */
  exit:
 
-  free_double(DWORK_7N);
+  free_double_2D(7, DWORK7);
   free_double(gd.w1p);
   free_double(gd.dx);
   free_double(gd.du);
@@ -597,7 +597,7 @@ START_TEST(test_line_search)
   double *x, *u, *r, *b, *dx, *du, *gradf;
   double tau, epsilon, alpha, beta, s_init; //loaded
 
-  double *fu1p, *fu2p, fe, f, *DWORK_5N;
+  double *fu1p, *fu2p, fe, f, **DWORK5;
   double *xp_exp, *up_exp, *rp_exp;
   double *fu1p_exp, *fu2p_exp, fep_exp, fp_exp;
   double flx_exp=0, flu_exp=0, flin_exp=0;
@@ -659,8 +659,8 @@ START_TEST(test_line_search)
   gd.du = du;
   gd.gradf = gradf;
 
-  DWORK_5N = malloc_double(5*N);
-  if(!DWORK_5N){
+  DWORK5 = malloc_double_2D(5, N);
+  if(!DWORK5){
     printf("Allocation failed\n");
   }
   fu1p = malloc_double(N);
@@ -668,7 +668,7 @@ START_TEST(test_line_search)
   dct_setup(N, M, pix_idx);
 
   ls_stat = line_search(N, M, x, u, r, b, fu1p, fu2p, gd, ls_params,
-                        DWORK_5N, &fe, &f, Ax_funs);
+                        DWORK5, &fe, &f, Ax_funs);
 
   // /* ----- Now check -------*/
   ck_assert_double_eq_tol(fep_exp, fe, TOL_DOUBLE);
@@ -706,7 +706,7 @@ START_TEST(test_line_search)
   free_double(fu1p);
   free_double(fu2p);
 
-  free_double(DWORK_5N);
+  free_double_2D(5, DWORK5);
 
   dct_destroy();
 

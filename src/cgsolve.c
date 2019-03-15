@@ -35,11 +35,10 @@ cg_report(int iter, double best_rel_res, double rel_res,
    store the matrix A, but only need a function which performs
    the linear mapping.
 
-
+   @param[in] N Length of the vector b.
    @param[out] x The result is stored in this array. Should have length N.
    @param[in] b  The RHS, should have length N.
-   @param[in] N Length of the vector b.
-   @param[in] Dwork Pointer to a work array of length 5 * N.
+   @param[in] Dwork array of Pointers to 4 work arrays of length N.
    @param[in] void(*AX_func) Pointer to a function which evalutes A * x.
    @param[in] AX_data  Data needed by AX_func. For example, if
    you just wanted AX_func to perform a normal matrix multiplication,
@@ -61,7 +60,7 @@ cg_report(int iter, double best_rel_res, double rel_res,
  }
 */
 
-int cgsolve(double *x, double *b, l1c_int N, double *Dwork,
+int cgsolve(l1c_int N, double *x, double *b, double **Dwork,
             void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
             CgResults *cg_result, CgParams cg_params){
 
@@ -79,10 +78,10 @@ int cgsolve(double *x, double *b, l1c_int N, double *Dwork,
   double *r, *p, *bestx, *q;
 
   /* Divide up Dwork for tempory variables */
-  r = Dwork;
-  p = Dwork + N;
-  bestx = Dwork + 2 * N;
-  q = Dwork + 3 * N;
+  r = Dwork[0];
+  p = Dwork[1];
+  bestx = Dwork[2];
+  q = Dwork[3];
 
   /* Init
   x = zeros(n,1)
@@ -178,13 +177,12 @@ int cgsolve(double *x, double *b, l1c_int N, double *Dwork,
    store the matrix A, but only need a function which performs
    the linear mapping.
 
-
-   @param[out] x The result is stored in this array. Should have length N.
+   @param[in] N Length of the vector b.
+   @param[in,out] x The result is stored in this array. Should have length N.
    @param[in] b  The RHS, should have length N.
    @param[in] M_inv_diag  1./M, where M is a vector representing the diagonal
                           preconditioner.
-   @param[in] N Length of the vector b.
-   @param[in] Dwork Pointer to a work array of length 5 * N.
+   @param[in] Dwork array of Pointers to 5 work arrays of length N.
    @param[in] void(*AX_func) Pointer to a function which evalutes A * x.
    @param[in] AX_data  Data needed by AX_func. For example, if
    you just wanted AX_func to perform a normal matrix multiplication,
@@ -206,7 +204,7 @@ int cgsolve(double *x, double *b, l1c_int N, double *Dwork,
  }
 */
 
-int cgsolve_diag_precond(double *x, double *b, double *M_inv_diag, l1c_int N, double *Dwork,
+int cgsolve_diag_precond(l1c_int N, double *x, double *b, double *M_inv_diag, double **Dwork,
             void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
             CgResults *cg_result, CgParams cg_params){
 
@@ -225,11 +223,11 @@ int cgsolve_diag_precond(double *x, double *b, double *M_inv_diag, l1c_int N, do
   double *r, *p, *bestx, *q, *z;
 
   /* Divide up Dwork for tempory variables */
-  r = Dwork;
-  p = Dwork + N;
-  bestx = Dwork + 2 * N;
-  q = Dwork + 3 * N;
-  z = Dwork + 4 * N;
+  r = Dwork[0];
+  p = Dwork[1];
+  bestx = Dwork[2];
+  q = Dwork[3];
+  z = Dwork[4];
 
   /* Init
   x = zeros(n,1)

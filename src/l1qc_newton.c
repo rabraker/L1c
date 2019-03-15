@@ -196,7 +196,7 @@ void l1qc_hess_grad(l1c_int N, double *fu1, double *fu2, double *sigx, double *a
   The rest (H12, H21, and H22) are diagonal.
  */
 int l1qc_descent_dir(l1c_int N, double *fu1, double *fu2, double *r, double fe,  double tau,
-                    GradData gd, double *Dwork_7N, CgParams cg_params, CgResults *cg_result,
+                    GradData gd, double **Dwork7, CgParams cg_params, CgResults *cg_result,
                     AxFuns Ax_funs){
   /* inputs
    --------
@@ -218,11 +218,12 @@ int l1qc_descent_dir(l1c_int N, double *fu1, double *fu2, double *r, double fe, 
   */
   l1c_int i=0;
   Hess_data h11p_data;
-  double *sigx, *atr, *Dwork_4N;
-  sigx =  Dwork_7N;
-  h11p_data.Dwork_1N = Dwork_7N + N;
-  atr = Dwork_7N + 2*N;
-  Dwork_4N = Dwork_7N + 3*N;
+  double *sigx, *atr;
+  double **Dwork_4N;
+  sigx =  Dwork7[0];
+  h11p_data.Dwork_1N = Dwork7[1];
+  atr = Dwork7[2];
+  Dwork_4N = Dwork7 + 3;
 
   Ax_funs.Aty(r, atr); //atr = A'*r.
 
@@ -234,7 +235,7 @@ int l1qc_descent_dir(l1c_int N, double *fu1, double *fu2, double *r, double fe, 
   h11p_data.sigx = sigx;
   h11p_data.AtAx = Ax_funs.AtAx;
 
-  cgsolve(gd.dx, gd.w1p, N, Dwork_4N,
+  cgsolve(N, gd.dx, gd.w1p, Dwork_4N,
           H11pfun, &h11p_data, cg_result, cg_params);
 
   if (cg_result->cgres > 0.5){
@@ -326,7 +327,7 @@ double find_max_step(l1c_int N, GradData gd, double *fu1,
 
 
 LSStat line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double *b, double *fu1,
-                   double *fu2, GradData gd, LSParams ls_params, double *DWORK_5N,
+                   double *fu2, GradData gd, LSParams ls_params, double **DWORK5,
                    double *fe, double *f, AxFuns Ax_funs){
   LSStat ls_stat = {.flx=0, .flu = 0, .flin=0, .step=0, .status=0};
   int iter=0;
@@ -334,12 +335,12 @@ LSStat line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double
 
   double step = ls_params.s;
 
-  /* Divy up our work array */
-  double *xp = DWORK_5N;
-  double *up = DWORK_5N + N;
-  double *rp = DWORK_5N + 2*N;
-  double *fu1p = DWORK_5N + 3*N;
-  double *fu2p = DWORK_5N + 4*N;
+  /* Make things accessible */
+  double *xp = DWORK5[0];
+  double *up = DWORK5[1];
+  double *rp = DWORK5[2];
+  double *fu1p = DWORK5[3];
+  double *fu2p = DWORK5[4];
 
   for (iter=1; iter<=32; iter++){
     // /* xp = x + s*dx etc*/
@@ -480,7 +481,7 @@ LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
 
   double *u   = malloc_double(N);
   /* ----- THIS CAUSES A SEGFAULT IF N IS NOT DIVISIBLE BY (DALIGN/sizeof(double)) -------*/
-  double *DWORK_7N = malloc_double(7*N);
+  double *DWORK7[7];
   double *r = malloc_double(M);
   double *fu1 = malloc_double(N);
   double *fu2 = malloc_double(N);
@@ -493,20 +494,26 @@ LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
   gd.ntgu   = malloc_double(N);
   gd.gradf  = malloc_double(2*N);
 
-  if ( !DWORK_7N | !r | !fu1 | !fu2
-       |!gd.w1p| !gd.dx| !gd.du
-       |!gd.sig11 | !gd.sig12 |!gd.ntgu
-       |!gd.gradf){
+  if ( !r || !fu1 || !fu2
+       || !gd.w1p || !gd.dx || !gd.du
+       || !gd.sig11 || !gd.sig12 ||!gd.ntgu
+       || !gd.gradf){
     lb_res.status = L1C_OUT_OF_MEMORY;
     goto exit;
   }
 
-
+  for (int k=0; k<7; k++){
+    DWORK7[k] = malloc_double(N);
+    if (!DWORK7[k]){
+      lb_res.status = L1C_OUT_OF_MEMORY;
+      goto exit;
+    }
+  }
   newton_init(N, x, u, &params);
 
 
 
-  if ( check_feasible_start(x, M, b, params.epsilon, DWORK_7N, Ax_funs) ){
+  if ( check_feasible_start(x, M, b, params.epsilon, DWORK7[0], Ax_funs) ){
     printf("Starting point is infeasible, exiting\n");
     lb_res.status = L1C_INFEASIBLE_START;
     goto exit;
@@ -550,7 +557,7 @@ LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
       */
 
 
-      if(l1qc_descent_dir(N, fu1, fu2, r, fe,  params.tau, gd, DWORK_7N, cg_params,
+      if(l1qc_descent_dir(N, fu1, fu2, r, fe,  params.tau, gd, DWORK7, cg_params,
                          &cg_results, Ax_funs)){
         printf("Unable to solve system for Newton descent direction.\n");
         printf("Returning previous iterate\n");
@@ -560,9 +567,9 @@ LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
 
 
       /* -------------- Line Search --------------------------- */
-      ls_params.s = find_max_step(N, gd, fu1, fu2, M, r, DWORK_7N, params.epsilon, Ax_funs);
+      ls_params.s = find_max_step(N, gd, fu1, fu2, M, r, DWORK7[0], params.epsilon, Ax_funs);
 
-      ls_stat = line_search(N, M, x, u, r, b, fu1, fu2, gd, ls_params, DWORK_7N, &fe, &f, Ax_funs);
+      ls_stat = line_search(N, M, x, u, r, b, fu1, fu2, gd, ls_params, DWORK7, &fe, &f, Ax_funs);
       if (ls_stat.status > 0)
         break;
 
@@ -616,7 +623,6 @@ LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
 
  exit:
   free_double(u);
-  free_double(DWORK_7N);
   free_double(r);
   free_double(fu1);
   free_double(fu2);
@@ -628,6 +634,9 @@ LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
   free_double(gd.ntgu);
   free_double(gd.gradf);
 
+  for (int k=0; k<7; k++){
+    free_double(DWORK7[k]);
+  }
   lb_res.l1 = l1c_dnorm1(N, x);
   return lb_res;
 
