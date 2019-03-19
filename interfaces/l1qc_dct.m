@@ -1,4 +1,5 @@
-% function [x, LBRes] = l1qc_dct(N, M, b, pix_idx, opts)
+function [x, LBRes] = l1qc_dct(N, M, b, pix_idx, opts)
+% [x, LBRes] = l1qc_dct(N, M, b, pix_idx, opts)
 %
 % Solves the Denoising Basis Pursuit problem with a DCT sparsifying
 % basis. Consider given a true signal $z$, and a subsampled vector
@@ -37,7 +38,7 @@
 %             1-based indexing: it will be converted to c's 0-based
 %             indexing inside the mex-function
 % 
-%   opts: a struct (create with CsTools.l1qc_opts) with the following fields:
+%   opts: a struct (l1qc_dct_opts) with the following fields:
 %     .epsilon : Denoising parameter. l1qc will enforce ||A*eta - b|| < epsilon
 % 
 %     .mu :   Log-barrier weight is multiplied by mu each LB iteration
