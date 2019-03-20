@@ -79,6 +79,11 @@ log_deps = 	build_CS20NG_example_data.log \
 test_l1c.log:$(log_deps)
 
 
+# Really, need a phony rule here I think.
+$(log_deps):test_data_dir
+
+test_data_dir:
+	mkdir -p test_data
 
 # test_matlab_dlopen.sh:$(log_deps)
 
