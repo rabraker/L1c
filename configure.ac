@@ -365,7 +365,7 @@ echo "Compile with fftw3 threads? $have_fftw_threads"
 
 
 dnl -Werror
-AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused   \
+AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused -Wunused-result  \
                           -Wcast-qual -Wcast-align -Winit-self     \
                           -Wfloat-equal -Wundef -Wshadow -Wstringop-truncation \
                           -Wswitch-enum -Wvla], [WARNFLAGS], [] [])
@@ -417,18 +417,18 @@ fi  # checks for mex
 # Checks for programs.
 
 # Checks for libraries.
-test_libs=
-AC_CHECK_LIB([pthread], [pthread_mutex_trylock], [test_libs="$test_libs -lpthread"],
-                        [AC_MSG_ERROR([Cannot find libpthread.])])
-AC_CHECK_LIB([rt], [timer_create], [test_libs="$test_libs -lrt"],
-             [AC_MSG_ERROR([Cannot find librt, which is required.])])
+dnl test_libs=
+dnl AC_CHECK_LIB([pthread], [pthread_mutex_trylock], [test_libs="$test_libs -lpthread"],
+dnl                         [AC_MSG_ERROR([Cannot find libpthread.])])
+dnl AC_CHECK_LIB([rt], [timer_create], [test_libs="$test_libs -lrt"],
+dnl              [AC_MSG_ERROR([Cannot find librt, which is required.])])
 
-echo $LIBS
-tmp=$LIBS
-LIBS="$LIBS $test_libs"
+dnl echo $LIBS
+dnl tmp=$LIBS
+dnl LIBS="$LIBS $test_libs"
 AC_CHECK_LIB([check], [suite_add_tcase],[test_libs="$test_libs -lcheck"],[
              AC_MSG_ERROR(check library is required for this program)])
-LIBS=$tmp
+dnl LIBS=$tmp
 
 AC_CHECK_LIB([cjson], [cJSON_GetArraySize],[],[
              AC_MSG_ERROR(cJSON library is required for this program)])
