@@ -5,14 +5,16 @@ before_install:
         - sudo apt-get update
         - sudo apt-get install -y libopenblas-base libopenblas-dev libfftw3-3 libfftw3-dev libfftw3-bin check
         - git clone https://github.com/DaveGamble/cJSON.git cJSON && cd cJSON && make && sudo make install && cd ../
-        # - git clone https://github.com/xianyi/OpenBLAS.git openblas 
-        # - cd openblas && make && sudo make install PREFIX=/usr/local && cd ../
-        - chmod +x bootstrap.sh
         
 install: 
 
 
-script: 
+script:
+        - ls /usr/local/lib
+        - ls /usr/lib/*check*
+        - sudo dpkg -L check
+        - sudo dpkg -L libopenblas-base
+        - sudo dpkg -L libfftw3-3
         - chmod +x bootstrap.sh 
         - ./bootstrap.sh 
         - CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/lib ./configure  
