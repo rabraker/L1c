@@ -102,7 +102,7 @@ int cgsolve(l1c_int N, double *x, double *b, double **Dwork,
   //OLD: cblas_dcopy((int)N, b, 1, r, 1);       /*r=b: copy b (ie, z_i_1) to r */
   /*Using warmstart: set r = b - A*x  */
   AX_func(N, x, r, AX_data);                    /* r = A * x                   */
-  cblas_daxpby(N, 1.0, b, 1, -1.0, r, 1);       /* r = 1*b + (-1)*Ax           */
+  l1c_daxpby(N, 1.0, b, -1.0, r);       /* r = 1*b + (-1)*Ax           */
 
 
   cblas_dcopy((int)N, r, 1, p, 1);             /*p=r:                          */
@@ -132,7 +132,7 @@ int cgsolve(l1c_int N, double *x, double *b, double **Dwork,
     delta = cblas_ddot(N, r, 1, r, 1);           /* delta = r'*r;      */
 
     beta = delta/delta_old;
-    cblas_daxpby(N, 1.0, r, 1, beta, p, 1);      /* d = r + beta*p;    */
+    l1c_daxpby(N, 1.0, r, beta, p);      /* d = r + beta*p;    */
 
     rel_res = sqrt(delta/delta_0);
     if (rel_res < best_rel_res) {
@@ -248,7 +248,7 @@ int cgsolve_diag_precond(l1c_int N, double *x, double *b, double *M_inv_diag, do
   //OLD: cblas_dcopy((int)N, b, 1, r, 1);       /*r=b: copy b (ie, z_i_1) to r */
   /*Using warmstart: set r = b - A*x  */
   AX_func(N, x, r, AX_data);                    /* r = A * x                   */
-  cblas_daxpby(N, 1.0, b, 1, -1.0, r, 1);       /* r = 1*b + (-1)*Ax           */
+  l1c_daxpby(N, 1.0, b, -1.0, r);       /* r = 1*b + (-1)*Ax           */
 
   // z0 = M^-1 * r0
   l1c_dxmuly_z(N, r, M_inv_diag, z);
@@ -278,7 +278,7 @@ int cgsolve_diag_precond(l1c_int N, double *x, double *b, double *M_inv_diag, do
     delta = cblas_ddot(N, r, 1, z, 1);           /* delta = r'*z;      */
 
     beta = delta/delta_old;
-    cblas_daxpby(N, 1.0, z, 1, beta, p, 1);      /* p = z + beta*p;    */
+    l1c_daxpby(N, 1.0, z, beta, p);      /* p = z + beta*p;    */
 
     nrm_r_sqrd = cblas_ddot(N, r, 1, r, 1);
     rel_res = sqrt(nrm_r_sqrd/nrm_b_sqrd);

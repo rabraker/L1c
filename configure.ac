@@ -47,10 +47,14 @@ dnl AC_PROG_CPP will be expanded in the else, and not visible outside, which lea
 dnl warnings like WARNING: check.h: accepted by the compiler, rejected by the preprocessor!
 AC_PROG_CPP
 
-AH_TEMPLATE([HAVE_SATLAS],
-    [Define to 1 if you have libsatlas])
-AH_TEMPLATE([HAVE_OPENBLAS],
-    [Define to 1 if you have libopenblas])
+AC_ARG_VAR(BLAS_LIB, [BLAS_LIB=[openblas][satlas][tatlas][?], the name of your prefered BLAS library.
+                     By default, configure will search first for openblas, then tatlas, then satlas])
+
+# Needed for AC_DEFINE_UNQUOTED below.
+dnl AH_TEMPLATE([HAVE_ATLAS],
+dnl     [Define to 1 if you have libsatlas])
+dnl AH_TEMPLATE([HAVE_OPENBLAS],
+dnl     [Define to 1 if you have libopenblas])
 
 
 AC_ARG_WITH(debug, [AS_HELP_STRING([--with-debug],[Compile with debugging support.])],
@@ -244,26 +248,32 @@ then
 else
  dnl ----------- look for another BLAS library ---------------------
  AC_CHECK_HEADER([cblas.h], [], [AC_MSG_ERROR("Cannot find cblas.h")])
-
-    if test ! -z $BLAS_LIB ; then
+    # All blas libraries should cblas_daxpy. Not all have cblas_daxpby. Check
+    # cblas_daxpy first.
+    if test ! -z $BLAS_LIB; then
        AC_CHECK_LIB([$BLAS_LIB], [cblas_daxpy],[
                     tmp="HAVE_${BLAS_LIB^^}"
-                    AC_DEFINE_UNQUOTED([$tmp], [1])
                     LIBS="-l$BLAS_LIB $LIBS"], [BLAS_LIB=])
     fi
     # Check in OpenBlas
     if test -z $BLAS_LIB; then
        AC_CHECK_LIB([openblas], [cblas_daxpy],[BLAS_LIB=openblas
-                    AC_DEFINE([HAVE_OPENBLAS], [1])
                     LIBS="-lopenblas $LIBS"],[])
     fi
     # Check in ATLAS
     if test -z $BLAS_LIB; then
-       AC_CHECK_LIB([satlas], [cblas_daxpy],[BLAS_LIB=satlas
-       AC_DEFINE([HAVE_SATLAS], [1], [0])
-       LIBS="-lsatlas $LIBS"],[])
+    # Atlas can compile both a serial (libsatlas) and threaded (libtatlas), library.
+    # Check the threaded library first.
+       AC_CHECK_LIB([tatlas], [cblas_daxpy],[BLAS_LIB=tatlas
+                    LIBS="-ltatlas $LIBS"],[
+                              AC_CHECK_LIB([satlas], [cblas_daxpy],[BLAS_LIB=satlas
+                              LIBS="-lsatlas $LIBS"],[])])
     fi
-
+    # Check in system blas
+    if test -z $BLAS_LIB; then
+    AC_CHECK_LIB([blas], [cblas_daxpy],[BLAS_LIB=blas
+                 LIBS="-lblas $LIBS"],[])
+    fi
     # If we still havent found it, error out.
     if test -z $BLAS_LIB; then
        AC_MSG_ERROR(BLAS library with cblas_daxpy is required for this program)
@@ -271,32 +281,30 @@ else
 
 # Now check if the supplied lib has daxpby
   case $BLAS_LIB in
-       openblas)
-            AC_CHECK_FUNC([cblas_daxpby], [AC_DEFINE([HAVE_DAXPBY], [1], [0])], [have_daxpby=no])
+    satlas|tatlas)  # Make a special exception for ATLAS, since they call it catlas_daxpby
+         AC_CHECK_FUNC([catlas_daxpby], [have_daxpby=yes], [have_daxpby=no])
+         if test x$have_daxpby = xyes; then
+            AC_MSG_CHECKING(checking for catlas_daxpby in cblas.h)
+            AC_EGREP_HEADER([catlas_daxpby], [cblas.h], [
+            AC_MSG_RESULT(yes)
+            AC_DEFINE([HAVE_ATLAS_DAXPBY], [1], [0])], [AC_MSG_RESULT(no)])
+         fi
+         ;;
+         *)
+         AC_CHECK_FUNC([cblas_daxpby], [have_daxpby=yes], [have_daxpby=no])
+         if test x$have_daxpby = xyes; then
             AC_MSG_CHECKING(checking for cblas_daxpby in cblas.h)
-            AC_EGREP_HEADER([cblas_daxpby], [cblas.h], [AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)
-                          AC_MSG_ERROR(Could not find cblas_daxpby in cblas.h)])
-            ;;
-       satlas)  # Make a special exception for ATLAS, since they call it catlas_daxpby
-            AC_CHECK_FUNC([catlas_daxpby], [
-            AC_DEFINE([HAVE_DAXPBY], [1], [0])],
-            [have_daxpby=no])
-            AC_MSG_CHECKING(checking for cblas_daxpby in cblas.h)
-            AC_EGREP_HEADER([catlas_daxpby], [cblas.h], [AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)
-                           AC_MSG_ERROR(Could not find cblas_daxpby in cblas.h)])
-            ;;
-           *)
-           AC_CHECK_FUNC(cblas_daxpby, [AC_DEFINE([HAVE_DAXPBY], [1], [0])], [have_daxpby=no])
-           AC_MSG_CHECKING(checking for cblas_daxpby in cblas.h)
-           AC_EGREP_HEADER([cblas_daxpby], [cblas.h], [AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)
-                           AC_MSG_ERROR(Could not find cblas_daxpby in cblas.h)])
-           ;;
+            AC_EGREP_HEADER([cblas_daxpby], [cblas.h], [
+            AC_MSG_RESULT(yes)
+            AC_DEFINE([HAVE_CBLAS_DAXPBY], [1], [0])], [AC_MSG_RESULT(no)])
+         fi
+         ;;
   esac
 
   #For now, throw an error if we dont have cblas_daxpby. Later, we will provide an implementation.
-  if test x$have_daxpby = xno; then
-     AC_MSG_ERROR(BLAS library with cblas_daxpby is required for this program)
-  fi
+  dnl if test x$have_daxpby = xno; then
+  dnl    AC_MSG_ERROR(BLAS library with cblas_daxpby is required for this program)
+  dnl fi
 
 fi
 

@@ -5,6 +5,23 @@
 
 
 /**
+   Compute the vector sum
+   y = alpha*x + beta*y.
+
+   This is a replacement for cblas_daxpby. If cblas_daxpby is availible, use it.
+*/
+void __l1c_daxpby(l1c_int N, double alpha, double * restrict x, double beta, double * restrict y){
+  double *x_ = __builtin_assume_aligned(x, DALIGN);
+  double *y_ = __builtin_assume_aligned(y, DALIGN);
+#pragma omp parallel for
+  for (l1c_int i=0; i<N; i++){
+    y_[i] = alpha*x_[i] + beta * y_[i];
+  }
+}
+
+
+
+/**
    Initialize a vector x of length N to alpha in all entries.
 */
 void l1c_init_vec(l1c_int N, double * restrict x, double alpha){

@@ -166,7 +166,7 @@ void dct_MtEty( double * restrict y, double * restrict x){
 
   tmp_x_a[0] = tmp_x_a[0]/sqrt(2.0);
 
-  cblas_daxpby(dct_Nx, dct_root_1_by_2N, tmp_x_a, 1, 0.0, x_a, 1);
+  l1c_daxpby(dct_Nx, dct_root_1_by_2N, tmp_x_a, 0.0, x_a);
 }
 
 
