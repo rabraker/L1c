@@ -8,7 +8,6 @@
 AUTOMAKE_OPTIONS = foreign 1.8 no-dependencies
 clean-local:: clean-convenience-link
 bin_PROGRAMS    =
-lib_LTLIBRARIES =
 
 # $(info "MATHLIBS = $(MATHLIBS)")
 # $(info "LDFLAGS = $(LDFLAGS)")
@@ -93,17 +92,18 @@ endif
 # Idea from here:
 # https://stackoverflow.com/questions/13948916/how-to-build-so-module-in-automake-and-a-libtool-using-project
 # but modified because his regexp doesnt work.
-all_libs = $(lib_LTLIBRARIES) $(mex_LTLIBRARIES) $(pyexec_LTLIBRARIES)
+all_libs = $(mex_LTLIBRARIES) $(pyexec_LTLIBRARIES)
 
 
 .PHONY: convenience-link clean-convenience-link
 
-# We need to ensure that we dont grep if lib_LTLTLIBRARIES is empty.
+# We need to ensure that we dont grep when lib_LTLTLIBRARIES is empty.
+# This seems way overcomplicated...
 # Also, need to replace things like .so.0 with .so, so matlab can read it.
 # lib_LTLLIBRARIES contains the .la files, which are just text descriptions.
 convenience-link: $(all_libs)
-	@echo "----tlt libs $(all_libs)"
-	@if test ! -z "$(all_libs)"; then \
+	@echo "----ltl_libs=$(all_libs)"
+	if test `echo "x$(all_libs)"|sed s/\ //g` != x; then \
 	for soname in `test -z $$^ || $(EGREP) "^dlname=" $^|sed -e "s/^.*=//g"|sed -e "s/'//g"`; do  \
 		new_soname=`echo $$soname|sed -e "s/so.*$$/so/g"`;                                         \
 		if test ! -h "$$new_soname"; then                                                          \

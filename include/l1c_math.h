@@ -3,9 +3,12 @@
 #include "config.h"
 #include "l1c_common.h"
 
-#if defined(HAVE_SATLAS)
-#define cblas_daxpby catlas_daxpby
-#endif
+
+void __l1c_daxpby(l1c_int N,
+                  double alpha,
+                  double * restrict x,
+                  double beta,
+                  double * restrict y);
 
 void l1c_init_vec(l1c_int N, double *x, double alpha);
 
@@ -38,5 +41,12 @@ double l1c_dlogsum(l1c_int N,
                    double *x);
 
 
+#if defined(HAVE_CBLAS_DAXPBY)
+#define l1c_daxpby(N, alpha, x, beta, y) cblas_daxpby((N), (alpha), (x), 1, (beta), (y), 1)
+#elif defined(HAVE_ATLAS_DAXPBY)
+#define l1c_daxpby(N, alpha, x, beta, y) catlas_daxpby((N), (alpha), (x), 1, (beta), (y), 1)
+#else
+#define l1c_daxpby(N, alpha, x, beta, y) __l1c_daxpby((N), (alpha), (x), (beta), (y))
+#endif
 
 #endif

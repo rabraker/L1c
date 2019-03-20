@@ -109,8 +109,8 @@ void H11pfun(l1c_int N, double *z, double *y,  void *hess_data_in){
 
   // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
   h11p_data.AtAx(z, y);                               // y = A^T*A*z
-  cblas_daxpby(N, atr_dot_z_fe, h11p_data.atr, 1,     // y = - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
-               -h11p_data.one_by_fe, y, 1);
+  l1c_daxpby(N, atr_dot_z_fe, h11p_data.atr,          // y = - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
+               -h11p_data.one_by_fe, y);
   vcl_dxMy_pz(N, h11p_data.sigx, z, y);                // y = sigx.*z + A^T*A*z
 
 
