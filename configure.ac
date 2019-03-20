@@ -108,7 +108,9 @@ fi
 if test x$with_opt = xyes;
 then
     AX_APPEND_COMPILE_FLAGS([-O3 -march=native -mtune=native], [l1c_cflags], [], [])
+    AC_LANG([C++])
     AX_APPEND_COMPILE_FLAGS([-O3 -march=native -mtune=native], [l1c_cxxflags], [], [])
+    AC_LANG([C])
 fi
 
 # ----------------------------------------------------------------------------------------- #
@@ -162,11 +164,15 @@ AM_CONDITIONAL([ENABLE_PYTHON],[test x$VALID_PYTHON = xyes])
 
 # --------------------------------------------------------------------------------------- #
 # We will build these flags up as we go, and AC_SUBST them at the bottom.
+AC_LANG([C++])
+AX_CHECK_COMPILE_FLAG([-std=c++0x], [l1c_cxxflags="$l1c_cxxflags -std=c++0x"],
+                            [AC_MSG_ERROR("Compiler does not support required flag")], [], [])
 
-
+AC_LANG([C])
 AX_APPEND_ALL_COMPILE_FLAGS([-fopenmp -m64 -std=c11], [l1c_cflags],
                             [AC_MSG_ERROR("Compiler does not support required flag")],
                             [],[])
+
 l1c_cppflags=
 mex_cppflags=
 mex_cflags=
@@ -186,7 +192,7 @@ AC_CHECK_LIB([m], [sqrt], [], [])
 # Check for posix_memalign or _mm_malloc
 AC_CHECK_FUNC(posix_memalign, [have_posix_mem=yes], [])
 
-AC_LANG([C])
+
 
 # ------------------------------ How can we align memory?----------------------------------- #
 # _mm_malloc is an inline function in mm_malloc.h, included by xmmintrin.h

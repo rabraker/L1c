@@ -13,8 +13,8 @@ install:
 script:
         - chmod +x bootstrap.sh 
         - ./bootstrap.sh 
-        - CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/lib ./configure  
+        - CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/lib ./configure --enable-python
         - make
-        - make check
+        - OMP_NUM_THREADS=4 make check
 
 

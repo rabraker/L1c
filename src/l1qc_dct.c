@@ -131,9 +131,8 @@ int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_i
                        .verbose = opts.verbose,
                        .cg_params.max_iter = opts.cgmaxiter,
                        .cg_params.tol = opts.cgtol,
+                       .cg_params.verbose=0,
                        .warm_start_cg=opts.warm_start_cg};
-
-  // LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
 
 
   /* Allocate memory for x and b, which is aligned to DALIGN.
