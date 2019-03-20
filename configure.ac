@@ -417,8 +417,19 @@ fi  # checks for mex
 # Checks for programs.
 
 # Checks for libraries.
-AC_CHECK_LIB([check], [suite_add_tcase],[],[
+test_libs=
+AC_CHECK_LIB([pthread], [pthread_mutex_trylock], [test_libs="$test_libs -lpthread"],
+                        [AC_MSG_ERROR([Cannot find libpthread.])])
+AC_CHECK_LIB([rt], [timer_create], [test_libs="$test_libs -lrt"],
+             [AC_MSG_ERROR([Cannot find librt, which is required.])])
+
+echo $LIBS
+tmp=$LIBS
+LIBS="$LIBS $test_libs"
+AC_CHECK_LIB([check], [suite_add_tcase],[test_libs="$test_libs -lcheck"],[
              AC_MSG_ERROR(check library is required for this program)])
+LIBS=$tmp
+
 AC_CHECK_LIB([cjson], [cJSON_GetArraySize],[],[
              AC_MSG_ERROR(cJSON library is required for this program)])
 
@@ -463,7 +474,7 @@ AC_SUBST(L1CCXXFLAGS, $l1c_cxxflags)
 
 AC_SUBST(L1CCPPFLAGS, $l1c_cppflags)
 AC_SUBST(L1CCFLAGS, $l1c_cflags)
-
+AC_SUBST(L1CTESTLIBS, $test_libs)
 AC_SUBST(MEXCPPFLAGS, $mex_cppflags)
 AC_SUBST(MEXCFLAGS, $mex_cflags)
 AC_SUBST(MEXLDLIBS, $mex_ldlibs)

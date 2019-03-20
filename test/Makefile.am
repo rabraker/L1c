@@ -59,7 +59,7 @@ else
 test_l1c_SOURCES +=	TEST_dct.c TEST_dct2.c
 endif
 
-test_l1c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la
+test_l1c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la $(L1CTESTLIBS)
 
 test_l1c_CPPFLAGS = -D_EXCLUDE_PUBLIC_ -I$(top_srcdir)/include  \
 					-I$(top_srcdir)/src \
