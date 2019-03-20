@@ -155,7 +155,7 @@ void dct2_EMx(double *x, double *y){
   dct2_x[0] = dct2_x[0]*2.0;
 
   // Across the columns of the first row.
-  cblas_dscal(dct2_N-1, root2, dct2_x+1, 1);
+  cblas_dscal(dct2_M-1, root2, dct2_x+1, 1);
 
   // Down the rows of the first column.
   cblas_dscal(dct2_N-1, root2, dct2_x+dct2_M, dct2_M);
@@ -211,7 +211,7 @@ void dct2_MtEt_EMx(double * restrict x, double * restrict z){
   dct2_x[0] = dct2_x[0]*2.0;
 
   // Across the columns of the first row.
-  cblas_dscal(dct2_N-1, root2, dct2_x+1, 1);
+  cblas_dscal(dct2_M-1, root2, dct2_x+1, 1);
 
   // Down the rows of the first column.
   cblas_dscal(dct2_N-1, root2, dct2_x+dct2_M, dct2_M);
