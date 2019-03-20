@@ -307,11 +307,6 @@ else
          ;;
   esac
 
-  #For now, throw an error if we dont have cblas_daxpby. Later, we will provide an implementation.
-  dnl if test x$have_daxpby = xno; then
-  dnl    AC_MSG_ERROR(BLAS library with cblas_daxpby is required for this program)
-  dnl fi
-
 fi
 
 # ------------------------------ Checks for FFTW ---------------------------------------- #
@@ -372,7 +367,7 @@ echo "Compile with fftw3 threads? $have_fftw_threads"
 
 dnl -Werror
 AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused -Wunused-result  \
-                          -Wcast-qual -Wcast-align -Winit-self     \
+                         -Wcast-qual -Wcast-align -Winit-self -Wmissing-field-initializers    \
                           -Wfloat-equal -Wundef -Wshadow -Wstringop-truncation \
                           -Wswitch-enum -Wvla], [WARNFLAGS], [] [])
 AC_SUBST(WARNFLAGS, $WARNFLAGS)
@@ -420,21 +415,49 @@ fi  # checks for mex
 
 
 
+# ---------------------- Check for headers -------------------------------
+
+AC_CHECK_HEADERS([stddef.h stdint.h stdlib.h string.h])
+AC_CHECK_HEADER([check.h], [], [AC_MSG_ERROR("Cannot find check.h")], [])
+# We need to make sure the installed libcheck we found has the floating point macros,
+# which were introduced in check ver 0.11.0
+AC_MSG_CHECKING(checking for ck_assert_double_eq_tol in check.h)
+# Cant use AC_EGREP_HEADER, because it greps the output of pre-processor on check.h, not check.h itself.
+#
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+#include "check.h"
+#ifndef ck_assert_double_eq_tol
+# error Macro ck_assert_double_eq_tol not defined
+#endif
+]])], [AC_MSG_RESULT(yes)],
+      [AC_MSG_RESULT(no)
+      AC_MSG_ERROR([Could not find ck_assert_double_eq_tol in check.h.
+      Do you have the at least version 0.11.0 installed?])])
+
+AC_CHECK_HEADER([cjson/cJSON.h], [], [AC_MSG_ERROR("Cannot find CJSON.h")])
+AC_CHECK_HEADER([math.h], [], [AC_MSG_ERROR("Cannot find math.h")])
+
+
+
 # Checks for programs.
 
-# Checks for libraries.
+# ----------------------- Checks for libraries.---------------------------------
+
+# These tests would be needed if we could use the repo version of libcheck, but it is too old.
+# Leaving them here because it should be simple to pull the two needed macros out of check.h
+# and put in our own check_utils.h.
 dnl test_libs=
 dnl AC_CHECK_LIB([pthread], [pthread_mutex_trylock], [test_libs="$test_libs -lpthread"],
 dnl                         [AC_MSG_ERROR([Cannot find libpthread.])])
 dnl AC_CHECK_LIB([rt], [timer_create], [test_libs="$test_libs -lrt"],
 dnl              [AC_MSG_ERROR([Cannot find librt, which is required.])])
-
 dnl echo $LIBS
 dnl tmp=$LIBS
 dnl LIBS="$LIBS $test_libs"
+dnl LIBS=$tmp
+
 AC_CHECK_LIB([check], [suite_add_tcase],[test_libs="$test_libs -lcheck"],[
              AC_MSG_ERROR(check library is required for this program)])
-dnl LIBS=$tmp
 
 AC_CHECK_LIB([cjson], [cJSON_GetArraySize],[],[
              AC_MSG_ERROR(cJSON library is required for this program)])
@@ -445,13 +468,6 @@ AC_CHECK_LIB([gomp], [omp_set_num_threads],[],[
 AC_CHECK_LIB([m], [sqrt],[],[
              AC_MSG_ERROR(library is required for this program)])
 
-
-# Check for headers
-
-AC_CHECK_HEADERS([stddef.h stdint.h stdlib.h string.h])
-AC_CHECK_HEADER([check.h], [], [AC_MSG_ERROR("Cannot find check.h")], [])
-AC_CHECK_HEADER([cjson/cJSON.h], [], [AC_MSG_ERROR("Cannot find CJSON.h")])
-AC_CHECK_HEADER([math.h], [], [AC_MSG_ERROR("Cannot find math.h")])
 
 AM_CONDITIONAL([compile_with_mkl], [test x$with_mkl = xyes ])
 AM_CONDITIONAL([comp_with_mex], [test x$enable_mex = xyes])

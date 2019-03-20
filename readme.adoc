@@ -52,10 +52,11 @@ Running the full build requires the following dependencies
 
 * https://github.com/xianyi/OpenBLAS[OpenBlas] or http://math-atlas.sourceforge.net/[ATLAS]
 * http://fftw.org/[FFTW3]
-* https://github.com/libcheck/check[libcheck] (used for unit tests)
+* https://github.com/libcheck/check[libcheck] (used for unit tests), at least version 0.11.0. Unfortunately, the version still in the Debian/Ubuntu repositories is 0.10, but 0.11.0 introduced the floating point assertion macros we need.
 * https://github.com/DaveGamble/cJSON[cJSON] (used for unit tests and example program). 
 * GNU OpenMP (`libgomp`) 
-* Python3, Numpy, and Scipy.
+* Python3, Numpy, and Scipy are needed for unit tests and some examples.
+* Matplotlib is needed for plotting in some examples
 * Valgrind (optional) to run the memory leak tests.
 * Two test cases still rely on matlab to produce the required data. If matlab is unavailible, you can run the tests anyway but 
 `test_line_search` and `test_l1qc_newton_1iter` will fail.
