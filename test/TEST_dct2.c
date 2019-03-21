@@ -54,73 +54,67 @@ typedef struct DctData{
 
 }DctData;
 
-/* Global variables for each test case: There are three test cases. The first
-   uses randomly generated data with size Nx=50, the second is large, and from
-   a simulation image, the third is is also random with Nx=50, but pix_idx corresonds to
-   the Nx x Nx identity.
+/* Global variable for all test cases.
  */
 
-DctData *dct2_small_data;
-DctData *dct2_large_data;
-DctData *dct2_pure_data;
-
+DctData *dctd;
 
 
 /* We the tcase_add_checked_fixture method. setup() and teardown are called by
    the associated setup and teardown functions for each test case. This allows us
    to use a different file path for each.
  */
-static void setup(DctData *dctd){
+static void setup(DctData *dct_dat){
   cJSON *test_data_json;
 
   int setup_status=0;
-  if (load_file_to_json(dctd->fpath, &test_data_json)){
+  if (load_file_to_json(dct_dat->fpath, &test_data_json)){
     fprintf(stderr, "Error loading data in test_dct\n");
     ck_abort();
   }
 
-  setup_status +=extract_json_double_array(test_data_json, "x_in", &dctd->x_in, &dctd->Nx);
-  setup_status +=extract_json_double_array(test_data_json, "y_in", &dctd->y_in, &dctd->Ny);
+  setup_status +=extract_json_double_array(test_data_json, "x_in", &dct_dat->x_in, &dct_dat->Nx);
+  setup_status +=extract_json_double_array(test_data_json, "y_in", &dct_dat->y_in, &dct_dat->Ny);
 
-  setup_status +=extract_json_double_array(test_data_json, "MtEt_EMx", &dctd->MtEty_EMx_exp, &dctd->Nx);
+  setup_status +=extract_json_double_array(test_data_json, "MtEt_EMx", &dct_dat->MtEty_EMx_exp, &dct_dat->Nx);
 
-  setup_status +=extract_json_double_array(test_data_json, "MtEty", &dctd->MtEty_exp, &dctd->Nx);
+  setup_status +=extract_json_double_array(test_data_json, "MtEty", &dct_dat->MtEty_exp, &dct_dat->Nx);
 
-  setup_status +=extract_json_double_array(test_data_json, "EMx", &dctd->EMx_exp, &dctd->Ny);
+  setup_status +=extract_json_double_array(test_data_json, "EMx", &dct_dat->EMx_exp, &dct_dat->Ny);
 
-  setup_status +=extract_json_int_array(test_data_json, "pix_idx", &dctd->pix_idx, &dctd->Npix);
-  setup_status +=extract_json_int(test_data_json, "N", &dctd->N);
-  setup_status +=extract_json_int(test_data_json, "M", &dctd->M);
+  setup_status +=extract_json_int_array(test_data_json, "pix_idx", &dct_dat->pix_idx, &dct_dat->Npix);
+  setup_status +=extract_json_int(test_data_json, "N", &dct_dat->N);
+  setup_status +=extract_json_int(test_data_json, "M", &dct_dat->M);
 
   if (setup_status){
     fprintf(stderr, "Error Loading json into program data in 'test_MtEty_large()'. Aborting\n");
     ck_abort();
   }
-  ck_assert_int_eq(dctd->N * dctd->M, dctd->Nx);
+  ck_assert_int_eq(dct_dat->N * dct_dat->M, dct_dat->Nx);
 
-  dctd->MtEty_EMx_act = malloc_double(dctd->Nx);
-  dctd->MtEty_act = malloc_double(dctd->Nx);
-  dctd->EMx_act = malloc_double(dctd->Nx);
+  dct_dat->MtEty_EMx_act = malloc_double(dct_dat->Nx);
+  dct_dat->MtEty_act = malloc_double(dct_dat->Nx);
+  dct_dat->EMx_act = malloc_double(dct_dat->Nx);
 
-  dct2_setup(dctd->N, dctd->M, dctd->Npix, dctd->pix_idx);
+  dct2_setup(dct_dat->N, dct_dat->M, dct_dat->Npix, dct_dat->pix_idx);
 
   cJSON_Delete(test_data_json);
 }
 
-static void teardown(DctData *dctd){
-  free_double(dctd->x_in);
-  free_double(dctd->y_in);
+static void teardown(DctData *dct_dat){
+  free_double(dct_dat->x_in);
+  free_double(dct_dat->y_in);
 
-  free_double(dctd->MtEty_EMx_exp);
-  free_double(dctd->MtEty_exp);
-  free_double(dctd->EMx_exp);
+  free_double(dct_dat->MtEty_EMx_exp);
+  free_double(dct_dat->MtEty_exp);
+  free_double(dct_dat->EMx_exp);
 
-  free_double(dctd->MtEty_EMx_act);
-  free_double(dctd->MtEty_act);
-  free_double(dctd->EMx_act);
+  free_double(dct_dat->MtEty_EMx_act);
+  free_double(dct_dat->MtEty_act);
+  free_double(dct_dat->EMx_act);
 
 
-  free(dctd->pix_idx);
+  free(dct_dat->pix_idx);
   dct2_destroy();
 
 
@@ -130,37 +124,69 @@ static void teardown(DctData *dctd){
 
 }
 
-static void setup_small(void){
-  dct2_small_data = malloc(sizeof(DctData));
+static void setup_square(void){
+  dctd = malloc(sizeof(DctData));
 
   char *fpath_dct2_small = fullfile(test_data_dir, "dct2_small.json");
 
-  sprintf(dct2_small_data->fpath, "%s", fpath_dct2_small);
-  setup(dct2_small_data);
+  sprintf(dctd->fpath, "%s", fpath_dct2_small);
+  setup(dctd);
 
   free(fpath_dct2_small);
 }
 
-static void teardown_small(void){
-  teardown(dct2_small_data);
-  free(dct2_small_data);
+static void teardown_square(void){
+  teardown(dctd);
+  free(dctd);
+}
+
+static void setup_tall(void){
+  dctd = malloc(sizeof(DctData));
+
+  char *fpath_dct2_small = fullfile(test_data_dir, "dct2_small_tall.json");
+
+  sprintf(dctd->fpath, "%s", fpath_dct2_small);
+  setup(dctd);
+
+  free(fpath_dct2_small);
+}
+
+static void teardown_tall(void){
+  teardown(dctd);
+  free(dctd);
 }
 
 
+static void setup_wide(void){
+  dctd = malloc(sizeof(DctData));
 
-static void setup_pure_dct(void){
-  dct2_pure_data = malloc(sizeof(DctData));
+  char *fpath_dct2_small = fullfile(test_data_dir, "dct2_small_wide.json");
+
+  sprintf(dctd->fpath, "%s", fpath_dct2_small);
+  setup(dctd);
+
+  free(fpath_dct2_small);
+}
+
+static void teardown_wide(void){
+  teardown(dctd);
+  free(dctd);
+}
+
+
+static void setup_pure_square(void){
+  dctd = malloc(sizeof(DctData));
 
   char *fpath_dct2_pure = fullfile(test_data_dir, "dct2_small_pure_dct.json");
-  sprintf(dct2_pure_data->fpath, "%s", fpath_dct2_pure);
-  setup(dct2_pure_data);
+  sprintf(dctd->fpath, "%s", fpath_dct2_pure);
+  setup(dctd);
 
   free(fpath_dct2_pure);
 }
 
-static void teardown_pure(void){
-  teardown(dct2_pure_data);
-  free(dct2_pure_data);
+static void teardown_pure_square(void){
+  teardown(dctd);
+  free(dctd);
 
 }
 
@@ -168,10 +194,10 @@ static void teardown_pure(void){
 START_TEST(test_dct2_MtEt_EMx_small)
 {
   /* Provided and freed by setup_small() and teardown_small()*/
-  dct2_MtEt_EMx(dct2_small_data->x_in, dct2_small_data->MtEty_EMx_act);
+  dct2_MtEt_EMx(dctd->x_in, dctd->MtEty_EMx_act);
 
-  ck_assert_double_array_eq_tol(dct2_small_data->Nx, dct2_small_data->MtEty_EMx_exp,
-                                dct2_small_data->MtEty_EMx_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(dctd->Nx, dctd->MtEty_EMx_exp,
+                                dctd->MtEty_EMx_act, TOL_DOUBLE_SUPER);
 
 }
 END_TEST
@@ -179,66 +205,23 @@ END_TEST
 
 START_TEST(test_dct2_MtEty_small)
 {
-  dct2_MtEty(dct2_small_data->y_in, dct2_small_data->MtEty_act);
+  dct2_MtEty(dctd->y_in, dctd->MtEty_act);
 
-  ck_assert_double_array_eq_tol(dct2_small_data->Nx, dct2_small_data->MtEty_exp,
-                                dct2_small_data->MtEty_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(dctd->Nx, dctd->MtEty_exp,
+                                dctd->MtEty_act, TOL_DOUBLE_SUPER);
 
 }
 END_TEST
 
 START_TEST(test_dct2_EMx_new_small)
 {
-  dct2_EMx(dct2_small_data->x_in, dct2_small_data->EMx_act);
+  dct2_EMx(dctd->x_in, dctd->EMx_act);
 
-  ck_assert_double_array_eq_tol(dct2_small_data->Ny, dct2_small_data->EMx_exp,
-                                dct2_small_data->EMx_act, TOL_DOUBLE_SUPER);
-
-}
-END_TEST
-
-
-/* The next three tests check what happens when pix_idx is all ones, ie,
- the identitiy. That is, these are equivalent to just taking the dct/idct
-with not sampling.
-*/
-START_TEST(test_dct2_MtEt_EMx_pure)
-{
-   /* Test the multiplication (EM)^T * (E*M) * x */
-  dct2_MtEt_EMx(dct2_pure_data->x_in, dct2_pure_data->MtEty_EMx_act);
-
-  ck_assert_double_array_eq_tol(dct2_pure_data->Nx, dct2_pure_data->MtEty_EMx_exp,
-                                dct2_pure_data->MtEty_EMx_act, TOL_DOUBLE_SUPER);
-
+  ck_assert_double_array_eq_tol(dctd->Ny, dctd->EMx_exp,
+                                dctd->EMx_act, TOL_DOUBLE_SUPER);
 
 }
 END_TEST
-
-
-START_TEST(test_dct2_MtEty_pure)
-{
-  dct2_MtEty(dct2_pure_data->y_in, dct2_pure_data->MtEty_act);
-
-  ck_assert_double_array_eq_tol(dct2_pure_data->Nx, dct2_pure_data->MtEty_exp,
-                                dct2_pure_data->MtEty_act, TOL_DOUBLE_SUPER);
-
-
-}
-END_TEST
-
-
-
-
-START_TEST(test_dct2_EMx_new_pure)
-{
-  dct2_EMx(dct2_pure_data->x_in, dct2_pure_data->EMx_act);
-
-  ck_assert_double_array_eq_tol(dct2_pure_data->Ny, dct2_pure_data->EMx_exp,
-                                dct2_pure_data->EMx_act, TOL_DOUBLE_SUPER);
-
-}
-END_TEST
-
 
 
 
@@ -248,30 +231,52 @@ Suite *dct2_suite(void)
 {
   Suite *s;
 
-  TCase *tc_dct2_small, *tc_dct2_pure;
-  // TCase  *tc_dct2_small;
+  TCase *tc_dct2_square, *tc_dct2_pure, *tc_dct2_tall, *tc_dct2_wide;
+  // TCase  *tc_dct2_square;
   s = suite_create("dct2");
 
 
-  tc_dct2_small = tcase_create("dct2_small");
-  tcase_add_checked_fixture(tc_dct2_small, setup_small, teardown_small);
-  tcase_add_test(tc_dct2_small, test_dct2_MtEt_EMx_small);
-  tcase_add_test(tc_dct2_small, test_dct2_MtEty_small);
-  tcase_add_test(tc_dct2_small, test_dct2_EMx_new_small);
+  tc_dct2_square = tcase_create("dct2_small");
+  tcase_add_checked_fixture(tc_dct2_square, setup_square, teardown_square);
+  tcase_add_test(tc_dct2_square, test_dct2_MtEt_EMx_small);
+  tcase_add_test(tc_dct2_square, test_dct2_MtEty_small);
+  tcase_add_test(tc_dct2_square, test_dct2_EMx_new_small);
 
-  suite_add_tcase(s, tc_dct2_small);
+  suite_add_tcase(s, tc_dct2_square);
 
+  /* The test check what happens when pix_idx is all ones, ie,
+     the identitiy. That is, these are equivalent to just taking the dct/idct
+     with not sampling.
+  */
 
   tc_dct2_pure = tcase_create("dct2_pure");
-  tcase_add_checked_fixture(tc_dct2_pure, setup_pure_dct, teardown_pure);
-  tcase_add_test(tc_dct2_pure, test_dct2_MtEt_EMx_pure);
-  tcase_add_test(tc_dct2_pure, test_dct2_EMx_new_pure);
-  tcase_add_test(tc_dct2_pure, test_dct2_MtEty_pure);
+  tcase_add_checked_fixture(tc_dct2_pure, setup_pure_square, teardown_pure_square);
+  tcase_add_test(tc_dct2_pure, test_dct2_MtEt_EMx_small);
+  tcase_add_test(tc_dct2_pure, test_dct2_EMx_new_small);
+  tcase_add_test(tc_dct2_pure, test_dct2_MtEty_small);
 
   suite_add_tcase(s, tc_dct2_pure);
 
+  /* DCT2 of tall, skinny matrix.
+  */
 
+  tc_dct2_tall = tcase_create("dct2_tall");
+  tcase_add_checked_fixture(tc_dct2_tall, setup_tall, teardown_tall);
+  tcase_add_test(tc_dct2_tall, test_dct2_MtEt_EMx_small);
+  tcase_add_test(tc_dct2_tall, test_dct2_EMx_new_small);
+  tcase_add_test(tc_dct2_tall, test_dct2_MtEty_small);
 
+  suite_add_tcase(s, tc_dct2_tall);
+
+  /* DCT2 of wide matrix.
+  */
+  tc_dct2_wide = tcase_create("dct2_wide");
+  tcase_add_checked_fixture(tc_dct2_wide, setup_wide, teardown_wide);
+  tcase_add_test(tc_dct2_wide, test_dct2_MtEt_EMx_small);
+  tcase_add_test(tc_dct2_wide, test_dct2_EMx_new_small);
+  tcase_add_test(tc_dct2_wide, test_dct2_MtEty_small);
+
+  suite_add_tcase(s, tc_dct2_wide);
 
   return s;
 
