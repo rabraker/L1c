@@ -16,7 +16,7 @@ lib_LTLIBRARIES = libl1c.la
 # noinst_LTLIBRARIES = libl1c.la
 
 libl1c_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include $(L1CCPPFLAGS)
-libl1c_la_CFLAGS = $(L1CCFLAGS)  -fPIC $(WARNFLAGS)
+libl1c_la_CFLAGS = $(L1CCFLAGS)  -fPIC
 libl1c_la_SOURCES = l1qc_newton.c \
 					l1c_math.c \
 					cgsolve.c  \

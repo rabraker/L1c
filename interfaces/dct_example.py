@@ -38,8 +38,8 @@ def dct_example(verbose=2, fpath='example_img_data.json', plot=False):
 
     # Call the library wrapper.
     time0 = time.perf_counter()
-    x_recon, p = l1cPy.l1qc_dct(N*N, 1, b, pix_idx, epsilon=0.01,
-                                l1_tol=0, cgmaxiter=200, verbose=verbose)
+    x_recon, p = l1cPy.l1qc_dct(N*N, 1, b, pix_idx, epsilon=0.1,
+                                l1_tol=1e-5, cgmaxiter=200, verbose=verbose)
 
     time_total = time.perf_counter() - time0
     print("(l1qc_dct) Total python time: %f" % time_total)
