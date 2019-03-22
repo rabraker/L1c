@@ -79,15 +79,18 @@ log_deps = 	build_CS20NG_example_data.log \
 test_l1c.log:$(log_deps)
 
 
-# Really, need a phony rule here I think.
-$(log_deps):test_data_dir
+# The next two rules ensure the $(TEST_DATA_DIR) directory
+# get created before anything else.
+%.log:$(TEST_DATA_DIR)
 
-test_data_dir:
-	mkdir -p test_data
+$(TEST_DATA_DIR):
+	mkdir -p $(TEST_DATA_DIR)
 
-# test_matlab_dlopen.sh:$(log_deps)
 
 test_matlab_mex.sh:$(log_deps)
+
 test_python_interface.sh:$(log_deps)
+
 test_l1qc_dct_c.sh:$(log_deps)
+
 valgrind_wrapper.log:$(log_deps)
