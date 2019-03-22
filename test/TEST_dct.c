@@ -52,16 +52,8 @@ typedef struct DctData{
 
 }DctData;
 
-/* Global variables for each test case: There are three test cases. The first
-   uses randomly generated data with size Nx=50, the second is large, and from
-   a simulation image, the third is is also random with Nx=50, but pix_idx corresonds to
-   the Nx x Nx identity.
- */
+/* Global variable for each all test cases.  */
 DctData *dctd;
-// _small_data;
-// DctData *dct_large_data;
-// DctData *dctd;
-
 
 
 /* We the tcase_add_checked_fixture method. setup() and teardown are called by
@@ -73,7 +65,7 @@ static void setup(DctData *dct_dat){
 
   int setup_status=0;
   if (load_file_to_json(dct_dat->fpath, &test_data_json)){
-    fprintf(stderr, "Error loading data in test_dct\n");
+    fprintf(stderr, "Error loading data in test_dct from file %s\n", dct_dat->fpath);
     ck_abort();
   }
 
