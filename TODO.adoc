@@ -1,0 +1,9 @@
+== L1C TODOs ==
+
+TO make this library more accessible, the following needs to happen.
+
+. Completely remove dependency on matlab for unit test data. This still exists in the following places
+- l1qc_newton:test_l1qc_newton_1iter: Basically an integration test. Could replace this with a test that starts with a sparse signal with known L1 norm. Maybe use generic transform A, as a matrix.
+- l1qc_linesearch:test_line_search. Not sure what to do with this.
++
+. Let users use libcheck in the repos. This should be easy to do by adding simple macro that replaces ~ck_assert_double_eq_tol~, which is the only thing we need from the newer version.

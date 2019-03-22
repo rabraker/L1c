@@ -2,7 +2,8 @@
 function [tm_mex, x_est, LBRes] = test_l1qc_dct_mex(fpath, verbose)
   
   dat=loadjson(fpath);
-  opts = l1qc_dct_opts('verbose', verbose);
+  opts = l1qc_dct_opts('verbose', verbose, 'l1_tol', 1e-5,...
+                       'epsilon', 0.1, 'mu', 10);
   tic
   if dat.one_based_index == 1
     pix_idx = dat.pix_idx;

@@ -46,6 +46,7 @@ dnl This is necessary, otherwise, when we use AC_CHECK_HEADER inside the conditi
 dnl AC_PROG_CPP will be expanded in the else, and not visible outside, which leads to
 dnl warnings like WARNING: check.h: accepted by the compiler, rejected by the preprocessor!
 AC_PROG_CPP
+AC_LANG([C])
 
 AC_ARG_VAR(BLAS_LIB, [BLAS_LIB=[openblas][satlas][tatlas][?], the name of your prefered BLAS library.
                      By default, configure will search first for openblas, then tatlas, then satlas])
@@ -55,7 +56,6 @@ dnl AH_TEMPLATE([HAVE_ATLAS],
 dnl     [Define to 1 if you have libsatlas])
 dnl AH_TEMPLATE([HAVE_OPENBLAS],
 dnl     [Define to 1 if you have libopenblas])
-
 
 AC_ARG_WITH(debug, [AS_HELP_STRING([--with-debug],[Compile with debugging support.])],
                    [AC_DEFINE(WITH_DEBUG,1,[Debugging enabled])
@@ -100,9 +100,26 @@ else
     mex_prefix=`echo $mex_prefix|sed 's,\/$,,'`
 fi
 
+# --------------------------------------------------------------------------------------- #
+# We will build these flags up as we go, and AC_SUBST them at the bottom.
+l1c_test_libs=
+l1c_cppflags=
+l1c_cflags=
+l1c_cxxflags=
+mex_cppflags=
+mex_cflags=
+mkl_cppflags=
+mkl_cflags=
+test_cppflags=
+test_cflags=
+win32_ldflags=
+
 if test x$with_debug = xyes;
 then
     AX_APPEND_COMPILE_FLAGS([-O0 -ggdb -g], [l1c_cflags], [], [])
+    AC_LANG([C++])
+    AX_APPEND_COMPILE_FLAGS([-O0 -ggdb -g], [l1c_cxxflags], [], [])
+    AC_LANG([C])
 fi
 
 if test x$with_opt = xyes;
@@ -112,6 +129,35 @@ then
     AX_APPEND_COMPILE_FLAGS([-O3 -march=native -mtune=native], [l1c_cxxflags], [], [])
     AC_LANG([C])
 fi
+
+
+
+AX_APPEND_ALL_COMPILE_FLAGS([-fopenmp -m64 -std=c11], [l1c_cflags],
+                            [AC_MSG_ERROR("Compiler does not support required flag")],
+                            [],[])
+# Check if c compiler accepts a bunch of warning flags
+AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused   \
+                            -Wcast-qual -Wcast-align -Winit-self     \
+                            -Wfloat-equal -Wundef -Wshadow -Wstringop-truncation \
+                            -Wswitch-enum -Wvla], [l1c_cflags], [] [])
+
+AC_LANG([C++])
+AX_APPEND_ALL_COMPILE_FLAGS([-m64 -std=c++11], [l1c_cxxflags],
+                            [AC_MSG_ERROR("Compiler does not support required flag")],
+                            [],[])
+# Check if c compiler accepts a bunch of warning flags
+AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused   \
+                            -Wcast-qual -Wcast-align -Winit-self     \
+                            -Wfloat-equal -Wundef -Wshadow -Wstringop-truncation \
+                            -Wswitch-enum -Wvla], [l1c_cxxflags], [] [])
+AC_LANG([C])
+
+
+# At least on my linux, this flag is not supported by ld, but is needed to
+# build on mingw
+AX_APPEND_LINK_FLAGS([-Wl,--export-all], [win32_ldflags], [], [])
+
+
 
 # ----------------------------------------------------------------------------------------- #
 # ---------------------------- Checks building python bindings ---------------------------- #
@@ -141,17 +187,10 @@ for dir in npd.misc_util.get_numpy_include_dirs():
     inc_dirs = ' -I'+dir;
 print(inc_dirs);"`
 
-      dnl echo $pyexecdir
-      dnl echo $pythondir
-      dnl echo $PYTHON_SITE_PKG
-      dnl echo $PYTHON_SITE_PKG_EXEC
-      dnl echo $npy_cppflags
-      dnl echo $enable_python
-      dnl echo $PYTHON
-      dnl echo $PYTHON_VERSION
-      dnl echo $PYTHON_CPPFLAGS
-      dnl echo $PYTHON_LIBS
-      dnl echo $PYTHON_EXTRA_LDFLAGS
+      # Other Variables that may prove useful:
+      # $pyexecdir, $pythondir, $PYTHON_SITE_PKG, $PYTHON_SITE_PKG_EXEC
+      # $npy_cppflags, $enable_python, $PYTHON, $PYTHON_VERSION
+      # $PYTHON_CPPFLAGS, $PYTHON_LIBS, $PYTHON_EXTRA_LDFLAGS
       AC_SUBST(PYTHONDIR,$pythondir)
       AC_SUBST(PKGPYTHONDIR,$pkgpythondir)
       AC_SUBST(PYEXECDIR,$pyexecdir)
@@ -162,39 +201,14 @@ fi
 
 AM_CONDITIONAL([ENABLE_PYTHON],[test x$VALID_PYTHON = xyes])
 
-# --------------------------------------------------------------------------------------- #
-# We will build these flags up as we go, and AC_SUBST them at the bottom.
-AC_LANG([C++])
-AX_CHECK_COMPILE_FLAG([-std=c++0x], [l1c_cxxflags="$l1c_cxxflags -std=c++0x"],
-                            [AC_MSG_ERROR("Compiler does not support required flag")], [], [])
-
-AC_LANG([C])
-AX_APPEND_ALL_COMPILE_FLAGS([-fopenmp -m64 -std=c11], [l1c_cflags],
-                            [AC_MSG_ERROR("Compiler does not support required flag")],
-                            [],[])
-
-l1c_cppflags=
-mex_cppflags=
-mex_cflags=
-mkl_cppflags=
-mkl_cflags=
-test_cppflags=
-test_cflags=
-win32_ldflags=
-
-# At least on my linux, this flag is not supported by ld, but is needed to
-# build on mingw
-AX_APPEND_LINK_FLAGS([-Wl,--export-all], [win32_ldflags], [], [])
 
 AC_CHECK_LIB([m], [sqrt], [], [])
 
-
+# ------------------------------ How can we align memory?----------------------------------- #
 # Check for posix_memalign or _mm_malloc
 AC_CHECK_FUNC(posix_memalign, [have_posix_mem=yes], [])
 
 
-
-# ------------------------------ How can we align memory?----------------------------------- #
 # _mm_malloc is an inline function in mm_malloc.h, included by xmmintrin.h
 # Should not need a header check, since if xmmintrin.h is not found, this should fail.
 AC_MSG_CHECKING([checking for _mm_malloc])
@@ -365,12 +379,6 @@ echo "Compile with fftw3 threads? $have_fftw_threads"
 
 
 
-dnl -Werror
-AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused -Wunused-result  \
-                         -Wcast-qual -Wcast-align -Winit-self -Wmissing-field-initializers    \
-                          -Wfloat-equal -Wundef -Wshadow -Wstringop-truncation \
-                          -Wswitch-enum -Wvla], [WARNFLAGS], [] [])
-AC_SUBST(WARNFLAGS, $WARNFLAGS)
 
 # ----------------------------------------------------------------------------------------- #
 # ------------------------------ Checks for matlab MEX------------------------------------- #
@@ -456,7 +464,7 @@ dnl tmp=$LIBS
 dnl LIBS="$LIBS $test_libs"
 dnl LIBS=$tmp
 
-AC_CHECK_LIB([check], [suite_add_tcase],[test_libs="$test_libs -lcheck"],[
+AC_CHECK_LIB([check], [suite_add_tcase],[l1c_test_libs="$l1c_test_libs -lcheck"],[
              AC_MSG_ERROR(check library is required for this program)])
 
 AC_CHECK_LIB([cjson], [cJSON_GetArraySize],[],[
@@ -493,15 +501,17 @@ AC_CHECK_FUNCS([strerror])
 # ----------------------------------------------------------------- #
 # Make the flags we collected visible to automake
 AC_SUBST(L1CCXXFLAGS, $l1c_cxxflags)
-
 AC_SUBST(L1CCPPFLAGS, $l1c_cppflags)
 AC_SUBST(L1CCFLAGS, $l1c_cflags)
-AC_SUBST(L1CTESTLIBS, $test_libs)
+AC_SUBST(L1CCFLAGS, $l1c_cflags)
+
+
 AC_SUBST(MEXCPPFLAGS, $mex_cppflags)
 AC_SUBST(MEXCFLAGS, $mex_cflags)
 AC_SUBST(MEXLDLIBS, $mex_ldlibs)
 AC_SUBST(WITH_MEX, $enable_mex)
 AC_SUBST(MEX_PREFIX, $mex_prefix)
+
 AC_SUBST(WITH_PYTHON, $enable_python)
 
 AC_SUBST(MKLCPPFLAGS, $mkl_cppflags)
@@ -509,6 +519,8 @@ AC_SUBST(MKLCFLAGS, $mkl_cflags)
 
 AC_SUBST(TESTCPPFLAGS, $test_cppflags)
 AC_SUBST(TESTCFLAGS, $test_cflags)
+AC_SUBST(L1CTESTLIBS, $l1c_test_libs)
+
 AC_SUBST(WIN32LDFLAGS, $win32_ldflags)
 
 

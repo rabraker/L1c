@@ -12,7 +12,6 @@ BregmanData/
 build/
 interfaces/*.o
 interfaces/*.mexa64
-test_data/
 *.in
 Makefile
 GTAGS

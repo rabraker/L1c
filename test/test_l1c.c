@@ -101,8 +101,10 @@ char* fullfile(char *base_path, char *name){
   int len_base = strlen(base_path);
   int len_name = strlen(name);
 
+  /*Add 2: 1 for \0 and one for '/', path separator. */
   char *full_path = malloc( (len_base + len_name + 2)*sizeof(char));
 
+  /*len_base does not include \0. */
   strncpy(full_path, base_path, len_base);
   full_path[len_base] = '/';
   strcpy(full_path + len_base + 1, name);
