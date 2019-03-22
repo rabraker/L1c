@@ -17,6 +17,7 @@ int main(int argc, char **argv){
   mkl_set_interface_layer(MKL_INTERFACE_ILP64);
   mkl_set_threading_layer(MKL_THREADING_GNU);
 #endif
+  int verbose=0;
   char *fpath;
   char fpath_[] = "example_img_data.json";
 
@@ -36,6 +37,12 @@ int main(int argc, char **argv){
     strcpy(fpath, fpath_);
   }
 
+  if (argc >=3){
+    verbose = atoi(argv[2]);
+  }else{
+    verbose = 0;
+  }
+
   cJSON *test_data_json=NULL;
   double *x=NULL, *b=NULL;
   l1c_int *pix_idx=NULL;
@@ -49,7 +56,7 @@ int main(int argc, char **argv){
 							   .lbtol = 1e-3,
 							   .newton_tol = 1e-3,
                                .newton_max_iter = 50,
-                               .verbose = 2,
+                               .verbose = verbose,
                                .l1_tol = 1e-5,
                                .cgtol = 1e-8,
                                .cgmaxiter = 200,
