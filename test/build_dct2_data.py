@@ -66,9 +66,9 @@ if srcdir is None:
 
 data_dir = srcdir+"/test_data"
 
+
+# -------------------------------------------------------- #
 fname = data_dir+"/dct2_small.json"
-
-
 N = 16
 M = 16
 
@@ -76,9 +76,33 @@ pix_idx = np.array([0, 2, 10, 15, 20, 25, 30, 35, 40, 45, 49])
 build_dct_rand_test_data(fname, pix_idx, N, M)
 
 
+# -------------------------------------------------------- #
+# Check we still do this right for a tall, skinny matrix
+fname = data_dir+"/dct2_small_tall.json"
+N = 18
+M = 16
+
+# pix_idx = np.array([0, 2, 10, 15, 20, 25, 30, 35, 40, 45, (N-5)*M])
+pix_idx = np.arange(N*M)
+build_dct_rand_test_data(fname, pix_idx, N, M)
+
+# -------------------------------------------------------- #
+# Check we still do this right for a wide, short matrix
+fname = data_dir+"/dct2_small_wide.json"
+N = 16
+M = 18
+
+# pix_idx = np.array([0, 2, 10, 15, 20, 25, 30, 35, 40, 45, (N-5)*M])
+pix_idx = np.arange(N*M)
+build_dct_rand_test_data(fname, pix_idx, N, M)
+
+
+# -------------------------------------------------------- #
 # This checks that we get the right result for a pure dct, and in
 # particular, that we got the scaling at the first element correct.
 
+N = 16
+M = 16
 
 pix_idx = np.arange(N*M)
 fname = data_dir+"/dct2_small_pure_dct.json"

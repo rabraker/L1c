@@ -24,9 +24,13 @@ failures+=$?
 # Regression check that we dont have to have N divisible by
 # DALIGN/sizeof(double = 64/8
 data_path="${ABS_TOP_SRCDIR}/test/test_data/example_img_data127.json"
-
 "${LIB_DIR}/l1qc_dct_c" "${data_path}" >/dev/null
 
 failures+=$?
 
-exit $failures
+# If failures >255, automake believes its zero, evidently.
+if test $failures -gt 0; then
+    exit 1
+else
+    exit $failures
+fi

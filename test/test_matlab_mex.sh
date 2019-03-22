@@ -40,4 +40,9 @@ cmd=$(ml_cmd "${LIB_DIR}" "${ml_script_dir}" "test_breg_TV_mex" \
 matlab -nojvm -r "${cmd}"
 failures+=$?
 
-exit $failures
+# If failurs >255, automake believes its zero, evidently.
+if test $failures -gt 0; then
+    exit 1
+else
+    exit $failures
+fi

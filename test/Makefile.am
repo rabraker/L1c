@@ -14,7 +14,7 @@ AM_TESTS_ENVIRONMENT = TOP_BUILDDIR='$(top_builddir)'; export TOP_BUILDDIR; \
 						WITH_MEX='$(WITH_MEX)'; export WITH_MEX;                    \
 						WITH_PYTHON='$(WITH_PYTHON)'; export WITH_PYTHON;
 
-
+# This directory should be part of the git-repo.
 TEST_DATA_DIR="$(abs_srcdir)/test_data/"
 
 # -------------------------------------------------------------------------------#
@@ -76,13 +76,14 @@ log_deps = 	build_CS20NG_example_data.log \
 			build_bregman_data.log
 
 
+# Ensure data gets built first
 test_l1c.log:$(log_deps)
 
 
-
-# test_matlab_dlopen.sh:$(log_deps)
-
 test_matlab_mex.sh:$(log_deps)
+
 test_python_interface.sh:$(log_deps)
+
 test_l1qc_dct_c.sh:$(log_deps)
+
 valgrind_wrapper.log:$(log_deps)

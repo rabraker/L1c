@@ -21,14 +21,14 @@ int main(int argc, char **argv){
   char fpath_[] = "example_img_data.json";
 
   if (argc >= 2){
-    fpath = malloc(strlen(argv[1])*sizeof(char));
+    fpath = malloc(strlen(argv[1])*sizeof(char)+1);
     if (!fpath){
       fprintf(stderr, "Error allocating memory\n");
       return 1;
     }
     strcpy(fpath, argv[1]);
   }else{
-    fpath = malloc(strlen(fpath_)*sizeof(char));
+    fpath = malloc(strlen(fpath_)*sizeof(char)+1);
     if (!fpath){
       fprintf(stderr, "Error allocating memory\n");
       return 1;
@@ -58,6 +58,7 @@ int main(int argc, char **argv){
 
   if (load_file_to_json(fpath, &test_data_json)){
     fprintf(stderr, "Error loading data in l1qc_dct_c\n");
+    status = L1C_FILE_READ_FAILURE;
     goto exit;
   }
 
@@ -69,6 +70,7 @@ int main(int argc, char **argv){
 
   if (status || !x){
     fprintf(stderr, "Error reading JSON file or allocating memory\n");
+    status +=1;
     goto exit;
   }
   // time_t start = time(NULL);
@@ -81,5 +83,7 @@ int main(int argc, char **argv){
   free(pix_idx);
   free_double(b);
   cJSON_Delete(test_data_json);
+
+  return status;
 
 }
