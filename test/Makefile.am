@@ -31,6 +31,7 @@ TESTS = test_l1c           \
 		build_l1qc_data.py    \
 		build_TV_data.py      \
 		build_bregman_data.py \
+		build_matrix_transform_data.py \
 		test_matlab_mex.sh \
 		test_python_interface.sh \
 		test_l1qc_dct_c.sh       \
@@ -72,7 +73,8 @@ log_deps = 	build_CS20NG_example_data.log \
 		   	build_cgsolve_data.log \
 			build_l1qc_data.log    \
 			build_TV_data.log      \
-			build_bregman_data.log
+			build_bregman_data.log \
+			build_matrix_transform_data.log
 
 
 # Ensure data gets built first

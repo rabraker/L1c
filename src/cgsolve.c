@@ -327,6 +327,8 @@ cg_report(int iter, double best_rel_res, double rel_res,
 
 
 /**
+   Mainly, for test routines.
+
    Computes the matrix-vector product y = A * b, for a symmetric matrix A.
    This is a wrapper for cblas_dspmv.
 */
@@ -337,14 +339,4 @@ void Ax_sym(l1c_int n, double *x, double *b, void *AX_data){
 
   cblas_dspmv (CblasRowMajor, CblasUpper, n, 1.0, A, x, 1, 0.0, b, 1);
 
-}
-
-/**
-Computes the matrix-vector product y = A * b, for a full matrix A.
-This is a wrapper for cblas_dgemv.
- */
-void Ax(l1c_int n, double *x, double *b, void *AX_data){
-  double *A = (double *) AX_data;
-
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, n, n, 1.0, A, n, x, 1, 0.0, b, 1);
 }

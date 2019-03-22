@@ -26,8 +26,6 @@ int cgsolve_diag_precond(l1c_int N, double *x, double *b, double *M_inv_diag, do
                          void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
                          CgResults *cg_result, CgParams cg_params);
 
-extern void Ax(l1c_int n, double *x, double *b, void *AX_data);
-
-extern void Ax_sym(l1c_int n, double *x, double *b, void *AX_data);
+void Ax_sym(l1c_int n, double *x, double *b, void *AX_data);
 
 #endif
