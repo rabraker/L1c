@@ -3,7 +3,12 @@
 TO make this library more accessible, the following needs to happen.
 
 . Completely remove dependency on matlab for unit test data. This still exists in the following places
-- l1qc_newton:test_l1qc_newton_1iter: Basically an integration test. Could replace this with a test that starts with a sparse signal with known L1 norm. Maybe use generic transform A, as a matrix.
-- l1qc_linesearch:test_line_search. Not sure what to do with this.
+	- l1qc_newton:test_l1qc_newton_1iter: Basically an integration test. Could replace this with a test that starts with a sparse signal with known L1 norm. Maybe use generic transform A, as a matrix.
+	- l1qc_linesearch:test_line_search. Not sure what to do with this.
 +
 . Let users use libcheck in the repos. This should be easy to do by adding simple macro that replaces ~ck_assert_double_eq_tol~, which is the only thing we need from the newer version.
+. The matlab code should use the builtin jsondecode, not the external library jsonlab. This requires an extra function or lines of code to actually open/read/close the file, because jsondecode only works on the text itself.
+. The API for dct/dct2 is a bit of a mess, as can be seen in l1qc_dct.c. I think the thing to do is make the setup functions populate a struct of function pointers.
+. The dct/dct2 should not store their state as local-globals. This limits the user to seting up a single optimization. Rather, the state should be stored, possibly, as an opaqe  field in the struct of function pointers.
+. Setup CI
+

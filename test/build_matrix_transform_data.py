@@ -2,14 +2,18 @@
 import os
 import numpy as np
 import L1cTestDataUtils as TDU
-from numpy.random import seed
+
+# ---------------------------------------------------------------- #
+#          Provide tests data for the l1c_matrix_transforms.
 
 
 def build_matrix_xfms_test_data(test_data_path, N, M):
-    # Build and save test data for matrix_transforms.c
-    #
+    """
+    Build and save test data for matrix_transforms.c
+    """
 
-    seed(2)
+    # make things reproducible.
+    np.random.seed(2)
     E_idx = np.random.randint(0, N, M)
     A = np.random.rand(N, N)[E_idx, :]
 
