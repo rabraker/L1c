@@ -24,7 +24,8 @@ libl1c_la_SOURCES = l1qc_newton.c \
 					TV.c         \
 					bregman.c    \
 					l1qc_dct.c   \
-					l1c_memory.c
+					l1c_memory.c \
+					matrix_transforms.c
 
 if compile_with_mkl
 libl1c_la_SOURCES += dct_mkl.c

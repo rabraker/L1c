@@ -52,6 +52,7 @@ test_l1c_SOURCES = TEST_cgsolve.c       \
 					TEST_vcl_math.c     \
 					TEST_bregman.c      \
 					TEST_TV.c           \
+					TEST_matrix_transforms.c \
 					test_l1c.c
 
 if compile_with_mkl

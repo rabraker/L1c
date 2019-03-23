@@ -2,32 +2,62 @@
 #include "l1c_common.h"
 #include "l1c_memory.h"
 
+/* Redeclared from l1c_transforms.h*/
+typedef struct L1cAxFuns {
+  void(*Ax)(double *x, double *y);
+  void(*Aty)(double *y, double *x);
+  void(*AtAx)(double *x, double *z);
 
-double *xfm_A;
-l1c_int xfm_N;
-l1c_int xfm_M;
-double *xfm_dwork;
+  /* Currently unused.*/
+  void(*M)(double *x);
+  void(*Mt)(double *y);
+  void(*E)(double *x);
+  void(*Et)(double *y);
+  void(*destroy)(void);
+
+  void *data;
+}L1cAxFuns;
+
+/* Forward Declarations */
+void Ax(double *x, double *y);
+void Aty(double *y, double *x);
+void AtAx(double *x_in, double *x_out);
+
+
+double *xfm_A=NULL;
+l1c_int xfm_N=0;
+l1c_int xfm_M=0;
+double *xfm_dwork=NULL;
 
 
 /*
   Do not free A until you are done.
  */
-int setup_matrix_transforms(l1c_int n, l1c_int m, double *A){
+int setup_matrix_transforms(l1c_int n, l1c_int m, double *A, L1cAxFuns *ax_funs){
 
   int L = n > m ? n : m;
 
-  dwork = malloc_double(L);
-  if (!dwork){
+  xfm_dwork = malloc_double(L);
+  if (!xfm_dwork){
     return L1C_OUT_OF_MEMORY;
   }
   xfm_A = A;
   xfm_N = n;
   xfm_M = m;
 
+  ax_funs->Ax = Ax;
+  ax_funs->Aty = Aty;
+  ax_funs->AtAx = AtAx;
+  ax_funs->M=NULL;
+  ax_funs->Mt=NULL;
+  ax_funs->E=NULL;
+  ax_funs->Et=NULL;
+  ax_funs->data=NULL;
+
   return 0;
 }
 
-void destroy_matrix_transforms(){
+void destroy_matrix_transforms(void){
   free_double(xfm_dwork);
 }
 
@@ -45,7 +75,7 @@ void Ax(double *x, double *y){
     y := alpha*A*x + beta*y
 
   */
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, xfm_N, xfm_M, alp, A, xfm_M, x, inc, beta, y, inc);
+  cblas_dgemv(CblasRowMajor, CblasNoTrans, xfm_N, xfm_M, alp, xfm_A, xfm_M, x, inc, beta, y, inc);
 }
 
 
@@ -66,11 +96,7 @@ void Aty(double *y, double *x){
   cblas_dgemv(CblasRowMajor, CblasTrans, xfm_N, xfm_M, alp, xfm_A, xfm_M, y, inc, beta, x, inc);
 }
 
-void AtAx(double x_in, double *x_out){
-  const double alp = 1.0;
-  const double beta = 1.0;
-  const l1c_int inc = 1;
-
+void AtAx(double *x_in, double *x_out){
   Ax(x_in, xfm_dwork);
   Aty(xfm_dwork, x_out);
 }
