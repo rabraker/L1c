@@ -59,12 +59,11 @@ else
 test_l1c_SOURCES +=	TEST_dct.c TEST_dct2.c
 endif
 
-test_l1c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la $(L1CTESTLIBS)
 
+test_l1c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la $(check_LIBS)
 test_l1c_CPPFLAGS = -D_EXCLUDE_PUBLIC_ -I$(top_srcdir)/include  \
-					-I$(top_srcdir)/src \
-						 $(L1CCPPFLAGS)
-test_l1c_CFLAGS = $(L1CCFLAGS)
+					-I$(top_srcdir)/src
+test_l1c_CFLAGS = $(L1CCFLAGS) $(check_CFLAGS)
 test_l1c_LDFLAGS = $(LDFLAGS)
 
 log_deps = 	build_CS20NG_example_data.log \

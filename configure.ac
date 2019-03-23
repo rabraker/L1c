@@ -42,6 +42,10 @@ AM_INIT_AUTOMAKE
 
 AM_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
+
+# Enable using pkg-config
+PKG_PROG_PKG_CONFIG
+
 dnl This is necessary, otherwise, when we use AC_CHECK_HEADER inside the conditional,
 dnl AC_PROG_CPP will be expanded in the else, and not visible outside, which leads to
 dnl warnings like WARNING: check.h: accepted by the compiler, rejected by the preprocessor!
@@ -439,8 +443,7 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 #endif
 ]])], [AC_MSG_RESULT(yes)],
       [AC_MSG_RESULT(no)
-      AC_MSG_ERROR([Could not find ck_assert_double_eq_tol in check.h.
-      Do you have the at least version 0.11.0 installed?])])
+      AC_DEFINE([HAVE_OLD_LIBCHECK], 1, [Define to 1 if libcheck does not include floating point test macros.])])
 
 AC_CHECK_HEADER([cjson/cJSON.h], [], [AC_MSG_ERROR("Cannot find CJSON.h")])
 AC_CHECK_HEADER([math.h], [], [AC_MSG_ERROR("Cannot find math.h")])
@@ -450,31 +453,25 @@ AC_CHECK_HEADER([math.h], [], [AC_MSG_ERROR("Cannot find math.h")])
 # Checks for programs.
 
 # ----------------------- Checks for libraries.---------------------------------
+AC_CHECK_LIB([m], [sqrt],[],[
+             AC_MSG_ERROR(library is required for this program)])
 
-# These tests would be needed if we could use the repo version of libcheck, but it is too old.
-# Leaving them here because it should be simple to pull the two needed macros out of check.h
-# and put in our own check_utils.h.
-dnl test_libs=
-dnl AC_CHECK_LIB([pthread], [pthread_mutex_trylock], [test_libs="$test_libs -lpthread"],
-dnl                         [AC_MSG_ERROR([Cannot find libpthread.])])
-dnl AC_CHECK_LIB([rt], [timer_create], [test_libs="$test_libs -lrt"],
-dnl              [AC_MSG_ERROR([Cannot find librt, which is required.])])
-dnl echo $LIBS
-dnl tmp=$LIBS
-dnl LIBS="$LIBS $test_libs"
-dnl LIBS=$tmp
 
-AC_CHECK_LIB([check], [suite_add_tcase],[l1c_test_libs="$l1c_test_libs -lcheck"],[
-             AC_MSG_ERROR(check library is required for this program)])
+# If libcheck is installed from source, dont need to link with all these extra libs, so we shouldnt require it.
+# If it was installed from repo, it requires also -lpthread, -lrt and -lsubunit
+# It would be better to use pkg-config here.
+
+PKG_CHECK_MODULES([check], [check])
+
+AC_SUBST(check_CFLAGS, $check_CFLAGS)
+AC_SUBST(check_LIBS, $check_LIBS)
+
 
 AC_CHECK_LIB([cjson], [cJSON_GetArraySize],[],[
              AC_MSG_ERROR(cJSON library is required for this program)])
 
 AC_CHECK_LIB([gomp], [omp_set_num_threads],[],[
              AC_MSG_ERROR(omp library is required for this program)])
-
-AC_CHECK_LIB([m], [sqrt],[],[
-             AC_MSG_ERROR(library is required for this program)])
 
 
 AM_CONDITIONAL([compile_with_mkl], [test x$with_mkl = xyes ])
