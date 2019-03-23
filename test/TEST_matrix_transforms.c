@@ -108,7 +108,7 @@ static void teardown(MXfmData *mxfm_dat){
   free_double(mxfm_dat->Aty_act);
   free_double(mxfm_dat->Ax_act);
 
-  destroy_matrix_transforms();
+  ax_funs.destroy();
 
 #ifdef _USEMKL_
   mkl_free_buffers();

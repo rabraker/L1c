@@ -22,7 +22,7 @@ typedef struct L1cAxFuns {
 void Ax(double *x, double *y);
 void Aty(double *y, double *x);
 void AtAx(double *x_in, double *x_out);
-
+void destroy_matrix_transforms(void);
 
 double *xfm_A=NULL;
 l1c_int xfm_N=0;
@@ -48,6 +48,7 @@ int setup_matrix_transforms(l1c_int n, l1c_int m, double *A, L1cAxFuns *ax_funs)
   ax_funs->Ax = Ax;
   ax_funs->Aty = Aty;
   ax_funs->AtAx = AtAx;
+  ax_funs->destroy = destroy_matrix_transforms;
   ax_funs->M=NULL;
   ax_funs->Mt=NULL;
   ax_funs->E=NULL;
