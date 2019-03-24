@@ -43,7 +43,12 @@ AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
-# Enable using pkg-config
+# Enable using pkg-config. First check if pkg-config is installed.
+AC_CHECK_PROG(PKG_CONFIG,[pkg-config],[pkg-config],[no])
+test "$PKG_CONFIG" == "no" && AC_MSG_ERROR([Required program 'pkg-config' not found.])
+
+PKG_PROG_PKG_CONFIG
+
 PKG_PROG_PKG_CONFIG
 
 dnl This is necessary, otherwise, when we use AC_CHECK_HEADER inside the conditional,
@@ -457,9 +462,7 @@ AC_CHECK_LIB([m], [sqrt],[],[
              AC_MSG_ERROR(library is required for this program)])
 
 
-# If libcheck is installed from source, dont need to link with all these extra libs, so we shouldnt require it.
-# If it was installed from repo, it requires also -lpthread, -lrt and -lsubunit
-# It would be better to use pkg-config here.
+# If libcheck is installed from source, dont need to link with all these extra libs, so we shouldnt require it. Easiest to just use pkg-config.
 
 PKG_CHECK_MODULES([check], [check])
 
