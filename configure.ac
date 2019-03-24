@@ -81,9 +81,6 @@ AC_ARG_WITH(mex-prefix, [AS_HELP_STRING([--with-mex-prefix=/path/to/mex/installa
                  not also given. By default, the bindings will be installed in ${prefix}/lib.])],
                  [mex_prefix=$withval], [mex_prefix=no])
 
-AC_ARG_WITH(fftw3, [AS_HELP_STRING([--with-fftw3], [Compile example with FFTW])], [
-                 use_fftw3=yes], [use_fftw3=no])
-
 AC_ARG_WITH(fftw3_threads, [AS_HELP_STRING(
                  [--with-fftw3-threads=@<:@combined@:>@@<:@omp@:>@@<:@threads@:>@@<:@yes@:>@@<:@no@:>@],
                    [Compile example with FFTW threading. By default, searches for combined, then omp
@@ -383,7 +380,6 @@ then
   AC_DEFINE([_USEFFTW3_], [1], 0)
 fi  # checks for fftw
 
-echo "Compile with fftw3? $use_fftw3"
 echo "Compile with fftw3 threads? $have_fftw_threads"
 
 
@@ -532,7 +528,7 @@ AC_MSG_NOTICE(Configuration summary:)
 AC_MSG_NOTICE(L1C will be built with l1c_cflags = $l1c_cflags)
 AC_MSG_NOTICE(L1C will be built with l1c_cppflags = $l1c_cppflags)
 AC_MSG_NOTICE(Compile with MKL? $with_mkl)
-AC_MSG_NOTICE(Compile with FFTW? $use_fftw3)
+AC_MSG_NOTICE(Compile with FFTW threads? $have_fftw_threads)
 AC_MSG_NOTICE(Compile python bindings? $enable_python)
 AC_MSG_NOTICE(Compile mex bindings? $enable_mex)
 

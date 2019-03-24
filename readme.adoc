@@ -42,7 +42,8 @@ The four steps are
 ----
 git clone git@ggitlab.com:rabraker/L1c.git L1c && cd L1c
 ./bootsrap                   # requires autotools
-./configure [--with-fftw3 [--with-fftw3-threads=[ARG]]] [--with-mkl] [--with-mex]
+./configure [--with-fftw3-threads=[ARG]] [--with-mkl] [--enable-mex] \
+            [--with-mex-prefix=/path/to/mex/install][--enable-python]
 make && make install
 ----
 
@@ -60,9 +61,10 @@ Running the full build requires the following dependencies
 * Python3, Numpy, and Scipy are needed for unit tests and some examples.
 * Python3-dev and python3-setuptools, if building the the python interface.
 * Matplotlib is needed for plotting in some examples
+* Matlab is required if building the mex interface.
 * Valgrind (optional) to run the memory leak tests.
-* Two test cases still rely on matlab to produce the required data. If matlab is unavailible, you can run the tests anyway but 
-`test_line_search` and `test_l1qc_newton_1iter` will fail.
+* Two test cases still rely on matlab to produce the required data. If matlab is unavailible, you can run the tests anyway but `test_line_search` and `test_l1qc_newton_1iter` will fail. Alternatively, the data can be https://rabraker.com/l1c_data/l1c_extra_data.tar[downloaded] and should be unpacked into `test/test_data`.
+
 Details and suggestions follow. Or run `./configure --help` if this is old hat to you. 
 
 Presently, the configure script will not finish if it does not find `cJSON` or `check`.
