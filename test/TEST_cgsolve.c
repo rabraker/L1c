@@ -25,6 +25,7 @@
 #include "l1c_common.h"
 #include "l1c_memory.h"
 #include "check_utils.h"
+#include "l1c_math.h"
 
 cJSON *test_data_json;
 /* Defined in test_l1c.c*/
@@ -126,7 +127,7 @@ END_TEST
 
 
 START_TEST(test_cgsolve_h11p){
-  char *fpath = fullfile(test_data_dir, "descent_data.json");
+  char *fpath = fullfile(test_data_dir, "l1qc_data.json");
 
   Hess_data h11p_data;
   double *atr=NULL, *sigx=NULL, *dx0=NULL, *dx_exp=NULL;
@@ -147,7 +148,7 @@ START_TEST(test_cgsolve_h11p){
   status +=extract_json_double_array(test_data_json, "sigx", &sigx, &N);
   status +=extract_json_double_array(test_data_json, "w1p", &w1p, &N);
   status +=extract_json_double_array(test_data_json, "dx", &dx_exp, &N);
-  status +=extract_json_double_array(test_data_json, "dx0", &dx0, &N);
+  // status +=extract_json_double_array(test_data_json, "dx0", &dx0, &N);
 
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
 
@@ -167,6 +168,8 @@ START_TEST(test_cgsolve_h11p){
   h11p_data.AtAx = ax_funs.AtAx;
 
   DWORK4 = malloc_double_2D(4, N);
+  dx0 = malloc_double(N);
+  l1c_init_vec(N, dx0, 0);
   double *dx_by_nrm = malloc_double(4*N);
   double *dx_by_nrm_exp = malloc_double(4*N);
   if ( status || !DWORK4 || !dx_by_nrm || !dx_by_nrm_exp){
