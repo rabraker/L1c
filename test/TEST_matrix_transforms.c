@@ -22,6 +22,7 @@
 #include "check_utils.h"
 #include "l1c_common.h"
 #include "l1c_memory.h"
+#include "l1c_math.h"
 
 #ifdef _USEMKL_
 #define TOL_LARGE_DCT 1e-10
@@ -87,6 +88,10 @@ static void setup(MXfmData *mxfm_dat){
   mxfm_dat->AtAx_act = malloc_double(mxfm_dat->Mcol);
   mxfm_dat->Aty_act = malloc_double(mxfm_dat->Mcol);
   mxfm_dat->Ax_act = malloc_double(mxfm_dat->Nrow);
+
+  l1c_init_vec(mxfmd->Mcol, mxfmd->AtAx_act, 0);
+  l1c_init_vec(mxfmd->Mcol, mxfmd->Aty_act, 0);
+  l1c_init_vec(mxfmd->Nrow, mxfmd->Ax_act, 0);
 
   setup_matrix_transforms(mxfm_dat->Nrow, mxfm_dat->Mcol, mxfm_dat->A, &ax_funs);
 

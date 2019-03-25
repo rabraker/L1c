@@ -4,10 +4,10 @@
 #include "l1c_transforms.h"
 
 /* Forward Declarations */
-void Ax(double *x, double *y);
-void Aty(double *y, double *x);
-void AtAx(double *x_in, double *x_out);
-void destroy_matrix_transforms(void);
+static void Ax(double *x, double *y);
+static void Aty(double *y, double *x);
+static void AtAx(double *x_in, double *x_out);
+static void destroy_matrix_transforms(void);
 
 double *xfm_A=NULL;
 l1c_int xfm_N=0;
@@ -26,6 +26,10 @@ int setup_matrix_transforms(l1c_int n, l1c_int m, double *A, L1cAxFuns *ax_funs)
   if (!xfm_dwork){
     return L1C_OUT_OF_MEMORY;
   }
+  for (int i=0; i<L; i++){
+    xfm_dwork[i] = 0;
+  }
+
   xfm_A = A;
   xfm_N = n;
   xfm_M = m;
@@ -43,7 +47,7 @@ int setup_matrix_transforms(l1c_int n, l1c_int m, double *A, L1cAxFuns *ax_funs)
   return 0;
 }
 
-void destroy_matrix_transforms(void){
+static void destroy_matrix_transforms(void){
   free_double(xfm_dwork);
 }
 
@@ -52,7 +56,7 @@ void destroy_matrix_transforms(void){
    This is a wrapper for cblas_dgemv.
 
 */
-void Ax(double *x, double *y){
+static void Ax(double *x, double *y){
   const double alp = 1.0;
   const double beta = 1.0;
   const l1c_int inc = 1;
@@ -71,7 +75,7 @@ void Ax(double *x, double *y){
    This is a wrapper for cblas_dgemv.
 
 */
-void Aty(double *y, double *x){
+static void Aty(double *y, double *x){
   const double alp = 1.0;
   const double beta = 1.0;
   const l1c_int inc = 1;
@@ -82,7 +86,7 @@ void Aty(double *y, double *x){
   cblas_dgemv(CblasRowMajor, CblasTrans, xfm_N, xfm_M, alp, xfm_A, xfm_M, y, inc, beta, x, inc);
 }
 
-void AtAx(double *x_in, double *x_out){
+static void AtAx(double *x_in, double *x_out){
   Ax(x_in, xfm_dwork);
   Aty(xfm_dwork, x_out);
 }
