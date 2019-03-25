@@ -20,7 +20,7 @@ then
     $LT --mode=execute valgrind $VALGRIND_OPTS ./test_l1c
 
     data_path="${ABS_TOP_SRCDIR}/test/test_data/example_img_data127.json"
-    $LT --mode=execute valgrind $VALGRIND_OPTS "${LIB_DIR}/l1qc_dct_c" "${data_path}"
+    $LT --mode=execute valgrind $VALGRIND_OPTS "${TOP_BUILDDIR}/interfaces/l1qc_dct_c" "${data_path}"
 else
     exit 77
 fi

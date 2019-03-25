@@ -26,6 +26,10 @@ int setup_matrix_transforms(l1c_int n, l1c_int m, double *A, L1cAxFuns *ax_funs)
   if (!xfm_dwork){
     return L1C_OUT_OF_MEMORY;
   }
+  for (int i=0; i<L; i++){
+    xfm_dwork[i] = 0;
+  }
+
   xfm_A = A;
   xfm_N = n;
   xfm_M = m;
