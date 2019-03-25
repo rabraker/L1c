@@ -13,10 +13,7 @@
 
 
 int main(int argc, char **argv){
-#if defined(HAVE_LIBMKL_RT)
-  mkl_set_interface_layer(MKL_INTERFACE_ILP64);
-  mkl_set_threading_layer(MKL_THREADING_GNU);
-#endif
+
   int verbose=0;
   char *fpath;
   char fpath_[] = "example_img_data.json";

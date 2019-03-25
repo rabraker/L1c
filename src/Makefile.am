@@ -25,12 +25,13 @@ libl1c_la_SOURCES = l1qc_newton.c \
 					bregman.c    \
 					l1qc_dct.c   \
 					l1c_memory.c \
-					matrix_transforms.c
+					matrix_transforms.c \
+					dct_transforms.c
 
 if compile_with_mkl
 libl1c_la_SOURCES += dct_mkl.c
 else
-libl1c_la_SOURCES += dct.c dct2.c
+libl1c_la_SOURCES += dct1.c dct2.c
 endif
 
 libl1c_la_LIBADD	= ../src/vcl/libvcl_math.la

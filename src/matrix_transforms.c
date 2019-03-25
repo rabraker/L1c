@@ -1,22 +1,7 @@
 #include "config.h"
 #include "l1c_common.h"
 #include "l1c_memory.h"
-
-/* Redeclared from l1c_transforms.h*/
-typedef struct L1cAxFuns {
-  void(*Ax)(double *x, double *y);
-  void(*Aty)(double *y, double *x);
-  void(*AtAx)(double *x, double *z);
-
-  /* Currently unused.*/
-  void(*M)(double *x);
-  void(*Mt)(double *y);
-  void(*E)(double *x);
-  void(*Et)(double *y);
-  void(*destroy)(void);
-
-  void *data;
-}L1cAxFuns;
+#include "l1c_transforms.h"
 
 /* Forward Declarations */
 void Ax(double *x, double *y);

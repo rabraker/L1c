@@ -12,8 +12,6 @@
 #include <check.h>
 #include <fftw3.h>
 
-#include "dct.h"
-
 /* Tolerances and things */
 #include "test_constants.h"
 /* To read in test data */
@@ -22,11 +20,13 @@
 #include "check_utils.h"
 #include "l1c_common.h"
 #include "l1c_memory.h"
+#include "l1c_transforms.h"
+
 
 #ifdef _USEMKL_
-#define TOL_LARGE_DCT 1e-10
+#define TOL_DCT 1e-10
 #else
-#define TOL_LARGE_DCT TOL_DOUBLE_SUPER
+#define TOL_DCT TOL_DOUBLE_SUPER
 #endif
 
 extern char* fullfile(char *base_path, char *name);
@@ -54,6 +54,8 @@ typedef struct DctData{
 
 /* Global variable for each all test cases.  */
 DctData *dctd;
+
+L1cAxFuns ax_funs;
 
 
 /* We the tcase_add_checked_fixture method. setup() and teardown are called by
@@ -88,7 +90,7 @@ static void setup(DctData *dct_dat){
   dct_dat->MtEty_act = malloc_double(dct_dat->Nx);
   dct_dat->EMx_act = malloc_double(dct_dat->Nx);
 
-  dct_setup(dct_dat->Nx, dct_dat->Npix, dct_dat->pix_idx);
+  dct1_setup(dct_dat->Nx, dct_dat->Npix, dct_dat->pix_idx, &ax_funs);
 
   cJSON_Delete(test_data_json);
 }
@@ -108,7 +110,7 @@ static void teardown(DctData *dct_dat){
 
 
   free(dct_dat->pix_idx);
-  dct_destroy();
+  ax_funs.destroy();
 
 
 #ifdef _USEMKL_
@@ -176,10 +178,10 @@ static void teardown_pure(void){
 START_TEST(test_dct_MtEt_EMx)
 {
   /* Provided and freed by setup_small() and teardown_small()*/
-  dct_MtEt_EMx(dctd->x_in, dctd->MtEty_EMx_act);
+  ax_funs.AtAx(dctd->x_in, dctd->MtEty_EMx_act);
 
   ck_assert_double_array_eq_tol(dctd->Nx, dctd->MtEty_EMx_exp,
-                                dctd->MtEty_EMx_act, TOL_DOUBLE_SUPER);
+                                dctd->MtEty_EMx_act, TOL_DCT);
 
 }
 END_TEST
@@ -187,10 +189,10 @@ END_TEST
 
 START_TEST(test_dct_MtEty)
 {
-  dct_MtEty(dctd->y_in, dctd->MtEty_act);
+  ax_funs.Aty(dctd->y_in, dctd->MtEty_act);
 
   ck_assert_double_array_eq_tol(dctd->Nx, dctd->MtEty_exp,
-                                dctd->MtEty_act, TOL_DOUBLE_SUPER);
+                                dctd->MtEty_act, TOL_DCT);
 
 }
 END_TEST
@@ -198,10 +200,10 @@ END_TEST
 
 START_TEST(test_dct_EMx)
 {
-  dct_EMx(dctd->x_in, dctd->EMx_act);
+  ax_funs.Ax(dctd->x_in, dctd->EMx_act);
 
   ck_assert_double_array_eq_tol(dctd->Ny, dctd->EMx_exp,
-                                dctd->EMx_act, TOL_DOUBLE_SUPER);
+                                dctd->EMx_act, TOL_DCT);
 
 }
 END_TEST

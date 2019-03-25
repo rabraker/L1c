@@ -20,7 +20,7 @@
 #include <cjson/cJSON.h>
 #include "json_utils.h"
 #include "l1qc_newton.h"
-#include "dct.h"
+#include "l1c_transforms.h"
 
 #include "l1c_common.h"
 #include "l1c_memory.h"
@@ -137,7 +137,7 @@ START_TEST(test_cgsolve_h11p){
 
   l1c_int N, M, cg_maxiter, status=0;
   l1c_int *pix_idx;
-
+  L1cAxFuns ax_funs;
   if (load_file_to_json(fpath, &test_data_json)){
     ck_abort_msg("Error loading data in test_cgsolve_h11p\n");
   }
@@ -157,12 +157,14 @@ START_TEST(test_cgsolve_h11p){
   status +=extract_json_int(test_data_json, "cgmaxiter", &cg_maxiter);
 
 
+  dct1_setup(N, M, pix_idx, &ax_funs);
+
   h11p_data.one_by_fe = 1.0/fe;
   h11p_data.one_by_fe_sqrd = 1.0 / (fe * fe);
   h11p_data.atr = atr;
   h11p_data.sigx = sigx;
   h11p_data.Dwork_1N = malloc_double(N);
-  h11p_data.AtAx = dct_MtEt_EMx;
+  h11p_data.AtAx = ax_funs.AtAx;
 
   DWORK4 = malloc_double_2D(4, N);
   double *dx_by_nrm = malloc_double(4*N);
@@ -173,7 +175,6 @@ START_TEST(test_cgsolve_h11p){
     goto exit;
   }
 
-  dct_setup(N, M, pix_idx);
   cgp.max_iter = cg_maxiter;
   cgp.tol = cgtol;
   cgp.verbose = 0;
@@ -199,7 +200,7 @@ START_TEST(test_cgsolve_h11p){
   free_double(dx0);
   free_double_2D(4, DWORK4);
   free_double(h11p_data.Dwork_1N);
-  dct_destroy();
+  ax_funs.destroy();
 
   free(fpath);
 

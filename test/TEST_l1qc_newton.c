@@ -18,7 +18,6 @@ This is a test suite for the l1qc_newton library.
 #include "json_utils.h"
 
 #include "l1qc_newton.h"
-#include "dct.h"
 
 /* Tolerances and things */
 #include "test_constants.h"
@@ -211,9 +210,7 @@ START_TEST (test_l1qc_newton_1iter)
   l1c_int N=0, M=0, status=0, lbiter_exp=0;
   l1c_int *pix_idx=NULL;
 
-  AxFuns ax_funs = {.Ax=dct_EMx,
-                    .Aty=dct_MtEty,
-                    .AtAx=dct_MtEt_EMx};
+  L1cAxFuns ax_funs;
 
   if (load_file_to_json(fpath_1iter, &test_data_json)){
     fprintf(stderr, "Error loading data in test_l1qc_newton_1iter\n");
@@ -238,7 +235,7 @@ START_TEST (test_l1qc_newton_1iter)
   status +=extract_json_int(test_data_json, "lbiter", &lbiter_exp);
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
 
-  dct_setup(N, M, pix_idx);
+  dct1_setup(N, M, pix_idx, &ax_funs);
 
   if (status){
     status += 1;
@@ -277,7 +274,7 @@ START_TEST (test_l1qc_newton_1iter)
   free_double(b);
   free(pix_idx);
 
-  dct_destroy();
+  ax_funs.destroy();
 
   cJSON_Delete(test_data_json);
   free(fpath_1iter);
@@ -380,9 +377,7 @@ START_TEST(test_l1qc_descent_dir)
   double **DWORK7;
   int status=0;
 
-  AxFuns Ax_funs = {.Ax=dct_EMx,
-                    .Aty=dct_MtEty,
-                    .AtAx=dct_MtEt_EMx};
+  L1cAxFuns ax_funs;
 
   DWORK7 = malloc_double_2D(7, Tdat.N);
   gd.w1p = malloc_double(Tdat.N);
@@ -400,13 +395,13 @@ START_TEST(test_l1qc_descent_dir)
   }
 
   /* Setup the DCT */
-  dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
+  dct1_setup(Tdat.N, Tdat.M, Tdat.pix_idx, &ax_funs);
 
   /* We must initialize gd.dx, because we have enabled warm starting*/
   l1c_init_vec(Tdat.N, gd.dx, 0.0);
 
   l1qc_descent_dir(Tdat.N, Tdat.fu1, Tdat.fu2, Tdat.r, Tdat.fe,
-                  Tdat.tau0, gd, DWORK7, cgp, &cgr, Ax_funs);
+                  Tdat.tau0, gd, DWORK7, cgp, &cgr, ax_funs);
 
   /*The next three should already be checked by test_get_gradient, but we can
    do it here too, to make sure things are staying sane.*/
@@ -430,7 +425,7 @@ START_TEST(test_l1qc_descent_dir)
   free_double(gd.sig12);
   free_double(gd.ntgu);
 
-  dct_destroy();
+  ax_funs.destroy();
 
   free_generic_data(Tdat);
 #ifdef _USEMKL_
@@ -452,6 +447,7 @@ START_TEST(test_H11pfun)
   Hess_data h11p_data;
   double *h11p_z=NULL, *z_orig=NULL;
   int status=0;
+  L1cAxFuns ax_funs;
 
   h11p_z = malloc_double(Tdat.N);
   z_orig = malloc_double(Tdat.N);
@@ -462,17 +458,19 @@ START_TEST(test_H11pfun)
     goto exit;
   }
 
+  /* Setup the DCT */
+  dct1_setup(Tdat.N, Tdat.M, Tdat.pix_idx, &ax_funs);
+
+
   h11p_data.one_by_fe = 1.0/Tdat.fe_rand;
   h11p_data.one_by_fe_sqrd = 1.0/(Tdat.fe_rand * Tdat.fe_rand);
   h11p_data.atr = Tdat.at_rrand;
   h11p_data.sigx = Tdat.sigx_rand;
 
-  h11p_data.AtAx = dct_MtEt_EMx;
+  h11p_data.AtAx = ax_funs.AtAx;
 
   cblas_dcopy(Tdat.N, Tdat.z_rand, 1, z_orig, 1);
 
-  /* Setup the DCT */
-  dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
 
   H11pfun(Tdat.N, Tdat.z_rand, h11p_z, &h11p_data);
 
@@ -487,7 +485,7 @@ START_TEST(test_H11pfun)
   free_double(z_orig);
   free_double(h11p_data.Dwork_1N);
 
-  dct_destroy();
+  ax_funs.destroy();
 
   free_generic_data(Tdat);
 
@@ -567,19 +565,16 @@ START_TEST (test_find_max_step)
   gd.du = Tdat.du_rand1;
   double *DWORK = malloc_double(Tdat.N);
 
-  AxFuns Ax_funs = {.Ax=dct_EMx,
-                    .Aty=dct_MtEty,
-                    .AtAx=dct_MtEt_EMx};
-
+  L1cAxFuns ax_funs;
   /* Setup the DCT */
-  dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
+  dct1_setup(Tdat.N, Tdat.M, Tdat.pix_idx, &ax_funs);
 
   smax = find_max_step(Tdat.N, gd, Tdat.fu1, Tdat.fu2, Tdat.M, Tdat.r, DWORK,
-                       Tdat.epsilon, Ax_funs);
+                       Tdat.epsilon, ax_funs);
   ck_assert_double_eq_tol(Tdat.smax, smax,  TOL_DOUBLE);
 
   free_double(DWORK);
-  dct_destroy();
+  ax_funs.destroy();
   free_generic_data(Tdat);
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -602,9 +597,7 @@ START_TEST(test_line_search)
   double *fu1p_exp, *fu2p_exp, fep_exp, fp_exp;
   double flx_exp=0, flu_exp=0, flin_exp=0;
 
-  AxFuns Ax_funs = {.Ax=dct_EMx,
-                    .Aty=dct_MtEty,
-                    .AtAx=dct_MtEt_EMx};
+  L1cAxFuns ax_funs;
 
   //double sm;
   l1c_int N,N2, M, status=0;
@@ -665,10 +658,10 @@ START_TEST(test_line_search)
   }
   fu1p = malloc_double(N);
   fu2p = malloc_double(N);
-  dct_setup(N, M, pix_idx);
+  dct1_setup(N, M, pix_idx, &ax_funs);
 
   ls_stat = line_search(N, M, x, u, r, b, fu1p, fu2p, gd, ls_params,
-                        DWORK5, &fe, &f, Ax_funs);
+                        DWORK5, &fe, &f, ax_funs);
 
   // /* ----- Now check -------*/
   ck_assert_double_eq_tol(fep_exp, fe, TOL_DOUBLE);
@@ -708,7 +701,7 @@ START_TEST(test_line_search)
 
   free_double_2D(5, DWORK5);
 
-  dct_destroy();
+  ax_funs.destroy();
 
   cJSON_Delete(test_data_json);
   free(fpath_linesearch);
@@ -730,11 +723,9 @@ START_TEST(test_f_eval)
   double *r=NULL, *fu1=NULL, *fu2=NULL;
   double fe=0, f=0;
   int status = 0;
-  AxFuns Ax_funs = {.Ax=dct_EMx,
-                    .Aty=dct_MtEty,
-                    .AtAx=dct_MtEt_EMx};
+  L1cAxFuns ax_funs;
 
-  dct_setup(Tdat.N, Tdat.M, Tdat.pix_idx);
+  dct1_setup(Tdat.N, Tdat.M, Tdat.pix_idx, &ax_funs);
 
   fu1 = malloc_double(Tdat.N);
   fu2 = malloc_double(Tdat.N);
@@ -747,7 +738,7 @@ START_TEST(test_f_eval)
   }
 
   f_eval(Tdat.N,  Tdat.x, Tdat.u, Tdat.M, r, Tdat.b, Tdat.tau0,
-         Tdat.epsilon, fu1, fu2, &fe, &f, Ax_funs);
+         Tdat.epsilon, fu1, fu2, &fe, &f, ax_funs);
 
   /* ----- Now check -------*/
   ck_assert_double_eq_tol(Tdat.fe, fe, TOL_DOUBLE);
@@ -764,7 +755,7 @@ START_TEST(test_f_eval)
   free_double(fu2);
   free_double(r);
 
-  dct_destroy();
+  ax_funs.destroy();
 
   free_generic_data(Tdat);
 

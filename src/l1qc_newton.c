@@ -7,6 +7,7 @@
 #include "cgsolve.h"
 #include "l1c_common.h"
 #include "l1c_memory.h"
+#include "l1c_transforms.h"
 #include "vcl_math.h"
 #include "l1c_math.h"
 
@@ -32,7 +33,7 @@ void newton_report(int iter,
 /* Evalutes the value functional */
 void f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, double *b,
             double tau, double epsilon, double *fu1, double *fu2,
-            double *fe, double *f, AxFuns Ax_funs){
+            double *fe, double *f, L1cAxFuns Ax_funs){
   /*
     inputs
     ------
@@ -197,7 +198,7 @@ void l1qc_hess_grad(l1c_int N, double *fu1, double *fu2, double *sigx, double *a
  */
 int l1qc_descent_dir(l1c_int N, double *fu1, double *fu2, double *r, double fe,  double tau,
                     GradData gd, double **Dwork7, CgParams cg_params, CgResults *cg_result,
-                    AxFuns Ax_funs){
+                    L1cAxFuns Ax_funs){
   /* inputs
    --------
    *fu1, *fu2, *atr, fe, tau
@@ -270,7 +271,7 @@ int l1qc_descent_dir(l1c_int N, double *fu1, double *fu2, double *r, double fe, 
  */
 double find_max_step(l1c_int N, GradData gd, double *fu1,
                      double *fu2, int M, double *r, double *DWORK,
-                     double epsilon, AxFuns Ax_funs){
+                     double epsilon, L1cAxFuns Ax_funs){
 
   double *Adx = DWORK;
   Ax_funs.Ax(gd.dx, Adx);  //Adx = A*dx
@@ -328,7 +329,7 @@ double find_max_step(l1c_int N, GradData gd, double *fu1,
 
 LSStat line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double *b, double *fu1,
                    double *fu2, GradData gd, LSParams ls_params, double **DWORK5,
-                   double *fe, double *f, AxFuns Ax_funs){
+                   double *fe, double *f, L1cAxFuns Ax_funs){
   LSStat ls_stat = {.flx=0, .flu = 0, .flin=0, .step=0, .status=0};
   int iter=0;
   double flx=0, flu=0, flin = 0.0, fp = 0.0, fep = 0.0;
@@ -434,7 +435,7 @@ int newton_init(l1c_int N, double *x, double *u,  NewtParams *params){
 }
 
 int check_feasible_start(double *x, l1c_int M, double *b, double epsilon,
-                         double *DWORK, AxFuns Ax_funs){
+                         double *DWORK, L1cAxFuns Ax_funs){
 
   /* Compute Ax - b = r */
   Ax_funs.Ax(x, DWORK);
@@ -466,7 +467,7 @@ int save_x(l1c_int N, double *x, char *fname){
 }
 
 LBResult l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
-                     NewtParams params, AxFuns Ax_funs){
+                     NewtParams params, L1cAxFuns Ax_funs){
   LSStat ls_stat = {.flx=0, .flu = 0, .flin=0, .step=0, .status=0};
   CgParams cg_params = params.cg_params;
   CgResults cg_results;

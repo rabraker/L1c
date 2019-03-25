@@ -8,9 +8,17 @@
 #include <cblas.h>
 #include "l1c_common.h"
 #include "l1c_memory.h"
+#include "l1c_transforms.h"
 
+/* ----- Forward Declarations -----*/
+static void dct2_destroy();
+static void dct2_idct(double *x_fftw);
+static void dct2_dct(double *x);
+static void dct2_EMx(double *x_fftw, double *y);
+static void dct2_MtEty(double *y, double *x);
+static void dct2_MtEt_EMx(double *x_fftw, double *z);
 
-
+/*-------- Globals for dct2. ------------- */
 static fftw_plan dct2_plan_MtEty;
 static fftw_plan dct2_plan_EMx;
 
@@ -26,7 +34,7 @@ static l1c_int dct2_M; // Cols
 static double dct2_root_1_by_4NM;
 
 
-int dct2_setup(l1c_int N, l1c_int M, l1c_int Ny, l1c_int *pix_mask_idx){
+int dct2_setup(l1c_int Nx, l1c_int Mx, l1c_int Ny, l1c_int *pix_mask_idx,  L1cAxFuns *ax_funs){
   int status = 0;
 #if defined(HAVE_FFTW3_THREADS)
   fftw_init_threads();
@@ -36,23 +44,23 @@ int dct2_setup(l1c_int N, l1c_int M, l1c_int Ny, l1c_int *pix_mask_idx){
 #endif
 
   l1c_int i=0;
-  dct2_Ety_sparse = malloc_double(N*M);
-  dct2_x = malloc_double(N*M);
-  dct2_y = malloc_double(N*M);
+  dct2_Ety_sparse = malloc_double(Nx*Mx);
+  dct2_x = malloc_double(Nx*Mx);
+  dct2_y = malloc_double(Nx*Mx);
   if (!dct2_x || !dct2_y || !dct2_Ety_sparse){
     fprintf(stderr, "Error allocating memory in dct2_setup");
     status = L1C_OUT_OF_MEMORY;
     goto fail;
   }
 
-  for (i=0; i<N*M; i++){
+  for (i=0; i<Nx*Mx; i++){
     dct2_Ety_sparse[i] = 0;
     dct2_x[i] = 0;
     dct2_y[i] = 0;
   }
 
-  dct2_N = N;
-  dct2_M = M;
+  dct2_N = Nx;
+  dct2_M = Mx;
 
   dct2_Ny = Ny;
   dct2_pix_mask_idx = pix_mask_idx;
@@ -66,10 +74,10 @@ int dct2_setup(l1c_int N, l1c_int M, l1c_int Ny, l1c_int *pix_mask_idx){
   fftw_r2r_kind dct2_kind_MtEty = FFTW_REDFT10; // DCT-II, “the” DCT
   fftw_r2r_kind dct2_kind_EMx = FFTW_REDFT01; // DCT-III, “the” IDCT
 
-  dct2_plan_MtEty = fftw_plan_r2r_2d(N, M, dct2_Ety_sparse, dct2_x,
+  dct2_plan_MtEty = fftw_plan_r2r_2d(Nx, Mx, dct2_Ety_sparse, dct2_x,
                              dct2_kind_MtEty, dct2_kind_MtEty, flags);
 
-  dct2_plan_EMx = fftw_plan_r2r_2d(N, M, dct2_x, dct2_y,
+  dct2_plan_EMx = fftw_plan_r2r_2d(Nx, Mx, dct2_x, dct2_y,
                                      dct2_kind_EMx, dct2_kind_EMx, flags);
 
   if ( !dct2_plan_EMx || !dct2_plan_MtEty){
@@ -77,6 +85,17 @@ int dct2_setup(l1c_int N, l1c_int M, l1c_int Ny, l1c_int *pix_mask_idx){
     status = L1C_DCT_INIT_FAILURE;
     goto fail;
   }
+
+  ax_funs->Ax = dct2_EMx;
+  ax_funs->Aty = dct2_MtEty;
+  ax_funs->AtAx = dct2_MtEt_EMx;
+  ax_funs->M = dct2_idct;
+  ax_funs->Mt = dct2_dct;
+  ax_funs->E = NULL;
+  ax_funs->Et = NULL;
+
+  ax_funs->destroy = dct2_destroy;
+  ax_funs->data = NULL;
 
   return status;
 
@@ -86,7 +105,7 @@ int dct2_setup(l1c_int N, l1c_int M, l1c_int Ny, l1c_int *pix_mask_idx){
 }
 
 
-void dct2_destroy(){
+static void dct2_destroy(){
   free_double(dct2_Ety_sparse);
   free_double(dct2_x);
   free_double(dct2_y);
@@ -99,7 +118,7 @@ void dct2_destroy(){
 }
 
 
-void dct2_dct(double *x){
+static void dct2_dct(double *x){
 
   double one_by_root2 = 1.0/sqrt(2);
   int i;
@@ -123,7 +142,7 @@ void dct2_dct(double *x){
 }
 
 
-void dct2_idct(double *x){
+static void dct2_idct(double *x){
 
   double root2 = sqrt(2);
   cblas_dcopy(dct2_N * dct2_M, x, 1, dct2_x, 1);
@@ -145,7 +164,7 @@ void dct2_idct(double *x){
 }
 
 
-void dct2_EMx(double *x, double *y){
+static void dct2_EMx(double *x, double *y){
 
   double root2 = sqrt(2);
   int i;
@@ -171,7 +190,7 @@ void dct2_EMx(double *x, double *y){
 }
 
 
-void dct2_MtEty(double *y, double *x){
+static void dct2_MtEty(double *y, double *x){
 
   double one_by_root2 = 1.0/sqrt(2);
   int i;
@@ -196,7 +215,7 @@ void dct2_MtEty(double *y, double *x){
 
 }
 
-void dct2_MtEt_EMx(double * restrict x, double * restrict z){
+static void dct2_MtEt_EMx(double * restrict x, double * restrict z){
   (void) x;
   (void) z;
 

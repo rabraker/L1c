@@ -12,7 +12,6 @@
 #include <check.h>
 #include <fftw3.h>
 
-#include "dct2.h"
 
 /* Tolerances and things */
 #include "test_constants.h"
@@ -22,6 +21,7 @@
 #include "check_utils.h"
 #include "l1c_common.h"
 #include "l1c_memory.h"
+#include "l1c_transforms.h"
 
 #ifdef _USEMKL_
 #define TOL_LARGE_DCT 1e-10
@@ -58,7 +58,7 @@ typedef struct DctData{
  */
 
 DctData *dctd;
-
+L1cAxFuns ax_funs;
 
 /* We the tcase_add_checked_fixture method. setup() and teardown are called by
    the associated setup and teardown functions for each test case. This allows us
@@ -96,7 +96,7 @@ static void setup(DctData *dct_dat){
   dct_dat->MtEty_act = malloc_double(dct_dat->Nx);
   dct_dat->EMx_act = malloc_double(dct_dat->Nx);
 
-  dct2_setup(dct_dat->N, dct_dat->M, dct_dat->Npix, dct_dat->pix_idx);
+  dct2_setup(dct_dat->N, dct_dat->M, dct_dat->Npix, dct_dat->pix_idx, &ax_funs);
 
   cJSON_Delete(test_data_json);
 }
@@ -115,7 +115,7 @@ static void teardown(DctData *dct_dat){
 
 
   free(dct_dat->pix_idx);
-  dct2_destroy();
+  ax_funs.destroy();
 
 
 #ifdef _USEMKL_
@@ -194,7 +194,7 @@ static void teardown_pure_square(void){
 START_TEST(test_dct2_MtEt_EMx_small)
 {
   /* Provided and freed by setup_small() and teardown_small()*/
-  dct2_MtEt_EMx(dctd->x_in, dctd->MtEty_EMx_act);
+  ax_funs.AtAx(dctd->x_in, dctd->MtEty_EMx_act);
 
   ck_assert_double_array_eq_tol(dctd->Nx, dctd->MtEty_EMx_exp,
                                 dctd->MtEty_EMx_act, TOL_DOUBLE_SUPER);
@@ -205,7 +205,7 @@ END_TEST
 
 START_TEST(test_dct2_MtEty_small)
 {
-  dct2_MtEty(dctd->y_in, dctd->MtEty_act);
+  ax_funs.Aty(dctd->y_in, dctd->MtEty_act);
 
   ck_assert_double_array_eq_tol(dctd->Nx, dctd->MtEty_exp,
                                 dctd->MtEty_act, TOL_DOUBLE_SUPER);
@@ -215,7 +215,7 @@ END_TEST
 
 START_TEST(test_dct2_EMx_new_small)
 {
-  dct2_EMx(dctd->x_in, dctd->EMx_act);
+  ax_funs.Ax(dctd->x_in, dctd->EMx_act);
 
   ck_assert_double_array_eq_tol(dctd->Ny, dctd->EMx_exp,
                                 dctd->EMx_act, TOL_DOUBLE_SUPER);

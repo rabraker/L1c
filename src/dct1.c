@@ -1,16 +1,21 @@
 /* Dont compile if we dont have fftw */
 #include "config.h"
-
-#ifdef _USEFFTW3_
-
 #include <stdlib.h>
 #include <fftw3.h>
 #include <omp.h>
 #include <math.h>
 
-#include "dct.h"
 #include "l1c_common.h"
 #include "l1c_memory.h"
+#include "l1c_transforms.h"
+
+/*----- Forward declarations ----- */
+static void dct_destroy();
+static void dct_EMx(double *x_fftw, double *y);
+static void dct_MtEty(double *y, double *x);
+static void dct_idct(double *x_fftw);
+static void dct_MtEt_EMx(double *x_fftw, double *z);
+
 
 static fftw_plan dct_plan_MtEty;
 static fftw_plan dct_plan_EMx;
@@ -27,7 +32,8 @@ static double dct_root_1_by_2N;
 /**
    If return is not zero, do not call dct_destroy();
 */
-int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
+int dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, L1cAxFuns *ax_funs){
+
   int status = 0;
 #if defined(HAVE_FFTW3_THREADS)
   fftw_init_threads();
@@ -73,6 +79,18 @@ int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
     goto fail;
   }
 
+
+  ax_funs->Ax = dct_EMx;
+  ax_funs->Aty = dct_MtEty;
+  ax_funs->AtAx = dct_MtEt_EMx;
+  ax_funs->M = dct_idct;
+  ax_funs->Mt = NULL;
+  ax_funs->E = NULL;
+  ax_funs->Et = NULL;
+
+  ax_funs->destroy = dct_destroy;
+  ax_funs->data = NULL;
+
   return status;
 
  fail:
@@ -80,7 +98,7 @@ int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
   return status;
 }
 
-void dct_destroy(){
+static void dct_destroy(){
   free_double(dct_Ety_sparse);
   free_double(dct_x);
   free_double(dct_y);
@@ -92,7 +110,7 @@ void dct_destroy(){
 }
 
 
-void dct_idct(double *x){
+static void dct_idct(double *x){
   // double *x_ = __builtin_assume_aligned(x, DALIGN);
 
   cblas_dcopy(dct_Nx, x, 1, dct_x, 1);
@@ -106,11 +124,10 @@ void dct_idct(double *x){
 
 }
 
-void dct_EMx(double *x_fftw, double * restrict y){
+static void dct_EMx(double *x, double * restrict y){
   /* Compute y = E * M *dct_x, where M is the IDCT, and E is the subsampling matrix.
-
-     --x_fftw should have size dct_Nx.
-     -- x_fftw MUST have been allocated with fftw_alloc_real;
+     --x should have size dct_Nx.
+     -- x and y should have been allocated with malloc_double;
      -- y should have size at least dct_Ny.
      On exit, the first dct_Ny entries of y will contain the result of E * M *x.
   */
@@ -119,11 +136,11 @@ void dct_EMx(double *x_fftw, double * restrict y){
   double *dcty_a = __builtin_assume_aligned(dct_y, DALIGN);
 
   // Leave the input vector unchanged.
-  double x0_tmp = x_fftw[0];
-  x_fftw[0] = x_fftw[0] * sqrt(2.0);
+  double x0_tmp = x[0];
+  x[0] = x[0] * sqrt(2.0);
 
-  fftw_execute_r2r(dct_plan_EMx, x_fftw, dcty_a);
-  x_fftw[0] = x0_tmp;   /* Undo the scaling operation. */
+  fftw_execute_r2r(dct_plan_EMx, x, dcty_a);
+  x[0] = x0_tmp;   /* Undo the scaling operation. */
 
   // Apply the subsampling operation. Assume that the indexes are ordered, and
   // do this in place
@@ -134,7 +151,7 @@ void dct_EMx(double *x_fftw, double * restrict y){
 }
 
 
-void dct_MtEty( double * restrict y, double * restrict x){
+static void dct_MtEty( double * restrict y, double * restrict x){
   /*Apply x = M^T * E^T * y.
     The results are normalized to matlabs convention. That is, divided by 1/sqrt(2*N) and
     x[0] <- x[0] * /sqrt(2).
@@ -166,7 +183,7 @@ void dct_MtEty( double * restrict y, double * restrict x){
 
 }
 
-void dct_MtEt_EMx(double * restrict x, double * restrict z){
+static void dct_MtEt_EMx(double * restrict x, double * restrict z){
   /* Performs the Multiplication z = (EM)^T * (EM) * x
      on the supplied vector x.
 
@@ -211,8 +228,3 @@ void dct_MtEt_EMx(double * restrict x, double * restrict z){
 
 }
 
-#else
-
-typedef int make_iso_compilers_happy;
-
-#endif

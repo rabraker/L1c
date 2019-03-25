@@ -1,5 +1,4 @@
 #include "config.h"
-#ifdef _USEMKL_ //disable the entire file if no mkl.
 
 #include <stdlib.h>
 #include <math.h>
@@ -8,9 +7,18 @@
 #include "mkl_trig_transforms.h"
 #include "l1c_common.h"
 #include "l1c_memory.h"
+#include "l1c_transforms.h"
+#include "l1c_math.h"
 
+/*----- Forward declarations ----- */
+static void dct_destroy();
+static void dct_EMx(double *x_fftw, double *y);
+static void dct_MtEty(double *y, double *x);
+static void dct_idct(double *x_fftw);
+static void dct_MtEt_EMx(double *x_fftw, double *z);
+
+/*---- Globals, local to this file ---------- */
 DFTI_DESCRIPTOR_HANDLE mkl_dct_handle=0;
-
 
 static double *dct_tmp_x=NULL;
 static double *dct_tmp_y=NULL;
@@ -24,6 +32,20 @@ static MKL_INT dct_stat;
 
 static l1c_int *dct_pix_mask_idx;
 static double dct_root_1_by_2N;
+
+
+
+/*
+
+  MKL does not provide two-dimensional DCT transforms. For compatibility,
+  treat the call as 1D.
+ */
+int dct2_setup(l1c_int Nx, l1c_int Mx, l1c_int Ny, l1c_int *pix_mask_idx, L1cAxFuns *ax_funs){
+  return dct1_setup(Nx*Mx, Ny, pix_mask_idx, ax_funs);
+}
+
+
+
 /*
   Standard BLAS interfaces (e.g., NetLib, ATLAS) use a standard int (32).
 
@@ -38,7 +60,7 @@ static double dct_root_1_by_2N;
 /**
    If return is not zero, do not call dct_destroy();
  */
-int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
+int dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, L1cAxFuns *ax_funs){
 
   MKL_INT tt_type = MKL_STAGGERED_COSINE_TRANSFORM;
   l1c_int i=0;
@@ -75,6 +97,17 @@ int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
     goto fail;
   }
 
+  ax_funs->Ax = dct_EMx;
+  ax_funs->Aty = dct_MtEty;
+  ax_funs->AtAx = dct_MtEt_EMx;
+  ax_funs->M = dct_idct;
+  ax_funs->Mt = NULL;
+  ax_funs->E = NULL;
+  ax_funs->Et = NULL;
+
+  ax_funs->destroy = dct_destroy;
+  ax_funs->data = NULL;
+
   return status;
 
  fail:
@@ -84,7 +117,7 @@ int dct_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx){
   return status;
 }
 
-void dct_destroy(){
+static void dct_destroy(){
   free_trig_transform(&mkl_dct_handle, dct_ipar, &dct_stat);
 
   free_double(dct_tmp_x);
@@ -92,7 +125,7 @@ void dct_destroy(){
   free_double(dct_dpar);
 }
 
-void dct_idct(double * restrict x){
+static void dct_idct(double * restrict x){
   double *x_ = __builtin_assume_aligned(x, DALIGN);
 
   x_[0] = x_[0] * sqrt(2.0); //proper scaling
@@ -108,7 +141,7 @@ void dct_idct(double * restrict x){
 
 }
 
-void dct_EMx(double * restrict x, double * restrict y){
+static void dct_EMx(double * restrict x, double * restrict y){
   /* Compute y = E * M *dct_x, where M is the IDCT, and E is the subsampling matrix.
 
      -- x should have size dct_Nx.
@@ -139,7 +172,7 @@ void dct_EMx(double * restrict x, double * restrict y){
 }
 
 
-void dct_MtEty( double * restrict y, double * restrict x){
+static void dct_MtEty( double * restrict y, double * restrict x){
   /*Apply x = M^T * E^T * y.
     -- y should have dimension at least dct_Ny
     -- x should have dimension at least dct_Nx
@@ -170,7 +203,7 @@ void dct_MtEty( double * restrict y, double * restrict x){
 }
 
 
-void dct_MtEt_EMx(double *x_fftw, double *z){
+static void dct_MtEt_EMx(double *x_fftw, double *z){
   /* Performs the Multiplication z = (EM)^T * (EM) * x
      on the supplied vector x.
 
@@ -184,8 +217,3 @@ void dct_MtEt_EMx(double *x_fftw, double *z){
 
 }
 
-#else
-
-typedef int make_iso_compilers_happy;
-
-#endif

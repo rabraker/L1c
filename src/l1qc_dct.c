@@ -4,80 +4,11 @@
 #include <stdio.h>
 #include <math.h>
 #include "l1c_common.h"
+#include "l1c_math.h"
 #include "l1c_memory.h"
-
+#include "l1c_transforms.h"
 #include "l1qc_newton.h"
 #include "omp.h"
-
-/* dct_mkl.h defines the Ax and Aty operations.
-   To adapt this file to a different set of transformations,
-   this largely what must be changed. Your new set of transformations
-   must expose three functions with the following prototype:
-
-   void Ax(double *x, double *y)
-   void Aty(double *y, double *x)
-   void AtAx(double *x, double *z)
-
-   where x and z have length n, and y has length m and m<n.
-*/
-
-#include "dct.h"
-
-#if defined(_USEMKL_)
-#define dct2_EMx dct_EMx
-#define dct2_MtEty dct_MtEty
-#define dct2_MtEt_EMx dct_MtEt_EMx
-#define dct2_idct dct_idct
-#define dct2_setup dct_setup_compat
-#define  dct2_destroy dct_destroy
-#else
-#include "dct2.h"
-#endif
-
-int dct_setup_compat(l1c_int N, l1c_int M, l1c_int Ny, l1c_int *pix_mask_idx){
-  // Placeholder, eventually dct_setup should be common to both 1 and 2d transforms.
-  (void) M;
-  return dct_setup(N, Ny, pix_mask_idx);
-}
-
-typedef struct XFormPack {
-  AxFuns Ax_funs;
-  void(*M)(double *x);
-  // int(*setup)(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx);
-  int(*setup)(l1c_int N, l1c_int M, l1c_int Ny, l1c_int *pix_mask_idx);
-
-  // int(*setup)(l1c_int Nrow, l1c_int Ncol, l1c_int M, l1c_int *pix_idx);
-  void(*destroy)(void);
-
-}XFormPack;
-
-
-
-int get_transform_funcs(int Ncol, XFormPack *xforms){
-
-  if (Ncol > 1){
-    xforms-> Ax_funs.Ax=dct2_EMx;
-    xforms-> Ax_funs.Aty=dct2_MtEty;
-    xforms-> Ax_funs.AtAx=dct2_MtEt_EMx;
-    xforms->M = dct2_idct;
-    xforms->setup = dct2_setup;
-    xforms->destroy = dct2_destroy;
-  }else if(Ncol == 1){
-    xforms-> Ax_funs.Ax=dct_EMx;
-    xforms-> Ax_funs.Aty=dct_MtEty;
-    xforms-> Ax_funs.AtAx=dct_MtEt_EMx;
-    xforms->M = dct_idct;
-    xforms->setup = dct_setup_compat;
-    xforms->destroy = dct_destroy;
-  }else{
-    fprintf(stderr, "Ncol=%d makes no sense.\n", Ncol);
-    return 1;
-  }
-
-  return 0;
-
-}
-
 
 
 typedef struct L1qcDctOpts{
@@ -107,18 +38,10 @@ int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_i
 
   int status = 0;
   int Ntot = Nrow*Ncol;
-
-  XFormPack xforms;
-
-  if (get_transform_funcs(Ncol, &xforms)){
-    fprintf(stderr, "Exiting...............\n");
-    return 1;
-  }
-  AxFuns Ax_funs = xforms.Ax_funs;
   /*
-    Pointers to the transform functions that define A*x and A^T *y
+    Struct of pointers to the transform functions that define A*x and A^T *y
   */
-
+  L1cAxFuns ax_funs;
 
   NewtParams params = {.epsilon = opts.epsilon,
                        .tau = opts.tau,
@@ -139,6 +62,15 @@ int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_i
      Pointer address from caller probably wont be properly aligned.
    */
   printf("Nrow = %d, Ncol=%d, M=%d\n", Nrow, Ncol, M);
+
+  status = l1c_setup_dct_transforms(Nrow, Ncol, M, pix_idx, &ax_funs);
+
+  if (status != 0 || !ax_funs.Ax || !ax_funs.Aty || !ax_funs.AtAx){
+    fprintf(stderr, "Error setup up dct. Exiting.\n");
+    status = L1C_DCT_INIT_FAILURE;
+    return status;
+  }
+
   double *eta_0 = malloc_double(Ntot);
   double *b_ours = malloc_double(M);
 
@@ -148,15 +80,13 @@ int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_i
     goto exit1;
   }
 
+  /* eta_0 init is only needed for when we use MKL.*/
+  l1c_init_vec(Ntot, eta_0, 0);
   cblas_dcopy(M, b, 1, b_ours, 1);
 
-  if (xforms.setup(Nrow, Ncol, M, (l1c_int*)pix_idx)){
-    status = L1C_DCT_INIT_FAILURE;
-    goto exit1;
-  }
-  Ax_funs.Aty(b_ours, eta_0);
+  ax_funs.Aty(b_ours, eta_0);
 
-  *lb_res = l1qc_newton(Ntot, eta_0, M, b_ours, params, Ax_funs);
+  *lb_res = l1qc_newton(Ntot, eta_0, M, b_ours, params, ax_funs);
   if (lb_res->status){
     status = lb_res->status;
     goto exit2;
@@ -164,7 +94,7 @@ int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_i
   /* We solved for eta in the DCT domain. Transform back to
      standard coorbbdinates.
   */
-  xforms.M(eta_0);
+  ax_funs.M(eta_0);
 
   cblas_dcopy(Ntot, eta_0, 1, x_out, 1);
 
@@ -179,7 +109,7 @@ int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_i
   printf("time per cg iter: %g\n", time_total / (double) lb_res->total_cg_iter);
 
  exit2:
-  xforms.destroy(); // Should not call this if ax_setup() failed.
+  ax_funs.destroy(); // Should not call this if ax_setup() failed.
  exit1:
   /* Cleanup our mess. */
   free_double(b_ours);
