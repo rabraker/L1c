@@ -6,9 +6,13 @@
 #include "matrix.h"
 #include <string.h>
 #include <stdlib.h>
-#include "l1c_common.h"
-#include "l1c_memory.h"
 #include <math.h>
+
+#if defined(_USEMKL_)
+#include "mkl.h"
+#endif
+#include "cblas.h"
+
 #include "l1c.h"
 
 
@@ -104,14 +108,14 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   /* We require that f is aligned on a DALIGN byte boundary. Matlab does not guarantee this.
   */
-  f_ours = malloc_double(N*M);
-  uk = malloc_double(N*M);
+  f_ours = l1c_malloc_double(N*M);
+  uk = l1c_malloc_double(N*M);
   if (!f_ours || !uk){
     mexErrMsgIdAndTxt("l1c:l1qc_dct:outofmemory",
                       "Error Allocating memory.");
   }
   cblas_dcopy(N*M, f, 1, f_ours, 1);
-  int stat = breg_anistropic_TV(N, M, uk, f_ours, mu, tol, max_iter, max_jac_iter);
+  int stat = l1c_breg_anistropic_TV(N, M, uk, f_ours, mu, tol, max_iter, max_jac_iter);
   if (stat){
     plhs[0] = NULL;
     goto exit;
@@ -127,8 +131,8 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   }
 
  exit:
- free_double(f_ours);
- free_double(uk);
+ l1c_free_double(f_ours);
+ l1c_free_double(uk);
  if (stat){
    mexErrMsgIdAndTxt("l1c:l1qc_dct:outofmemory",
                      "Error Allocating memory.");

@@ -1,6 +1,6 @@
 #ifndef __BREGMAN___
 #define __BREGMAN__
-#include "l1c_common.h"
+#include "l1c.h"
 
 
 

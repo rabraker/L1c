@@ -17,8 +17,7 @@
 #include <cjson/cJSON.h>
 #include "json_utils.h"
 
-#include "l1c_common.h"
-#include "l1c_memory.h"
+#include "l1c.h"
 #include "TV.h"
 #include "check_utils.h"
 
@@ -85,13 +84,13 @@ static void setup(ImgDiffData *ddat){
 
   NM = ddat->NM;
 
-  ddat->DxA_act = malloc_double(NM);
-  ddat->DyA_act = malloc_double(NM);
-  ddat->DxTA_act = malloc_double(NM);
-  ddat->DyTA_act = malloc_double(NM);
+  ddat->DxA_act = l1c_malloc_double(NM);
+  ddat->DyA_act = l1c_malloc_double(NM);
+  ddat->DxTA_act = l1c_malloc_double(NM);
+  ddat->DyTA_act = l1c_malloc_double(NM);
 
-  ddat->DxTDxA_act = malloc_double(NM);
-  ddat->DyTDyA_act = malloc_double(NM);
+  ddat->DxTDxA_act = l1c_malloc_double(NM);
+  ddat->DyTDyA_act = l1c_malloc_double(NM);
 
   if (!(ddat->DxA_act) || !(ddat->DyA_act) || !(ddat->DxTA_act)
       || !(ddat->DyTA_act) || !(ddat->DxTDxA_act) || !(ddat->DyTDyA_act)){
@@ -103,21 +102,21 @@ static void setup(ImgDiffData *ddat){
 
 
 static void teardown(ImgDiffData *ddat){
-  free_double(ddat->A);
-  free_double(ddat->DxA_exp);
-  free_double(ddat->DyA_exp);
-  free_double(ddat->DxTA_exp);
-  free_double(ddat->DyTA_exp);
-  free_double(ddat->DxTDxA_exp);
-  free_double(ddat->DyTDyA_exp);
+  l1c_free_double(ddat->A);
+  l1c_free_double(ddat->DxA_exp);
+  l1c_free_double(ddat->DyA_exp);
+  l1c_free_double(ddat->DxTA_exp);
+  l1c_free_double(ddat->DyTA_exp);
+  l1c_free_double(ddat->DxTDxA_exp);
+  l1c_free_double(ddat->DyTDyA_exp);
 
-  free_double(ddat->DxA_act);
-  free_double(ddat->DyA_act);
-  free_double(ddat->DxTA_act);
-  free_double(ddat->DyTA_act);
+  l1c_free_double(ddat->DxA_act);
+  l1c_free_double(ddat->DyA_act);
+  l1c_free_double(ddat->DxTA_act);
+  l1c_free_double(ddat->DyTA_act);
 
-  free_double(ddat->DxTDxA_act);
-  free_double(ddat->DyTDyA_act);
+  l1c_free_double(ddat->DxTDxA_act);
+  l1c_free_double(ddat->DyTDyA_act);
 }
 
 

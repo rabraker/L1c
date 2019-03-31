@@ -1,8 +1,14 @@
 #include "config.h"
-#include "l1c_common.h"
-#include "l1c_memory.h"
+
 #include <math.h>
 #include <stdio.h>
+
+#if defined(_USEMKL_)
+#include "mkl.h"
+#endif
+#include "cblas.h"
+
+#include "l1c.h"
 
 /*
   This file provides a set of functions for computing the discrete

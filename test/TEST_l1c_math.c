@@ -6,7 +6,7 @@
 #include <math.h> //Constants
 #include <check.h>
 
-#include "l1c_common.h"
+#include "l1c.h"
 
 #include <cjson/cJSON.h>
 #include "json_utils.h"
@@ -16,7 +16,6 @@
 #include "test_constants.h"
 #include "check_utils.h"
 #include "l1c_math.h"
-#include "l1c_memory.h"
 
 
 
@@ -39,10 +38,10 @@ START_TEST(test_l1c_daxpy_z2)
 {
   l1c_int N = 256*256;
 
-  double *xx = malloc_double(2*N);
-  double *yy = malloc_double(2*N);
-  double *zz_exp = malloc_double(2*N);
-  double *zz = malloc_double(2*N);
+  double *xx = l1c_malloc_double(2*N);
+  double *yy = l1c_malloc_double(2*N);
+  double *zz_exp = l1c_malloc_double(2*N);
+  double *zz = l1c_malloc_double(2*N);
 
   double alp = 4.5918;
   for (int i=0; i<2*N; i++){
@@ -59,10 +58,10 @@ START_TEST(test_l1c_daxpy_z2)
 
   ck_assert_double_array_eq_tol(N, zz_exp, zz, TOL_DOUBLE_SUPER);
 
-  free_double(xx);
-  free_double(yy);
-  free_double(zz_exp);
-  free_double(zz);
+  l1c_free_double(xx);
+  l1c_free_double(yy);
+  l1c_free_double(zz_exp);
+  l1c_free_double(zz);
 
 }
 END_TEST

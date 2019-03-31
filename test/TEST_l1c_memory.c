@@ -1,13 +1,12 @@
 #include "config.h"
 
-#include "l1c_common.h"
-#include "l1c_memory.h"
+#include "l1c.h"
 
 #include <check.h>
 #include <stdint.h>
 
 
-START_TEST(test_malloc_double){
+START_TEST(test_l1c_malloc_double){
 
   #define N_trial 50
   int N = 256*256;
@@ -20,7 +19,7 @@ START_TEST(test_malloc_double){
    address just happens to a multiple of 64*/
   for (i=0; i<N_trial; i++){
 
-    dptr = malloc_double(N);
+    dptr = l1c_malloc_double(N);
     ptr_as_int = (uintptr_t) dptr;
     ck_assert_ptr_eq(0, (void*) (ptr_as_int & (DALIGN-1)) );
 
@@ -28,21 +27,13 @@ START_TEST(test_malloc_double){
   }
 
   for (i=0; i<N_trial; i++){
-    free_double(dptr_array[i]);
+    l1c_free_double(dptr_array[i]);
   }
 
 
 
 }
 END_TEST
-
-
-
-
-
-
-
-
 
 
 /* Add all the test cases to our suite
@@ -55,7 +46,7 @@ Suite *l1c_memory_suite(void)
   s = suite_create("l1c_memory");
   tc_common = tcase_create("l1c_memory");
 
-  tcase_add_test(tc_common,test_malloc_double);
+  tcase_add_test(tc_common,test_l1c_malloc_double);
 
   suite_add_tcase(s, tc_common);
 

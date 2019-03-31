@@ -5,9 +5,7 @@
 
 #include "mkl_service.h"
 #include "mkl_trig_transforms.h"
-#include "l1c_common.h"
-#include "l1c_memory.h"
-#include "l1c_transforms.h"
+#include "l1c.h"
 #include "l1c_math.h"
 
 /*----- Forward declarations ----- */
@@ -40,7 +38,7 @@ static double dct_root_1_by_2N;
   MKL does not provide two-dimensional DCT transforms. For compatibility,
   treat the call as 1D.
  */
-int dct2_setup(l1c_int Nx, l1c_int Mx, l1c_int Ny, l1c_int *pix_mask_idx, L1cAxFuns *ax_funs){
+int l1c_dct2_setup(l1c_int Nx, l1c_int Mx, l1c_int Ny, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs){
   return dct1_setup(Nx*Mx, Ny, pix_mask_idx, ax_funs);
 }
 
@@ -60,7 +58,7 @@ int dct2_setup(l1c_int Nx, l1c_int Mx, l1c_int Ny, l1c_int *pix_mask_idx, L1cAxF
 /**
    If return is not zero, do not call dct_destroy();
  */
-int dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, L1cAxFuns *ax_funs){
+int dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs){
 
   MKL_INT tt_type = MKL_STAGGERED_COSINE_TRANSFORM;
   l1c_int i=0;
@@ -70,9 +68,9 @@ int dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, L1cAxFuns *ax_funs
   dct_root_1_by_2N = sqrt(1.0 / ( (double) dct_Nx * 2)); // Normalization constant.
   dct_pix_mask_idx = pix_mask_idx;
 
-  dct_tmp_x = malloc_double(Nx+1);
-  dct_tmp_y = malloc_double(Nx+1);
-  dct_dpar = malloc_double(5*Nx/2 + 2);
+  dct_tmp_x = l1c_malloc_double(Nx+1);
+  dct_tmp_y = l1c_malloc_double(Nx+1);
+  dct_dpar = l1c_malloc_double(5*Nx/2 + 2);
 
   if (!dct_tmp_x || !dct_tmp_y || !dct_dpar){
     fprintf(stderr, "Error allocating memory in dct_setup\n");
@@ -111,18 +109,18 @@ int dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, L1cAxFuns *ax_funs
   return status;
 
  fail:
-  free_double(dct_tmp_x);
-  free_double(dct_tmp_y);
-  free_double(dct_dpar);
+  l1c_free_double(dct_tmp_x);
+  l1c_free_double(dct_tmp_y);
+  l1c_free_double(dct_dpar);
   return status;
 }
 
 static void dct_destroy(){
   free_trig_transform(&mkl_dct_handle, dct_ipar, &dct_stat);
 
-  free_double(dct_tmp_x);
-  free_double(dct_tmp_y);
-  free_double(dct_dpar);
+  l1c_free_double(dct_tmp_x);
+  l1c_free_double(dct_tmp_y);
+  l1c_free_double(dct_dpar);
 }
 
 static void dct_idct(double * restrict x){

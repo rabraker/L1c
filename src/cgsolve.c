@@ -13,8 +13,7 @@ This contains the conjugate gradient solver, cgsolve. The two small routines Ax 
 #include <stdlib.h>
 #include <math.h>
 
-#include "cgsolve.h"
-#include "l1c_common.h"
+#include "l1c.h"
 #include "l1c_math.h"
 
 static void
@@ -60,9 +59,9 @@ cg_report(int iter, double best_rel_res, double rel_res,
  }
 */
 
-int cgsolve(l1c_int N, double *x, double *b, double **Dwork,
-            void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
-            CgResults *cg_result, CgParams cg_params){
+int l1c_cgsolve(l1c_int N, double *x, double *b, double **Dwork,
+                void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
+                l1c_CgResults *cg_result, l1c_CgParams cg_params){
 
 
   int iter;
@@ -204,9 +203,9 @@ int cgsolve(l1c_int N, double *x, double *b, double **Dwork,
  }
 */
 
-int cgsolve_diag_precond(l1c_int N, double *x, double *b, double *M_inv_diag, double **Dwork,
-            void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
-            CgResults *cg_result, CgParams cg_params){
+int l1c_cgsolve_diag_precond(l1c_int N, double *x, double *b, double *M_inv_diag, double **Dwork,
+                             void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
+                             l1c_CgResults *cg_result, l1c_CgParams cg_params){
 
 
   int iter;
@@ -326,17 +325,3 @@ cg_report(int iter, double best_rel_res, double rel_res,
 }
 
 
-/**
-   Mainly, for test routines.
-
-   Computes the matrix-vector product y = A * b, for a symmetric matrix A.
-   This is a wrapper for cblas_dspmv.
-*/
-
-void Ax_sym(l1c_int n, double *x, double *b, void *AX_data){
-
-  double *A = (double *) AX_data;
-
-  cblas_dspmv (CblasRowMajor, CblasUpper, n, 1.0, A, x, 1, 0.0, b, 1);
-
-}

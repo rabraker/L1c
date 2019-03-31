@@ -5,9 +5,12 @@
 #include <omp.h>
 #include <math.h>
 
-#include "l1c_common.h"
-#include "l1c_memory.h"
-#include "l1c_transforms.h"
+#if defined(_USEMKL_)
+#include "mkl.h"
+#endif
+#include "cblas.h"
+
+#include "l1c.h"
 
 /*----- Forward declarations ----- */
 static void dct_destroy();
@@ -32,7 +35,7 @@ static double dct_root_1_by_2N;
 /**
    If return is not zero, do not call dct_destroy();
 */
-int dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, L1cAxFuns *ax_funs){
+int l1c_dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs){
 
   int status = 0;
 #if defined(HAVE_FFTW3_THREADS)
@@ -43,9 +46,9 @@ int dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, L1cAxFuns *ax_funs
 #endif
 
   l1c_int i=0;
-  dct_Ety_sparse = malloc_double(Nx);
-  dct_x = malloc_double(Nx);
-  dct_y = malloc_double(Nx);
+  dct_Ety_sparse = l1c_malloc_double(Nx);
+  dct_x = l1c_malloc_double(Nx);
+  dct_y = l1c_malloc_double(Nx);
   if (!dct_x || !dct_y || !dct_Ety_sparse){
     fprintf(stderr, "Error allocating memory in dct_setup");
     status = L1C_OUT_OF_MEMORY;
@@ -99,9 +102,9 @@ int dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, L1cAxFuns *ax_funs
 }
 
 static void dct_destroy(){
-  free_double(dct_Ety_sparse);
-  free_double(dct_x);
-  free_double(dct_y);
+  l1c_free_double(dct_Ety_sparse);
+  l1c_free_double(dct_x);
+  l1c_free_double(dct_y);
   fftw_destroy_plan(dct_plan_EMx);
   fftw_destroy_plan(dct_plan_MtEty);
 #if defined(HAVE_FFTW3_THREADS)
@@ -127,7 +130,7 @@ static void dct_idct(double *x){
 static void dct_EMx(double *x, double * restrict y){
   /* Compute y = E * M *dct_x, where M is the IDCT, and E is the subsampling matrix.
      --x should have size dct_Nx.
-     -- x and y should have been allocated with malloc_double;
+     -- x and y should have been allocated with l1c_malloc_double;
      -- y should have size at least dct_Ny.
      On exit, the first dct_Ny entries of y will contain the result of E * M *x.
   */

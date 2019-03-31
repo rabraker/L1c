@@ -12,16 +12,11 @@
 #include <check.h>
 #include <fftw3.h>
 
-#include "l1c_transforms.h"
-
-/* Tolerances and things */
+#include "l1c.h"
 #include "test_constants.h"
-/* To read in test data */
 #include <cjson/cJSON.h>
 #include "json_utils.h"
 #include "check_utils.h"
-#include "l1c_common.h"
-#include "l1c_memory.h"
 #include "l1c_math.h"
 
 #ifdef _USEMKL_
@@ -56,7 +51,7 @@ typedef struct MXfmData{
 /* Global variable for each all test cases.  */
 MXfmData *mxfmd;
 
-L1cAxFuns ax_funs;
+l1c_AxFuns ax_funs;
 
 
 /* We the tcase_add_checked_fixture method. setup() and teardown are called by
@@ -85,15 +80,15 @@ static void setup(MXfmData *mxfm_dat){
     fprintf(stderr, "Error Loading json into program data in 'test_MtEty_large()'. Aborting\n");
     ck_abort();
   }
-  mxfm_dat->AtAx_act = malloc_double(mxfm_dat->Mcol);
-  mxfm_dat->Aty_act = malloc_double(mxfm_dat->Mcol);
-  mxfm_dat->Ax_act = malloc_double(mxfm_dat->Nrow);
+  mxfm_dat->AtAx_act = l1c_malloc_double(mxfm_dat->Mcol);
+  mxfm_dat->Aty_act = l1c_malloc_double(mxfm_dat->Mcol);
+  mxfm_dat->Ax_act = l1c_malloc_double(mxfm_dat->Nrow);
 
   l1c_init_vec(mxfmd->Mcol, mxfmd->AtAx_act, 0);
   l1c_init_vec(mxfmd->Mcol, mxfmd->Aty_act, 0);
   l1c_init_vec(mxfmd->Nrow, mxfmd->Ax_act, 0);
 
-  setup_matrix_transforms(mxfm_dat->Nrow, mxfm_dat->Mcol, mxfm_dat->A, &ax_funs);
+  l1c_setup_matrix_transforms(mxfm_dat->Nrow, mxfm_dat->Mcol, mxfm_dat->A, &ax_funs);
 
   cJSON_Delete(test_data_json);
 }
@@ -101,17 +96,17 @@ static void setup(MXfmData *mxfm_dat){
 
 static void teardown(MXfmData *mxfm_dat){
 
-  free_double(mxfm_dat->A);
-  free_double(mxfm_dat->x_in);
-  free_double(mxfm_dat->y_in);
+  l1c_free_double(mxfm_dat->A);
+  l1c_free_double(mxfm_dat->x_in);
+  l1c_free_double(mxfm_dat->y_in);
 
-  free_double(mxfm_dat->AtAx_exp);
-  free_double(mxfm_dat->Aty_exp);
-  free_double(mxfm_dat->Ax_exp);
+  l1c_free_double(mxfm_dat->AtAx_exp);
+  l1c_free_double(mxfm_dat->Aty_exp);
+  l1c_free_double(mxfm_dat->Ax_exp);
 
-  free_double(mxfm_dat->AtAx_act);
-  free_double(mxfm_dat->Aty_act);
-  free_double(mxfm_dat->Ax_act);
+  l1c_free_double(mxfm_dat->AtAx_act);
+  l1c_free_double(mxfm_dat->Aty_act);
+  l1c_free_double(mxfm_dat->Ax_act);
 
   ax_funs.destroy();
 

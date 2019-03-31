@@ -1,6 +1,6 @@
 #ifndef _JSON_UTILS_
 #define  _JSON_UTILS_
-#include "l1c_common.h"
+#include "l1c.h"
 
 
 long get_file_length(FILE *file_ptr);

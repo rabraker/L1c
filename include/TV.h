@@ -1,7 +1,7 @@
 #ifndef __L1C_TV___
 #define __L1C_TV__
 #include "config.h"
-#include "l1c_common.h"
+#include "l1c.h"
 
 void l1c_Dx(l1c_int n, l1c_int m, double *X, double *Dx);
 

@@ -3,36 +3,22 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "l1c_common.h"
-#include "l1c_math.h"
-#include "l1c_memory.h"
-#include "l1c_transforms.h"
-#include "l1qc_newton.h"
 #include "omp.h"
 
+#if defined(_USEMKL_)
+#include "mkl.h"
+#endif
+#include "cblas.h"
 
-typedef struct L1qcDctOpts{
-  double epsilon;
-  double mu;
-  double lbtol;
-  double tau;
-  int lbiter;
-  double newton_tol;
-  int newton_max_iter;
-  int verbose;
-  double l1_tol;
-  double cgtol;
-  int cgmaxiter;
-  int warm_start_cg;
-}L1qcDctOpts;
-
-
+#include "l1c.h"
+#include "l1c_math.h"
+#include "l1qc_newton.h"
 
 
 /*--------------------------- Two-dimensional version ------------------------------*/
 
 int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_idx,
-             L1qcDctOpts opts, LBResult *lb_res){
+             l1c_L1qcOpts opts, l1c_LBResult *lb_res){
   struct timeval tv_start, tv_end;
   tv_start = l1c_get_time();
 
@@ -41,21 +27,7 @@ int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_i
   /*
     Struct of pointers to the transform functions that define A*x and A^T *y
   */
-  L1cAxFuns ax_funs;
-
-  NewtParams params = {.epsilon = opts.epsilon,
-                       .tau = opts.tau,
-                       .mu = opts.mu,
-                       .newton_tol = opts.newton_tol,
-                       .newton_max_iter = opts.newton_max_iter,
-                       .lbiter = 0,
-                       .l1_tol = opts.l1_tol,
-                       .lbtol = opts.lbtol,
-                       .verbose = opts.verbose,
-                       .cg_params.max_iter = opts.cgmaxiter,
-                       .cg_params.tol = opts.cgtol,
-                       .cg_params.verbose=0,
-                       .warm_start_cg=opts.warm_start_cg};
+  l1c_AxFuns ax_funs;
 
 
   /* Allocate memory for x and b, which is aligned to DALIGN.
@@ -71,8 +43,8 @@ int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_i
     return status;
   }
 
-  double *eta_0 = malloc_double(Ntot);
-  double *b_ours = malloc_double(M);
+  double *eta_0 = l1c_malloc_double(Ntot);
+  double *b_ours = l1c_malloc_double(M);
 
   if ( !b_ours || !eta_0){
     fprintf(stderr, "Memory Allocation failure\n");
@@ -86,7 +58,7 @@ int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_i
 
   ax_funs.Aty(b_ours, eta_0);
 
-  *lb_res = l1qc_newton(Ntot, eta_0, M, b_ours, params, ax_funs);
+  *lb_res = l1c_l1qc_newton(Ntot, eta_0, M, b_ours, opts, ax_funs);
   if (lb_res->status){
     status = lb_res->status;
     goto exit2;
@@ -112,8 +84,8 @@ int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_i
   ax_funs.destroy(); // Should not call this if ax_setup() failed.
  exit1:
   /* Cleanup our mess. */
-  free_double(b_ours);
-  free_double(eta_0);
+  l1c_free_double(b_ours);
+  l1c_free_double(eta_0);
   return status;
 }
 

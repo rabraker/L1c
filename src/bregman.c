@@ -3,8 +3,11 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "l1c_common.h"
-#include "l1c_memory.h"
+#if defined(_USEMKL_)
+#include "mkl.h"
+#endif
+#include "cblas.h"
+
 #include "bregman.h"
 #include "TV.h"
 #include "l1c_math.h"
@@ -337,7 +340,7 @@ void breg_anis_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, doub
 
  */
 
-int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
+int l1c_breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
                        double mu, double tol, int max_iter, int max_jac_iter){
 
   struct timeval tv_start, tv_end;
@@ -349,18 +352,18 @@ int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
   double *dwork1=NULL, *dwork2=NULL, *rhs=NULL;
   double *Dxu_b=NULL, *Dyu_b=NULL;
 
-  uk_1 = malloc_double(N);
-  d_x = malloc_double(N);
-  d_y = malloc_double(N);
-  b_x = malloc_double(N);
-  b_y = malloc_double(N);
-  dwork1 = malloc_double(N);
-  dwork2 = malloc_double(N);
+  uk_1 = l1c_malloc_double(N);
+  d_x = l1c_malloc_double(N);
+  d_y = l1c_malloc_double(N);
+  b_x = l1c_malloc_double(N);
+  b_y = l1c_malloc_double(N);
+  dwork1 = l1c_malloc_double(N);
+  dwork2 = l1c_malloc_double(N);
 
   /* Convenience handles. Note below that usage is separated.*/
   Dxu_b = dwork1;
   Dyu_b = dwork2;
-  rhs = malloc_double(N);
+  rhs = l1c_malloc_double(N);
 
   /* Must initialize these. */
   l1c_init_vec(N, uk_1, 0);
@@ -413,15 +416,15 @@ int breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
   /*Cleanup before exit. */
 
  exit:
-  free_double(uk_1);
-  free_double(d_x);
-  free_double(d_y);
-  free_double(b_x);
-  free_double(b_y);
+  l1c_free_double(uk_1);
+  l1c_free_double(d_x);
+  l1c_free_double(d_y);
+  l1c_free_double(b_x);
+  l1c_free_double(b_y);
 
-  free_double(dwork1);
-  free_double(dwork2);
-  free_double(rhs);
+  l1c_free_double(dwork1);
+  l1c_free_double(dwork2);
+  l1c_free_double(rhs);
 
 
   tv_end = l1c_get_time();

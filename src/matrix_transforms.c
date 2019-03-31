@@ -1,7 +1,11 @@
 #include "config.h"
-#include "l1c_common.h"
-#include "l1c_memory.h"
-#include "l1c_transforms.h"
+
+#if defined(_USEMKL_)
+#include "mkl.h"
+#endif
+#include "cblas.h"
+
+#include "l1c.h"
 
 /* Forward Declarations */
 static void Ax(double *x, double *y);
@@ -18,11 +22,11 @@ double *xfm_dwork=NULL;
 /*
   Do not free A until you are done.
  */
-int setup_matrix_transforms(l1c_int n, l1c_int m, double *A, L1cAxFuns *ax_funs){
+int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_funs){
 
   int L = n > m ? n : m;
 
-  xfm_dwork = malloc_double(L);
+  xfm_dwork = l1c_malloc_double(L);
   if (!xfm_dwork){
     return L1C_OUT_OF_MEMORY;
   }
@@ -48,7 +52,7 @@ int setup_matrix_transforms(l1c_int n, l1c_int m, double *A, L1cAxFuns *ax_funs)
 }
 
 static void destroy_matrix_transforms(void){
-  free_double(xfm_dwork);
+  l1c_free_double(xfm_dwork);
 }
 
 /**

@@ -7,8 +7,7 @@
 #include <cjson/cJSON.h>
 
 #include "json_utils.h"
-#include "l1c_common.h"
-#include "l1c_memory.h"
+#include "l1c.h"
 
 
 /* Utility functions */
@@ -120,7 +119,7 @@ int extract_json_double_array(cJSON *data_json, char *name, double **x, l1c_int 
     goto end;
   }
   *N = cJSON_GetArraySize(x_json);
-  *x = malloc_double(*N);
+  *x = l1c_malloc_double(*N);
 
   if (!*x){
     status =1;

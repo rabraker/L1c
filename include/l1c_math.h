@@ -1,7 +1,17 @@
 #ifndef __L1C_MATH__
 #define __L1C_MATH__
 #include "config.h"
-#include "l1c_common.h"
+#include "l1c.h"
+
+
+
+static inline double min(double a,double b){
+  return a < b ? a : b;
+}
+
+static inline double max(double a, double b){
+  return a > b ? a : b;
+}
 
 
 void __l1c_daxpby(l1c_int N,

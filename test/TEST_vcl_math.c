@@ -10,8 +10,7 @@
 #include <math.h> //Constants
 #include <check.h>
 
-#include "l1c_common.h"
-#include "l1c_memory.h"
+#include "l1c.h"
 
 #include <cjson/cJSON.h>
 #include "json_utils.h"
@@ -26,7 +25,7 @@
 START_TEST(test_vcl_sum)
 {
   double x_[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
-  double *x = malloc_double(12);
+  double *x = l1c_malloc_double(12);
   for (int i =0; i<12; i++){
     x[i] = x_[i];
   }
@@ -57,7 +56,7 @@ START_TEST(test_vcl_sum)
   sum_x = vcl_sum(12, x);
   ck_assert_double_eq_tol(sum_exp5, sum_x, TOL_DOUBLE);
 
-  free_double(x);
+  l1c_free_double(x);
 }
 END_TEST
 
@@ -65,7 +64,7 @@ END_TEST
 START_TEST(test_vcl_logsum)
 {
   double x_[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
-  double *x = malloc_double(12);
+  double *x = l1c_malloc_double(12);
   for (int i =0; i<12; i++){
     x[i] = x_[i];
   }
@@ -98,7 +97,7 @@ START_TEST(test_vcl_logsum)
   logsum_x = vcl_logsum(12, alpha, x);
   ck_assert_double_eq_tol(logsum_exp5, logsum_x, TOL_DOUBLE);
 
-  free_double(x);
+  l1c_free_double(x);
 }
 END_TEST
 

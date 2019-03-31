@@ -19,9 +19,7 @@
 #include <cjson/cJSON.h>
 #include "json_utils.h"
 #include "check_utils.h"
-#include "l1c_common.h"
-#include "l1c_memory.h"
-#include "l1c_transforms.h"
+#include "l1c.h"
 
 #ifdef _USEMKL_
 #define TOL_LARGE_DCT 1e-10
@@ -58,7 +56,7 @@ typedef struct DctData{
  */
 
 DctData *dctd;
-L1cAxFuns ax_funs;
+l1c_AxFuns ax_funs;
 
 /* We the tcase_add_checked_fixture method. setup() and teardown are called by
    the associated setup and teardown functions for each test case. This allows us
@@ -92,26 +90,26 @@ static void setup(DctData *dct_dat){
   }
   ck_assert_int_eq(dct_dat->N * dct_dat->M, dct_dat->Nx);
 
-  dct_dat->MtEty_EMx_act = malloc_double(dct_dat->Nx);
-  dct_dat->MtEty_act = malloc_double(dct_dat->Nx);
-  dct_dat->EMx_act = malloc_double(dct_dat->Nx);
+  dct_dat->MtEty_EMx_act = l1c_malloc_double(dct_dat->Nx);
+  dct_dat->MtEty_act = l1c_malloc_double(dct_dat->Nx);
+  dct_dat->EMx_act = l1c_malloc_double(dct_dat->Nx);
 
-  dct2_setup(dct_dat->N, dct_dat->M, dct_dat->Npix, dct_dat->pix_idx, &ax_funs);
+  l1c_dct2_setup(dct_dat->N, dct_dat->M, dct_dat->Npix, dct_dat->pix_idx, &ax_funs);
 
   cJSON_Delete(test_data_json);
 }
 
 static void teardown(DctData *dct_dat){
-  free_double(dct_dat->x_in);
-  free_double(dct_dat->y_in);
+  l1c_free_double(dct_dat->x_in);
+  l1c_free_double(dct_dat->y_in);
 
-  free_double(dct_dat->MtEty_EMx_exp);
-  free_double(dct_dat->MtEty_exp);
-  free_double(dct_dat->EMx_exp);
+  l1c_free_double(dct_dat->MtEty_EMx_exp);
+  l1c_free_double(dct_dat->MtEty_exp);
+  l1c_free_double(dct_dat->EMx_exp);
 
-  free_double(dct_dat->MtEty_EMx_act);
-  free_double(dct_dat->MtEty_act);
-  free_double(dct_dat->EMx_act);
+  l1c_free_double(dct_dat->MtEty_EMx_act);
+  l1c_free_double(dct_dat->MtEty_act);
+  l1c_free_double(dct_dat->EMx_act);
 
 
   free(dct_dat->pix_idx);

@@ -1,11 +1,11 @@
 #include "config.h"
-#include "l1c_common.h"
+#include "l1c.h"
 
 #if defined(_HAVE_POSIX_MEMALIGN_)
 // #define _POSIX_C_SOURCE  200112L
 #include <stdlib.h>
 
-double* malloc_double(int N){
+double* l1c_malloc_double(int N){
   void *dptr;
   /*DALIGN must be multiple of sizeof(double) and power of two.
     This is satisfired for DALIGN=64 and sizeof(double)=8.
@@ -18,7 +18,7 @@ double* malloc_double(int N){
   }
 }
 
-void free_double(double *x){
+void l1c_free_double(double *x){
   free(x);
 }
 
@@ -26,20 +26,20 @@ void free_double(double *x){
 #elif defined(_HAVE_MM_MALLOC_)
 #include <xmmintrin.h>
 
-double* malloc_double(int N){
+double* l1c_malloc_double(int N){
   void *dptr;
   dptr = _mm_malloc((size_t)(N) * sizeof(double), DALIGN);
   return (double*) dptr;
 }
 
-void free_double(double *x){
+void l1c_free_double(double *x){
   _mm_free(x);
 }
 #endif //_HAVE_POSIX_MEMALIGN_
 
 
 /* This is primarily for the DWORK arrays. */
-double** malloc_double_2D(l1c_int nrow, l1c_int ncol){
+double** l1c_malloc_double_2D(l1c_int nrow, l1c_int ncol){
   int k;
   double **dwork = malloc(nrow*sizeof(double*));
   if (!dwork){
@@ -51,7 +51,7 @@ double** malloc_double_2D(l1c_int nrow, l1c_int ncol){
   }
 
   for (k=0; k<nrow; k++){
-    dwork[k] = malloc_double(ncol);
+    dwork[k] = l1c_malloc_double(ncol);
     if (!dwork[k]){
       goto fail2;
     }
@@ -61,7 +61,7 @@ double** malloc_double_2D(l1c_int nrow, l1c_int ncol){
 
  fail2:
   for (k=0; k<nrow; k++){
-    free_double(dwork[k]);
+    l1c_free_double(dwork[k]);
   }
  fail1:
   free(dwork);
@@ -70,10 +70,10 @@ double** malloc_double_2D(l1c_int nrow, l1c_int ncol){
 
 }
 
-void free_double_2D(int nrow, double **dwork){
+void l1c_free_double_2D(int nrow, double **dwork){
 
   for (int k=0; k<nrow; k++){
-    free_double(dwork[k]);
+    l1c_free_double(dwork[k]);
   }
   free(dwork);
 }

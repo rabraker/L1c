@@ -8,7 +8,6 @@
 #include <cjson/cJSON.h>
 
 #include "json_utils.h"
-#include "l1c_memory.h"
 #include "l1c.h"
 
 
@@ -47,17 +46,18 @@ int main(int argc, char **argv){
 
 
 
-  LBResult lb_res;
-  L1qcDctOpts l1qc_dct_opts = {.epsilon=.1,
-							   .mu = 10,
-							   .lbtol = 1e-3,
-							   .newton_tol = 1e-3,
-                               .newton_max_iter = 50,
-                               .verbose = verbose,
-                               .l1_tol = 1e-5,
-                               .cgtol = 1e-8,
-                               .cgmaxiter = 200,
-                               .warm_start_cg=0};
+  l1c_LBResult lb_res;
+  l1c_L1qcOpts l1qc_opts = {.epsilon=.1,
+                            .mu = 10,
+                            .lbtol = 1e-3,
+                            .newton_tol = 1e-3,
+                            .newton_max_iter = 50,
+                            .verbose = verbose,
+                            .l1_tol = 1e-5,
+                            .cg_tol = 1e-8,
+                            .cg_maxiter = 200,
+                            .cg_verbose = 0,
+                            .warm_start_cg=0};
 
 
   if (load_file_to_json(fpath, &test_data_json)){
@@ -70,7 +70,7 @@ int main(int argc, char **argv){
   status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
   status +=extract_json_int(test_data_json, "N", &N);
 
-  x = malloc_double(N);
+  x = l1c_malloc_double(N);
 
   if (status || !x){
     fprintf(stderr, "Error reading JSON file or allocating memory\n");
@@ -79,13 +79,13 @@ int main(int argc, char **argv){
   }
   // time_t start = time(NULL);
 
-  l1qc_dct(N, 1, x, M, b, pix_idx, l1qc_dct_opts, &lb_res);
+  l1qc_dct(N, 1, x, M, b, pix_idx, l1qc_opts, &lb_res);
 
  exit:
   free(fpath);
-  free_double(x);
+  l1c_free_double(x);
   free(pix_idx);
-  free_double(b);
+  l1c_free_double(b);
   cJSON_Delete(test_data_json);
 
   return status;

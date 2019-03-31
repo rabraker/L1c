@@ -7,18 +7,20 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h> //Constants
+#include <math.h>
 #include <check.h>
+#include <cjson/cJSON.h>
 
-#include "cgsolve.h"
+#if defined(_USEMKL_)
+#include "mkl.h"
+#endif
+#include "cblas.h"
+
 
 /* Tolerances and things */
 #include "test_constants.h"
-#include <cjson/cJSON.h>
 #include "json_utils.h"
-
-#include "l1c_common.h"
-#include "l1c_memory.h"
+#include "l1c.h"
 #include "bregman.h"
 #include "check_utils.h"
 
@@ -99,20 +101,20 @@ static void setup(void){
 
 
 static void teardown(void){
-  free_double(BD->x);
-  free_double(BD->y);
-  free_double(BD->z);
-  free_double(BD->x_shrunk_exp);
-  free_double(BD->dx);
-  free_double(BD->dy);
-  free_double(BD->bx);
-  free_double(BD->by);
-  free_double(BD->f);
-  free_double(BD->rhs_exp);
-  free_double(BD->b);
-  free_double(BD->Hsolveb);
-  free_double(BD->Hessx);
-  free_double(BD->H_diag_exp);
+  l1c_free_double(BD->x);
+  l1c_free_double(BD->y);
+  l1c_free_double(BD->z);
+  l1c_free_double(BD->x_shrunk_exp);
+  l1c_free_double(BD->dx);
+  l1c_free_double(BD->dy);
+  l1c_free_double(BD->bx);
+  l1c_free_double(BD->by);
+  l1c_free_double(BD->f);
+  l1c_free_double(BD->rhs_exp);
+  l1c_free_double(BD->b);
+  l1c_free_double(BD->Hsolveb);
+  l1c_free_double(BD->Hessx);
+  l1c_free_double(BD->H_diag_exp);
   free(BD->fpath);
   free(BD);
 }
@@ -121,9 +123,9 @@ static void teardown(void){
 START_TEST(test_breg_anis_jacobi){
   BregFuncs bfuncs = breg_get_functions();
 
-  double *uk = malloc_double(BD->NM);
-  double *dwork = malloc_double(BD->NM);
-  double *D =  malloc_double(BD->NM);
+  double *uk = l1c_malloc_double(BD->NM);
+  double *dwork = l1c_malloc_double(BD->NM);
+  double *D =  l1c_malloc_double(BD->NM);
   int i = 0;
 
   // Must initialize uk, becuase it used recursively in breg_anis_jacobi.
@@ -137,9 +139,9 @@ START_TEST(test_breg_anis_jacobi){
   }
 
   ck_assert_double_array_eq_tol(BD->NM, BD->Hsolveb, uk, TOL_DOUBLE);
-  free_double(uk);
-  free_double(dwork);
-  free_double(D);
+  l1c_free_double(uk);
+  l1c_free_double(dwork);
+  l1c_free_double(D);
 }
 END_TEST
 
@@ -147,7 +149,7 @@ END_TEST
 START_TEST(test_breg_anis_guass_seidel){
   BregFuncs bfuncs = breg_get_functions();
 
-  double *uk = malloc_double(BD->NM);
+  double *uk = l1c_malloc_double(BD->NM);
   cblas_dcopy(BD->NM, BD->b, 1, uk, 1);
 
   for (int i=0; i<(BD->NM); i++){
@@ -155,7 +157,7 @@ START_TEST(test_breg_anis_guass_seidel){
   }
 
   ck_assert_double_array_eq_tol(BD->NM, BD->Hsolveb, uk, TOL_DOUBLE);
-  free_double(uk);
+  l1c_free_double(uk);
 }
 END_TEST
 
@@ -168,7 +170,7 @@ START_TEST(test_breg_shrink1){
   l1c_int N=0;
 
   N = BD->NM;
-  x_shrunk = malloc_double(N);
+  x_shrunk = l1c_malloc_double(N);
   if ( (!x_shrunk)){
     fprintf(stderr, "error allocating memory\n");
     ck_abort();
@@ -181,7 +183,7 @@ START_TEST(test_breg_shrink1){
 
   ck_assert_double_array_eq_tol(N, BD->x_shrunk_exp, x_shrunk, TOL_DOUBLE_SUPER*10);
 
-  free_double(x_shrunk);
+  l1c_free_double(x_shrunk);
 
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -195,9 +197,9 @@ START_TEST(test_breg_rhs){
   BregFuncs bfuncs = breg_get_functions();
   double *dwork1, *dwork2, *rhs;
 
-  rhs = malloc_double(BD->NM);
-  dwork1 = malloc_double(BD->NM);
-  dwork2 = malloc_double(BD->NM);
+  rhs = l1c_malloc_double(BD->NM);
+  dwork1 = l1c_malloc_double(BD->NM);
+  dwork2 = l1c_malloc_double(BD->NM);
   if ( (!rhs || !dwork1 || !dwork2) ){
     fprintf(stderr, "error allocating memory\n");
     ck_abort();
@@ -207,9 +209,9 @@ START_TEST(test_breg_rhs){
   ck_assert_double_array_eq_tol(BD->NM, BD->rhs_exp, rhs, TOL_DOUBLE_SUPER*10);
 
 
-  free_double(rhs);
-  free_double(dwork1);
-  free_double(dwork2);
+  l1c_free_double(rhs);
+  l1c_free_double(dwork1);
+  l1c_free_double(dwork2);
 
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -223,7 +225,7 @@ START_TEST(test_breg_hess_inv_diag){
   BregFuncs bfuncs = breg_get_functions();
   double *D;
 
-  D = malloc_double(BD->NM);
+  D = l1c_malloc_double(BD->NM);
   if ( (!D) ){
     fprintf(stderr, "error allocating memory\n");
     ck_abort();
@@ -234,7 +236,7 @@ START_TEST(test_breg_hess_inv_diag){
   ck_assert_double_array_eq_tol(BD->NM, BD->H_diag_exp, D, TOL_DOUBLE_SUPER*10);
 
 
-  free_double(D);
+  l1c_free_double(D);
 
 
 #ifdef _USEMKL_
@@ -252,7 +254,7 @@ START_TEST(test_breg_mxpy_z){
   l1c_int N=BD->NM;
 
 
-  z = malloc_double(N);
+  z = l1c_malloc_double(N);
   if ( (!z) ){
     fprintf(stderr, "error allocating memory\n");
     ck_abort();
@@ -265,7 +267,7 @@ START_TEST(test_breg_mxpy_z){
   ck_assert_double_array_eq_tol(N, BD->z, z, TOL_DOUBLE_SUPER*10);
 
 
-  free_double(z);
+  l1c_free_double(z);
 
 #ifdef _USEMKL_
   mkl_free_buffers();
@@ -298,7 +300,7 @@ START_TEST(test_breg_anis_TV){
   status +=extract_json_int(img_json, "n", &n);
   status +=extract_json_int(img_json, "m", &m);
 
-  uk = malloc_double(n*m);
+  uk = l1c_malloc_double(n*m);
   if (setup_status || !uk){
     fprintf(stderr, "Error allocating memory in test_breg_ans_TV\n");
     ck_abort();
@@ -306,12 +308,12 @@ START_TEST(test_breg_anis_TV){
   for(int i=0; i<n*m; i++){
     uk[i]=0;
   }
-  int ret = breg_anistropic_TV(n, m, uk, img_vec, mu, tol, max_iter, max_jac_iter);
+  int ret = l1c_breg_anistropic_TV(n, m, uk, img_vec, mu, tol, max_iter, max_jac_iter);
 
   ck_assert_int_eq(ret, 0);
 
-  free_double(uk);
-  free_double(img_vec);
+  l1c_free_double(uk);
+  l1c_free_double(img_vec);
   free(fpath);
   cJSON_Delete(img_json);
 }

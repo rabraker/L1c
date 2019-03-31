@@ -6,9 +6,14 @@
 #include <omp.h>
 #include <math.h>
 #include <cblas.h>
-#include "l1c_common.h"
-#include "l1c_memory.h"
-#include "l1c_transforms.h"
+
+#if defined(_USEMKL_)
+#include "mkl.h"
+#endif
+#include "cblas.h"
+
+
+#include "l1c.h"
 
 /* ----- Forward Declarations -----*/
 static void dct2_destroy();
@@ -34,7 +39,7 @@ static l1c_int dct2_M; // Cols
 static double dct2_root_1_by_4NM;
 
 
-int dct2_setup(l1c_int Nx, l1c_int Mx, l1c_int Ny, l1c_int *pix_mask_idx,  L1cAxFuns *ax_funs){
+int l1c_dct2_setup(l1c_int Nx, l1c_int Mx, l1c_int Ny, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs){
   int status = 0;
 #if defined(HAVE_FFTW3_THREADS)
   fftw_init_threads();
@@ -44,9 +49,9 @@ int dct2_setup(l1c_int Nx, l1c_int Mx, l1c_int Ny, l1c_int *pix_mask_idx,  L1cAx
 #endif
 
   l1c_int i=0;
-  dct2_Ety_sparse = malloc_double(Nx*Mx);
-  dct2_x = malloc_double(Nx*Mx);
-  dct2_y = malloc_double(Nx*Mx);
+  dct2_Ety_sparse = l1c_malloc_double(Nx*Mx);
+  dct2_x = l1c_malloc_double(Nx*Mx);
+  dct2_y = l1c_malloc_double(Nx*Mx);
   if (!dct2_x || !dct2_y || !dct2_Ety_sparse){
     fprintf(stderr, "Error allocating memory in dct2_setup");
     status = L1C_OUT_OF_MEMORY;
@@ -106,9 +111,9 @@ int dct2_setup(l1c_int Nx, l1c_int Mx, l1c_int Ny, l1c_int *pix_mask_idx,  L1cAx
 
 
 static void dct2_destroy(){
-  free_double(dct2_Ety_sparse);
-  free_double(dct2_x);
-  free_double(dct2_y);
+  l1c_free_double(dct2_Ety_sparse);
+  l1c_free_double(dct2_x);
+  l1c_free_double(dct2_y);
 
   fftw_destroy_plan(dct2_plan_EMx);
   fftw_destroy_plan(dct2_plan_MtEty);

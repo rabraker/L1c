@@ -1,10 +1,9 @@
 #include "config.h"
-#include "l1c_common.h"
-#include "l1c_memory.h"
-#include "l1c.h"
-
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "l1c.h"
+
 
 #include "Python.h"
 // Without the following, the numpy header generates #warnings
@@ -86,14 +85,14 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
   int i=0, status=0, n=0, m=0, N=0, M=0, M_=0;
   int *pix_idx=NULL;
 
-  LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
+  l1c_LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
 
-  L1qcDctOpts opts = {.epsilon=.01, .mu = 10,
-                      .lbtol = 1e-3, .newton_tol = 1e-3,
-                      .newton_max_iter = 50, .verbose = 0,
-                      .l1_tol = 1e-5, .lbiter = 0,
-                      .cgtol = 1e-8, .cgmaxiter = 200,
-                      .warm_start_cg=0};
+  l1c_L1qcOpts opts = {.epsilon=.01, .mu = 10,
+                       .lbtol = 1e-3, .newton_tol = 1e-3,
+                       .newton_max_iter = 50, .verbose = 0,
+                       .l1_tol = 1e-5, .lbiter = 0,
+                       .cg_tol = 1e-8, .cg_maxiter = 200,
+                       .cg_verbose=0, .warm_start_cg=0};
 
   char *keywords[] = {"", "", "", "",
                       "epsilon", "mu",
@@ -109,8 +108,8 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
                                    &opts.epsilon, &opts.mu,
                                    &opts.lbtol, &opts.newton_tol,
                                    &opts.newton_max_iter, &opts.verbose,
-                                   &opts.l1_tol, &opts.cgtol,
-                                   &opts.cgmaxiter)){
+                                   &opts.l1_tol, &opts.cg_tol,
+                                   &opts.cg_maxiter)){
     fprintf(stderr, "Parsing input arguments failed.\n");
     return NULL;
   }
@@ -150,7 +149,7 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
   pix_idx = (int*)PyArray_DATA(pix_idx_npA);
 
   /* Allocate memory for M*xk=f */
-  x_ours = malloc_double(N);
+  x_ours = l1c_malloc_double(N);
   if (!x_ours){
     fprintf(stderr, "Memory Allocation failure\n");
     PyErr_SetString(PyExc_MemoryError, "Failed to allocation memory");
@@ -247,8 +246,8 @@ _breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw){
   f  = (double*)PyArray_DATA(f_npA);
 
   /* Allocate memory for M*xk=f */
-  f_ours = malloc_double(n*m);
-  uk = malloc_double(n*m);
+  f_ours = l1c_malloc_double(n*m);
+  uk = l1c_malloc_double(n*m);
   if (!f_ours || !uk){
     fprintf(stderr, "Memory Allocation failure\n");
     PyErr_SetString(PyExc_MemoryError, "Failed to allocation memory");
@@ -259,7 +258,7 @@ _breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw){
     f_ours[i] = f[i];
   }
 
-  status = breg_anistropic_TV(n, m, uk, f_ours, mu, tol, max_iter, max_jac_iter);
+  status = l1c_breg_anistropic_TV(n, m, uk, f_ours, mu, tol, max_iter, max_jac_iter);
   if (status){
     PyErr_SetString(PyExc_MemoryError, "Failed to allocation memory");
     goto fail2;
@@ -270,7 +269,7 @@ _breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw){
 
   /* Clean up. */
   Py_DECREF(f_npA);
-  free_double(f_ours);
+  l1c_free_double(f_ours);
 
   ret_val = Py_BuildValue("O", uk_out_npA);
 
@@ -279,8 +278,8 @@ _breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw){
   /* If we failed, clean up more things. Note the fall through. */
  fail2:
   printf("INSIDE fail2\n");
-  free_double(f_ours);
-  free_double(uk);
+  l1c_free_double(f_ours);
+  l1c_free_double(uk);
  fail1:
   printf("INSIDE fail1\n");
   Py_XDECREF(f_npA);
