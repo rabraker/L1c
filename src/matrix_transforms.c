@@ -15,8 +15,21 @@ l1c_int xfm_M=0;
 double *xfm_dwork=NULL;
 
 
-/*
-  Do not free A until you are done.
+/**
+ * Setup a set of transformations for an arbitrary matrix `A`.
+ * For the l1 problems to make sense, `n<<m`.
+ *
+ * @param n Number of rows in the matrix A.
+ * @param m Number of columns in the matrix A.
+ * @param A An array of doubles with length `n*m`, stored in row
+ * major order.
+ * @param ax_funs Pointer an L1cAxFuns struct. On succesfful exit, the fields
+ * `Ax`, `Aty`, AtAx`, and destroy will be populated.
+ *
+ * @warning   Do not free `A` until you are done.
+ *
+ *
+ * @warning Do not free A until you are done.
  */
 int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_funs){
 

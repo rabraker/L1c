@@ -33,6 +33,78 @@ static l1c_int dct2_M; // Cols
 static double dct2_root_1_by_4NM;
 
 
+/**
+ * The function will populate an
+ * l1c_AxFuns struct such that
+ *
+ * \f{align}{
+ *    M &= \textrm{inverse discrete cosine transform}\\
+ *    Mt &= \textrm{discrete cosine transform}\\
+ *    Ax &= EM(x) \\
+ *    Aty &= M^T(E^Ty) \\
+ *    AtAx &=  M^T(E^TEM(x))
+ * \f}
+ *
+ * where \f$M(x)\f$ represents the inverse two dimensional
+ * discrete cosine transform and \f$E\f$ represents the subsampling operation.
+ * The fields `E`, `Et` and `data` will be `NULL`.
+ *
+ *
+ * Recall that, for an n_x by m_x matrix X, the 2D DCT is given by
+ *
+ * \f{equation}{
+ *    \hat{X}=M_{n_x} X M_{m_x}
+ * \f}
+ *
+ * where \f$ X\in\mathbb{R}^{n_x \times m_x}\f$. On the other hand, the subsampling
+ * operator operates on a vector. Specifically, \f$E\f$, is the identy matrix
+ * with rows removed. In python notation:
+ *
+ * @code{python}
+ *    E = I[pix_mask_idx,:]
+ * @endcode
+ *
+ *
+ * Conceptually, the operation
+ *
+ * \f$EM(X)\f$ can be thought of as
+ *
+ * \f{equation}{
+ *    EM(x)= E\textrm{vec}\left(  (M_{n_x} X M_{m_x})^T  \right).
+ * \f}
+ *
+ * The transpose is necessary because the `vec()` operator concatenates
+ * a matrix in column major order, but, in L1C, we follow the standard
+ * `C` convention of row major order. In reality, the code does not do any
+ * of the re-shaping implied above, because the vector and matrix are represnted
+ * the same way in memory. So an alternative description is that
+ *
+ * \f{equation}{
+ *    M(x)=M_{m_x}\otimes M^T_{n_x} \textrm{vec}(X^T)
+ * \f}
+ *
+ *
+ * To de-allocate the memory reserved by dct2_setup(), call ax_funs.destroy().
+ * Do not call ax_funs.destroy() if return value of dct2_setup() is non-zero.
+ *
+ * @param[in] Nx Number of rows of the underlying signal.
+ * @param[in] Mx Number of columns of the underlying signal.
+ *               To treat, e.g., an image as a 1D vectorized signal
+ *               set Mx=1 and Nx = number_of_rows * number_of_columns.
+ * @param[in]  Ny Number of elements in pix_mask_idx.
+ * @param[in]  pix_mask_idx Indeces of locations of the subsampling. For both
+ *              DCT1 and DCT2, this vector should be the same.
+ * @param[out] ax_funs A structure of function pointers which will be populated.
+ *                      On successfull exit, The fields Ax, Aty, AtAx, destroy, and M
+ *                      will be non-null. The fields MT, E, and ET will be null.
+ *
+ *
+ * @return   0 if succesfull. If unsuccesfull, returns L1C_DCT_INIT_FAILURE
+ *           or L1C_OUT_OF_MEMORY.
+ *
+ * @warning This function assumes that its inputs have already been sanitized. In
+ *          particular, if `max(pix_mask_idx) > Nx*Mx`, then segfaults are likely to occur.
+ */
 int l1c_dct2_setup(l1c_int Nx, l1c_int Mx, l1c_int Ny, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs){
   int status = 0;
 #if defined(HAVE_FFTW3_THREADS)

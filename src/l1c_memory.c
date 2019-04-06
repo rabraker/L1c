@@ -38,7 +38,7 @@ void l1c_free_double(double *x){
 #endif //_HAVE_POSIX_MEMALIGN_
 
 
-/* This is primarily for the DWORK arrays. */
+/** This is primarily for the DWORK arrays. */
 double** l1c_malloc_double_2D(l1c_int nrow, l1c_int ncol){
   int k;
   double **dwork = malloc(nrow*sizeof(double*));
@@ -70,6 +70,10 @@ double** l1c_malloc_double_2D(l1c_int nrow, l1c_int ncol){
 
 }
 
+
+/**
+   Free an 2D array allocated by l1c_malloc_double_2D
+*/
 void l1c_free_double_2D(int nrow, double **dwork){
 
   for (int k=0; k<nrow; k++){

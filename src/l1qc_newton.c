@@ -446,6 +446,15 @@ int _l1c_l1qc_check_feasible_start(double *x, l1c_int M, double *b, double epsil
 }
 
 
+/**
+ *
+ * @param[in] N size of x.
+ * @param[in,out] x result of optimization.
+ * @param[in] M size of b
+ * @param[in] b The measurements.
+ * @param[in] params a struct of options.
+ * @param[in] Ax_funs a struct of function pointers.
+ */
 l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
                      l1c_L1qcOpts params, l1c_AxFuns Ax_funs){
 

@@ -1,4 +1,4 @@
-/**  \file
+/**  @file
 This contains the conjugate gradient solver, cgsolve. The two small routines Ax and Ax_sym illustrate how the user function AX_func can parse the input void *AX_data.
 
 */
@@ -18,43 +18,41 @@ cg_report(int iter, double best_rel_res, double rel_res,
 
 
 /**
-
-   Purpose
-   -------
-   To solve the system of equations
-   \f[
-   A x = b
-   \f]
-   where \f$A = A^T > 0\f$ via the method of conjugate gradients.
-   The advantage to this method is that we do not have to
-   store the matrix A, but only need a function which performs
-   the linear mapping.
-
-   @param[in] N Length of the vector b.
-   @param[out] x The result is stored in this array. Should have length N.
-   @param[in] b  The RHS, should have length N.
-   @param[in] Dwork array of Pointers to 4 work arrays of length N.
-   @param[in] void(*AX_func) Pointer to a function which evalutes A * x.
-   @param[in] AX_data  Data needed by AX_func. For example, if
-   you just wanted AX_func to perform a normal matrix multiplication,
-   you could do
-   AX_func((int n, double *x, double *b, void *AX_data){
-   double *A = (double *) AX_data;
-   @param[out] cg_result Pointer to a struct containing relevent results from the computation.
-   @param[in] cg_params Struct containing parameters (tolerance and verbosity) for the computation.
-
-
-   Algorithm
-   ---------
-   This code is a c implementation of the conjugate gradient solver
-   in l1magic. It is a direct port of the matlab code, which follows
-   closely to the description on wikipedia
-
-   https://en.wikipedia.org/wiki/Conjugate_gradient_method
-
- }
+ * Conjugate gradient solver.
+ *
+ * Purpose
+ * -------
+ * To solve the system of equations
+ * \f[
+ * A x = b
+ * \f]
+ * where \f$A = A^T > 0\f$ via the method of conjugate gradients.
+ * The advantage to this method is that we do not have to
+ * store the matrix A, but only need a function which performs
+ * the linear mapping.
+ *
+ * Algorithm
+ * ---------
+ * This code is a c implementation of the conjugate gradient solver
+ * in l1magic. It is a direct port of the matlab code, which follows
+ * closely to the description on wikipedia
+ *
+ * https://en.wikipedia.org/wiki/Conjugate_gradient_method
+ *
+ * @param[in] N Length of the vector b.
+ * @param[out] x The result is stored in this array. Should have length N.
+ * @param[in] b  The RHS, should have length N.
+ * @param[in] Dwork array of Pointers to 4 work arrays of length N.
+ * @param[in] AX_func Pointer to a function which evalutes A * x.
+ * @param[in] AX_data  Data needed by AX_func. For example, if
+ * you just wanted AX_func to perform a normal matrix multiplication,
+ * you could do
+ * AX_func((int n, double *x, double *b, void *AX_data){
+ * double *A = (double *) AX_data;
+ * @param[out] cg_result Pointer to a struct containing relevent results from the computation.
+ * @param[in] cg_params Struct containing parameters (tolerance and verbosity) for the computation.
+*
 */
-
 int l1c_cgsolve(l1c_int N, double *x, double *b, double **Dwork,
                 void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
                 l1c_CgResults *cg_result, l1c_CgParams cg_params){
@@ -160,45 +158,44 @@ int l1c_cgsolve(l1c_int N, double *x, double *b, double **Dwork,
 
 
 /**
-
-   Purpose
-   -------
-   To solve the system of equations
-   \f[
-   A x = b
-   \f]
-   where \f$A = A^T > 0\f$ via the method of conjugate gradients.
-   The advantage to this method is that we do not have to
-   store the matrix A, but only need a function which performs
-   the linear mapping.
-
-   @param[in] N Length of the vector b.
-   @param[in,out] x The result is stored in this array. Should have length N.
-   @param[in] b  The RHS, should have length N.
-   @param[in] M_inv_diag  1./M, where M is a vector representing the diagonal
-                          preconditioner.
-   @param[in] Dwork array of Pointers to 5 work arrays of length N.
-   @param[in] void(*AX_func) Pointer to a function which evalutes A * x.
-   @param[in] AX_data  Data needed by AX_func. For example, if
-   you just wanted AX_func to perform a normal matrix multiplication,
-   you could do
-   AX_func((int n, double *x, double *b, void *AX_data){
-   double *A = (double *) AX_data;
-   @param[out] cg_result Pointer to a struct containing relevent results from the computation.
-   @param[in] cg_params Struct containing parameters (tolerance and verbosity) for the computation.
-
-
-   Algorithm
-   ---------
-   This code is a c implementation of the conjugate gradient solver
-   in l1magic. It is a direct port of the matlab code, which follows
-   closely to the description on wikipedia
-
-   https://en.wikipedia.org/wiki/Conjugate_gradient_method
-
- }
+ * Preconditioned Conjugate gradient solver.
+ *
+ * Purpose
+ * -------
+ * To solve the system of equations
+ * \f[
+ * A x = b
+ * \f]
+ * where \f$A = A^T > 0\f$ via the method of conjugate gradients
+ * with a diagonal preconditioner.
+ * The advantage to this method is that we do not have to
+ * store the matrix A, but only need a function which performs
+ * the linear mapping.
+ *
+ * Algorithm
+ * ---------
+ * This code follows the wikipedia [1] description of preconditioned conjugate
+ * gradient.
+ *
+ * [1] https://en.wikipedia.org/wiki/Conjugate_gradient_method
+ *
+ *
+ * @param[in] N Length of the vector b.
+ * @param[in,out] x The result is stored in this array. Should have length N.
+ * @param[in] b  The RHS, should have length N.
+ * @param[in] M_inv_diag  1./M, where M is a vector representing the diagonal
+ *                        preconditioner.
+ * @param[in] Dwork array of Pointers to 5 work arrays of length N.
+ * @param[in] AX_func Pointer to a function which evalutes A * x.
+ * @param[in] AX_data  Data needed by AX_func. For example, if
+ * you just wanted AX_func to perform a normal matrix multiplication,
+ * you could do
+ * AX_func((int n, double *x, double *b, void *AX_data){
+ * double *A = (double *) AX_data;
+ * @param[out] cg_result Pointer to a struct containing relevent results from the computation.
+ * @param[in] cg_params Struct containing parameters (tolerance and verbosity) for the computation.
+ *
 */
-
 int l1c_cgsolve_diag_precond(l1c_int N, double *x, double *b, double *M_inv_diag, double **Dwork,
                              void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
                              l1c_CgResults *cg_result, l1c_CgParams cg_params){

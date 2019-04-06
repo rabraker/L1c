@@ -11,8 +11,20 @@
 #include "l1qc_newton.h"
 
 
-/*--------------------------- Two-dimensional version ------------------------------*/
-
+/**
+ * Interface to l1qc_newton using the DCT1/DCT2 transforms \f$Ax=b\f$
+ *
+ * @param[in] Nrow number of rows
+ * @param[in] Ncol number of columns
+ * @param[out] x_out An array of size Nrow*Ncol, which will contain the result of the optimization.
+ * @param[in] M The size of the observation array, b. In general, M << Nrow*Ncol.
+ * @param[in] b The array of measurements or observations.
+ * @param[in] pix_idx An array of indeces, such that, given the true Ncol*Nrow vectorx
+ *            then x[pix_idx] = b, in python notation.
+ * @param[in] opts A struct of options for the optimization.
+ * @param[out] lb_res A struct containing the information about
+ *             the results of the optimization.
+*/
 int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_idx,
              l1c_L1qcOpts opts, l1c_LBResult *lb_res){
   struct timeval tv_start, tv_end;

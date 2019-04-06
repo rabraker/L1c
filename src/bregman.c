@@ -324,18 +324,27 @@ void breg_anis_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, doub
 
 
 
-/*
-  Given an n by m image f, solves the anistropic TV denoising problem
-
-  min ||\nabla_x u||_1 + ||\nabla_y||_1 + 0.5\mu ||u - f||_2
-   u
-
-  using the Bregman Splitting. This algorithm is developed in the paper
-  "The Split Bregman Method for L1-Regularized Problems," by Tom
-  Goldstein and Stanley Osher.
-
+/**
+ * Given an `n` by `m` image `f`, solves the anistropic TV denoising problem
+ * \f[
+ * \min_{u} ||\nabla_x u||_1 + ||\nabla_y||_1 + 0.5\mu ||u - f||_2
+ * \f]
+ * using Bregman Splitting. This algorithm was developed by Tom
+ * Goldstein and Stanley Osher in @cite goldstein_splitbregman_2009.
+ *
+ *
+ * @param[in] n Number of rows of the image.
+ * @param[in] m Number of rows of the image.
+ * @param[out] uk An `n*m` array allocated by malloc_doubl(), which will
+ * contain the result of the optimization.
+ * @param[in] f An `n*m` array, allocated by malloc_doubl(), which contains the noisy image.
+ *
+ * @param[in] mu See equation above.
+ * @param[in] tol The iterations stop when \f$ \frac{||u_{k-1} - u_k||_2}{||u_k||} < tol\f$
+ * @param[in] max_iter Maximum number of iterations.
+ * @param[in] max_jac_iter Number of iterations to run the linear solver.
+ * The original paper sets this to 1.
  */
-
 int l1c_breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
                        double mu, double tol, int max_iter, int max_jac_iter){
 

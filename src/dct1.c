@@ -29,9 +29,58 @@ static l1c_int dct_Ny;
 static l1c_int dct_Nx;
 static double dct_root_1_by_2N;
 
+
 /**
-   If return is not zero, do not call dct_destroy();
-*/
+ * The function will populate an
+ * l1c_AxFuns struct such that
+ *
+ * \f{align}{
+ *    M &= \textrm{inverse discrete cosine transform}\\
+ *    Ax &= EMx \\
+ *    Aty &= M^TE^Ty \\
+ *    AtAx &=  M^TE^TEMx)
+ * \f}
+ * where \f$M\f$ represents the inverse one dimensional
+ * discrete cosine transform matrix and \f$E\f$ represents the subsampling.
+ * The fields `Mt`, `E`, `Et` and `data` will be `NULL`.
+ *
+ * The sub-sampling operator, \f$E\f$, is the identy matrix with rows removed.
+ * In python notation:
+ *
+ * @code{python}
+ *     E = I[pix_mask_idx, :]
+ * @endcode
+ *
+ *
+ * To de-allocate the memory reserved by dct1_setup(), call ax_funs.destroy().
+ * Do not call ax_funs.destroy() if return value of dct1_setup() is non-zero.
+ *
+ * .. note:: Although this function treats the signal `x` as a 1D vector, it can also be
+ *    used a 2D signal, e.g., image. In `c`, we hold a matrix in memory as a concatenated
+ *    vector. L1C follows the convention of using row major order. Thus, an N by M
+ *    grayscale image becomes an 1D N*M array, where the rows of the original matrix have
+ *    been concatenated together. This is in contrast to the more standard (in linear
+ *    algebra) notion of the \f$\textrm{vec}()\f$ operation, which concatenates a
+ *    matrix in columm major order.
+ *
+ *
+ * @param[in] Nx Number of rows of the underlying signal.
+ *            To treat, e.g., an image as a 1D vectorized signal
+ *            set Mx=1 and Nx = number_of_rows * number_of_columns.
+ * @param[in]  Ny Number of elements in pix_mask_idx.
+ * @param[in]  pix_mask_idx indeces of locations of the subsampling. For both
+ *             DCT1 and DCT2, this vector should be the same.
+ * @param[out] ax_funs A structure of function pointers which will be populated.
+ *             On successfull exit, The fields Ax, Aty, AtAx, destroy, and M
+ *             will be non-null. The fields MT, E, and ET will be null.
+ *
+ * @return  0 if succesfull. If unsuccesfull, returns L1C_DCT_INIT_FAILURE
+ *          or L1C_OUT_OF_MEMORY.
+ *
+ *
+ * @warning This function assumes that its inputs have already been sanitized. In
+ *          particular, if `max(pix_mask_idx) > Nx`, then segfaults are likely to occur.
+ */
 int l1c_dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs){
 
   int status = 0;
