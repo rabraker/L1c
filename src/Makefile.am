@@ -26,13 +26,10 @@ libl1c_la_SOURCES = l1qc_newton.c \
 					l1qc_dct.c   \
 					l1c_memory.c \
 					matrix_transforms.c \
-					dct_transforms.c
+					dct_transforms.c \
+                    dct1.c \
+					dct2.c
 
-if compile_with_mkl
-libl1c_la_SOURCES += dct_mkl.c
-else
-libl1c_la_SOURCES += dct1.c dct2.c
-endif
 
 libl1c_la_LIBADD	= ../src/vcl/libvcl_math.la
 
@@ -50,4 +47,3 @@ libl1c_la_LDFLAGS	= -no-undefined $(LDFLAGS)\
 # 					../include/dct_mkl.h
 
 
-AM_CPPFLAGS = $(MKL_INCLUDE)

@@ -5,11 +5,7 @@
 #include <math.h>
 #include "omp.h"
 
-#if defined(_USEMKL_)
-#include "mkl.h"
-#endif
 #include "cblas.h"
-
 #include "l1c.h"
 #include "l1c_math.h"
 #include "l1qc_newton.h"

@@ -42,7 +42,7 @@ The four steps are
 ----
 git clone git@ggitlab.com:rabraker/L1c.git L1c && cd L1c
 ./bootsrap                   # requires autotools
-./configure [--with-fftw3-threads=[ARG]] [--with-mkl] [--enable-mex] \
+./configure [--with-fftw3-threads=[ARG]] [--enable-mex] \
             [--with-mex-prefix=/path/to/mex/install][--enable-python]
 make && make install
 ----
@@ -232,7 +232,7 @@ typedef struct AxFuns {
 }AxFuns;
 ----
 
-The struct `AxFuns` contains pointers to your user-defined functions which compute latexmath:[Ax] and latexmath:[A^{T}y] For an example, see the mex-interface file `l1qc_mex.c` (in `interfaces/`) and either `dct.c` or `dct_mkl.c`. Note that although the mex interface looks long and complicated, almost all of this is boiler-plate parsing of Matlab's input to the function. The amount of code to modify for a different set of transform functions is only a few lines.
+The struct `l1c_AxFuns` contains pointers to your user-defined functions which compute latexmath:[Ax] and latexmath:[A^{T}y] For an example, see the mex-interface file `l1qc_dct_mex.c` (in `interfaces/`) and either `dct1.c`, `dct2.c` or `matrix_transforms.c`. Note that although the mex interface looks long and complicated, almost all of this is boiler-plate parsing of Matlab's input to the function. The amount of code to modify for a different set of transform functions is only a few lines.
 
 
 == Modifications from the original algorithms ==

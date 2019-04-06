@@ -4,15 +4,11 @@ This contains the conjugate gradient solver, cgsolve. The two small routines Ax 
 */
 #include "config.h"
 
-#ifdef _USEMKL_
-#include "mkl_cblas.h"
-#else
-#include "cblas.h"
-#endif
-
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
+#include "cblas.h"
 #include "l1c.h"
 #include "l1c_math.h"
 

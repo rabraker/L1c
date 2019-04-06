@@ -288,9 +288,6 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
  exit:
   free(pix_idx);
   l1c_free_double(x_ours);
-#if defined(_USEMKL_)
-  mkl_free_buffers();
-#endif
 
   switch (status){
   case L1C_OUT_OF_MEMORY:

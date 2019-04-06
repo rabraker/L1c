@@ -53,13 +53,9 @@ test_l1c_SOURCES = TEST_cgsolve.c       \
 					TEST_bregman.c      \
 					TEST_TV.c           \
 					TEST_matrix_transforms.c \
-					test_l1c.c
-
-if compile_with_mkl
-test_l1c_SOURCES +=	TEST_dct.c
-else
-test_l1c_SOURCES +=	TEST_dct.c TEST_dct2.c
-endif
+					test_l1c.c               \
+					TEST_dct.c               \
+					TEST_dct2.c
 
 
 test_l1c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la $(check_LIBS)

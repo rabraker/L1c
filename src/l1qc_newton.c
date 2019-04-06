@@ -1,13 +1,10 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 
-#if defined(_USEMKL_)
-#include "mkl.h"
-#endif
 #include "cblas.h"
-
 #include "l1c.h"
 #include "vcl_math.h"
 #include "l1c_math.h"

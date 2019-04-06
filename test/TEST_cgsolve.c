@@ -11,10 +11,6 @@
 #include <math.h> //Constants
 #include <check.h>
 #include <cjson/cJSON.h>
-
-#if defined(_USEMKL_)
-#include "mkl.h"
-#endif
 #include "cblas.h"
 
 #include "l1c.h"
@@ -129,9 +125,7 @@ START_TEST(test_cgsolve)
 
 
   cJSON_Delete(test_data_json);
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
+
   if (status){
     ck_abort();
   }
@@ -224,9 +218,6 @@ START_TEST(test_cgsolve_h11p){
   free(fpath);
 
   cJSON_Delete(test_data_json);
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
 
   if (status){
     ck_abort();
@@ -280,9 +271,7 @@ START_TEST(test_cgsolve_Ax_sym){
 
   free(fpath);
   cJSON_Delete(test_data_json);
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
+
   if (status){
     ck_abort();
   }
@@ -338,9 +327,7 @@ START_TEST(test_cgsolve_diag_precond)
   l1c_free_double(M_inv_diag);
 
   cJSON_Delete(test_data_json);
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
+
   if (status){
     ck_abort();
   }

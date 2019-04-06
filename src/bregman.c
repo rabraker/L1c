@@ -3,11 +3,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#if defined(_USEMKL_)
-#include "mkl.h"
-#endif
 #include "cblas.h"
-
 #include "bregman.h"
 #include "TV.h"
 #include "l1c_math.h"

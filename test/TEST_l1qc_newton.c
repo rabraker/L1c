@@ -10,13 +10,13 @@ This is a test suite for the l1qc_newton library.
 #include "mkl.h"
 #endif // _USE_MKL
 
-#include "cblas.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h> //Constants
 #include <check.h>
 #include <cjson/cJSON.h>
 
+#include "cblas.h"
 #include "l1c.h"
 #include "check_utils.h"
 #include "json_utils.h"
@@ -274,9 +274,6 @@ START_TEST (test_l1qc_newton_1iter)
 
   cJSON_Delete(test_data_json);
   free(fpath_1iter);
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
 
 
   if (status){

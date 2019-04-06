@@ -8,11 +8,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#if defined(_USEMKL_)
-#include "mkl.h"
-#endif
 #include "cblas.h"
-
 #include "l1c.h"
 
 
@@ -137,7 +133,5 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
    mexErrMsgIdAndTxt("l1c:l1qc_dct:outofmemory",
                      "Error Allocating memory.");
  }
-#if defined(_USEMKL_)
- mkl_free_buffers();
-#endif
+
 } /* ------- mexFunction ends here ----- */

@@ -4,7 +4,6 @@
 
 #include "l1c.h"
 
-
 #include "Python.h"
 // Without the following, the numpy header generates #warnings
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -184,7 +183,6 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
   Py_XDECREF(b_npA);
   Py_XDECREF(pix_idx_npA);
 
-  printf("INSIDE\n");
   return NULL;
 
 }

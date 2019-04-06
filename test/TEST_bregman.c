@@ -10,12 +10,7 @@
 #include <math.h>
 #include <check.h>
 #include <cjson/cJSON.h>
-
-#if defined(_USEMKL_)
-#include "mkl.h"
-#endif
 #include "cblas.h"
-
 
 /* Tolerances and things */
 #include "test_constants.h"
@@ -185,10 +180,6 @@ START_TEST(test_breg_shrink1){
 
   l1c_free_double(x_shrunk);
 
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
-
 }
 END_TEST
 
@@ -213,10 +204,6 @@ START_TEST(test_breg_rhs){
   l1c_free_double(dwork1);
   l1c_free_double(dwork2);
 
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
-
 }
 END_TEST
 
@@ -237,11 +224,6 @@ START_TEST(test_breg_hess_inv_diag){
 
 
   l1c_free_double(D);
-
-
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
 
 }
 END_TEST
@@ -268,10 +250,6 @@ START_TEST(test_breg_mxpy_z){
 
 
   l1c_free_double(z);
-
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
 
 }
 END_TEST
