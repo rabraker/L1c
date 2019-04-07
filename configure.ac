@@ -469,7 +469,13 @@ AC_SUBST(L1CTESTLIBS, $l1c_test_libs)
 AC_SUBST(WIN32LDFLAGS, $win32_ldflags)
 
 
-AC_CONFIG_FILES([Makefile  test/Makefile src/Makefile src/vcl/Makefile interfaces/Makefile])
+AC_CONFIG_FILES([Makefile
+                test/Makefile
+                src/Makefile
+                src/vcl/Makefile
+                examples/c/Makefile
+                interfaces/python/Makefile
+                interfaces/mex/Makefile])
 AC_OUTPUT
 echo "  "
 echo "================================================================================================="

@@ -7,8 +7,6 @@ TO make this library more accessible, the following needs to happen.
 	- l1qc_linesearch:test_line_search. Not sure what to do with this.
 +
 
-. The matlab code should use the builtin jsondecode, not the external library jsonlab. This requires an extra function or lines of code to actually open/read/close the file, because jsondecode only works on the text itself.
-
 . The dct/dct2 should not store their state as local-globals. This limits the user to seting up a single optimization. Rather, the state should be stored, possibly, as an opaqe  field in the struct of function pointers.
 . Setup CI
 

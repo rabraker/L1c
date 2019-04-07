@@ -1,7 +1,11 @@
 % Helper function for autotools testsuite.
 function [tm_mex, x_est, LBRes] = test_l1qc_dct_mex(fpath, verbose)
+  fid = fopen(fpath, 'r');
+  dat_json = fscanf(fid, '%s');
+  fclose(fid);
   
-  dat=loadjson(fpath);
+  dat = jsondecode(dat_json);
+  
   opts = l1qc_dct_opts('verbose', verbose, 'l1_tol', 1e-5,...
                        'epsilon', 0.1, 'mu', 10);
   tic

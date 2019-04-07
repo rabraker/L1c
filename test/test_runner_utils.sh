@@ -13,18 +13,21 @@ function get_os(){
 
 
 function ml_cmd() {
-    # expect: $1=path we need to add (where mex and .so/.dll are located)
-    #         $2=path to test src dir, containing matlab scripts.
-    #         $2=function name
-    #         $3...$n=function arguments
+    # expect: $1=path where mex src is, which contains, e.g., l1qc_dct_opts.m
+    #         $2=path we need to add (where mex and .so/.dll are located)
+    #         $3=path to test src dir, containing matlab scripts.
+    #         $4=function name
+    #         $5...$n=function arguments
     #
-    if test "$#" -le 3; then
+    if test "$#" -le 5; then
         echo "Not enough input arguments"
         exit 1
     fi
-    lib_dir=$1
+    mex_src_dir_=$1
     shift
-    matlab_script_dir=$1
+    lib_dir_=$1
+    shift
+    matlab_script_dir_=$1
     shift
     fcn=$1
     shift # on to arguments
@@ -38,9 +41,9 @@ function ml_cmd() {
     # so that matlab will find the mex function when it searches lib_dir first,
     # not the help file in interfaces (only relevant for VPATH builds).
     cmd="try; \
-          addpath('${ABS_TOP_SRCDIR}/interfaces/');
-          addpath('${matlab_script_dir}');
-          addpath('${lib_dir}');
+          addpath('${mex_src_dir_}');
+          addpath('${matlab_script_dir_}');
+          addpath('${lib_dir_}');
           $fcn($arg_str); \
           exit(0);\
      catch ME;\

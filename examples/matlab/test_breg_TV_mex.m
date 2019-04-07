@@ -1,7 +1,11 @@
 
 function [tm_mex, Xopt] = test_breg_TV_mex(fpath, verbose)
-  dat=loadjson(fpath);
-
+  fid = fopen(fpath, 'r');
+  dat_json = fscanf(fid, '%s');
+  fclose(fid);
+  
+  dat = jsondecode(dat_json);
+  
   n = sqrt(dat.N);
   m = n;
   x = dat.x_orig(:) + rand(dat.N,1);

@@ -3,7 +3,12 @@ AUTOMAKE_OPTIONS = foreign
 
 # The order of these is important: e.g., we need to run src/vcl/Makefile
 # before we run src/Makefile
-SUBDIRS = src/vcl src interfaces test
+SUBDIRS = src/vcl             \
+			src               \
+		  	interfaces/python \
+			interfaces/mex    \
+			examples/c        \
+			test
 
 LDFLAGS=-L/usr/local/MATLAB/R2018b/bin/glnxa64 -lmex
 
