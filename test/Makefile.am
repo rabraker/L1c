@@ -23,29 +23,47 @@ TEST_DATA_DIR="$(abs_srcdir)/test_data/"
 # >>> with_valgrind=yes make check
 #
 
-TESTS = test_l1c           \
-		build_CS20NG_example_data.py \
-		build_dct2_data.py     \
-		build_dct_data.py     \
-		build_cgsolve_data.py \
-		build_l1qc_data.py    \
-		build_TV_data.py      \
-		build_bregman_data.py \
+TESTS = test_l1c.test                  \
+		build_CS20NG_example_data.py   \
+		build_dct2_data.py             \
+		build_dct_data.py              \
+		build_cgsolve_data.py          \
+		build_l1qc_data.py             \
+		build_TV_data.py               \
+		build_bregman_data.py          \
 		build_matrix_transform_data.py \
-		test_matlab_mex.sh \
-		test_python_interface.sh \
-		test_l1qc_dct_c.sh       \
+		test_matlab_mex.sh             \
+		test_python_interface.sh       \
+		test_l1qc_dct_c.sh             \
 		valgrind_wrapper.sh
 
 
-TEST_EXTENSIONS = .py .sh
+TEST_EXTENSIONS = .py .sh .test
+
+EXTRA_DIST =	build_CS20NG_example_data.py   \
+				build_dct2_data.py 	   		   \
+				build_dct_data.py  	  		   \
+				build_cgsolve_data.py 		   \
+				build_l1qc_data.py 	  		   \
+				build_TV_data.py   	  		   \
+				build_bregman_data.py 		   \
+				build_matrix_transform_data.py \
+				test_matlab_mex.sh 			   \
+				test_python_interface.sh 	   \
+				test_l1qc_dct_c.sh 		 	   \
+				valgrind_wrapper.sh			   \
+				test_runner_utils.sh           \
+				L1cTestDataUtils.py            \
+				check_gradient.py              \
+				test_data/.persistent
+
 
 # Expected failures
 XFAIL_TESTS=
 
-check_PROGRAMS   = test_l1c
+check_PROGRAMS   = test_l1c.test
 
-test_l1c_SOURCES = TEST_cgsolve.c       \
+test_l1c_test_SOURCES = TEST_cgsolve.c       \
 					TEST_l1c_math.c     \
 					TEST_l1c_memory.c   \
 					TEST_l1qc_newton.c  \
@@ -55,14 +73,18 @@ test_l1c_SOURCES = TEST_cgsolve.c       \
 					TEST_matrix_transforms.c \
 					test_l1c.c               \
 					TEST_dct.c               \
-					TEST_dct2.c
+					TEST_dct2.c              \
+					$(top_srcdir)/include/TEST.h \
+					$(top_srcdir)/include/test_constants.h \
+					$(top_srcdir)/include/check_utils.h
 
 
-test_l1c_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la $(check_LIBS)
-test_l1c_CPPFLAGS = -D_EXCLUDE_PUBLIC_ -I$(top_srcdir)/include  \
-					-I$(top_srcdir)/src
-test_l1c_CFLAGS = $(L1CCFLAGS) $(check_CFLAGS)
-test_l1c_LDFLAGS = $(LDFLAGS)
+
+test_l1c_test_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la $(check_LIBS)
+test_l1c_test_CPPFLAGS = -D_EXCLUDE_PUBLIC_ -I$(top_srcdir)/include  \
+						-I$(top_srcdir)/src
+test_l1c_test_CFLAGS = $(L1CCFLAGS) $(check_CFLAGS)
+test_l1c_test_LDFLAGS = $(LDFLAGS)
 
 log_deps = 	build_CS20NG_example_data.log \
 			build_dct2_data.log \
@@ -78,10 +100,10 @@ log_deps = 	build_CS20NG_example_data.log \
 test_l1c.log:$(log_deps)
 
 
-test_matlab_mex.sh:$(log_deps)
+test_matlab_mex.log:$(log_deps)
 
-test_python_interface.sh:$(log_deps)
+test_python_interface.log:$(log_deps)
 
-test_l1qc_dct_c.sh:$(log_deps)
+test_l1qc_dct_c.log:$(log_deps)
 
 valgrind_wrapper.log:$(log_deps)

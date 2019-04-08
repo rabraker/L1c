@@ -41,6 +41,10 @@ breg_anistropic_TV_la_LIBADD   =  $(top_builddir)/src/libl1c.la \
 mex_DATA = l1qc_dct_opts.m l1qc_dct.m breg_anistropic_TV.m
 endif
 
+EXTRA_DIST = l1qc_dct_opts.m     \
+			 l1qc_dct.m          \
+			breg_anistropic_TV.m \
+			TestL1cMex.m
 
 
 # Rules to copy the libs .libs into the current directory

@@ -56,6 +56,15 @@ AC_LANG([C])
 AC_ARG_VAR(BLAS_LIB, [BLAS_LIB=[openblas][satlas][tatlas][?], the name of your prefered BLAS library.
                      By default, configure will search first for openblas, then tatlas, then satlas])
 
+AC_ARG_VAR(python_prefix, [python_prefix=/path/to/python-binding/installation,
+                          The path to which the python bindings should be installed.
+                          This will default to the path provided by distutils.
+                          This variable has no effect if python bindings are not being built.])
+
+AC_ARG_VAR(mex_prefix, [mex_prefix=/path/to/mex/installation,
+                       Location to install the mex bindings in. Ignored if --with-mex is
+                       not also given. By default, the bindings will be installed in ${prefix}/lib.])
+
 # Needed for AC_DEFINE_UNQUOTED below.
 dnl AH_TEMPLATE([HAVE_ATLAS],
 dnl     [Define to 1 if you have libsatlas])
@@ -68,11 +77,6 @@ AC_ARG_WITH(debug, [AS_HELP_STRING([--with-debug],[Compile with debugging suppor
 
 AC_ARG_WITH(opt, [AS_HELP_STRING([--without-opt],[Compile optimizations off.])],
                  [with_opt=no], [with_opt=yes])
-
-AC_ARG_WITH(mex-prefix, [AS_HELP_STRING([--with-mex-prefix=/path/to/mex/installation],
-                 [Location to install the mex bindings in. Ignored if --with-mex is
-                 not also given. By default, the bindings will be installed in ${prefix}/lib.])],
-                 [mex_prefix=$withval], [mex_prefix=no])
 
 AC_ARG_WITH(fftw3_threads, [AS_HELP_STRING(
                  [--with-fftw3-threads=@<:@combined@:>@@<:@omp@:>@@<:@threads@:>@@<:@yes@:>@@<:@no@:>@],
@@ -90,7 +94,7 @@ AC_ARG_ENABLE([python],[AS_HELP_STRING([--enable-python],
                 [build with python bindings])],
                 [enable_python=$enableval],[enable_python=no])
 
-if test x$mex_prefix = xno; then
+if test x$mex_prefix = x; then
    mex_prefix=$libdir
 else
 # Remove any trailing slash the user may have provided,
@@ -160,6 +164,13 @@ AX_APPEND_LINK_FLAGS([-Wl,--export-all], [win32_ldflags], [], [])
 # ---------------------------- Checks building python bindings ---------------------------- #
 VALID_PYTHON=
 if test x$enable_python != xno; then
+   if test ! -z $python_prefix; then
+      # These variables only have an affect on AX_PYTHON_DEVEL, no
+      # AM_PATH_PYTHON.
+      PYTHON_SITE_PKG_EXEC=$python_prefix
+      PYTHON_SITE_PKG=$python_prefix
+   fi
+
    AM_PATH_PYTHON([3], [PYTHON_FOUND=true],[])
    if test $PYTHON_FOUND = true; then
       AX_PYTHON_DEVEL([>= '3'])
@@ -169,9 +180,13 @@ if test x$enable_python != xno; then
       else
         VALID_PYTHON=yes
       fi
-      pythondir="${PYTHON_SITE_PKG}/${PACKAGE}Py"
+
+      # We want to install the bindings and their related python files all in the
+      # same place. Automake will try to stick these in different directories. And the
+      # default will be /usr/lib/python3.5/...
       pyexecdir="${PYTHON_SITE_PKG_EXEC}/${PACKAGE}Py"
-      echo "pyexecdir $pyexecdir"
+      pkgpythondir=$pyexecdir
+      pythondir=$pyexecdir
       if test -z $pyexecdir;
       then
         AC_MSG_ERROR(Could not locate PYTHON_EXEC_DIR)
@@ -188,13 +203,14 @@ print(inc_dirs);"`
       # $pyexecdir, $pythondir, $PYTHON_SITE_PKG, $PYTHON_SITE_PKG_EXEC
       # $npy_cppflags, $enable_python, $PYTHON, $PYTHON_VERSION
       # $PYTHON_CPPFLAGS, $PYTHON_LIBS, $PYTHON_EXTRA_LDFLAGS
-      AC_SUBST(PYTHONDIR,$pythondir)
-      AC_SUBST(PKGPYTHONDIR,$pkgpythondir)
-      AC_SUBST(PYEXECDIR,$pyexecdir)
-      AC_SUBST(PKGPYEXECDIR,$pkgpyexecdir)
+      dnl AC_SUBST(PYTHONDIR,$pythondir)
+      dnl AC_SUBST(PKGPYTHONDIR, $pkgpythondir)
+      dnl AC_SUBST(PYEXECDIR, $pyexecdir)
+      dnl AC_SUBST(PKGPYEXECDIR, $pkgpyexecdir)
       AC_SUBST(NPYCPPFLAGS, $npy_cppflags)
    fi
 fi
+
 
 AM_CONDITIONAL([ENABLE_PYTHON],[test x$VALID_PYTHON = xyes])
 
@@ -474,6 +490,8 @@ AC_CONFIG_FILES([Makefile
                 src/Makefile
                 src/vcl/Makefile
                 examples/c/Makefile
+                include/Makefile
+                include/vcl/Makefile
                 interfaces/python/Makefile
                 interfaces/mex/Makefile])
 AC_OUTPUT
@@ -481,6 +499,7 @@ echo "  "
 echo "================================================================================================="
 AC_MSG_NOTICE(Configuration summary:)
 AC_MSG_NOTICE(L1C will be built with l1c_cflags = $l1c_cflags)
+AC_MSG_NOTICE(L1C will be built with l1c_cxxflags = $l1c_cxxflags)
 AC_MSG_NOTICE(L1C will be built with l1c_cppflags = $l1c_cppflags)
 AC_MSG_NOTICE(Compile with FFTW threads? $have_fftw_threads)
 AC_MSG_NOTICE(Compile python bindings? $enable_python)
@@ -489,8 +508,9 @@ AC_MSG_NOTICE(Compile mex bindings? $enable_mex)
 AC_MSG_NOTICE(libl1c will be installed into: ${prefix})
 if test x$enable_python != xno; then
    AC_MSG_NOTICE(Python bindings will be installed in: $pyexecdir)
+   AC_MSG_NOTICE(Python bindings will be installed in: $pkgpythondir)
 fi
 if test x$enable_mex != xno; then
-   AC_MSG_NOTICE(Using mex linkage $mex_ldlibs)
    AC_MSG_NOTICE(Mex bindings will be installed in: $mex_prefix)
+   AC_MSG_NOTICE(Using mex linkage $mex_ldlibs)
 fi

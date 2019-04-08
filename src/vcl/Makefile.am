@@ -8,7 +8,8 @@
 # about linking against a static library when we compile and link the interfaces
 
 noinst_LTLIBRARIES = libvcl_math.la
-libvcl_math_la_SOURCES = vcl_math.cpp
+libvcl_math_la_SOURCES = vcl_math.cpp \
+						 $(top_srcdir)/include/vcl_math.h
 
 
 

@@ -28,7 +28,14 @@ libl1c_la_SOURCES = l1qc_newton.c \
 					matrix_transforms.c \
 					dct_transforms.c \
                     dct1.c \
-					dct2.c
+					dct2.c \
+					$(top_srcdir)/include/bregman.h \
+					$(top_srcdir)/include/json_utils.h \
+					$(top_srcdir)/include/l1c_math.h \
+					$(top_srcdir)/include/l1qc_newton.h \
+					$(top_srcdir)/include/TV.h \
+					$(top_srcdir)/include/l1c_timing.h
+
 
 
 libl1c_la_LIBADD	= ../src/vcl/libvcl_math.la

@@ -8,10 +8,15 @@ SUBDIRS = src/vcl             \
 		  	interfaces/python \
 			interfaces/mex    \
 			examples/c        \
-			test
+			test              \
+			include           \
+			include/vcl
 
 LDFLAGS=-L/usr/local/MATLAB/R2018b/bin/glnxa64 -lmex
 
+
+EXTRA_DIST = examples/python \
+			examples/matlab
 
 # libtool requires some M4 scripts to be added to the source tree.  Make sure that
 # Autoconf knows where to find them.

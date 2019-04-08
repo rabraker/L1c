@@ -7,10 +7,6 @@ clean-local:: clean-convenience-link
 # -------------------------------------------------------------------#
 # -------------------------------  ----------------------------------#
 
-$(info "prefix= $(prefix)")
-$(info "pyexecdir= $(pyexecdir)")
-$(info "pyexecdir= $(PYEXECDIR)")
-
 if ENABLE_PYTHON
 # if $(pyexecdir) is empty, this will fail with
 # libtool:   error: only absolute run-paths are allowed
