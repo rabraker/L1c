@@ -1,5 +1,6 @@
 #include "config.h"
 #include "l1c.h"
+#include "l1c_math.h"
 
 #if defined(_HAVE_POSIX_MEMALIGN_)
 // #define _POSIX_C_SOURCE  200112L
@@ -27,9 +28,9 @@ void l1c_free_double(double *x){
 #include <xmmintrin.h>
 
 double* l1c_malloc_double(int N){
-  void *dptr;
+  double *dptr;
   dptr = _mm_malloc((size_t)(N) * sizeof(double), DALIGN);
-  return (double*) dptr;
+  return dptr;
 }
 
 void l1c_free_double(double *x){
@@ -37,6 +38,25 @@ void l1c_free_double(double *x){
 }
 #endif //_HAVE_POSIX_MEMALIGN_
 
+
+double* l1c_calloc_double(int N){
+  double *dptr;
+  dptr = l1c_malloc_double(N);
+  if (dptr){
+    l1c_init_vec(N, dptr, 0);
+  }
+  return dptr;
+}
+
+double** l1c_calloc_double_2D(l1c_int nrow, l1c_int ncol){
+  double **dptr = l1c_malloc_double_2D(nrow, ncol);
+  if (dptr){
+    for(int i=0; i<nrow; i++){
+      l1c_init_vec(ncol, dptr[i], 0);
+    }
+  }
+  return dptr;
+}
 
 /** This is primarily for the DWORK arrays. */
 double** l1c_malloc_double_2D(l1c_int nrow, l1c_int ncol){

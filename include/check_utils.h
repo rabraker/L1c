@@ -136,6 +136,25 @@ static inline double ck_min(double a,double b){
 #define ck_assert_double_array_eq_tol(N, X, Y, T)  \
   _ck_assert_floating_array_absdiff_op_tol(N, X, Y, <, T, double, "")
 
+/**
+ * Check two double precision floating point arrays to determine if X[i] == Y[i]
+ * for i=0,...N-1
+ *
+ * If X[i] != Y[i] for any i, the test fails.
+ *
+ * @param N Number of elements in array.
+ * @param X floating point number (double)
+ * @param Y floating point number (double) to compare against X
+ * @param T tolerance (double)
+ *
+ * @note If the check fails, the remaining of the test is aborted
+ *
+ * @since Not part of standard libcheck
+ */
+#define ck_assert_double_array_eq(N, X, Y)                       \
+  _ck_assert_floating_array_absdiff_op_tol(N, X, Y, <=, 0, double, "")
+/* using <= with T=0 prevents warnings about equality comparison of double.*/
+
 
 #endif
 

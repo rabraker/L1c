@@ -22,6 +22,11 @@ typedef int l1c_int;
 */
 double* l1c_malloc_double(int N);
 
+double* l1c_calloc_double(int N);
+
+double** l1c_calloc_double_2D(l1c_int nrow, l1c_int ncol);
+
+
 /**
  * Free an array allocated by l1c_malloc_double
  */
