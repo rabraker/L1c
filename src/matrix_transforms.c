@@ -71,7 +71,7 @@ static void destroy_matrix_transforms(void){
 */
 static void Ax(double *x, double *y){
   const double alp = 1.0;
-  const double beta = 1.0;
+  const double beta = 0.0;
   const l1c_int inc = 1;
   /*For Layout = CblasRowMajor, the value of lda must be at least max(1, m).
 
@@ -90,7 +90,7 @@ static void Ax(double *x, double *y){
 */
 static void Aty(double *y, double *x){
   const double alp = 1.0;
-  const double beta = 1.0;
+  const double beta = 0.0;
   const l1c_int inc = 1;
   /* dgemv computes
      x = alpha*A^T*y + beta*x, with CblasTrans

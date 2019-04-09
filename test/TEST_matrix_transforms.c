@@ -80,9 +80,13 @@ static void setup(MXfmData *mxfm_dat){
   mxfm_dat->Aty_act = l1c_malloc_double(mxfm_dat->Mcol);
   mxfm_dat->Ax_act = l1c_malloc_double(mxfm_dat->Nrow);
 
-  l1c_init_vec(mxfmd->Mcol, mxfmd->AtAx_act, 0);
-  l1c_init_vec(mxfmd->Mcol, mxfmd->Aty_act, 0);
-  l1c_init_vec(mxfmd->Nrow, mxfmd->Ax_act, 0);
+  /* cblas_dgemv works like:
+     y = Ax + beta*y. We had a bug where beta=0, but
+     initializing the result vectors to 0 covers that up.
+   */
+  l1c_init_vec(mxfmd->Mcol, mxfmd->AtAx_act, 1);
+  l1c_init_vec(mxfmd->Mcol, mxfmd->Aty_act, 1);
+  l1c_init_vec(mxfmd->Nrow, mxfmd->Ax_act, 1);
 
   l1c_setup_matrix_transforms(mxfm_dat->Nrow, mxfm_dat->Mcol, mxfm_dat->A, &ax_funs);
 
