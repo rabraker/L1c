@@ -40,18 +40,18 @@ extern char *test_data_dir;
    of valgrind when tracking down other problems.
 */
 void init_l1qc_opts(l1c_L1qcOpts *params){
-  params->epsilon=0;
-  params->tau=0;
-  params->mu=0;
-  params->newton_tol=0;
-  params->newton_max_iter=0;
+  params->epsilon=1e-3;
+  params->tau=10;
+  params->mu=10;
+  params->newton_tol=1e-3;
+  params->newton_max_iter=50;
   params->lbiter=0;
-  params->lbtol=0;
+  params->lbtol=1e-4;
   params->l1_tol=0;
-  params->verbose=0;
+  params->verbose=2;
   params->cg_verbose=0;
-  params->cg_tol=0;
-  params->cg_maxiter=0;
+  params->cg_tol=1e-8;
+  params->cg_maxiter=200;
   params->warm_start_cg=0;
 }
 
@@ -197,17 +197,19 @@ void free_generic_data(L1qcTestData Tdat){
 
 }
 
-START_TEST (test_l1qc_newton_1iter)
+
+
+
+
+START_TEST (test_l1qc_newton)
 {
   l1c_L1qcOpts params;
-  char *fpath_1iter = fullfile(test_data_dir, "lb_test_data_iter_2.json");
+  char *fpath_1iter = fullfile(test_data_dir, "lb_test_data_AX.json");
   double *x0=NULL, *b=NULL;
-  double *x1_exp=NULL, *u1_exp=NULL;
-
+  double *x_exp=NULL, *A=NULL;
+  double enrm1;
   l1c_LBResult lb_res;
-  double tau_exp=0.0;
-  l1c_int N=0, M=0, status=0, lbiter_exp=0;
-  l1c_int *pix_idx=NULL;
+  l1c_int N=0, M=0, NM=0,  status=0;
 
   l1c_AxFuns ax_funs;
 
@@ -215,12 +217,17 @@ START_TEST (test_l1qc_newton_1iter)
 
   if (load_file_to_json(fpath_1iter, &test_data_json)){
     fprintf(stderr, "Error loading data in test_l1qc_newton_1iter\n");
+    free(fpath_1iter);
     ck_abort();
   }
-  status +=extract_json_double_array(test_data_json, "x0", &x0, &N);
-  status +=extract_json_double_array(test_data_json, "xp", &x1_exp, &N);
-  status +=extract_json_double_array(test_data_json, "up", &u1_exp, &N);
-  status +=extract_json_double_array(test_data_json, "b", &b, &M);
+  free(fpath_1iter);
+
+  // status +=extract_json_int(test_data_json, 'n', n);
+  // status +=extract_json_int(test_data_json, 'm', m);
+
+  status +=extract_json_double_array(test_data_json, "x0", &x0, &M);
+  status +=extract_json_double_array(test_data_json, "x_act", &x_exp, &M);
+  status +=extract_json_double_array(test_data_json, "b", &b, &N);
 
   status +=extract_json_double(test_data_json, "epsilon", &params.epsilon);
   status +=extract_json_double(test_data_json, "mu", &params.mu);
@@ -228,52 +235,49 @@ START_TEST (test_l1qc_newton_1iter)
   status +=extract_json_double(test_data_json, "newtontol", &params.newton_tol);
   status +=extract_json_int(test_data_json, "newtonmaxiter", &params.newton_max_iter);
   status +=extract_json_double(test_data_json, "cgtol", &params.cg_tol);
+  status +=extract_json_double(test_data_json, "enrm1", &enrm1);
   status +=extract_json_int(test_data_json, "cgmaxiter", &params.cg_maxiter);
 
-  status +=extract_json_double(test_data_json, "tau", &tau_exp);
+  status +=extract_json_double_array(test_data_json, "A", &A, &NM);
 
-  status +=extract_json_int(test_data_json, "lbiter", &lbiter_exp);
-  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
+  ck_assert_int_eq(NM, N*M);
 
-  l1c_dct1_setup(N, M, pix_idx, &ax_funs);
+  l1c_setup_matrix_transforms(N, M, A, &ax_funs);
 
-  if (status){
+  if (status ||!A || !x0 || !x_exp || !b){
     status += 1;
     goto exit1;
   }
 
   params.verbose = 2;
-  params.lbiter = 2;
-  params.tau = tau_exp;
-  params.warm_start_cg = 2;
+  params.warm_start_cg = 0;
   params.l1_tol = -1; //wont be used.
 
-  lb_res = l1c_l1qc_newton(N, x0, M, b, params, ax_funs);
-  double dnrm1_x0 = l1c_dnorm1(N, x0);
-  double dnrm1_exp= l1c_dnorm1(N, x1_exp);
-  double abs_norm1_diff = min(dnrm1_x0, dnrm1_exp);
+  lb_res = l1c_l1qc_newton(M, x0, N, b, params, ax_funs);
 
-  /*  We cant seem to get very good digit by digit agreement after
-      several iterations. l1-norms has decent agreement, at least in a relative sense.
-   */
-  ck_assert_double_array_eq_tol(N, x1_exp, x0,  0.5);
+  /* It appears that we typically have
+     | ||x||_1 - ||x_opt||_1 | < ||e||_1
+  */
+  double dnrm1_x1exp= l1c_dnorm1(M, x_exp);
+  double dnrm1_xp = l1c_dnorm1(M, x0);
 
-  ck_assert_double_eq_tol(dnrm1_x0/abs_norm1_diff, dnrm1_exp/abs_norm1_diff, .00005);
+
+
+  ck_assert_double_eq_tol(dnrm1_x1exp, dnrm1_xp, enrm1);
   ck_assert_int_eq(0, lb_res.status);
 
 
 
  exit1:
   l1c_free_double(x0);
-  l1c_free_double(x1_exp);
-  l1c_free_double(u1_exp);
+  l1c_free_double(x_exp);
   l1c_free_double(b);
-  free(pix_idx);
+  l1c_free_double(A);
 
   ax_funs.destroy();
 
+
   cJSON_Delete(test_data_json);
-  free(fpath_1iter);
 
 
   if (status){
@@ -283,6 +287,8 @@ START_TEST (test_l1qc_newton_1iter)
 
 }
 END_TEST
+
+
 
 /*------------------------------------------ */
 START_TEST (test_newton_init_regres1)
@@ -778,7 +784,7 @@ Suite *l1qc_newton_suite(void)
   s = suite_create("l1qc_newton");
 
   tc_l1qc_newton = tcase_create("l1qc_newton");
-  tcase_add_test(tc_l1qc_newton, test_l1qc_newton_1iter);
+  tcase_add_test(tc_l1qc_newton, test_l1qc_newton);
 
   tc_newton_init = tcase_create("newton_init");
   tcase_add_test(tc_newton_init, test_newton_init);

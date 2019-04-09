@@ -472,20 +472,21 @@ l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
   GradData gd = {.w1p=NULL, .dx=NULL, .du=NULL, .sig11=NULL,
                  .sig12=NULL, .ntgu=NULL, .gradf=NULL};
 
-  double *u   = l1c_malloc_double(N);
 
-  double *DWORK7[7];
-  double *r = l1c_malloc_double(M);
-  double *fu1 = l1c_malloc_double(N);
-  double *fu2 = l1c_malloc_double(N);
+  double **DWORK7=NULL;
 
-  gd.w1p = l1c_malloc_double(N);
-  gd.dx  = l1c_malloc_double(N);
-  gd.du  = l1c_malloc_double(N);
-  gd.sig11  = l1c_malloc_double(N);
-  gd.sig12  = l1c_malloc_double(N);
-  gd.ntgu   = l1c_malloc_double(N);
-  gd.gradf  = l1c_malloc_double(2*N);
+  double *u   = l1c_calloc_double(N);
+  double *r = l1c_calloc_double(M);
+  double *fu1 = l1c_calloc_double(N);
+  double *fu2 = l1c_calloc_double(N);
+
+  gd.w1p = l1c_calloc_double(N);
+  gd.dx  = l1c_calloc_double(N);
+  gd.du  = l1c_calloc_double(N);
+  gd.sig11  = l1c_calloc_double(N);
+  gd.sig12  = l1c_calloc_double(N);
+  gd.ntgu   = l1c_calloc_double(N);
+  gd.gradf  = l1c_calloc_double(2*N);
 
   if ( !r || !fu1 || !fu2
        || !gd.w1p || !gd.dx || !gd.du
@@ -495,13 +496,9 @@ l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
     goto exit;
   }
 
-  for (int k=0; k<7; k++){
-    DWORK7[k] = l1c_malloc_double(N);
-    if (!DWORK7[k]){
-      lb_res.status = L1C_OUT_OF_MEMORY;
-      goto exit;
-    }
-  }
+
+  DWORK7 = l1c_calloc_double_2D(7, N);
+
 
   _l1c_l1qc_newton_init(N, x, u, &params);
 
@@ -629,9 +626,10 @@ l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
   l1c_free_double(gd.ntgu);
   l1c_free_double(gd.gradf);
 
-  for (int k=0; k<7; k++){
-    l1c_free_double(DWORK7[k]);
-  }
+  l1c_free_double_2D(7, DWORK7);
+  // for (int k=0; k<7; k++){
+  //   l1c_free_double(DWORK7[k]);
+  // }
   lb_res.l1 = l1c_dnorm1(N, x);
   return lb_res;
 
