@@ -198,9 +198,6 @@ void free_generic_data(L1qcTestData Tdat){
 }
 
 
-
-
-
 START_TEST (test_l1qc_newton)
 {
   l1c_L1qcOpts params;
@@ -256,14 +253,18 @@ START_TEST (test_l1qc_newton)
   lb_res = l1c_l1qc_newton(M, x0, N, b, params, ax_funs);
 
   /* It appears that we typically have
-     | ||x||_1 - ||x_opt||_1 | < ||e||_1
+     | ||x||_1 - ||x_opt||_1 | < 2*||e||_1
+
+     This not based in any theory I know of and probably doesnt generalize
+     to other problems. It just a heuristic, and lets us ensure we dont regress
+     from the current state, which works. I dont know of a better method here.
   */
   double dnrm1_x1exp= l1c_dnorm1(M, x_exp);
   double dnrm1_xp = l1c_dnorm1(M, x0);
 
+  ck_assert_double_eq_tol(dnrm1_x1exp, dnrm1_xp, 2*enrm1);
 
-
-  ck_assert_double_eq_tol(dnrm1_x1exp, dnrm1_xp, enrm1);
+  /*We should exit cleanly for this problem.*/
   ck_assert_int_eq(0, lb_res.status);
 
 

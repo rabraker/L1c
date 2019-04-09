@@ -7,6 +7,63 @@ import json
 import codecs
 import L1cTestDataUtils as TDU
 
+def build_lb_test_data(lb_data_path, N, T, K):
+    """
+    Test data for the whole log-barrier integration test.
+    This is basically the example the example.
+    What we check that (1) the optimization finishes without error
+    and (2) that the optimal vector has an l1-norm comparable to
+    the true x, to within the noise level.
+    """
+    x = np.zeros((N,1))
+    q = np.random.permutation(N)
+    x[q[0:T]] = np.sign(np.random.randn(T, 1))
+
+    # Build the measurement matrix.
+    A_ = np.random.randn(K, N)
+    # orthonormal basis for the range of A_
+    U, _, _ = np.linalg.svd(A_.T)
+    A = U[:, 0:K].T
+
+    # Add some noise.
+    sigma = 0.01
+    e =  np.random.randn(K, 1)*sigma
+    b = A.dot(x) + e
+    x0 = A.T.dot(b)
+
+    enrm1 = np.linalg.norm(e, ord=1)
+    print("||e|| = %f" % enrm1)
+    print("||x|| = %f" % np.linalg.norm(x, ord=1))
+
+    n, m = A.shape
+    if False:
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.subplot(1, 2, 1)
+        plt.plot(x)
+
+        plt.subplot(1, 2, 2)
+        plt.plot(x0)
+        plt.show()
+
+    epsilon = sigma*np.sqrt(K)*np.sqrt(1 + 2*np.sqrt(2)/np.sqrt(K))
+    data = {'A': A,
+            'x_act': x,
+            'x0': x0,
+            'b': b,
+            'epsilon': epsilon,
+            'mu': 10,
+            'lbtol': 1e-4,
+            'newtontol': 1e-4,
+            'newtonmaxiter': 200,
+            'cgtol': 1e-8,
+            'cgmaxiter': 2*N,
+            'enrm1': enrm1
+    }
+
+    data = TDU.jsonify(data)
+    TDU.save_json(data, lb_data_path)
+
 
 def build_dct_mat(N):
     dct_mat = np.zeros((N, N))
@@ -106,7 +163,7 @@ def H11p_fun(sigx, fe, A, atr, z):
     return h11p_z
 
 
-def Hess_gradf(fe, fu1, fu2, atr, A):
+def Hess_gradf(tau, fe, fu1, fu2, atr, A):
 
     gf, ntgu, ntgz = gradf(A, atr, fu1, fu2, fe, tau)
     # atr = (A.T).dot(r)
@@ -130,107 +187,123 @@ def Hess_gradf(fe, fu1, fu2, atr, A):
 
     dx = np.linalg.solve(H11_prime, w1p)
     du = (1/sig11)*ntgu - (sig12/sig11)*dx
+    N = dx.shape[0]
+    print("================ %d ==========\n" %N)
     np.testing.assert_array_almost_equal(dx, dxdu[0:N])
     np.testing.assert_array_almost_equal(du, dxdu[N:])
 
     return gf, ntgu, ntgz, atr, sig11, sig12, sigx, w1p, dxdu
 
 
-srcdir = os.getenv("srcdir")
-if srcdir is None:
-    srcdir = "."
+def build_l1qc_main(l1qc_data_path):
 
-test_data_path = srcdir+"/test_data"
+    np.random.seed(0)
+    N = 16
+    tau = 10
+    mu = 10
+    lbtol = 1e-3
+    epsilon = .1
 
-l1qc_data_path = test_data_path+"/l1qc_data.json"
+    A, At, pix_idx = build_Amats(N)
+    M = A.shape[0]
 
-np.random.seed(0)
-N = 16
-tau = 10
-mu = 10
-lbtol = 1e-3
-epsilon = .1
+    xx = np.random.randn(N, 1)
+    b = A.dot(xx) + np.random.randn(M, 1) * 0.015
+    x = At.dot(b) + np.random.randn(N, 1) * 0.0001
 
-A, At, pix_idx = build_Amats(N)
-M = A.shape[0]
+    u, tau_exp, lbiter = newton_init(x, lbtol, mu)
 
-xx = np.random.randn(N, 1)
-b = A.dot(xx) + np.random.randn(M, 1) * 0.015
-x = At.dot(b) + np.random.randn(N, 1) * 0.0001
+    xu = np.vstack((x, u))
+    r, f, fe, fu1, fu2 = f_fun(xu, b, A, epsilon, tau)
 
-u, tau_exp, lbiter = newton_init(x, lbtol, mu)
-
-xu = np.vstack((x, u))
-r, f, fe, fu1, fu2 = f_fun(xu, b, A, epsilon, tau)
-
-if np.isnan(f) or np.isnan(fe):
-    print("Randomly generated test data is infeasible. ")
-    sys.exit(1)
+    if np.isnan(f) or np.isnan(fe):
+        print("Randomly generated test data is infeasible. ")
+        sys.exit(1)
 
 
-dx_rand1 = np.random.randn(N, 1)
-du_rand1 = np.random.randn(N, 1)
-Adx_rand1 = A.dot(dx_rand1)
-smax = find_max_step(dx_rand1, du_rand1, Adx_rand1, fu1, fu2, r, epsilon)
+    dx_rand1 = np.random.randn(N, 1)
+    du_rand1 = np.random.randn(N, 1)
+    Adx_rand1 = A.dot(dx_rand1)
+    smax = find_max_step(dx_rand1, du_rand1, Adx_rand1, fu1, fu2, r, epsilon)
 
-atr = A.T.dot(r)
-gf, ntau_gradu, ntau_gradx = gradf(A, atr, fu1, fu2, fe, tau)
-gf, ntgu, ntgx, atr, sig11, sig12, sigx, w1p, dxdu = Hess_gradf(fe, fu1,
-                                                                fu2, atr, A)
+    atr = A.T.dot(r)
+    gf, ntau_gradu, ntau_gradx = gradf(A, atr, fu1, fu2, fe, tau)
+    gf, ntgu, ntgx, atr, sig11, sig12, sigx, w1p, dxdu = Hess_gradf(tau, fe, fu1,
+                                                                    fu2, atr, A)
 
-sigx_rand = np.random.randn(N, 1)
-z_rand = np.random.randn(N, 1)
-r_rand = np.random.randn(M, 1)
-at_rrand = A.T.dot(r)
-fe_rand = -np.abs(np.random.rand(1)[0])
-h11p_z = H11p_fun(sigx_rand, fe_rand, A, at_rrand, z_rand)
+    sigx_rand = np.random.randn(N, 1)
+    z_rand = np.random.randn(N, 1)
+    r_rand = np.random.randn(M, 1)
+    at_rrand = A.T.dot(r)
+    fe_rand = -np.abs(np.random.rand(1)[0])
+    h11p_z = H11p_fun(sigx_rand, fe_rand, A, at_rrand, z_rand)
 
-l1qc_data = {'N': N,
-             'M': M,
-             'tau0': tau,
-             'lbtol': lbtol,
-             'mu': mu,
-             'epsilon': epsilon,
-             'cgtol': 1e-9,
-             'cgmaxiter': 500,
-             'pix_idx': pix_idx,
-             'A': A,
-             'b': b,
-             'x': x,
-             # newton init
-             'tau': tau_exp,
-             'lbiter': lbiter,
-             'u': u,
-             'r': r,
-             'f': f,
-             'fe': fe,
-             'fu1': fu1,
-             'fu2': fu2,
-             # for find_max_step
-             'Adx_rand1': Adx_rand1,
-             'dx_rand1': dx_rand1,
-             'du_rand1': du_rand1,
-             'smax': smax,
-             # for h11p
-             'sigx_rand': sigx_rand,
-             'z_rand': z_rand,
-             'r_rand': r_rand,
-             'at_rrand': at_rrand,
-             'fe_rand': fe_rand,
-             'h11p_z': h11p_z,
-             # for decent data
-             'gradf': gf,
-             'atr': atr,
-             'ntgx': ntgx,
-             'ntgu': ntgu,
-             'sig11': sig11,
-             'sig12': sig12,
-             'w1p': w1p,
-             'sigx': sigx,
-             'dx': dxdu[0:N],
-             'du': dxdu[N:]}
+    l1qc_data = {'N': N,
+                 'M': M,
+                 'tau0': tau,
+                 'lbtol': lbtol,
+                 'mu': mu,
+                 'epsilon': epsilon,
+                 'cgtol': 1e-9,
+                 'cgmaxiter': 500,
+                 'pix_idx': pix_idx,
+                 'A': A,
+                 'b': b,
+                 'x': x,
+                 # newton init
+                 'tau': tau_exp,
+                 'lbiter': lbiter,
+                 'u': u,
+                 'r': r,
+                 'f': f,
+                 'fe': fe,
+                 'fu1': fu1,
+                 'fu2': fu2,
+                 # for find_max_step
+                 'Adx_rand1': Adx_rand1,
+                 'dx_rand1': dx_rand1,
+                 'du_rand1': du_rand1,
+                 'smax': smax,
+                 # for h11p
+                 'sigx_rand': sigx_rand,
+                 'z_rand': z_rand,
+                 'r_rand': r_rand,
+                 'at_rrand': at_rrand,
+                 'fe_rand': fe_rand,
+                 'h11p_z': h11p_z,
+                 # for decent data
+                 'gradf': gf,
+                 'atr': atr,
+                 'ntgx': ntgx,
+                 'ntgu': ntgu,
+                 'sig11': sig11,
+                 'sig12': sig12,
+                 'w1p': w1p,
+                 'sigx': sigx,
+                 'dx': dxdu[0:N],
+                 'du': dxdu[N:]}
 
 
-l1qc_data_json = TDU.jsonify(l1qc_data)
+    l1qc_data_json = TDU.jsonify(l1qc_data)
 
-TDU.save_json(l1qc_data, l1qc_data_path)
+    TDU.save_json(l1qc_data, l1qc_data_path)
+
+
+if __name__ == "__main__":
+    srcdir = os.getenv("srcdir")
+    if srcdir is None:
+        srcdir = "."
+
+    test_data_path = srcdir+"/test_data"
+
+    l1qc_data_path = test_data_path+"/l1qc_data.json"
+
+    build_l1qc_main(l1qc_data_path)
+
+    # Data for the whole log-barrier integration test.
+    N = 512  # Total vector size
+    T = 20   # sparsity
+    K = 120  # Number of measurements.
+
+    lb_data_path = test_data_path+"/lb_test_data_AX.json"
+    build_lb_test_data(lb_data_path, N, T, K)

@@ -4,6 +4,15 @@
 #include <check.h>
 #include <math.h>
 
+/* This is only defined in new versions of check.
+   Since we provide backward compatibility, we must check
+   and define if check.h didnt do it.
+ */
+#ifndef CK_FLOATING_DIG
+#define CK_FLOATING_DIG 10
+#endif
+
+
 static inline double ck_min(double a,double b){
   return a < b ? a : b;
 }
