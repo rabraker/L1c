@@ -44,13 +44,3 @@ libl1c_la_LDFLAGS	= -no-undefined $(LDFLAGS)\
 						$(WIN32LDFLAGS) -Wl,--no-as-needed
 
 
-# include_HEADERS = ../include/*.c
-
-# 					../include/cgsolve.h \
-# 					../include/l1qc_newton.h    \
-# 					../include/l1c_common.h \
-# 					../include/l1c_math.h \
-# 					../include/dct.h \
-# 					../include/dct_mkl.h
-
-

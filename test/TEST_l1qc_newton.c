@@ -6,10 +6,6 @@ This is a test suite for the l1qc_newton library.
 
 #define CK_FLOATING_DIG 17
 
-#if defined(_USEMKL_)
-#include "mkl.h"
-#endif // _USE_MKL
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h> //Constants
