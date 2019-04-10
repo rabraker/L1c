@@ -26,7 +26,7 @@ def build_lb_test_data(lb_data_path, N, T, K):
     A = U[:, 0:K].T
 
     # Add some noise.
-    sigma = 0.01
+    sigma = 0.005
     e =  np.random.randn(K, 1)*sigma
     b = A.dot(x) + e
     x0 = A.T.dot(b)
@@ -55,9 +55,9 @@ def build_lb_test_data(lb_data_path, N, T, K):
             'mu': 10,
             'lbtol': 1e-4,
             'newtontol': 1e-4,
-            'newtonmaxiter': 200,
+            'newtonmaxiter': 50,
             'cgtol': 1e-8,
-            'cgmaxiter': 2*N,
+            'cgmaxiter': N,
             'enrm1': enrm1
     }
 

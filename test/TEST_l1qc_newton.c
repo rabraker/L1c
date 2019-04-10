@@ -16,6 +16,7 @@ This is a test suite for the l1qc_newton library.
 #include "l1c.h"
 #include "check_utils.h"
 #include "json_utils.h"
+#include "l1c_timing.h"
 
 #include "l1qc_newton.h"
 
@@ -235,25 +236,37 @@ START_TEST (test_l1qc_newton)
 
   ck_assert_int_eq(NM, N*M);
 
-  l1c_setup_matrix_transforms(N, M, A, &ax_funs);
-
   if (status ||!A || !x0 || !x_exp || !b){
     status += 1;
     goto exit1;
   }
 
+  if(l1c_setup_matrix_transforms(N, M, A, &ax_funs)){
+    goto exit1;
+  }
+
   params.verbose = 2;
   params.warm_start_cg = 0;
-  params.l1_tol = -1; //wont be used.
+  params.l1_tol = 1e-4; //wont be used.
+  struct timeval tv_start, tv_end;
+  tv_start = l1c_get_time();
 
   lb_res = l1c_l1qc_newton(M, x0, N, b, params, ax_funs);
 
-  /* It appears that we typically have
+  tv_end = l1c_get_time();
+  double time_total = l1c_get_time_diff(tv_start, tv_end);
+  printf("total c time: %f\n", time_total);
+
+  /* It appears that we often have
      | ||x||_1 - ||x_opt||_1 | < 2*||e||_1
 
      This not based in any theory I know of and probably doesnt generalize
      to other problems. It just a heuristic, and lets us ensure we dont regress
      from the current state, which works. I dont know of a better method here.
+
+     could also check ||x - x_opt||_2 ~= ?? ||e||_2
+
+     But these seems typically larger.
   */
   double dnrm1_x1exp= l1c_dnorm1(M, x_exp);
   double dnrm1_xp = l1c_dnorm1(M, x0);
@@ -264,15 +277,12 @@ START_TEST (test_l1qc_newton)
   ck_assert_int_eq(0, lb_res.status);
 
 
-
+  ax_funs.destroy();
  exit1:
   l1c_free_double(x0);
   l1c_free_double(x_exp);
   l1c_free_double(b);
   l1c_free_double(A);
-
-  ax_funs.destroy();
-
 
   cJSON_Delete(test_data_json);
 
