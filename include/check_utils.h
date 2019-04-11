@@ -37,7 +37,30 @@ static inline double ck_min(double a,double b){
 
 #endif
 
+#ifndef _ck_assert_floating
+/* Floating point number comparison macros with improved output
+ * compared to ck_assert(). */
+/* OP may be any comparison operator, TP is type, TM is type modifier. */
+#define _ck_assert_double(X, OP, Y) do {                            \
+    double _ck_x = (X);                                                 \
+    double _ck_y = (Y);                                                 \
+    ck_assert_msg(_ck_x OP _ck_y,                                       \
+                  "Assertion '%s' failed: %s == %.* g, %s == %.* g", \
+                  #X" "#OP" "#Y,                                        \
+                  #X, (int)CK_FLOATING_DIG, _ck_x,                      \
+                  #Y, (int)CK_FLOATING_DIG, _ck_y);                     \
+  } while (0)
+#endif
 
+#ifndef ck_assert_double_le
+/*
+ * Check two double precision floating point numbers to determine if X <= Y
+ *
+ * Availible in check 0.11.0
+ */
+#define ck_assert_double_le(X, Y) _ck_assert_double(X, <=, Y)
+
+#endif
 
 /* Floating point tolerance Floating point relative tolerance comparison
    for arrays. Based on ck_assert_floating_absdiff_tol.
@@ -99,7 +122,7 @@ static inline double ck_min(double a,double b){
 
 
 
-/**
+/*
  * Check two double precision floating point arrays to determine
  * if all elements satisfy the relative tolerance condition
  * if |X[i] - Y[i]|/min(|X[i}, |Y[i]|) < TOL
@@ -119,7 +142,7 @@ static inline double ck_min(double a,double b){
 
 #define ck_assert_double_array_eq_reltol(N, X, Y, T)  \
   _ck_assert_floating_array_absdiff_op_reltol(N, X, Y, <, T, double)
-/**
+/*
  * Check two double precision floating point array to determine if X[i]/nrm≈Y[i]/nrm
  * with specified tolerance, for i=0,...N-1
  *
@@ -127,7 +150,7 @@ static inline double ck_min(double a,double b){
 
 
 
-/**
+/*
  * Check two double precision floating point arrays to determine if |X[i] - Y[i]| < TOL
  * for i=0,...N-1
  *
@@ -145,7 +168,7 @@ static inline double ck_min(double a,double b){
 #define ck_assert_double_array_eq_tol(N, X, Y, T)  \
   _ck_assert_floating_array_absdiff_op_tol(N, X, Y, <, T, double, "")
 
-/**
+/*
  * Check two double precision floating point arrays to determine if X[i] == Y[i]
  * for i=0,...N-1
  *

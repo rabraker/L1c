@@ -204,7 +204,8 @@ START_TEST (test_l1qc_newton)
   double enrm1;
   l1c_LBResult lb_res;
   l1c_int N=0, M=0, NM=0,  status=0;
-
+  l1c_int T=0, TC=0;
+  l1c_int *T_idx=NULL, *TC_idx=NULL;
   l1c_AxFuns ax_funs;
 
   init_l1qc_opts(&params);
@@ -232,11 +233,16 @@ START_TEST (test_l1qc_newton)
   status +=extract_json_double(test_data_json, "enrm1", &enrm1);
   status +=extract_json_int(test_data_json, "cgmaxiter", &params.cg_maxiter);
 
+  status +=extract_json_int_array(test_data_json, "T_idx", &T_idx, &T);
+  status +=extract_json_int_array(test_data_json, "TC_idx", &TC_idx, &TC);
   status +=extract_json_double_array(test_data_json, "A", &A, &NM);
 
   ck_assert_int_eq(NM, N*M);
 
-  if (status ||!A || !x0 || !x_exp || !b){
+  double *tmp1 = l1c_calloc_double(M);
+  double *tmp2 = l1c_calloc_double(M);
+
+  if (status || !TC_idx || !T_idx || !A || !x0 || !x_exp || !b || !tmp1 || !tmp2){
     status += 1;
     goto exit1;
   }
@@ -257,23 +263,58 @@ START_TEST (test_l1qc_newton)
   double time_total = l1c_get_time_diff(tv_start, tv_end);
   printf("total c time: %f\n", time_total);
 
-  /* It appears that we often have
-     | ||x||_1 - ||x_opt||_1 | < 2*||e||_1
+  /*
+    From Stable Signal Recovery from Incomplete and Inaccurate Measurements,
+    Candes, Romberg, Tao 2005, it looks like we should be able to verify
+    (cir. (9)-(10)):
+       a. ||x_opt||_1 <= ||x_act||_1
+       b. ||Ax_opt - Ax_act||_1 <= 2*\epsilon
+       c. Let h = x_opt - x_act. Let h_T = h[idx_supp], and
+       h_TC = h[(1:m)!=idx_supp]. Then
+       ||h_TC||_1 <= ||h_T||_1
 
-     This not based in any theory I know of and probably doesnt generalize
-     to other problems. It just a heuristic, and lets us ensure we dont regress
-     from the current state, which works. I dont know of a better method here.
+       d. From their numerical experiments, they suggest that
+          ||x_opt - x_act|| < C*eps, with C<2 (see also eq. (5)).
+          with eps^2 = sigma^2(n + lambda*sqrt(2*n)). Though table 1
+          shows this, I dont get the same result repeating that
+          experiment, even with their software. It seems that C~=3.5
+   */
 
-     could also check ||x - x_opt||_2 ~= ?? ||e||_2
 
-     But these seems typically larger.
-  */
+  /* a. ---------------------
+     Check property (a).*/
   double dnrm1_x1exp= l1c_dnorm1(M, x_exp);
   double dnrm1_xp = l1c_dnorm1(M, x0);
+  ck_assert_double_le(dnrm1_xp, dnrm1_x1exp);
 
-  ck_assert_double_eq_tol(dnrm1_x1exp, dnrm1_xp, 2*enrm1);
+  /* -----------------------
+    b. Check property (b) */
+  ax_funs.Ax(x_exp, tmp1);
+  ax_funs.Ax(x0, tmp2);
+  double dnrm2_yerr = 0, yerr_k = 0;
+  for(int i=0; i<M; i++){
+    yerr_k = tmp1[i] - tmp2[i];
+    dnrm2_yerr += yerr_k * yerr_k;
+  }
+  dnrm2_yerr = sqrt(dnrm2_yerr);
 
-  /*We should exit cleanly for this problem.*/
+  ck_assert_double_le(dnrm2_yerr, params.epsilon*2);
+
+  /* c. ------------------
+     Check property (c) */
+  l1c_daxpy_z(M, 1, x0, x_exp, tmp1); //h = x0 - x
+  double h_T_nrm1=0, h_TC_nrm1=0;
+  for(int i=0; i<T; i++){
+    h_T_nrm1 += fabs(tmp1[T_idx[i]]);
+  }
+  for(int i=0; i<TC; i++){
+    h_TC_nrm1 += fabs(tmp1[TC_idx[i]]);
+  }
+  ck_assert_double_le(h_TC_nrm1, h_T_nrm1);
+
+  /*d. TODO: implement this check. */
+
+  /* e. We should exit cleanly for this problem.*/
   ck_assert_int_eq(0, lb_res.status);
 
 
@@ -283,7 +324,10 @@ START_TEST (test_l1qc_newton)
   l1c_free_double(x_exp);
   l1c_free_double(b);
   l1c_free_double(A);
-
+  l1c_free_double(tmp1);
+  l1c_free_double(tmp2);
+  free(T_idx);
+  free(TC_idx);
   cJSON_Delete(test_data_json);
 
 

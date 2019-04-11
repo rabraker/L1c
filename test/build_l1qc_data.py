@@ -19,6 +19,9 @@ def build_lb_test_data(lb_data_path, N, T, K):
     q = np.random.permutation(N)
     x[q[0:T]] = np.sign(np.random.randn(T, 1))
 
+    T_idx = q[0:T]
+    TC_idx = q[T:]
+
     # Build the measurement matrix.
     A_ = np.random.randn(K, N)
     # orthonormal basis for the range of A_
@@ -58,6 +61,8 @@ def build_lb_test_data(lb_data_path, N, T, K):
             'newtonmaxiter': 50,
             'cgtol': 1e-8,
             'cgmaxiter': N,
+            'T_idx': T_idx,
+            'TC_idx': TC_idx,
             'enrm1': enrm1
     }
 
