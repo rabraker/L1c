@@ -28,7 +28,7 @@ using a log-barrier algorithm, which is based on the implementation in https://s
 
 * Solving the Anistropic Total Variation (TV) denoising using  https://www.ece.rice.edu/~tag7/Tom_Goldstein/Split_Bregman.html[Bregman Splitting]. Given a noisy latexmath:[n] by latexmath:[m] image latexmath:[f], this solves the problem
 +
-latexmath:[\min_{u} ||\nabla_{x}||_{1} + ||\nabla_{y}||_{1} + ||u-f||_{2}. ]
+latexmath:[\min_{u} ||\nabla_{x}u||_{1} + ||\nabla_{y}u||_{1} + ||u-f||_{2}. ]
 
 * 1D and 2D discrete cosine transforms (using FFTW).
 
@@ -43,7 +43,7 @@ The four steps are
 git clone git@ggitlab.com:rabraker/L1c.git L1c && cd L1c
 ./bootsrap                   # requires autotools
 ./configure [--with-fftw3-threads=[ARG]] [--enable-mex] \
-            [--with-mex-prefix=/path/to/mex/install][--enable-python]
+            [mex_prefix=/path/to/mex/install] [--enable-python]
 make && make install
 ----
 
@@ -87,7 +87,7 @@ On my machine, `FFTW3`, `cJSON`, and `check` are installed in `/usr/local`. ATLA
 ----
 CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include" \
          LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib" \
-./configure --with-fftw3 --with-fftw3-threads=omp 
+./configure --with-fftw3-threads=omp 
 ----
 
 
@@ -96,20 +96,20 @@ Alternatively, you can export `CPPFLAGS` and `LDFLAGS`:
 ----
 export CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include"
 export LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib"
-./configure --with-fftw3 --with-fftw3-threads=omp 
+./configure --with-fftw3-threads=omp 
 ----
 
 
 ===== mex bindings =====
-If we also we want to compile with the mex bindings, we need to add Matlab's `lib` and `include` directories. These are in non-stanard locations, so they must be added to `CPPFLAGS` and `LDFLAGS`. By default, the mex modules will get installed into `${prefix}/lib/`, which is probably not what you want. Specify a different location with `--with-mex-prefix=/path/to/mex`:
+If we also we want to compile with the mex bindings, we need to add Matlab's `lib` and `include` directories. These are in non-stanard locations, so they must be added to `CPPFLAGS` and `LDFLAGS`. By default, the mex modules will get installed into `${prefix}/lib/`, which is probably not what you want. Specify a different location with `mex_prefix=/path/to/mex`:
 [source,bash]
 ----
 export CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include \
                  -I/usr/local/MATLAB/R2018b/extern/include"
 export LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib  \
                 -L/usr/local/MATLAB/R2018b/bin/glnxa64"
-./configure --with-fftw3 --with-fftw3-threads=omp --enable-mex \  
-            --with-mex-prefix=/home/arnold/matlab/l1c
+./configure --with-fftw3-threads=omp --enable-mex \  
+            mex_prefix=/home/arnold/matlab/l1c
 ----
 
 Note that on my system, the command `mexext` is located in `/usr/local/MATLAB/R2018b/bin/`, which is symlinked to `/usr/local/bin/mexext`, which is on my path. If this is not the case, then in addition to above you can, e.g., `export MEXEXT=mexa64`. You can get the appropriate value to export by typing `mexext` at the matlab command prompt.
@@ -121,7 +121,7 @@ To build the python bindings, use `--enable-python`:
 ----
 export CPPFLAGS="-I/usr/local/include -I/usr/local/openblas/include"
 export LDFLAGS="-L/usr/local/lib -L/usr/local/openblas/lib"
-./configure --with-fftw3 --with-fftw3-threads=omp --enable-python
+./configure --with-fftw3-threads=omp --enable-python
 ----
 
 Building python bindings is supported for Python 3 (tested with 3.5). The proper compilation and linking flags as well as the installation location are obtained from the python3 on your path (via distutils.sysconfig). On linux, the typical install location will default to something like `/usr/lib/python3/dist-packages`. These values can be modified via the environmental variables:
@@ -129,7 +129,7 @@ Building python bindings is supported for Python 3 (tested with 3.5). The proper
 ----
 PYTHON_CPPFLAGS        # Should contain Python.h
 PYTHON_LIBS            # e.g., -lpython3.5m
-PYTHON_SITE_PKG_EXEC   # e.g., /home/user/.local/lib/python3.5/site-packages
+python_prefix          # e.g., /home/user/.local/lib/python3.5/site-packages
 ----
 
 

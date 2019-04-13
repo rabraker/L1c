@@ -1,0 +1,26 @@
+{%- extends "basic/layout.html" %}
+
+
+{%- block css %}
+<link rel="stylesheet" href="{{ pathto('_static/pygments.css', 1) }}" type="text/css" />
+<link rel="stylesheet" href="{{ pathto('_static/custom.css', 1) }}" type="text/css" />
+{% endblock %}
+
+{%- block script %}
+<script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+<script type="text/x-mathjax-config">MathJax.Hub.Config({"extensions": ["tex2jax.js"], "jax": ["input/TeX", "output/HTML-CSS"]})</script>
+
+{% endblock %}
+
+{%- block relbar1 %}{% endblock %}
+{%- block relbar2 %}{% endblock %}
+
+{# put the sidebar before the body #}
+
+{%- block sidebar1 %}
+{{ sidebar() }}
+{% endblock %}
+
+{%- block sidebar2 %}{% endblock %}
+`

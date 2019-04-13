@@ -2,7 +2,8 @@ run_dct
 testcheck
 lib/
 sandbox/
-doc/
+doc/build
+doc/xml
 *.html
 readme.md
 test_l1qc

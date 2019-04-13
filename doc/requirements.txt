@@ -1,0 +1,5 @@
+
+breathe
+sphinx<=1.99
+sphinxcontrib-bibtex
+sphinxcontrib-fulltoc
