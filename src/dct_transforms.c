@@ -8,6 +8,8 @@
 
 
 /**
+ * @ingroup transforms
+ *
  * Purpose
  * =======
  * This is the high-level interface to dct1_setup() and dct2_setup()

@@ -39,6 +39,16 @@ void l1c_free_double(double *x){
 #endif //_HAVE_POSIX_MEMALIGN_
 
 
+/**
+ * Allocate a **zeroed** array of doubles aligned to a DALGIN byte boundary.
+ * @param[in] N Number of requested elements. The returned pointer should be
+ * freed with l1c_free_double().
+ *
+ * @return pointer to an array of doubles of length N.
+ *
+ * @see l1c_malloc_double()
+ * @see l1c_malloc_double()
+ */
 double* l1c_calloc_double(int N){
   double *dptr;
   dptr = l1c_malloc_double(N);
@@ -47,7 +57,18 @@ double* l1c_calloc_double(int N){
   }
   return dptr;
 }
-
+/**
+ * Allocate a 2D array **zeroed** array of doubles with nrow rows and ncol
+ * columns. Each row is aligned to a DALGIN byte boundary.
+ *
+ * @param[in] nrow Number of requested rows.
+ * @param[in] ncol Number of requested elements in each row..
+ *
+ * @return pointer to an array of doubles of length N.
+ *
+ * @see l1c_malloc_double_2D()
+ * @see l1c_free_double_2D()
+ */
 double** l1c_calloc_double_2D(l1c_int nrow, l1c_int ncol){
   double **dptr = l1c_malloc_double_2D(nrow, ncol);
   if (dptr){
@@ -58,7 +79,18 @@ double** l1c_calloc_double_2D(l1c_int nrow, l1c_int ncol){
   return dptr;
 }
 
-/** This is primarily for the DWORK arrays. */
+/**
+ * Allocate a 2D array of unitialized doubles with nrow rows and ncol
+ * columns. Each row is aligned to a DALGIN byte boundary.
+ *
+ * @param[in] nrow Number of requested rows.
+ * @param[in] ncol Number of requested elements in each row..
+ *
+ * @return pointer to an array of doubles of length N.
+ *
+ * @see l1c_calloc_double_2D()
+ * @see l1c_free_double_2D()
+ */
 double** l1c_malloc_double_2D(l1c_int nrow, l1c_int ncol){
   int k;
   double **dwork = malloc(nrow*sizeof(double*));
@@ -90,14 +122,17 @@ double** l1c_malloc_double_2D(l1c_int nrow, l1c_int ncol){
 
 }
 
-
 /**
-   Free an 2D array allocated by l1c_malloc_double_2D
-*/
-void l1c_free_double_2D(int nrow, double **dwork){
+ * Free a 2D array allocated by l1c_malloc_double_2D() or l1c_calloc_double_2D().
+ * The function will first free each row, then the pointer containing the rows.
+ *
+ * @param[in] nrow Number of rows in the 2D array to be freed.
+ * @param[in] ddptr An array (of size nrow) of pointers.
+ */
+void l1c_free_double_2D(int nrow, double **ddptr){
 
   for (int k=0; k<nrow; k++){
-    l1c_free_double(dwork[k]);
+    l1c_free_double(ddptr[k]);
   }
-  free(dwork);
+  free(ddptr);
 }

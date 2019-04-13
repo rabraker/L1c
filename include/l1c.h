@@ -1,6 +1,6 @@
 #ifndef __L1C__
 #define __L1C__
-/**
+/*
  * @file l1c.h
  *
  * The main API for l1c.
@@ -13,12 +13,29 @@
  */
 typedef int l1c_int;
 
-/** How many bytes l1c_malloc_double will use for alignment.*/
+
+/**
+ * \defgroup memory
+ * Functions for managing memory, and in particular, aligned allocation
+ * needed for vectorized math.
+ * @{
+ */
+
+/** How many bytes l1c_malloc_double will use for alignment.
+    The default is 64. This should be sufficient for up to AVX512. For SSE2
+    and AVX2, you could redifine this 32.
+ */
 #define DALIGN  64
 
 /**
- *  Allocate an array of doubles aligned to a DALGIN byte boundary.
- *  @param[in] N Number of requested elements.
+ * Allocate an array of doubles aligned to a DALGIN byte boundary.
+ *
+ * @param[in] N Number of requested elements. The returned pointer should be
+ * freed with l1c_free_double().
+ *
+ * @return pointer to an array of doubles of length N.
+ *
+ * @see{l1c_calloc_double()}
 */
 double* l1c_malloc_double(int N);
 
@@ -26,19 +43,55 @@ double* l1c_calloc_double(int N);
 
 double** l1c_calloc_double_2D(l1c_int nrow, l1c_int ncol);
 
-
-/**
- * Free an array allocated by l1c_malloc_double
- */
-void l1c_free_double(double *);
-
 double** l1c_malloc_double_2D(l1c_int nrow, l1c_int ncol);
 
-void l1c_free_double_2D(int nrow, double **dwork);
+
+/**
+ * Free an array allocated by l1c_malloc_double.
+ *
+ * @param[in] dptr The pointer to be freed.
+ */
+void l1c_free_double(double *dptr);
+
+void l1c_free_double_2D(int nrow, double **ddptr);
+/**@}*/
+
 
 
 /**
- * A struct of function pointers for linear transforms.
+ * @defgroup transforms
+ * Functions for linear transformations.
+ * @{
+ */
+
+/** A struct of function pointers for linear transforms.
+ *
+ * Any new set of transforms must implement the base transforms, `.Ax`,
+ * the adjoint, `.Aty`, and the normal transform `.AtAx`.
+ *
+ * Upon entry, the output vector should be initialized to any finite value.
+ * This allows more efficient code in the matrix_transforms class, which is
+ * based on cblas_dgemv, which does overwrite the output but rather updates
+ * it in place. For example,
+ *
+ * @code
+ * y = Ax + beta*y
+ * @endcode
+ *
+ * The remaining function pointers are, at this point, optional, and not required
+ * by the low level optimizations. However, often in CS, the transform `A` can be
+ * decomposed as `A=EM`, where `M` is an othogonal, `m` by `m` matrix (say, a
+ * DCT transform) and `E` is an `n` by `m` matrix, e.g., an identity with rows removed.
+ * The remaining fields are there to provide access to those individual components.
+ *
+ * Currently, the `.data` field is unused, but at some point, it may be good to make the
+ * optimizations re-entrant. This field is there as a placeholder so a transform class
+ * can store its state in `.data`, rather than file-global variables (as is currently done).
+ * @see l1c_dct1_setup()
+ *      l1c_dct2_setup()
+ *      l1c_setup_dct_transforms()
+ *      l1c_setup_matrix_transforms()
+ *
  */
 typedef struct l1c_AxFuns {
   /*Everybody must implement these.*/
@@ -61,16 +114,23 @@ typedef struct l1c_AxFuns {
   /** Currently unused.*/
   void(*Et)(double *y);
 
-  /**Release data allocated by setup.
-     All implementations must define destroy.
+  /**Release data allocated by the associated setup function.
+     All implementations must define .`destroy`.
   */
   void(*destroy)(void);
 
-  /** Reserved for use.*/
+  /** Reserved for future use.*/
   void *data;
 }l1c_AxFuns;
 
 
+
+
+/** @}*/
+
+/**
+ * @defgroup lin_solve
+ * @{*/
 /** Struct containing artifacts of the cgsolve routine. */
 typedef struct l1c_CgResults{
   /** Residual */
@@ -93,14 +153,23 @@ typedef struct l1c_CgParams{
   double tol;
 } l1c_CgParams;
 
+/** @}*/
+
+
 
 /**
  *  Contains the results of an l1qc_newton() optimizations.
  */
 typedef struct l1c_LBResult{
+  /** Value of the objective function.*/
   double l1;
+  /** Total number of newton interations, across all log-barrier iterations.*/
   int    total_newton_iter;
+  /** Total number of conjugate gradient interations, across all log-barrier
+      and all Newton iterations.*/
   int    total_cg_iter;
+  /** Return status. 0 if the optimizations completed succesfully. Otherwise,
+      see \ref l1c_errors */
   int    status;
 
 }l1c_LBResult;
@@ -171,12 +240,16 @@ int l1c_dct2_setup(l1c_int Nx, l1c_int Mx, l1c_int Ny, l1c_int *pix_mask_idx,  l
 
 int l1c_dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs);
 
+
 int l1c_setup_dct_transforms(l1c_int Nx, l1c_int Mx, l1c_int Ny,
                              l1c_int *pix_idx, l1c_AxFuns *ax_funs);
 
 int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_funs);
 
 
+/**
+ * @defgroup l1c_errors Error codes returned.
+ * @{*/
 /** Initial guess was infeasible. */
 #define L1C_INFEASIBLE_START  (1U << 1)
 
@@ -195,5 +268,6 @@ int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_
 /** E.g., N<0.*/
 #define L1C_INVALID_ARGUMENT  (1U << 11)
 
+/** @}*/
 
 #endif

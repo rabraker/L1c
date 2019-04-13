@@ -34,6 +34,8 @@ static double dct2_root_1_by_4NM;
 
 
 /**
+ * @ingroup transforms
+ *
  * The function will populate an
  * l1c_AxFuns struct such that
  *

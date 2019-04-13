@@ -18,6 +18,8 @@ cg_report(int iter, double best_rel_res, double rel_res,
 
 
 /**
+ * @ingroup lin_solve
+ *
  * Conjugate gradient solver.
  *
  * Purpose
@@ -34,8 +36,7 @@ cg_report(int iter, double best_rel_res, double rel_res,
  * Algorithm
  * ---------
  * This code is a c implementation of the conjugate gradient solver
- * in l1magic. It is a direct port of the matlab code, which follows
- * closely to the description on wikipedia
+ * in l1magic. It closely follows the wikipedia description
  *
  * https://en.wikipedia.org/wiki/Conjugate_gradient_method
  *
@@ -158,6 +159,8 @@ int l1c_cgsolve(l1c_int N, double *x, double *b, double **Dwork,
 
 
 /**
+ * @ingroup lin_solve
+ *
  * Preconditioned Conjugate gradient solver.
  *
  * Purpose

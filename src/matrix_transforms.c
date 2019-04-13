@@ -16,6 +16,8 @@ double *xfm_dwork=NULL;
 
 
 /**
+ * @ingroup transforms
+ *
  * Setup a set of transformations for an arbitrary matrix `A`.
  * For the l1 problems to make sense, `n<<m`.
  *
