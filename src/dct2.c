@@ -26,9 +26,9 @@ static double * restrict dct2_x;
 static double * restrict dct2_y;
 
 static l1c_int *dct2_pix_mask_idx;
-static l1c_int dct2_Ny;
-static l1c_int dct2_N; // Rows
-static l1c_int dct2_M; // Cols
+static l1c_int dct2_n;    // Number of measurements.
+static l1c_int dct2_mrow; // Rows of image
+static l1c_int dct2_mcol; // Cols of image
 
 static double dct2_root_1_by_4NM;
 
@@ -51,14 +51,15 @@ static double dct2_root_1_by_4NM;
  * discrete cosine transform and \f$E\f$ represents the subsampling operation.
  * The fields `E`, `Et` and `data` will be `NULL`.
  *
+ * The effective size of `A` is `n` by `mrow*mcol`.
  *
- * Recall that, for an n_x by m_x matrix X, the 2D DCT is given by
+ * Recall that, for an `mrow` by `mcol` matrix \f$ X\f$, the 2D DCT is given by
  *
  * \f{equation}{
- *    \hat{X}=M_{n_x} X M_{m_x}
+ *    \hat{X}=M_{mrow} X M_{mcol}
  * \f}
  *
- * where \f$ X\in\mathbb{R}^{n_x \times m_x}\f$. On the other hand, the subsampling
+ * On the other hand, the subsampling
  * operator operates on a vector. Specifically, \f$E\f$, is the identy matrix
  * with rows removed. In python notation:
  *
@@ -72,7 +73,7 @@ static double dct2_root_1_by_4NM;
  * \f$EM(X)\f$ can be thought of as
  *
  * \f{equation}{
- *    EM(x)= E\textrm{vec}\left(  (M_{n_x} X M_{m_x})^T  \right).
+ *    EM(x)= E\textrm{vec}\left(  (M_{mrow} X M_{mcol})^T  \right).
  * \f}
  *
  * The transpose is necessary because the `vec()` operator concatenates
@@ -81,19 +82,18 @@ static double dct2_root_1_by_4NM;
  * of the re-shaping implied above, because the vector and matrix are represnted
  * the same way in memory. So an alternative description is that
  *
- * \f{equation}{
- *    M(x)=M_{m_x}\otimes M^T_{n_x} \textrm{vec}(X^T)
+ * \f{equation}{n
+ *    M(x)=M_{mcol}\otimes M^T_{mrow} \textrm{vec}(X^T)
  * \f}
  *
+ * So that \f$M\f$ is an `(mrow * mcol)` by `(mrow * mcol)` matrix.
  *
  * To de-allocate the memory reserved by dct2_setup(), call ax_funs.destroy().
  * Do not call ax_funs.destroy() if return value of dct2_setup() is non-zero.
  *
- * @param[in] Nx Number of rows of the underlying signal.
- * @param[in] Mx Number of columns of the underlying signal.
- *               To treat, e.g., an image as a 1D vectorized signal
- *               set Mx=1 and Nx = number_of_rows * number_of_columns.
- * @param[in]  Ny Number of elements in pix_mask_idx.
+ * @param[in] mrow Number of rows of the underlying signal.
+ * @param[in] mcol Number of columns of the underlying signal.
+ * @param[in]  n Number of elements in pix_mask_idx.
  * @param[in]  pix_mask_idx Indeces of locations of the subsampling. For both
  *              DCT1 and DCT2, this vector should be the same.
  * @param[out] ax_funs A structure of function pointers which will be populated.
@@ -105,9 +105,9 @@ static double dct2_root_1_by_4NM;
  *           or L1C_OUT_OF_MEMORY.
  *
  * @warning This function assumes that its inputs have already been sanitized. In
- *          particular, if `max(pix_mask_idx) > Nx*Mx`, then segfaults are likely to occur.
+ *          particular, if `max(pix_mask_idx) > mrow*mcol`, then segfaults are likely to occur.
  */
-int l1c_dct2_setup(l1c_int Nx, l1c_int Mx, l1c_int Ny, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs){
+int l1c_dct2_setup(l1c_int mrow, l1c_int mcol, l1c_int n, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs){
   int status = 0;
 #if defined(HAVE_FFTW3_THREADS)
   fftw_init_threads();
@@ -117,28 +117,28 @@ int l1c_dct2_setup(l1c_int Nx, l1c_int Mx, l1c_int Ny, l1c_int *pix_mask_idx,  l
 #endif
 
   l1c_int i=0;
-  dct2_Ety_sparse = l1c_malloc_double(Nx*Mx);
-  dct2_x = l1c_malloc_double(Nx*Mx);
-  dct2_y = l1c_malloc_double(Nx*Mx);
+  dct2_Ety_sparse = l1c_malloc_double(mrow*mcol);
+  dct2_x = l1c_malloc_double(mrow*mcol);
+  dct2_y = l1c_malloc_double(mrow*mcol);
   if (!dct2_x || !dct2_y || !dct2_Ety_sparse){
     fprintf(stderr, "Error allocating memory in dct2_setup");
     status = L1C_OUT_OF_MEMORY;
     goto fail;
   }
 
-  for (i=0; i<Nx*Mx; i++){
+  for (i=0; i<mrow*mcol; i++){
     dct2_Ety_sparse[i] = 0;
     dct2_x[i] = 0;
     dct2_y[i] = 0;
   }
 
-  dct2_N = Nx;
-  dct2_M = Mx;
+  dct2_mrow = mrow;
+  dct2_mcol = mcol;
 
-  dct2_Ny = Ny;
+  dct2_n = n;
   dct2_pix_mask_idx = pix_mask_idx;
 
-  double den = ((double) dct2_N) * ((double)dct2_M) * 4 ;
+  double den = ((double) dct2_mrow) * ((double)dct2_mcol) * 4 ;
   dct2_root_1_by_4NM = sqrt(1.0 / den); // Normalization constant.
 
 
@@ -147,10 +147,10 @@ int l1c_dct2_setup(l1c_int Nx, l1c_int Mx, l1c_int Ny, l1c_int *pix_mask_idx,  l
   fftw_r2r_kind dct2_kind_MtEty = FFTW_REDFT10; // DCT-II, “the” DCT
   fftw_r2r_kind dct2_kind_EMx = FFTW_REDFT01; // DCT-III, “the” IDCT
 
-  dct2_plan_MtEty = fftw_plan_r2r_2d(Nx, Mx, dct2_Ety_sparse, dct2_x,
+  dct2_plan_MtEty = fftw_plan_r2r_2d(mrow, mcol, dct2_Ety_sparse, dct2_x,
                              dct2_kind_MtEty, dct2_kind_MtEty, flags);
 
-  dct2_plan_EMx = fftw_plan_r2r_2d(Nx, Mx, dct2_x, dct2_y,
+  dct2_plan_EMx = fftw_plan_r2r_2d(mrow, mcol, dct2_x, dct2_y,
                                      dct2_kind_EMx, dct2_kind_EMx, flags);
 
   if ( !dct2_plan_EMx || !dct2_plan_MtEty){
@@ -195,22 +195,22 @@ static void dct2_dct(double *x){
 
   double one_by_root2 = 1.0/sqrt(2);
   int i;
-  cblas_dcopy(dct2_N * dct2_M, x, 1, dct2_Ety_sparse, 1);
+  cblas_dcopy(dct2_mrow * dct2_mcol, x, 1, dct2_Ety_sparse, 1);
 
 
   fftw_execute(dct2_plan_MtEty); //-->dct2_x
 
   // normalize by 1/sqrt(2*N) * 1/sqrt(2*M)
-  for (i=0; i<dct2_N * dct2_M; i++){
+  for (i=0; i<dct2_mrow * dct2_mcol; i++){
     x[i] = dct2_x[i] * dct2_root_1_by_4NM;
   }
 
   x[0] = x[0]*0.5;
   // Across the columns of the first row.
-  cblas_dscal(dct2_M-1, one_by_root2, x+1, 1);
+  cblas_dscal(dct2_mcol-1, one_by_root2, x+1, 1);
 
   // Down the rows of the first column.
-  cblas_dscal(dct2_N-1, one_by_root2, x+dct2_M, dct2_M);
+  cblas_dscal(dct2_mrow-1, one_by_root2, x+dct2_mcol, dct2_mcol);
 
 }
 
@@ -218,21 +218,21 @@ static void dct2_dct(double *x){
 static void dct2_idct(double *x){
 
   double root2 = sqrt(2);
-  cblas_dcopy(dct2_N * dct2_M, x, 1, dct2_x, 1);
+  cblas_dcopy(dct2_mrow * dct2_mcol, x, 1, dct2_x, 1);
 
 
   dct2_x[0] = dct2_x[0]*2.0;
 
   // Across the columns of the first row.
-  cblas_dscal(dct2_N-1, root2, dct2_x+1, 1);
+  cblas_dscal(dct2_mrow-1, root2, dct2_x+1, 1);
 
   // Down the rows of the first column.
-  cblas_dscal(dct2_N-1, root2, dct2_x+dct2_M, dct2_M);
+  cblas_dscal(dct2_mrow-1, root2, dct2_x+dct2_mcol, dct2_mcol);
 
   fftw_execute_r2r(dct2_plan_EMx, dct2_x, x);
 
   // normalize by 1/sqrt(2*N) * 1/sqrt(2*M)
-  cblas_dscal(dct2_N*dct2_M, dct2_root_1_by_4NM, x, 1);
+  cblas_dscal(dct2_mrow*dct2_mcol, dct2_root_1_by_4NM, x, 1);
 
 }
 
@@ -241,22 +241,22 @@ static void dct2_EMx(double *x, double *y){
 
   double root2 = sqrt(2);
   int i;
-  cblas_dcopy(dct2_N * dct2_M, x, 1, dct2_x, 1);
+  cblas_dcopy(dct2_mrow * dct2_mcol, x, 1, dct2_x, 1);
 
 
   dct2_x[0] = dct2_x[0]*2.0;
 
   // Across the columns of the first row.
-  cblas_dscal(dct2_M-1, root2, dct2_x+1, 1);
+  cblas_dscal(dct2_mcol-1, root2, dct2_x+1, 1);
 
   // Down the rows of the first column.
-  cblas_dscal(dct2_N-1, root2, dct2_x+dct2_M, dct2_M);
+  cblas_dscal(dct2_mrow-1, root2, dct2_x+dct2_mcol, dct2_mcol);
 
   fftw_execute_r2r(dct2_plan_EMx, dct2_x, dct2_y);
 
   // Apply the subsampling operation and
   // normalize by 1/sqrt(2*N) * 1/sqrt(2*M)
-  for(i=0; i<dct2_Ny; i++){
+  for(i=0; i<dct2_n; i++){
     y[i] = dct2_y[dct2_pix_mask_idx[i]] * dct2_root_1_by_4NM;
   }
 
@@ -267,7 +267,7 @@ static void dct2_MtEty(double *y, double *x){
 
   double one_by_root2 = 1.0/sqrt(2);
   int i;
-  for (i=0; i<dct2_Ny; i++){
+  for (i=0; i<dct2_n; i++){
     dct2_Ety_sparse[dct2_pix_mask_idx[i]] = y[i];
   }
 
@@ -275,16 +275,16 @@ static void dct2_MtEty(double *y, double *x){
   fftw_execute(dct2_plan_MtEty); //-->dct2_x
 
   // normalize by 1/sqrt(2*N) * 1/sqrt(2*M)
-  for (i=0; i<dct2_N * dct2_M; i++){
+  for (i=0; i<dct2_mrow * dct2_mcol; i++){
     x[i] = dct2_x[i] * dct2_root_1_by_4NM;
   }
 
   x[0] = x[0]*0.5;
   // Across the columns of the first row.
-  cblas_dscal(dct2_M-1, one_by_root2, x+1, 1);
+  cblas_dscal(dct2_mcol-1, one_by_root2, x+1, 1);
 
   // Down the rows of the first column.
-  cblas_dscal(dct2_N-1, one_by_root2, x+dct2_M, dct2_M);
+  cblas_dscal(dct2_mrow-1, one_by_root2, x+dct2_mcol, dct2_mcol);
 
 }
 
@@ -297,22 +297,22 @@ static void dct2_MtEt_EMx(double * restrict x, double * restrict z){
   int i;
 
   // /* ---------- EMx----------------------------*/
-  cblas_dcopy(dct2_N * dct2_M, x, 1, dct2_x, 1);
+  cblas_dcopy(dct2_mrow * dct2_mcol, x, 1, dct2_x, 1);
 
 
   dct2_x[0] = dct2_x[0]*2.0;
 
   // Across the columns of the first row.
-  cblas_dscal(dct2_M-1, root2, dct2_x+1, 1);
+  cblas_dscal(dct2_mcol-1, root2, dct2_x+1, 1);
 
   // Down the rows of the first column.
-  cblas_dscal(dct2_N-1, root2, dct2_x+dct2_M, dct2_M);
+  cblas_dscal(dct2_mrow-1, root2, dct2_x+dct2_mcol, dct2_mcol);
 
   fftw_execute_r2r(dct2_plan_EMx, dct2_x, dct2_y);
 
   // Apply the subsampling operation and
   // normalize by 1/sqrt(2*N) * 1/sqrt(2*M)
-  for(i=0; i<dct2_Ny; i++){
+  for(i=0; i<dct2_n; i++){
     dct2_Ety_sparse[dct2_pix_mask_idx[i]] = dct2_y[dct2_pix_mask_idx[i]] * dct2_root_1_by_4NM;
     // dct2_Ety_sparse[dct2_pix_mask_idx[i]] = x[i];
   }
@@ -322,14 +322,14 @@ static void dct2_MtEt_EMx(double * restrict x, double * restrict z){
   fftw_execute(dct2_plan_MtEty); //-->dct2_x
 
   // normalize by 1/sqrt(2*N) * 1/sqrt(2*M)
-  for (i=0; i<dct2_N * dct2_M; i++){
+  for (i=0; i<dct2_mrow * dct2_mcol; i++){
     z[i] = dct2_x[i] * dct2_root_1_by_4NM;
   }
 
   z[0] = z[0]*0.5;
   // Across the columns of the first row.
-  cblas_dscal(dct2_M-1, one_by_root2, z+1, 1);
+  cblas_dscal(dct2_mcol-1, one_by_root2, z+1, 1);
 
   // Down the rows of the first column.
-  cblas_dscal(dct2_N-1, one_by_root2, z+dct2_M, dct2_M);
+  cblas_dscal(dct2_mrow-1, one_by_root2, z+dct2_mcol, dct2_mcol);
 }

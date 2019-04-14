@@ -229,19 +229,19 @@ int l1c_cgsolve_diag_precond(l1c_int N, double *x, double *b, double *M_inv_diag
 l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
                              l1c_L1qcOpts params, l1c_AxFuns Ax_funs);
 
-int l1qc_dct(int Nrow, int Ncol, double *x_out, int M, double *b, l1c_int *pix_idx,
+int l1qc_dct(int mrow, int mcol, double *x_out, int n, double *b, l1c_int *pix_idx,
              l1c_L1qcOpts opts, l1c_LBResult *lb_res);
 
 int l1c_breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
                        double mu, double tol, int max_iter, int max_jac_iter);
 
 
-int l1c_dct2_setup(l1c_int Nx, l1c_int Mx, l1c_int Ny, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs);
+int l1c_dct2_setup(l1c_int mrow, l1c_int mcol, l1c_int n, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs);
 
-int l1c_dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs);
+int l1c_dct1_setup(l1c_int m, l1c_int n, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs);
 
 
-int l1c_setup_dct_transforms(l1c_int Nx, l1c_int Mx, l1c_int Ny,
+int l1c_setup_dct_transforms(l1c_int mrow, l1c_int mcol, l1c_int n,
                              l1c_int *pix_idx, l1c_AxFuns *ax_funs);
 
 int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_funs);

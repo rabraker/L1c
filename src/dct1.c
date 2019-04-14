@@ -25,8 +25,8 @@ static double * restrict dct_x;
 static double * restrict dct_y;
 
 static l1c_int *dct_pix_mask_idx;
-static l1c_int dct_Ny;
-static l1c_int dct_Nx;
+static l1c_int dct_n;
+static l1c_int dct_m;
 static double dct_root_1_by_2N;
 
 
@@ -45,6 +45,9 @@ static double dct_root_1_by_2N;
  * where \f$M\f$ represents the inverse one dimensional
  * discrete cosine transform matrix and \f$E\f$ represents the subsampling.
  * The fields `Mt`, `E`, `Et` and `data` will be `NULL`.
+ *
+ * The dimension of the transform `A` is `n` by `m`.
+ *
  *
  * The sub-sampling operator, \f$E\f$, is the identy matrix with rows removed.
  * In python notation:
@@ -66,12 +69,10 @@ static double dct_root_1_by_2N;
  *    matrix in columm major order.
  *
  *
- * @param[in] Nx Number of rows of the underlying signal.
- *            To treat, e.g., an image as a 1D vectorized signal
- *            set Mx=1 and Nx = number_of_rows * number_of_columns.
- * @param[in]  Ny Number of elements in pix_mask_idx.
- * @param[in]  pix_mask_idx indeces of locations of the subsampling. For both
- *             DCT1 and DCT2, this vector should be the same.
+ * @param[in] m Number of columns in the transform `A` and the number of
+ *            of elements in the underlying signal.
+ * @param[in]  n Number of elements in pix_mask_idx, and number of rows `A`.
+ * @param[in]  pix_mask_idx indeces of locations of the subsampling.
  * @param[out] ax_funs A structure of function pointers which will be populated.
  *             On successfull exit, The fields Ax, Aty, AtAx, destroy, and M
  *             will be non-null. The fields MT, E, and ET will be null.
@@ -81,9 +82,9 @@ static double dct_root_1_by_2N;
  *
  *
  * @warning This function assumes that its inputs have already been sanitized. In
- *          particular, if `max(pix_mask_idx) > Nx`, then segfaults are likely to occur.
+ *          particular, if `max(pix_mask_idx) > m`, then segfaults are likely to occur.
  */
-int l1c_dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs){
+int l1c_dct1_setup(l1c_int m, l1c_int n, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs){
 
   int status = 0;
 #if defined(HAVE_FFTW3_THREADS)
@@ -94,26 +95,26 @@ int l1c_dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, l1c_AxFuns *ax
 #endif
 
   l1c_int i=0;
-  dct_Ety_sparse = l1c_malloc_double(Nx);
-  dct_x = l1c_malloc_double(Nx);
-  dct_y = l1c_malloc_double(Nx);
+  dct_Ety_sparse = l1c_malloc_double(m);
+  dct_x = l1c_malloc_double(m);
+  dct_y = l1c_malloc_double(m);
   if (!dct_x || !dct_y || !dct_Ety_sparse){
     fprintf(stderr, "Error allocating memory in dct_setup");
     status = L1C_OUT_OF_MEMORY;
     goto fail;
   }
 
-  for (i=0; i<Nx; i++){
+  for (i=0; i<m; i++){
     dct_Ety_sparse[i] = 0;
     dct_x[i] = 0;
     dct_y[i] = 0;
   }
 
-  dct_Nx = Nx;
-  dct_Ny = Ny;
+  dct_m = m;
+  dct_n = n;
   dct_pix_mask_idx = pix_mask_idx;
 
-  dct_root_1_by_2N = sqrt(1.0 / ( (double) dct_Nx * 2)); // Normalization constant.
+  dct_root_1_by_2N = sqrt(1.0 / ( (double) dct_m * 2)); // Normalization constant.
 
   // FFTW_PATIENT | FFTW_DESTROY_INPUT| FFTW_PRESERVE_INPUT; | FFTW_PRESERVE_INPUT;
   // FFTW_PATIENT seems to give us about 2.5 seconds for the 512x512 test image.
@@ -122,8 +123,8 @@ int l1c_dct1_setup(l1c_int Nx, l1c_int Ny, l1c_int *pix_mask_idx, l1c_AxFuns *ax
   fftw_r2r_kind dct_kind_MtEty = FFTW_REDFT10; // DCT-II, "the" DCT
   fftw_r2r_kind dct_kind_EMx   = FFTW_REDFT01; // DCT-III, “the” IDCT
 
-  dct_plan_MtEty = fftw_plan_r2r_1d(Nx, dct_Ety_sparse, dct_x, dct_kind_MtEty, flags);
-  dct_plan_EMx = fftw_plan_r2r_1d(Nx, dct_x, dct_y, dct_kind_EMx, flags);
+  dct_plan_MtEty = fftw_plan_r2r_1d(m, dct_Ety_sparse, dct_x, dct_kind_MtEty, flags);
+  dct_plan_EMx = fftw_plan_r2r_1d(m, dct_x, dct_y, dct_kind_EMx, flags);
   if ( !dct_plan_MtEty || !dct_plan_EMx){
     fprintf(stderr, "Failed to initialize FFTW3 dct plans.\n");
     status = L1C_DCT_INIT_FAILURE;
@@ -164,12 +165,12 @@ static void dct_destroy(){
 static void dct_idct(double *x){
   // double *x_ = __builtin_assume_aligned(x, DALIGN);
 
-  cblas_dcopy(dct_Nx, x, 1, dct_x, 1);
+  cblas_dcopy(dct_m, x, 1, dct_x, 1);
   dct_x[0] = dct_x[0] * sqrt(2.0); //proper scaling
 
   fftw_execute_r2r(dct_plan_EMx, dct_x, x);
   // normalize
-  for (int i=0; i<dct_Nx; i++){
+  for (int i=0; i<dct_m; i++){
     x[i] =x[i] * dct_root_1_by_2N;
   }
 
@@ -177,10 +178,10 @@ static void dct_idct(double *x){
 
 static void dct_EMx(double *x, double * restrict y){
   /* Compute y = E * M *dct_x, where M is the IDCT, and E is the subsampling matrix.
-     --x should have size dct_Nx.
+     --x should have size dct_m.
      -- x and y should have been allocated with l1c_malloc_double;
-     -- y should have size at least dct_Ny.
-     On exit, the first dct_Ny entries of y will contain the result of E * M *x.
+     -- y should have size at least dct_n.
+     On exit, the first dct_n entries of y will contain the result of E * M *x.
   */
   l1c_int i=0;
   double *y_a = __builtin_assume_aligned(y, DALIGN);
@@ -195,7 +196,7 @@ static void dct_EMx(double *x, double * restrict y){
 
   // Apply the subsampling operation. Assume that the indexes are ordered, and
   // do this in place
-  for (i=0; i<dct_Ny; i++){
+  for (i=0; i<dct_n; i++){
     y_a[i] = dcty_a[ dct_pix_mask_idx[i]] * dct_root_1_by_2N;
   }
 
@@ -207,8 +208,8 @@ static void dct_MtEty( double * restrict y, double * restrict x){
     The results are normalized to matlabs convention. That is, divided by 1/sqrt(2*N) and
     x[0] <- x[0] * /sqrt(2).
 
-    -- y should have dimension at least dct_Ny
-    -- x should have dimension at least dct_Nx
+    -- y should have dimension at least dct_n
+    -- x should have dimension at least dct_m
     -- neither x nor y are required to be allocated by fftw.
    */
   double *y_a = __builtin_assume_aligned(y, DALIGN);
@@ -219,7 +220,7 @@ static void dct_MtEty( double * restrict y, double * restrict x){
   l1c_int i=0;
   // E^T * y --> y_sparse. y_sparse should be set to all zeros, and pix_mask does not change.
   // Returns a pointer to the array containing the result, which has length N.
-  for (i=0; i<dct_Ny; i++){
+  for (i=0; i<dct_n; i++){
     // dct_Ety_sparse[dct_pix_mask_idx[i]] = y[i] * dct_root_1_by_2N;
     Ety_a[dct_pix_mask_idx[i]] = y_a[i];
   }
@@ -228,7 +229,7 @@ static void dct_MtEty( double * restrict y, double * restrict x){
   fftw_execute(dct_plan_MtEty); //  M^T * dct_y_sparse
 
   dct_x[0] = dct_x[0]/sqrt(2.0);
-  for(i=0; i<dct_Nx; i++){
+  for(i=0; i<dct_m; i++){
     x_a[i] = dctx_a[i]  * dct_root_1_by_2N;
   }
 
@@ -238,8 +239,8 @@ static void dct_MtEt_EMx(double * restrict x, double * restrict z){
   /* Performs the Multiplication z = (EM)^T * (EM) * x
      on the supplied vector x.
 
-     -- x should have dimension at least dct_Nx.
-     -- z should have dimension at least dct_Nx
+     -- x should have dimension at least dct_m.
+     -- z should have dimension at least dct_m
    */
 
   // dct_EMx(x, dct_y); //writes output y to global, which belongs to fftw.
@@ -253,7 +254,7 @@ static void dct_MtEt_EMx(double * restrict x, double * restrict z){
   double *z_a = __builtin_assume_aligned(z, DALIGN);
 
   l1c_int i = 0;
-  // double one_by_2N = 1.0 / ( (double) dct_Nx * 2);
+  // double one_by_2N = 1.0 / ( (double) dct_m * 2);
 
   double x0_tmp = x[0];
   x[0] = x[0] * sqrt(2.0);
@@ -265,7 +266,7 @@ static void dct_MtEt_EMx(double * restrict x, double * restrict z){
   yet takes 1000 more CG iterations in the end (for the 512 x 512 test image. Presumeably, the second DCT is less accurate and we we dont get as close to, e.g., dct(x) == M * x
   */
 
-  for (i=0; i<dct_Ny; i++){
+  for (i=0; i<dct_n; i++){
     dctEty_a[ dct_pix_mask_idx[i]] = dcty_a[ dct_pix_mask_idx[i]] * dct_root_1_by_2N;
   }
 
@@ -273,7 +274,7 @@ static void dct_MtEt_EMx(double * restrict x, double * restrict z){
   fftw_execute(dct_plan_MtEty); // This is the M^T * dct_y_sparse
 
   dct_x[0] = dct_x[0]/sqrt(2.0);
-  for(i=0; i<dct_Nx; i++){
+  for(i=0; i<dct_m; i++){
     z_a[i] = dctx_a[i]  * dct_root_1_by_2N;
   }
 
