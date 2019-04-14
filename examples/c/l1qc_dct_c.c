@@ -42,7 +42,7 @@ int main(int argc, char **argv){
   cJSON *test_data_json=NULL;
   double *x=NULL, *b=NULL;
   l1c_int *pix_idx=NULL;
-  l1c_int N=0, M=0, status=0;
+  l1c_int m=0, n=0, status=0;
 
 
 
@@ -66,11 +66,11 @@ int main(int argc, char **argv){
     goto exit;
   }
 
-  status +=extract_json_double_array(test_data_json, "b", &b, &M);
-  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
-  status +=extract_json_int(test_data_json, "N", &N);
+  status +=extract_json_double_array(test_data_json, "b", &b, &n);
+  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &n);
+  status +=extract_json_int(test_data_json, "mtot", &m);
 
-  x = l1c_malloc_double(N);
+  x = l1c_malloc_double(m);
 
   if (status || !x){
     fprintf(stderr, "Error reading JSON file or allocating memory\n");
@@ -79,7 +79,7 @@ int main(int argc, char **argv){
   }
   // time_t start = time(NULL);
 
-  l1qc_dct(N, 1, x, M, b, pix_idx, l1qc_opts, &lb_res);
+  l1qc_dct(m, 1, x, n, b, pix_idx, l1qc_opts, &lb_res);
 
  exit:
   free(fpath);

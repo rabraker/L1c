@@ -64,7 +64,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   l1c_LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
 
-  l1c_int i=0, M=0,Nrow=0, Ncol=1, npix=0, NM=0, idx=0;
+  l1c_int i=0, n=0, mrow=0, mcol=1, npix=0, mtot=0, idx=0;
   double *pix_idx_double=NULL, *x_ours=NULL;
   l1c_int *pix_idx;
   int status=0;
@@ -80,25 +80,25 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   }
 
 
-  /* -------- Check Nrow -------------*/
+  /* -------- Check mrow -------------*/
   if( !mxIsDouble(prhs[0]) || !mxIsScalar(prhs[0]) ) {
     mexErrMsgIdAndTxt("l1c:l1qc_dct:notDouble",
                       "First Input vector must be type double.");
   }
-  Nrow = (l1c_int) mxGetScalar(prhs[0]);
+  mrow = (l1c_int) mxGetScalar(prhs[0]);
 
 
-  /* -------- Check Ncol -------------*/
+  /* -------- Check mcol -------------*/
   if( !mxIsDouble(prhs[1]) || !mxIsScalar(prhs[1]) ) {
     mexErrMsgIdAndTxt("l1c:l1qc_dct:notDouble",
                       "First Input vector must be type double.");
   }
-  Ncol = (l1c_int) mxGetScalar(prhs[1]);
-  NM = Ncol * Nrow;
+  mcol = (l1c_int) mxGetScalar(prhs[1]);
+  mtot = mcol * mrow;
 
-  /* Until I fix the DWORK/DALIGN issue, check that NM is divisible by DALIGN/sizeof(double)*/
+  /* Until I fix the DWORK/DALIGN issue, check that mtot is divisible by DALIGN/sizeof(double)*/
 
-  if (check_input_size(NM)){
+  if (check_input_size(mtot)){
     mexErrMsgIdAndTxt("l1c:l1qc_dct:not_align-able",
                       "l1qc_dct currently requires N*M be divisible by %d.", DALIGN/sizeof(double));
   }
@@ -115,7 +115,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     mexErrMsgIdAndTxt("l1c:l1qc_dct:notVector",
                       "Second Input must be a vector.");
   }else{
-    M = (l1c_int) ( mxGetM(prhs[2]) *  mxGetN(prhs[2]) );
+    n = (l1c_int) ( mxGetM(prhs[2]) *  mxGetN(prhs[2]) );
   }
 
   b = mxGetPr(prhs[2]);
@@ -138,8 +138,8 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   pix_idx_double = mxGetPr(prhs[3]);
 
-  if ( !(Nrow*Ncol > M) || (M != npix) || Nrow <=0 || Ncol <=0){
-    printf("Nrow = %d, Ncol=%d, M=%d, npix = %d\n", Nrow, Ncol, M, npix);
+  if ( !(mrow*mcol > n) || (n != npix) || mrow <=0 || mcol <=0){
+    printf("mrow = %d, mcol=%d, n=%d, npix = %d\n", mrow, mcol, n, npix);
     mexErrMsgIdAndTxt("l1c:l1qc_dct:incompatible_dimensions",
                       "Must have length(x0) > length(b), and length(b) = length(pix_idx).");
   }
@@ -222,28 +222,28 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   /* We are going to change x, so we must allocate and make a copy, so we
      dont change data in Matlabs workspace.
   */
-  x_ours = l1c_malloc_double(Nrow*Ncol);
+  x_ours = l1c_malloc_double(mrow*mcol);
   /*
     pix_idx will naturally be a double we supplied from matlab
     and will have 1-based indexing. Convert to integers and
     shift to 0-based indexing.
   */
-  pix_idx = calloc(M, sizeof(l1c_int));
+  pix_idx = calloc(n, sizeof(l1c_int));
   if (!x_ours || !pix_idx){
     status = L1C_OUT_OF_MEMORY;
     goto exit;
   }
   /* We need to validate pix_idx.*/
-  for (i=0; i<M; i++){
+  for (i=0; i<n; i++){
     idx = ((l1c_int) pix_idx_double[i]) - 1;
-    if (idx <0 || idx > NM-1){
+    if (idx <0 || idx > mtot-1){
       status = L1C_INVALID_ARGUMENT;
       goto exit;
     }
     pix_idx[i] = idx;
   }
 
-  int stat = l1qc_dct(Nrow, Ncol, x_ours, M, b, pix_idx, l1qc_opts, &lb_res);
+  int stat = l1qc_dct(mrow, mcol, x_ours, n, b, pix_idx, l1qc_opts, &lb_res);
   if (stat){
     lb_res.status = stat;
   }
@@ -251,11 +251,11 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   /* Prepare output data.
    */
-  plhs[0] = mxCreateDoubleMatrix((mwSize)Nrow * (mwSize)Ncol, 1, mxREAL);
+  plhs[0] = mxCreateDoubleMatrix((mwSize)mrow * (mwSize)mcol, 1, mxREAL);
 
   x_out =  mxGetPr(plhs[0]);
 
-  for (i=0; i<Nrow*Ncol; i++){
+  for (i=0; i<mrow*mcol; i++){
     x_out[i] = x_ours[i];
   }
   /* Only build the output struct if there is more than 1 output.*/

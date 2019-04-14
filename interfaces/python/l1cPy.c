@@ -81,7 +81,7 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
   PyArrayObject *b_npA=NULL;
   PyArrayObject *pix_idx_npA=NULL;
 
-  int i=0, status=0, n=0, m=0, N=0, M=0, M_=0;
+  int i=0, status=0, mrow=0, mcol=0, mtot=0, n=0, n_=0;
   int *pix_idx=NULL;
 
   l1c_LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
@@ -103,7 +103,7 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
 
   /* Parse the input tuple O=object, d=double, i=int*/
   if (!PyArg_ParseTupleAndKeywords(args, kw, "iiOO|ddddiiddi", keywords,
-                                   &n, &m, &b_obj, &pix_idx_obj,
+                                   &mrow, &mcol, &b_obj, &pix_idx_obj,
                                    &opts.epsilon, &opts.mu,
                                    &opts.lbtol, &opts.newton_tol,
                                    &opts.newton_max_iter, &opts.verbose,
@@ -134,11 +134,11 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
   }
 
   /*--------------- Check Sizes ----------------- */
-  N = n*m;
-  M = PyArray_DIM(b_npA, 0);
-  M_ = PyArray_DIM(pix_idx_npA, 0);
+  mtot = mrow*mcol;
+  n = PyArray_DIM(b_npA, 0);
+  n_ = PyArray_DIM(pix_idx_npA, 0);
 
-  if ( N < M || M != M_ ){
+  if ( mtot < n || n != n_ ){
     PyErr_SetString(PyExc_ValueError, "Must have len(x) > len(b) and len(b) == len(pix_idx).");
     goto fail;
   }
@@ -148,21 +148,21 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
   pix_idx = (int*)PyArray_DATA(pix_idx_npA);
 
   /* Allocate memory for M*xk=f */
-  x_ours = l1c_malloc_double(N);
+  x_ours = l1c_malloc_double(mtot);
   if (!x_ours){
     fprintf(stderr, "Memory Allocation failure\n");
     PyErr_SetString(PyExc_MemoryError, "Failed to allocation memory");
     goto fail;
   }
 
-  for(i=0; i<N; i++){
+  for(i=0; i<mtot; i++){
     x_ours[i] = 0;
   }
 
-  status = l1qc_dct(N, 1, x_ours, M, b, pix_idx, opts, &lb_res);
+  status = l1qc_dct(mrow, mcol, x_ours, n, b, pix_idx, opts, &lb_res);
 
   /* Build the output tuple */
-  npy_intp dims[] = {N};
+  npy_intp dims[] = {mtot};
   x_out_npA = PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, x_ours);
   lb_res_obj = Py_BuildValue("{s:d,s:i,s:i,s:i}",
                                        "l1", lb_res.l1,

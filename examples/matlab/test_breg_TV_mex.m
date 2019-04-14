@@ -6,9 +6,9 @@ function [tm_mex, Xopt] = test_breg_TV_mex(fpath, verbose)
   
   dat = jsondecode(dat_json);
   
-  n = sqrt(dat.N);
+  n = sqrt(dat.mtot);
   m = n;
-  x = dat.x_orig(:) + rand(dat.N,1);
+  x = dat.x_orig(:) + rand(dat.mtot, 1);
   img = reshape(x, n, n);
   mu = 5;
 

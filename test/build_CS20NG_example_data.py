@@ -84,9 +84,9 @@ def build_cs20ng_test_data(npix, data_path=None):
     pix_idx, pix_mask_mat = mu_path_mask(20, npix, 0.1)
 
     data = {'x_orig': img,
-            'N': img.flatten().shape[0],
-            'nrow': img.shape[0],
-            'ncol': img.shape[1],
+            'mtot': img.flatten().shape[0],
+            'mrow': img.shape[0],
+            'mcol': img.shape[1],
             'b': img.flatten()[pix_idx],
             'pix_idx': pix_idx,
             'one_based_index': 0}
