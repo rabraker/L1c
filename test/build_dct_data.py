@@ -15,9 +15,9 @@ def Adct_factory(pix_idx):
     return Adct
 
 
-def Atdct_factory(pix_idx, N):
+def Atdct_factory(pix_idx, m):
     def Atdct(y):
-        x = np.zeros(N)
+        x = np.zeros(m)
         x[pix_idx] = y
         x = dct(x, type=2, norm='ortho')
         return x
@@ -25,9 +25,9 @@ def Atdct_factory(pix_idx, N):
     return Atdct
 
 
-def dct_test_data(Nx, eta_vec, pix_idx):
+def dct_test_data(m, eta_vec, pix_idx):
     Adct = Adct_factory(pix_idx)
-    Atdct = Atdct_factory(pix_idx, Nx)
+    Atdct = Atdct_factory(pix_idx, m)
 
     # Another small example with randomly generated data.
 
@@ -52,7 +52,7 @@ def save_dct_test_data(fname, eta, y, EMx, MtEty, MtEt_EMx, pix_idx):
     TDU.save_json(data, fname)
 
 
-def build_dct_rand_test_data(fname, pix_idx, Nx):
+def build_dct_rand_test_data(fname, pix_idx, m):
     """
     Build a small example with random test data for the eta vector.
     y = EM * eta
@@ -60,8 +60,8 @@ def build_dct_rand_test_data(fname, pix_idx, Nx):
     """
 
     seed(0)
-    eta_vec = rand(Nx)
-    y_vec, EMx, MtEty, MtEt_EMx = dct_test_data(Nx, eta_vec, pix_idx)
+    eta_vec = rand(m)
+    y_vec, EMx, MtEty, MtEt_EMx = dct_test_data(m, eta_vec, pix_idx)
 
     save_dct_test_data(fname, eta_vec, y_vec, EMx, MtEty, MtEt_EMx, pix_idx)
 
@@ -71,7 +71,7 @@ def build_dct_large(fname, npix):
     Build a small example derived from the simulated CS20NG sample grating,
     with a mu-path mask applied.
     """
-    Nx = npix ** 2
+    m = npix ** 2
     perc = 0.15
     mu_len = 25
     img = CS20NG.make_CS20NG(npix)
@@ -80,7 +80,7 @@ def build_dct_large(fname, npix):
     x = img.flatten()
     eta = dct(x, norm='ortho', type=2)
 
-    y_vec, EMx, MtEty, MtEt_EMx = dct_test_data(Nx, eta, pix_idx)
+    y_vec, EMx, MtEty, MtEt_EMx = dct_test_data(m, eta, pix_idx)
 
     save_dct_test_data(fname, eta, y_vec, EMx, MtEty, MtEt_EMx, pix_idx)
 
@@ -93,16 +93,16 @@ data_dir = srcdir+"/test_data"
 
 # ------------- A small example, with sub-sampling ------------
 fname = data_dir+"/dct_small.json"
-Nx = 50
+m = 50
 pix_idx = np.array([2, 10, 15, 20, 25, 30, 35, 40, 45, 49])
 
 # ------------- A small example, without sub-sampling ------------
 # This checks that we get the right result for a pure dct, and in
 # particular, that we got the scaling at the first element correct.
-build_dct_rand_test_data(fname, pix_idx, Nx)
+build_dct_rand_test_data(fname, pix_idx, m)
 pix_idx = np.arange(50)
 fname = data_dir+"/dct_small_pure_dct.json"
-build_dct_rand_test_data(fname, pix_idx, Nx)
+build_dct_rand_test_data(fname, pix_idx, m)
 
 
 # -------- A large set of test data -------------

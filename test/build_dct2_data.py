@@ -8,9 +8,9 @@ from scipy.fftpack import dct
 import L1cTestDataUtils as TDU
 
 
-def Adct_factory(pix_idx, N, M):
+def Adct_factory(pix_idx, mrow, mcol):
     def Adct(x):
-        x = x.reshape((N, M))
+        x = x.reshape((mrow, mcol))
         y = dct(x, axis=0, type=3, norm='ortho')
         y = dct(y, axis=1, type=3, norm='ortho')
         y = y.flatten()[pix_idx]
@@ -18,11 +18,11 @@ def Adct_factory(pix_idx, N, M):
     return Adct
 
 
-def Atdct_factory(pix_idx, N, M):
+def Atdct_factory(pix_idx, mrow, mcol):
     def Atdct(y):
-        x = np.zeros(N*M)
+        x = np.zeros(mrow*mcol)
         x[pix_idx] = y
-        x = x.reshape((N, M))
+        x = x.reshape((mrow, mcol))
         x = dct(x, axis=0, type=2, norm='ortho')
         x = dct(x, axis=1, type=2, norm='ortho')
         return x
@@ -30,14 +30,14 @@ def Atdct_factory(pix_idx, N, M):
     return Atdct
 
 
-def build_dct_rand_test_data(fname, pix_idx, N, M):
+def build_dct_rand_test_data(fname, pix_idx, mrow, mcol):
 
     seed(0)
 
-    eta_vec = rand(N*M)
+    eta_vec = rand(mrow*mcol)
 
-    Adct = Adct_factory(pix_idx, N, M)
-    Atdct = Atdct_factory(pix_idx, N, M)
+    Adct = Adct_factory(pix_idx, mrow, mcol)
+    Atdct = Atdct_factory(pix_idx, mrow, mcol)
 
     # Another small example with randomly generated data.
 
@@ -54,8 +54,8 @@ def build_dct_rand_test_data(fname, pix_idx, N, M):
             'pix_idx': pix_idx.flatten().tolist(),
             'MtEty': MtEty.flatten().tolist(),
             'MtEt_EMx': MtEt_EMx.flatten().tolist(),
-            'N': N,
-            'M': M}
+            'mrow': mrow,
+            'mcol': mcol}
 
     TDU.save_json(data, fname)
 
@@ -69,41 +69,41 @@ data_dir = srcdir+"/test_data"
 
 # -------------------------------------------------------- #
 fname = data_dir+"/dct2_small.json"
-N = 16
-M = 16
+mrow = 16
+mcol = 16
 
 pix_idx = np.array([0, 2, 10, 15, 20, 25, 30, 35, 40, 45, 49])
-build_dct_rand_test_data(fname, pix_idx, N, M)
+build_dct_rand_test_data(fname, pix_idx, mrow, mcol)
 
 
 # -------------------------------------------------------- #
 # Check we still do this right for a tall, skinny matrix
 fname = data_dir+"/dct2_small_tall.json"
-N = 18
-M = 16
+mrow = 18
+mcol = 16
 
-# pix_idx = np.array([0, 2, 10, 15, 20, 25, 30, 35, 40, 45, (N-5)*M])
-pix_idx = np.arange(N*M)
-build_dct_rand_test_data(fname, pix_idx, N, M)
+# pix_idx = np.array([0, 2, 10, 15, 20, 25, 30, 35, 40, 45, (mrow-5)*mcol])
+pix_idx = np.arange(mrow*mcol)
+build_dct_rand_test_data(fname, pix_idx, mrow, mcol)
 
 # -------------------------------------------------------- #
 # Check we still do this right for a wide, short matrix
 fname = data_dir+"/dct2_small_wide.json"
-N = 16
-M = 18
+mrow = 16
+mcol = 18
 
-# pix_idx = np.array([0, 2, 10, 15, 20, 25, 30, 35, 40, 45, (N-5)*M])
-pix_idx = np.arange(N*M)
-build_dct_rand_test_data(fname, pix_idx, N, M)
+# pix_idx = np.array([0, 2, 10, 15, 20, 25, 30, 35, 40, 45, (mrow-5)*mcol])
+pix_idx = np.arange(mrow*mcol)
+build_dct_rand_test_data(fname, pix_idx, mrow, mcol)
 
 
 # -------------------------------------------------------- #
 # This checks that we get the right result for a pure dct, and in
 # particular, that we got the scaling at the first element correct.
 
-N = 16
-M = 16
+mrow = 16
+mcol = 16
 
-pix_idx = np.arange(N*M)
+pix_idx = np.arange(mrow*mcol)
 fname = data_dir+"/dct2_small_pure_dct.json"
-build_dct_rand_test_data(fname, pix_idx, N, M)
+build_dct_rand_test_data(fname, pix_idx, mrow, mcol)

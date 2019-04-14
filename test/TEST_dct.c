@@ -36,9 +36,8 @@ typedef struct DctData{
   double *x_in;
   double *y_in;
 
-  l1c_int Nx;
-  l1c_int Npix;
-  l1c_int Ny;
+  l1c_int m;
+  l1c_int n;
 
   int setup_status;
   char fpath[256];
@@ -64,26 +63,26 @@ static void setup(DctData *dct_dat){
     ck_abort();
   }
 
-  setup_status +=extract_json_double_array(test_data_json, "x_in", &dct_dat->x_in, &dct_dat->Nx);
-  setup_status +=extract_json_double_array(test_data_json, "y_in", &dct_dat->y_in, &dct_dat->Ny);
+  setup_status +=extract_json_double_array(test_data_json, "x_in", &dct_dat->x_in, &dct_dat->m);
+  setup_status +=extract_json_double_array(test_data_json, "y_in", &dct_dat->y_in, &dct_dat->n);
 
-  setup_status +=extract_json_double_array(test_data_json, "MtEt_EMx", &dct_dat->MtEty_EMx_exp, &dct_dat->Nx);
+  setup_status +=extract_json_double_array(test_data_json, "MtEt_EMx", &dct_dat->MtEty_EMx_exp, &dct_dat->m);
 
-  setup_status +=extract_json_double_array(test_data_json, "MtEty", &dct_dat->MtEty_exp, &dct_dat->Nx);
+  setup_status +=extract_json_double_array(test_data_json, "MtEty", &dct_dat->MtEty_exp, &dct_dat->m);
 
-  setup_status +=extract_json_double_array(test_data_json, "EMx", &dct_dat->EMx_exp, &dct_dat->Ny);
+  setup_status +=extract_json_double_array(test_data_json, "EMx", &dct_dat->EMx_exp, &dct_dat->n);
 
-  setup_status +=extract_json_int_array(test_data_json, "pix_idx", &dct_dat->pix_idx, &dct_dat->Npix);
+  setup_status +=extract_json_int_array(test_data_json, "pix_idx", &dct_dat->pix_idx, &dct_dat->n);
 
   if (setup_status){
     fprintf(stderr, "Error Loading json into program data in 'test_MtEty_large()'. Aborting\n");
     ck_abort();
   }
-  dct_dat->MtEty_EMx_act = l1c_malloc_double(dct_dat->Nx);
-  dct_dat->MtEty_act = l1c_malloc_double(dct_dat->Nx);
-  dct_dat->EMx_act = l1c_malloc_double(dct_dat->Nx);
+  dct_dat->MtEty_EMx_act = l1c_malloc_double(dct_dat->m);
+  dct_dat->MtEty_act = l1c_malloc_double(dct_dat->m);
+  dct_dat->EMx_act = l1c_malloc_double(dct_dat->m);
 
-  l1c_dct1_setup(dct_dat->Nx, dct_dat->Npix, dct_dat->pix_idx, &ax_funs);
+  l1c_dct1_setup(dct_dat->m, dct_dat->n, dct_dat->pix_idx, &ax_funs);
 
   cJSON_Delete(test_data_json);
 }
@@ -168,7 +167,7 @@ START_TEST(test_dct_MtEt_EMx)
   /* Provided and freed by setup_small() and teardown_small()*/
   ax_funs.AtAx(dctd->x_in, dctd->MtEty_EMx_act);
 
-  ck_assert_double_array_eq_tol(dctd->Nx, dctd->MtEty_EMx_exp,
+  ck_assert_double_array_eq_tol(dctd->m, dctd->MtEty_EMx_exp,
                                 dctd->MtEty_EMx_act, TOL_DCT);
 
 }
@@ -179,7 +178,7 @@ START_TEST(test_dct_MtEty)
 {
   ax_funs.Aty(dctd->y_in, dctd->MtEty_act);
 
-  ck_assert_double_array_eq_tol(dctd->Nx, dctd->MtEty_exp,
+  ck_assert_double_array_eq_tol(dctd->m, dctd->MtEty_exp,
                                 dctd->MtEty_act, TOL_DCT);
 
 }
@@ -190,7 +189,7 @@ START_TEST(test_dct_EMx)
 {
   ax_funs.Ax(dctd->x_in, dctd->EMx_act);
 
-  ck_assert_double_array_eq_tol(dctd->Ny, dctd->EMx_exp,
+  ck_assert_double_array_eq_tol(dctd->n, dctd->EMx_exp,
                                 dctd->EMx_act, TOL_DCT);
 
 }
