@@ -364,10 +364,6 @@ START_TEST (test_newton_init_regres1)
 
   ck_assert_double_array_eq_tol(N, u_exp, u,  TOL_DOUBLE_SUPER);
 
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
-
 }
 END_TEST
 
@@ -406,9 +402,7 @@ START_TEST (test_newton_init)
   l1c_free_double(u);
 
   free_generic_data(Tdat);
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
+
   if (status){
     ck_abort();
   }
@@ -479,9 +473,6 @@ START_TEST(test_l1qc_descent_dir)
   ax_funs.destroy();
 
   free_generic_data(Tdat);
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
 
   if (status)
     ck_abort();
@@ -540,10 +531,6 @@ START_TEST(test_H11pfun)
 
   free_generic_data(Tdat);
 
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
-
   if (status)
     ck_abort();
 
@@ -595,9 +582,7 @@ START_TEST(test_l1qc_hess_grad)
 
 
   free_generic_data(Tdat);
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
+
   if (status)
     ck_abort();
 }
@@ -629,9 +614,6 @@ START_TEST (test_find_max_step)
   l1c_free_double(DWORK);
   ax_funs.destroy();
   free_generic_data(Tdat);
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
 
 }
 END_TEST
@@ -759,9 +741,6 @@ START_TEST(test_line_search)
   cJSON_Delete(test_data_json);
   free(fpath_linesearch);
 
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
 }
 END_TEST
 
@@ -811,10 +790,6 @@ START_TEST(test_f_eval)
   ax_funs.destroy();
 
   free_generic_data(Tdat);
-
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
 
   if (status)
     ck_abort();

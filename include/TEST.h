@@ -7,11 +7,7 @@ Suite * cgsolve_suite(void);
 
 Suite * dct_suite(void);
 
-#if !defined(_USEMKL_)
 Suite * dct2_suite(void);
-#endif
-
-Suite * dct_mkl_suite(void);
 
 Suite *vcl_math_suite(void);
 

@@ -21,11 +21,7 @@
 #include "check_utils.h"
 #include "l1c.h"
 
-#ifdef _USEMKL_
-#define TOL_LARGE_DCT 1e-10
-#else
 #define TOL_LARGE_DCT TOL_DOUBLE_SUPER
-#endif
 
 extern char* fullfile(char *base_path, char *name);
 extern char *test_data_dir;
@@ -114,11 +110,6 @@ static void teardown(DctData *dct_dat){
 
   free(dct_dat->pix_idx);
   ax_funs.destroy();
-
-
-#ifdef _USEMKL_
-  mkl_free_buffers();
-#endif
 
 }
 
