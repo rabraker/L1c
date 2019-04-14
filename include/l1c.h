@@ -226,7 +226,7 @@ int l1c_cgsolve_diag_precond(l1c_int N, double *x, double *b, double *M_inv_diag
                              void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
                              l1c_CgResults *cg_result, l1c_CgParams cg_params);
 
-l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
+l1c_LBResult l1c_l1qc_newton(l1c_int m, double *x, l1c_int n, double *b,
                              l1c_L1qcOpts params, l1c_AxFuns Ax_funs);
 
 int l1qc_dct(int mrow, int mcol, double *x_out, int n, double *b, l1c_int *pix_idx,

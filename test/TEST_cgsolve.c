@@ -173,7 +173,7 @@ START_TEST(test_cgsolve_h11p){
   h11p_data.one_by_fe_sqrd = 1.0 / (fe * fe);
   h11p_data.atr = atr;
   h11p_data.sigx = sigx;
-  h11p_data.Dwork_1N = l1c_malloc_double(N);
+  h11p_data.Dwork_1m = l1c_malloc_double(N);
   h11p_data.AtAx = ax_funs.AtAx;
 
   DWORK4 = l1c_malloc_double_2D(4, N);
@@ -212,7 +212,7 @@ START_TEST(test_cgsolve_h11p){
   free(pix_idx);
   l1c_free_double(dx0);
   l1c_free_double_2D(4, DWORK4);
-  l1c_free_double(h11p_data.Dwork_1N);
+  l1c_free_double(h11p_data.Dwork_1m);
   ax_funs.destroy();
 
   free(fpath);

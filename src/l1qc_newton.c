@@ -13,10 +13,10 @@
 
 /* ---------------- Forward Declarations ---------------------- */
 
-static void lb_report(int lb_iter, int N, double *u, double l1,
+static void lb_report(int lb_iter, int m, double *u, double l1,
                       l1c_L1qcOpts params, l1c_LBResult lb_res);
 
-static void newton_report(int iter, int N, GradData gd, double lambda2,
+static void newton_report(int iter, int m, GradData gd, double lambda2,
                           double f, l1c_CgResults cg_results, LSStat ls_status);
 
 
@@ -25,14 +25,14 @@ static void newton_report(int iter, int N, GradData gd, double lambda2,
 
 
 /* Evalutes the value functional */
-void _l1c_l1qc_f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, double *b,
+void _l1c_l1qc_f_eval(l1c_int m, double *x, double *u, l1c_int n, double *r, double *b,
                       double tau, double epsilon, double *fu1, double *fu2,
                       double *fe, double *f, l1c_AxFuns Ax_funs){
   /*
     inputs
     ------
-    N : length of vectors
-    r,x,u : input data, of length N
+    m : length of vectors
+    r,x,u : input data, of length m
     tau : barrier relaxation paremeter
     epsilon: scalar
 
@@ -46,7 +46,7 @@ void _l1c_l1qc_f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, dou
 
     work space
     ----------
-    Dwork : should have length 2*N
+    Dwork : should have length 2*m
    */
 
   double a1=0, a2=0, a3=0;
@@ -54,26 +54,26 @@ void _l1c_l1qc_f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, dou
 
   /* Compute Ax - b = r */
   Ax_funs.Ax(x, r);
-  cblas_daxpy(M, -1.0, b, 1, r, 1);
+  cblas_daxpy(n, -1.0, b, 1, r, 1);
 
   // fu1 = x - u
-  l1c_daxpy_z(N, -1.0, u, x, fu1);
+  l1c_daxpy_z(m, -1.0, u, x, fu1);
   // fu2 = -x - u
-  axpby_z(N, -1.0, x, -1.0, u, fu2);
+  axpby_z(m, -1.0, x, -1.0, u, fu2);
 
-  *fe = 0.5 * (cblas_ddot(M, r, 1, r, 1) - epsilon * epsilon);
+  *fe = 0.5 * (cblas_ddot(n, r, 1, r, 1) - epsilon * epsilon);
 
-  a1 = vcl_logsum(N, -1.0, fu1);
-  a2 = vcl_logsum(N, -1.0, fu2);
+  a1 = vcl_logsum(m, -1.0, fu1);
+  a2 = vcl_logsum(m, -1.0, fu2);
   a3 = log(- (*fe));
-  *f = vcl_sum(N, u) - (1.0/tau) * ( a1 + a2 +a3);
+  *f = vcl_sum(m, u) - (1.0/tau) * ( a1 + a2 +a3);
 
 }
 
 
 /* Computes the H11 part of the hessian. Used to call cgsolve.
  */
-void _l1c_l1qc_H11pfun(l1c_int N, double *z, double *y,  void *hess_data_in){
+void _l1c_l1qc_H11pfun(l1c_int m, double *z, double *y,  void *hess_data_in){
   /*
 
    */
@@ -81,32 +81,32 @@ void _l1c_l1qc_H11pfun(l1c_int N, double *z, double *y,  void *hess_data_in){
   // Hess_data h11p_data = *((Hess_data *) hess_data_in);
   // // // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
 
-  // double *ATA_z = h11p_data.Dwork_1N;
+  // double *ATA_z = h11p_data.Dwork_1m;
   // double atr_dot_z_fe = 0.0;
 
-  // atr_dot_z_fe = cblas_ddot(N, h11p_data.atr, 1, z, 1);
+  // atr_dot_z_fe = cblas_ddot(m, h11p_data.atr, 1, z, 1);
   // atr_dot_z_fe = atr_dot_z_fe * h11p_data.one_by_fe_sqrd; //1/fe^2*(atr'*z)
 
 
   // h11p_data.AtAx(z, ATA_z);                               // AtA_z
-  // l1c_dxmuly_z(N, h11p_data.sigx, z, y);                  // y = sigx.*z
-  // cblas_daxpy(N, -h11p_data.one_by_fe, ATA_z, 1, y, 1);   // y = sigx.*z (1/fe)*ATA_z
-  // cblas_daxpy(N, atr_dot_z_fe, h11p_data.atr, 1, y, 1);
+  // l1c_dxmuly_z(m, h11p_data.sigx, z, y);                  // y = sigx.*z
+  // cblas_daxpy(m, -h11p_data.one_by_fe, ATA_z, 1, y, 1);   // y = sigx.*z (1/fe)*ATA_z
+  // cblas_daxpy(m, atr_dot_z_fe, h11p_data.atr, 1, y, 1);
 
   Hess_data h11p_data = *((Hess_data *) hess_data_in);
   // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
 
   double atr_dot_z_fe = 0.0;
 
-  atr_dot_z_fe = cblas_ddot(N, h11p_data.atr, 1, z, 1);
+  atr_dot_z_fe = cblas_ddot(m, h11p_data.atr, 1, z, 1);
   atr_dot_z_fe = atr_dot_z_fe * h11p_data.one_by_fe_sqrd; //1/fe^2*(atr'*z)
 
 
   // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
   h11p_data.AtAx(z, y);                               // y = A^T*A*z
-  l1c_daxpby(N, atr_dot_z_fe, h11p_data.atr,          // y = - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
+  l1c_daxpby(m, atr_dot_z_fe, h11p_data.atr,          // y = - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
                -h11p_data.one_by_fe, y);
-  vcl_dxMy_pz(N, h11p_data.sigx, z, y);                // y = sigx.*z + A^T*A*z
+  vcl_dxMy_pz(m, h11p_data.sigx, z, y);                // y = sigx.*z + A^T*A*z
 
 
 }
@@ -144,7 +144,7 @@ The hessian is given by Hx + Hu where
     |                |               |
 
  */
-void _l1c_l1qc_hess_grad(l1c_int N, double *fu1, double *fu2, double *sigx, double *atr,
+void _l1c_l1qc_hess_grad(l1c_int m, double *fu1, double *fu2, double *sigx, double *atr,
                double fe,  double tau, GradData gd){
 
   l1c_int i = 0;
@@ -154,7 +154,7 @@ void _l1c_l1qc_hess_grad(l1c_int N, double *fu1, double *fu2, double *sigx, doub
   double mone_by_tau = -1.0/tau;
 
   #pragma omp parallel for private(one_by_fu1, one_by_fu2, one_by_fe_Atr, ntgz, ntgu, sig11, sig12)
-  for (i=0; i<N; i++){
+  for (i=0; i<m; i++){
 
     one_by_fu1 = 1.0 / fu1[i];
     one_by_fu2 = 1.0 / fu2[i];
@@ -165,7 +165,7 @@ void _l1c_l1qc_hess_grad(l1c_int N, double *fu1, double *fu2, double *sigx, doub
 
     // gradf = -1/tau*[ntgz; ntgu]
     gd.gradf[i] = mone_by_tau * ntgz;
-    gd.gradf[i+N] = mone_by_tau * ntgu;
+    gd.gradf[i+m] = mone_by_tau * ntgu;
 
     // Hessian parameters
     sig11 = one_by_fu1 * one_by_fu1 + one_by_fu2 * one_by_fu2;
@@ -190,7 +190,7 @@ void _l1c_l1qc_hess_grad(l1c_int N, double *fu1, double *fu2, double *sigx, doub
   The Hessian is split into 4 blocks: only the H11 part is dense.
   The rest (H12, H21, and H22) are diagonal.
  */
-int _l1c_l1qc_descent_dir(l1c_int N, double *fu1, double *fu2, double *r, double fe,  double tau,
+int _l1c_l1qc_descent_dir(l1c_int m, double *fu1, double *fu2, double *r, double fe,  double tau,
                  GradData gd, double **Dwork7, l1c_CgParams cg_params, l1c_CgResults *cg_result,
                  l1c_AxFuns Ax_funs){
   /* inputs
@@ -208,21 +208,21 @@ int _l1c_l1qc_descent_dir(l1c_int N, double *fu1, double *fu2, double *r, double
 
   work
   ----
-    *Dwork_5N
+    *Dwork_5m
 
   */
   l1c_int i=0;
   Hess_data h11p_data;
   double *sigx, *atr;
-  double **Dwork_4N;
+  double **Dwork_4m;
   sigx =  Dwork7[0];
-  h11p_data.Dwork_1N = Dwork7[1];
+  h11p_data.Dwork_1m = Dwork7[1];
   atr = Dwork7[2];
-  Dwork_4N = Dwork7 + 3;
+  Dwork_4m = Dwork7 + 3;
 
   Ax_funs.Aty(r, atr); //atr = A'*r.
 
-  _l1c_l1qc_hess_grad(N, fu1, fu2, sigx, atr, fe, tau, gd);
+  _l1c_l1qc_hess_grad(m, fu1, fu2, sigx, atr, fe, tau, gd);
 
   h11p_data.one_by_fe = 1.0/fe;
   h11p_data.one_by_fe_sqrd = 1.0 / (fe * fe);
@@ -230,7 +230,7 @@ int _l1c_l1qc_descent_dir(l1c_int N, double *fu1, double *fu2, double *r, double
   h11p_data.sigx = sigx;
   h11p_data.AtAx = Ax_funs.AtAx;
 
-  l1c_cgsolve(N, gd.dx, gd.w1p, Dwork_4N,
+  l1c_cgsolve(m, gd.dx, gd.w1p, Dwork_4m,
               _l1c_l1qc_H11pfun, &h11p_data, cg_result, cg_params);
 
   if (cg_result->cgres > 0.5){
@@ -238,7 +238,7 @@ int _l1c_l1qc_descent_dir(l1c_int N, double *fu1, double *fu2, double *r, double
   }
 
 #pragma omp parallel for
-  for (i=0; i<N; i++){
+  for (i=0; i<m; i++){
     // gd.du[i] = (gd.ntgu[i] - gd.sig12[i] * gd.dx[i] ) / gd.sig11[i];
     gd.du[i] = (1.0/gd.sig11[i]) * gd.ntgu[i] - (gd.sig12[i] / gd.sig11[i]) * gd.dx[i];
   }
@@ -262,8 +262,8 @@ int _l1c_l1qc_descent_dir(l1c_int N, double *fu1, double *fu2, double *r, double
   functional. However, this should be faster, that iterating through
   the line search.
  */
-double _l1c_l1qc_find_max_step(l1c_int N, GradData gd, double *fu1,
-                               double *fu2, int M, double *r, double *DWORK,
+double _l1c_l1qc_find_max_step(l1c_int m, GradData gd, double *fu1,
+                               double *fu2, int n, double *r, double *DWORK,
                                double epsilon, l1c_AxFuns Ax_funs){
 
   double *Adx = DWORK;
@@ -273,9 +273,9 @@ double _l1c_l1qc_find_max_step(l1c_int N, GradData gd, double *fu1,
   l1c_int i=0;
   double min_u1 = 0.0, min_u2=0.0;
 
-  aqe = cblas_ddot(M, Adx, 1, Adx, 1);
-  bqe = 2.0 * cblas_ddot(M, r, 1, Adx, 1);
-  cqe = cblas_ddot(M, r, 1, r, 1) - epsilon * epsilon;
+  aqe = cblas_ddot(n, Adx, 1, Adx, 1);
+  bqe = 2.0 * cblas_ddot(n, r, 1, Adx, 1);
+  cqe = cblas_ddot(n, r, 1, r, 1) - epsilon * epsilon;
 
   root = (-bqe + sqrt( bqe*bqe - 4 * aqe * cqe)) / ( 2* aqe);
 
@@ -298,7 +298,7 @@ double _l1c_l1qc_find_max_step(l1c_int N, GradData gd, double *fu1,
     care about the cases when,  dx-du>0 or -dx-du>0.
    */
   min_u1 = INFINITY;
-  for (i=0; i<N; i++){
+  for (i=0; i<m; i++){
     if ( !(gd.dx[i] - gd.du[i] > 0) ){
       continue;
     }else{
@@ -306,7 +306,7 @@ double _l1c_l1qc_find_max_step(l1c_int N, GradData gd, double *fu1,
     }
   }
   min_u2 = INFINITY;
-  for (i=0; i<N; i++){
+  for (i=0; i<m; i++){
     if ( !(-gd.dx[i] - gd.du[i] > 0) ){
       continue;
     }else{
@@ -320,7 +320,7 @@ double _l1c_l1qc_find_max_step(l1c_int N, GradData gd, double *fu1,
 }
 
 
-LSStat _l1c_l1qc_line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double *b, double *fu1,
+LSStat _l1c_l1qc_line_search(l1c_int m, l1c_int n, double *x, double *u, double *r, double *b, double *fu1,
                              double *fu2, GradData gd, LSParams ls_params, double **DWORK5,
                              double *fe, double *f, l1c_AxFuns Ax_funs){
 
@@ -339,14 +339,14 @@ LSStat _l1c_l1qc_line_search(l1c_int N, l1c_int M, double *x, double *u, double 
 
   for (iter=1; iter<=32; iter++){
     // /* xp = x + s*dx etc*/
-    l1c_daxpy_z(N, step, gd.dx, x, xp);
-    l1c_daxpy_z(N, step, gd.du, u, up);
+    l1c_daxpy_z(m, step, gd.dx, x, xp);
+    l1c_daxpy_z(m, step, gd.du, u, up);
 
     // /*Re-evaluate, rather than relying on Adx */
     // Ax_funs.Ax(xp, rp);
-    // cblas_daxpy(M, -1.0, b, 1, rp, 1); //rp = A*xp - b
+    // cblas_daxpy(n, -1.0, b, 1, rp, 1); //rp = A*xp - b
 
-    _l1c_l1qc_f_eval(N, xp, up, M, rp, b, ls_params.tau, ls_params.epsilon,
+    _l1c_l1qc_f_eval(m, xp, up, n, rp, b, ls_params.tau, ls_params.epsilon,
                      fu1p, fu2p, &fep, &fp, Ax_funs);
 
 
@@ -357,16 +357,16 @@ LSStat _l1c_l1qc_line_search(l1c_int N, l1c_int M, double *x, double *u, double 
 
     /* need gradf'*[dx; du], but dx and du stored separately.
        Use pointer arithmetic with gradf*/
-    flx = cblas_ddot(N, gd.gradf, 1, gd.dx, 1);
-    flu = cblas_ddot(N, gd.gradf+N, 1, gd.du, 1);
+    flx = cblas_ddot(m, gd.gradf, 1, gd.dx, 1);
+    flu = cblas_ddot(m, gd.gradf+m, 1, gd.du, 1);
     flin = *f + ls_params.alpha * step * (flx + flu);
 
     if (fp <= flin){ /* Sufficient decrease test */
-      cblas_dcopy(N, xp, 1, x, 1);
-      cblas_dcopy(N, up, 1, u, 1);
-      cblas_dcopy(M, rp, 1, r, 1);
-      cblas_dcopy(N, fu1p, 1, fu1, 1);
-      cblas_dcopy(N, fu2p, 1, fu2, 1);
+      cblas_dcopy(m, xp, 1, x, 1);
+      cblas_dcopy(m, up, 1, u, 1);
+      cblas_dcopy(n, rp, 1, r, 1);
+      cblas_dcopy(m, fu1p, 1, fu1, 1);
+      cblas_dcopy(m, fu2p, 1, fu2, 1);
       *f = fp;
       *fe = fep;
       ls_stat.flx = flx;
@@ -400,46 +400,46 @@ LSStat _l1c_l1qc_line_search(l1c_int N, l1c_int M, double *x, double *u, double 
   return ls_stat;
 }
 
-int _l1c_l1qc_newton_init(l1c_int N, double *x, double *u,  l1c_L1qcOpts *params){
+int _l1c_l1qc_newton_init(l1c_int m, double *x, double *u,  l1c_L1qcOpts *params){
   l1c_int i = 0;
   double x_max = 0.0, tmp = 0.0;
 
   /* Initialize u */
   x_max = -INFINITY;
-  for (i=0; i<N; i++){
+  for (i=0; i<m; i++){
     x_max = max(x_max, fabs(x[i]));
   }
-  for (i=0; i<N; i++){
+  for (i=0; i<m; i++){
     u[i] = 0.95 * fabs(x[i]) + 0.10 *x_max;
   }
 
   /* choose initial value of tau so that the duality gap after the first
      step will be about the original norm */
-  //tau = max((2*N+1)/sum(abs(x0)), 1);
-  tmp = l1c_dnorm1(N, x);
-  tmp = (double)(2*N+1) / tmp;
+  //tau = max((2*m+1)/sum(abs(x0)), 1);
+  tmp = l1c_dnorm1(m, x);
+  tmp = (double)(2*m+1) / tmp;
   params->tau = max(tmp, 1);
 
   // If user has set lbiter, dont compute a different one.
   if (params->lbiter == 0){
-    tmp = log (2 * (double)N + 1) - log(params->lbtol) - log(params->tau);
+    tmp = log (2 * (double)m + 1) - log(params->lbtol) - log(params->tau);
     params->lbiter =(int) ceil (tmp / log(params->mu));
   }
   return 0;
 }
 
-int _l1c_l1qc_check_feasible_start(double *x, l1c_int M, double *b, double epsilon,
+int _l1c_l1qc_check_feasible_start(double *x, l1c_int n, double *b, double epsilon,
                                    double *DWORK, l1c_AxFuns Ax_funs){
 
   /* Compute Ax - b = r */
   Ax_funs.Ax(x, DWORK);
-  cblas_daxpy(M, -1.0, b, 1, DWORK, 1);
+  cblas_daxpy(n, -1.0, b, 1, DWORK, 1);
 
-  double tmp = cblas_dnrm2(M, DWORK, 1)  - epsilon;
+  double tmp = cblas_dnrm2(n, DWORK, 1)  - epsilon;
   if (tmp > 0){
     // Using minimum-2 norm  x0 = At*inv(AAt)*y.') as they
     // will require updates to cgsolve.
-    printf("epsilon = %f,  ||r|| = %.20f\n", epsilon, cblas_dnrm2(M, DWORK, 1));
+    printf("epsilon = %f,  ||r|| = %.20f\n", epsilon, cblas_dnrm2(n, DWORK, 1));
     return L1C_INFEASIBLE_START;
   }else
     return 0;
@@ -448,14 +448,14 @@ int _l1c_l1qc_check_feasible_start(double *x, l1c_int M, double *b, double epsil
 
 /**
  *
- * @param[in] N size of x.
+ * @param[in] m size of x.
  * @param[in,out] x result of optimization.
- * @param[in] M size of b
+ * @param[in] n size of b
  * @param[in] b The measurements.
  * @param[in] params a struct of options.
  * @param[in] Ax_funs a struct of function pointers.
  */
-l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
+l1c_LBResult l1c_l1qc_newton(l1c_int m, double *x, l1c_int n, double *b,
                      l1c_L1qcOpts params, l1c_AxFuns Ax_funs){
 
   LSStat ls_stat = {.flx=0, .flu = 0, .flin=0, .step=0, .status=0};
@@ -475,18 +475,18 @@ l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
 
   double **DWORK7=NULL;
 
-  double *u   = l1c_calloc_double(N);
-  double *r = l1c_calloc_double(M);
-  double *fu1 = l1c_calloc_double(N);
-  double *fu2 = l1c_calloc_double(N);
+  double *u   = l1c_calloc_double(m);
+  double *r = l1c_calloc_double(n);
+  double *fu1 = l1c_calloc_double(m);
+  double *fu2 = l1c_calloc_double(m);
 
-  gd.w1p = l1c_calloc_double(N);
-  gd.dx  = l1c_calloc_double(N);
-  gd.du  = l1c_calloc_double(N);
-  gd.sig11  = l1c_calloc_double(N);
-  gd.sig12  = l1c_calloc_double(N);
-  gd.ntgu   = l1c_calloc_double(N);
-  gd.gradf  = l1c_calloc_double(2*N);
+  gd.w1p = l1c_calloc_double(m);
+  gd.dx  = l1c_calloc_double(m);
+  gd.du  = l1c_calloc_double(m);
+  gd.sig11  = l1c_calloc_double(m);
+  gd.sig12  = l1c_calloc_double(m);
+  gd.ntgu   = l1c_calloc_double(m);
+  gd.gradf  = l1c_calloc_double(2*m);
 
   if ( !r || !fu1 || !fu2
        || !gd.w1p || !gd.dx || !gd.du
@@ -497,14 +497,14 @@ l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
   }
 
 
-  DWORK7 = l1c_calloc_double_2D(7, N);
+  DWORK7 = l1c_calloc_double_2D(7, m);
 
 
-  _l1c_l1qc_newton_init(N, x, u, &params);
+  _l1c_l1qc_newton_init(m, x, u, &params);
 
 
 
-  if (_l1c_l1qc_check_feasible_start(x, M, b, params.epsilon, DWORK7[0], Ax_funs) ){
+  if (_l1c_l1qc_check_feasible_start(x, n, b, params.epsilon, DWORK7[0], Ax_funs) ){
     printf("Starting point is infeasible, exiting\n");
     lb_res.status = L1C_INFEASIBLE_START;
     goto exit;
@@ -520,16 +520,16 @@ l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
 
   if (params.verbose >0) {
     printf("Total Log-Barrier iterations:  %d \n", (int)params.lbiter);
-    printf("Original l1-norm: %f, original functional %f\n", l1c_dnorm1(N, x), l1c_dsum(N, u));
+    printf("Original l1-norm: %f, original functional %f\n", l1c_dnorm1(m, x), l1c_dsum(m, u));
   }
 
   /* ---------------- MAIN **TAU** ITERATION --------------------- */
   for (lb_iter=1; lb_iter<=params.lbiter; lb_iter++){
 
     /*Re-initialize dx to zero every lb-iteration. */
-    l1c_init_vec(N, gd.dx, 0.0);
+    l1c_init_vec(m, gd.dx, 0.0);
 
-    _l1c_l1qc_f_eval(N, x, u, M, r, b, params.tau, params.epsilon, fu1, fu2, &fe, &f, Ax_funs);
+    _l1c_l1qc_f_eval(m, x, u, n, r, b, params.tau, params.epsilon, fu1, fu2, &fe, &f, Ax_funs);
 
     l1_prev = INFINITY;
     /* ---------------- MAIN Newton ITERATION --------------------- */
@@ -539,9 +539,9 @@ l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
          warm_start_cg ==1 means we use dx itself, ie., a NOP.
        */
       if (params.warm_start_cg==0){
-        cblas_dscal(N, 0, gd.dx, 1);
+        cblas_dscal(m, 0, gd.dx, 1);
       }else if (params.warm_start_cg==2){
-        cblas_dscal(N, ls_stat.step, gd.dx, 1);
+        cblas_dscal(m, ls_stat.step, gd.dx, 1);
       }
      /* Note: we do not need to re-evaluate the functional because we now do
         that inside the line search. Thus, f, fe, fu1, fu2 and r provided by
@@ -549,7 +549,7 @@ l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
       */
 
 
-      if(_l1c_l1qc_descent_dir(N, fu1, fu2, r, fe,  params.tau, gd, DWORK7, cg_params,
+      if(_l1c_l1qc_descent_dir(m, fu1, fu2, r, fe,  params.tau, gd, DWORK7, cg_params,
                          &cg_results, Ax_funs)){
         printf("Unable to solve system for Newton descent direction.\n");
         printf("Returning previous iterate\n");
@@ -559,22 +559,22 @@ l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
 
 
       /* -------------- Line Search --------------------------- */
-      ls_params.s = _l1c_l1qc_find_max_step(N, gd, fu1, fu2, M, r, DWORK7[0], params.epsilon, Ax_funs);
+      ls_params.s = _l1c_l1qc_find_max_step(m, gd, fu1, fu2, n, r, DWORK7[0], params.epsilon, Ax_funs);
 
-      ls_stat = _l1c_l1qc_line_search(N, M, x, u, r, b, fu1, fu2, gd, ls_params, DWORK7, &fe, &f, Ax_funs);
+      ls_stat = _l1c_l1qc_line_search(m, n, x, u, r, b, fu1, fu2, gd, ls_params, DWORK7, &fe, &f, Ax_funs);
       if (ls_stat.status > 0){
         break;
       }
 
       /* ------------------Report and Check for exit --------------*/
       lambda2 = -(
-                  cblas_ddot(N, gd.gradf, 1, gd.dx, 1)
+                  cblas_ddot(m, gd.gradf, 1, gd.dx, 1)
                   +
-                  cblas_ddot(N, gd.gradf+N, 1, gd.du, 1)
+                  cblas_ddot(m, gd.gradf+m, 1, gd.du, 1)
                   );
 
       if (params.verbose >1){
-        newton_report(iter, N, gd, lambda2, f, cg_results, ls_stat);
+        newton_report(iter, m, gd, lambda2, f, cg_results, ls_stat);
       }
 
       /*Check for early exit */
@@ -582,7 +582,7 @@ l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
         break;
       }
 
-      l1 = l1c_dnorm1(N, x);
+      l1 = l1c_dnorm1(m, x);
       rate = fabs(l1_prev - l1)/l1;
 
       l1_prev = l1;
@@ -605,7 +605,7 @@ l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
 
     /* Report on log-barrier progress. */
     if (params.verbose >0){
-      lb_report(lb_iter, N, u, l1, params, lb_res);
+      lb_report(lb_iter, m, u, l1, params, lb_res);
     }
 
   } /* LB-iter */
@@ -630,7 +630,7 @@ l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
   // for (int k=0; k<7; k++){
   //   l1c_free_double(DWORK7[k]);
   // }
-  lb_res.l1 = l1c_dnorm1(N, x);
+  lb_res.l1 = l1c_dnorm1(m, x);
   return lb_res;
 
 }/* MAIN ENDS HERE*/
@@ -641,13 +641,13 @@ l1c_LBResult l1c_l1qc_newton(l1c_int N, double *x, l1c_int M, double *b,
 Prints status report for the outer, log-barrier iterations.
  */
 static void
-lb_report(int lb_iter, int N, double *u, double l1,
+lb_report(int lb_iter, int m, double *u, double l1,
           l1c_L1qcOpts params, l1c_LBResult lb_res){
 
   printf("\n*********************************************************************");
   printf("***********************************\n");
   printf("* LB iter: %d, l1: %.3f, fctl: %8.3e, tau: %8.3e, total newton-iter: %d, Total CG iter=%d *\n",
-         lb_iter, l1, l1c_dsum(N, u), params.tau, lb_res.total_newton_iter, lb_res.total_cg_iter);
+         lb_iter, l1, l1c_dsum(m, u), params.tau, lb_res.total_newton_iter, lb_res.total_cg_iter);
   printf("***********************************************************************");
   printf("*********************************\n\n");
 
@@ -658,11 +658,11 @@ lb_report(int lb_iter, int N, double *u, double l1,
   Prints status reports for the inner Newton iterations.
  */
 static void
-newton_report(int iter, int N, GradData gd, double lambda2,
+newton_report(int iter, int m, GradData gd, double lambda2,
                    double f, l1c_CgResults cg_results, LSStat ls_status){
 
   /* want norm [dx; du] */
-  double  stepsize = cblas_ddot(N, gd.dx, 1, gd.dx, 1) + cblas_ddot(N, gd.du, 1, gd.du, 1);
+  double  stepsize = cblas_ddot(m, gd.dx, 1, gd.dx, 1) + cblas_ddot(m, gd.du, 1, gd.du, 1);
   stepsize = stepsize * ls_status.step;
   if (iter == 1){
     printf("Newton-iter | Functional | Newton decrement |  Stepsize  |  cg-res");

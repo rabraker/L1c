@@ -7,7 +7,7 @@ import json
 import codecs
 import L1cTestDataUtils as TDU
 
-def build_lb_test_data(lb_data_path, N, T, K):
+def build_lb_test_data(lb_data_path, m, T, K):
     """
     Test data for the whole log-barrier integration test.
     This is basically the example the example.
@@ -15,15 +15,15 @@ def build_lb_test_data(lb_data_path, N, T, K):
     and (2) that the optimal vector has an l1-norm comparable to
     the true x, to within the noise level.
     """
-    x = np.zeros((N,1))
-    q = np.random.permutation(N)
+    x = np.zeros((m, 1))
+    q = np.random.permutation(m)
     x[q[0:T]] = np.sign(np.random.randn(T, 1))
 
     T_idx = q[0:T]
     TC_idx = q[T:]
 
     # Build the measurement matrix.
-    A_ = np.random.randn(K, N)
+    A_ = np.random.randn(K, m)
     # orthonormal basis for the range of A_
     U, _, _ = np.linalg.svd(A_.T)
     A = U[:, 0:K].T
@@ -60,32 +60,32 @@ def build_lb_test_data(lb_data_path, N, T, K):
             'newtontol': 1e-4,
             'newtonmaxiter': 50,
             'cgtol': 1e-8,
-            'cgmaxiter': N,
+            'cgmaxiter': m,
             'T_idx': T_idx,
             'TC_idx': TC_idx,
-            'enrm1': enrm1
+            'enrm1': enrm1,
     }
 
     data = TDU.jsonify(data)
     TDU.save_json(data, lb_data_path)
 
 
-def build_dct_mat(N):
-    dct_mat = np.zeros((N, N))
-    I = np.eye(N)
+def build_dct_mat(m):
+    dct_mat = np.zeros((m, m))
+    I = np.eye(m)
 
-    for k in range(0, N):
+    for k in range(0, m):
         dct_mat[:, k] = dct(I[:, k], type=2, norm='ortho')
 
     return dct_mat
 
 
-def build_Amats(N):
+def build_Amats(m):
 
-    dct_mat = build_dct_mat(N)
+    dct_mat = build_dct_mat(m)
 
-    E_mat = np.eye(N)
-    row_select = np.random.rand(N)
+    E_mat = np.eye(m)
+    row_select = np.random.rand(m)
 
     # The comma is important! Otherwise we get tuple and everything
     # below is fubar.
@@ -117,11 +117,11 @@ def find_max_step(dx, du, Adx, fu1, fu2, r, epsilon):
 
 
 def newton_init(x0, lbtol, mu):
-    N = x0.shape[0]
+    m = x0.shape[0]
     u = (0.95)*np.abs(x0) + (0.10)*np.max(np.abs(x0))
-    tmp = (2.0*N+1.0)/np.sum(np.abs(x0))
+    tmp = (2.0*m+1.0)/np.sum(np.abs(x0))
     tau = np.max((tmp, 1))
-    lbiter = np.ceil((np.log(2.0*N+1.0)-np.log(lbtol)-np.log(tau))/np.log(mu))
+    lbiter = np.ceil((np.log(2.0*m+1.0)-np.log(lbtol)-np.log(tau))/np.log(mu))
 
     return u, tau, lbiter
 
@@ -192,10 +192,10 @@ def Hess_gradf(tau, fe, fu1, fu2, atr, A):
 
     dx = np.linalg.solve(H11_prime, w1p)
     du = (1/sig11)*ntgu - (sig12/sig11)*dx
-    N = dx.shape[0]
-    print("================ %d ==========\n" %N)
-    np.testing.assert_array_almost_equal(dx, dxdu[0:N])
-    np.testing.assert_array_almost_equal(du, dxdu[N:])
+    m = dx.shape[0]
+    print("================ %d ==========\n" %m)
+    np.testing.assert_array_almost_equal(dx, dxdu[0:m])
+    np.testing.assert_array_almost_equal(du, dxdu[m:])
 
     return gf, ntgu, ntgz, atr, sig11, sig12, sigx, w1p, dxdu
 
@@ -203,18 +203,18 @@ def Hess_gradf(tau, fe, fu1, fu2, atr, A):
 def build_l1qc_main(l1qc_data_path):
 
     np.random.seed(0)
-    N = 16
+    m = 16
     tau = 10
     mu = 10
     lbtol = 1e-3
     epsilon = .1
 
-    A, At, pix_idx = build_Amats(N)
-    M = A.shape[0]
+    A, At, pix_idx = build_Amats(m)
+    n = A.shape[0]
 
-    xx = np.random.randn(N, 1)
-    b = A.dot(xx) + np.random.randn(M, 1) * 0.015
-    x = At.dot(b) + np.random.randn(N, 1) * 0.0001
+    xx = np.random.randn(m, 1)
+    b = A.dot(xx) + np.random.randn(n, 1) * 0.015
+    x = At.dot(b) + np.random.randn(m, 1) * 0.0001
 
     u, tau_exp, lbiter = newton_init(x, lbtol, mu)
 
@@ -226,8 +226,8 @@ def build_l1qc_main(l1qc_data_path):
         sys.exit(1)
 
 
-    dx_rand1 = np.random.randn(N, 1)
-    du_rand1 = np.random.randn(N, 1)
+    dx_rand1 = np.random.randn(m, 1)
+    du_rand1 = np.random.randn(m, 1)
     Adx_rand1 = A.dot(dx_rand1)
     smax = find_max_step(dx_rand1, du_rand1, Adx_rand1, fu1, fu2, r, epsilon)
 
@@ -236,15 +236,15 @@ def build_l1qc_main(l1qc_data_path):
     gf, ntgu, ntgx, atr, sig11, sig12, sigx, w1p, dxdu = Hess_gradf(tau, fe, fu1,
                                                                     fu2, atr, A)
 
-    sigx_rand = np.random.randn(N, 1)
-    z_rand = np.random.randn(N, 1)
-    r_rand = np.random.randn(M, 1)
+    sigx_rand = np.random.randn(m, 1)
+    z_rand = np.random.randn(m, 1)
+    r_rand = np.random.randn(n, 1)
     at_rrand = A.T.dot(r)
     fe_rand = -np.abs(np.random.rand(1)[0])
     h11p_z = H11p_fun(sigx_rand, fe_rand, A, at_rrand, z_rand)
 
-    l1qc_data = {'N': N,
-                 'M': M,
+    l1qc_data = {'m': m,
+                 'n': n,
                  'tau0': tau,
                  'lbtol': lbtol,
                  'mu': mu,
@@ -285,8 +285,8 @@ def build_l1qc_main(l1qc_data_path):
                  'sig12': sig12,
                  'w1p': w1p,
                  'sigx': sigx,
-                 'dx': dxdu[0:N],
-                 'du': dxdu[N:]}
+                 'dx': dxdu[0:m],
+                 'du': dxdu[m:]}
 
 
     l1qc_data_json = TDU.jsonify(l1qc_data)
@@ -306,9 +306,9 @@ if __name__ == "__main__":
     build_l1qc_main(l1qc_data_path)
 
     # Data for the whole log-barrier integration test.
-    N = 512  # Total vector size
+    m = 512  # Total vector size
     T = 20   # sparsity
     K = 120  # Number of measurements.
 
     lb_data_path = test_data_path+"/lb_test_data_AX.json"
-    build_lb_test_data(lb_data_path, N, T, K)
+    build_lb_test_data(lb_data_path, m, T, K)

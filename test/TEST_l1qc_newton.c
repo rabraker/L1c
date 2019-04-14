@@ -53,8 +53,8 @@ void init_l1qc_opts(l1c_L1qcOpts *params){
 }
 
 typedef struct L1qcTestData {
-  l1c_int N;
-  l1c_int M;
+  l1c_int m;
+  l1c_int n;
   double tau0;
   double lbtol;
   double mu;
@@ -102,56 +102,56 @@ static void init_generic_data(L1qcTestData *dat){
   char *fpath_generic = fullfile(test_data_dir, "l1qc_data.json");
   cJSON *json_data;
 
-  int N_tmp=0, M_tmp=0, status=0;
+  int m_tmp=0, n_tmp=0, status=0;
   if (load_file_to_json(fpath_generic, &json_data)){
     fprintf(stderr, "Error loading data in test_l1qc_newton_1iter\n");
     ck_abort();
   }
-  status +=extract_json_int(json_data, "N", &dat->N);
-  status +=extract_json_int(json_data, "M", &dat->M);
+  status +=extract_json_int(json_data, "m", &dat->m);
+  status +=extract_json_int(json_data, "n", &dat->n);
   status +=extract_json_double(json_data, "tau0", &dat->tau0);
   status +=extract_json_double(json_data, "lbtol", &dat->lbtol);
   status +=extract_json_double(json_data, "mu", &dat->mu);
   status +=extract_json_double(json_data, "epsilon", &dat->epsilon);
   status +=extract_json_double(json_data, "cgtol", &dat->cgtol);
   status +=extract_json_int(json_data, "cgmaxiter", &dat->cgmaxiter);
-  status +=extract_json_int_array(json_data, "pix_idx", &dat->pix_idx, &N_tmp);
+  status +=extract_json_int_array(json_data, "pix_idx", &dat->pix_idx, &m_tmp);
 
-  status +=extract_json_double_array(json_data, "A", &dat->A, &N_tmp);
-  status +=extract_json_double_array(json_data, "b", &dat->b, &M_tmp);
-  status +=extract_json_double_array(json_data, "x", &dat->x, &N_tmp);
+  status +=extract_json_double_array(json_data, "A", &dat->A, &m_tmp);
+  status +=extract_json_double_array(json_data, "b", &dat->b, &n_tmp);
+  status +=extract_json_double_array(json_data, "x", &dat->x, &m_tmp);
 
   status +=extract_json_double(json_data, "tau", &dat->tau);
   status +=extract_json_int(json_data, "lbiter", &dat->lbiter);
-  status +=extract_json_double_array(json_data, "u", &dat->u, &N_tmp);
-  status +=extract_json_double_array(json_data, "r", &dat->r, &M_tmp);
+  status +=extract_json_double_array(json_data, "u", &dat->u, &m_tmp);
+  status +=extract_json_double_array(json_data, "r", &dat->r, &n_tmp);
   status +=extract_json_double(json_data, "f", &dat->f);
   status +=extract_json_double(json_data, "fe", &dat->fe);
-  status +=extract_json_double_array(json_data, "fu1", &dat->fu1, &N_tmp);
-  status +=extract_json_double_array(json_data, "fu2", &dat->fu2, &N_tmp);
+  status +=extract_json_double_array(json_data, "fu1", &dat->fu1, &m_tmp);
+  status +=extract_json_double_array(json_data, "fu2", &dat->fu2, &m_tmp);
   //Smax
-  status +=extract_json_double_array(json_data, "dx_rand1", &dat->dx_rand1, &N_tmp);
-  status +=extract_json_double_array(json_data, "du_rand1", &dat->du_rand1, &N_tmp);
+  status +=extract_json_double_array(json_data, "dx_rand1", &dat->dx_rand1, &m_tmp);
+  status +=extract_json_double_array(json_data, "du_rand1", &dat->du_rand1, &m_tmp);
   status +=extract_json_double(json_data, "smax", &dat->smax);
   //h11p
-  status +=extract_json_double_array(json_data, "sigx_rand", &dat->sigx_rand, &N_tmp);
-  status +=extract_json_double_array(json_data, "z_rand", &dat->z_rand, &N_tmp);
-  status +=extract_json_double_array(json_data, "r_rand", &dat->r_rand, &N_tmp);
-  status +=extract_json_double_array(json_data, "at_rrand", &dat->at_rrand, &N_tmp);
+  status +=extract_json_double_array(json_data, "sigx_rand", &dat->sigx_rand, &m_tmp);
+  status +=extract_json_double_array(json_data, "z_rand", &dat->z_rand, &m_tmp);
+  status +=extract_json_double_array(json_data, "r_rand", &dat->r_rand, &m_tmp);
+  status +=extract_json_double_array(json_data, "at_rrand", &dat->at_rrand, &m_tmp);
   status +=extract_json_double(json_data, "fe_rand", &dat->fe_rand);
-  status +=extract_json_double_array(json_data, "h11p_z", &dat->h11p_z, &N_tmp);
+  status +=extract_json_double_array(json_data, "h11p_z", &dat->h11p_z, &m_tmp);
   //For descent data
 
-  status +=extract_json_double_array(json_data, "gradf", &dat->gradf, &N_tmp);
-  status +=extract_json_double_array(json_data, "atr", &dat->atr, &N_tmp);
-  status +=extract_json_double_array(json_data, "ntgx", &dat->ntgx, &N_tmp);
-  status +=extract_json_double_array(json_data, "ntgu", &dat->ntgu, &N_tmp);
-  status +=extract_json_double_array(json_data, "sig11", &dat->sig11, &N_tmp);
-  status +=extract_json_double_array(json_data, "sig12", &dat->sig12, &N_tmp);
-  status +=extract_json_double_array(json_data, "w1p", &dat->w1p, &N_tmp);
-  status +=extract_json_double_array(json_data, "sigx", &dat->sigx, &N_tmp);
-  status +=extract_json_double_array(json_data, "dx", &dat->dx, &N_tmp);
-  status +=extract_json_double_array(json_data, "du", &dat->du, &N_tmp);
+  status +=extract_json_double_array(json_data, "gradf", &dat->gradf, &m_tmp);
+  status +=extract_json_double_array(json_data, "atr", &dat->atr, &m_tmp);
+  status +=extract_json_double_array(json_data, "ntgx", &dat->ntgx, &m_tmp);
+  status +=extract_json_double_array(json_data, "ntgu", &dat->ntgu, &m_tmp);
+  status +=extract_json_double_array(json_data, "sig11", &dat->sig11, &m_tmp);
+  status +=extract_json_double_array(json_data, "sig12", &dat->sig12, &m_tmp);
+  status +=extract_json_double_array(json_data, "w1p", &dat->w1p, &m_tmp);
+  status +=extract_json_double_array(json_data, "sigx", &dat->sigx, &m_tmp);
+  status +=extract_json_double_array(json_data, "dx", &dat->dx, &m_tmp);
+  status +=extract_json_double_array(json_data, "du", &dat->du, &m_tmp);
 
   if (status){
     fprintf(stderr, "Error initializing data\n");
@@ -203,7 +203,7 @@ START_TEST (test_l1qc_newton)
   double *x_exp=NULL, *A=NULL;
   double enrm1;
   l1c_LBResult lb_res;
-  l1c_int N=0, M=0, NM=0,  status=0;
+  l1c_int m=0, n=0, mn=0,  status=0;
   l1c_int T=0, TC=0;
   l1c_int *T_idx=NULL, *TC_idx=NULL;
   l1c_AxFuns ax_funs;
@@ -220,9 +220,9 @@ START_TEST (test_l1qc_newton)
   // status +=extract_json_int(test_data_json, 'n', n);
   // status +=extract_json_int(test_data_json, 'm', m);
 
-  status +=extract_json_double_array(test_data_json, "x0", &x0, &M);
-  status +=extract_json_double_array(test_data_json, "x_act", &x_exp, &M);
-  status +=extract_json_double_array(test_data_json, "b", &b, &N);
+  status +=extract_json_double_array(test_data_json, "x0", &x0, &n);
+  status +=extract_json_double_array(test_data_json, "x_act", &x_exp, &n);
+  status +=extract_json_double_array(test_data_json, "b", &b, &m);
 
   status +=extract_json_double(test_data_json, "epsilon", &params.epsilon);
   status +=extract_json_double(test_data_json, "mu", &params.mu);
@@ -235,19 +235,19 @@ START_TEST (test_l1qc_newton)
 
   status +=extract_json_int_array(test_data_json, "T_idx", &T_idx, &T);
   status +=extract_json_int_array(test_data_json, "TC_idx", &TC_idx, &TC);
-  status +=extract_json_double_array(test_data_json, "A", &A, &NM);
+  status +=extract_json_double_array(test_data_json, "A", &A, &mn);
 
-  ck_assert_int_eq(NM, N*M);
+  ck_assert_int_eq(mn, m*n);
 
-  double *tmp1 = l1c_calloc_double(M);
-  double *tmp2 = l1c_calloc_double(M);
+  double *tmp1 = l1c_calloc_double(n);
+  double *tmp2 = l1c_calloc_double(n);
 
   if (status || !TC_idx || !T_idx || !A || !x0 || !x_exp || !b || !tmp1 || !tmp2){
     status += 1;
     goto exit1;
   }
 
-  if(l1c_setup_matrix_transforms(N, M, A, &ax_funs)){
+  if(l1c_setup_matrix_transforms(m, n, A, &ax_funs)){
     goto exit1;
   }
 
@@ -257,7 +257,7 @@ START_TEST (test_l1qc_newton)
   struct timeval tv_start, tv_end;
   tv_start = l1c_get_time();
 
-  lb_res = l1c_l1qc_newton(M, x0, N, b, params, ax_funs);
+  lb_res = l1c_l1qc_newton(n, x0, m, b, params, ax_funs);
 
   tv_end = l1c_get_time();
   double time_total = l1c_get_time_diff(tv_start, tv_end);
@@ -283,8 +283,8 @@ START_TEST (test_l1qc_newton)
 
   /* a. ---------------------
      Check property (a).*/
-  double dnrm1_x1exp= l1c_dnorm1(M, x_exp);
-  double dnrm1_xp = l1c_dnorm1(M, x0);
+  double dnrm1_x1exp= l1c_dnorm1(n, x_exp);
+  double dnrm1_xp = l1c_dnorm1(n, x0);
   ck_assert_double_le(dnrm1_xp, dnrm1_x1exp);
 
   /* -----------------------
@@ -292,7 +292,7 @@ START_TEST (test_l1qc_newton)
   ax_funs.Ax(x_exp, tmp1);
   ax_funs.Ax(x0, tmp2);
   double dnrm2_yerr = 0, yerr_k = 0;
-  for(int i=0; i<M; i++){
+  for(int i=0; i<n; i++){
     yerr_k = tmp1[i] - tmp2[i];
     dnrm2_yerr += yerr_k * yerr_k;
   }
@@ -302,7 +302,7 @@ START_TEST (test_l1qc_newton)
 
   /* c. ------------------
      Check property (c) */
-  l1c_daxpy_z(M, 1, x0, x_exp, tmp1); //h = x0 - x
+  l1c_daxpy_z(n, 1, x0, x_exp, tmp1); //h = x0 - x
   double h_T_nrm1=0, h_TC_nrm1=0;
   for(int i=0; i<T; i++){
     h_T_nrm1 += fabs(tmp1[T_idx[i]]);
@@ -347,7 +347,7 @@ START_TEST (test_newton_init_regres1)
 
   l1c_L1qcOpts params;
   init_l1qc_opts(&params);
-  l1c_int N=4;
+  l1c_int m=4;
 
   double x[] = {1.0, 2.0, 3.0, 4.0};
   double u[] = {0,0,0,0};
@@ -360,9 +360,9 @@ START_TEST (test_newton_init_regres1)
   params.lbtol = 0.1;
   params.mu = 0.1;
 
- _l1c_l1qc_newton_init(N, x, u, &params);
+ _l1c_l1qc_newton_init(m, x, u, &params);
 
-  ck_assert_double_array_eq_tol(N, u_exp, u,  TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(m, u_exp, u,  TOL_DOUBLE_SUPER);
 
 }
 END_TEST
@@ -376,7 +376,7 @@ START_TEST (test_newton_init)
   double *u=NULL;
   int ret=0, status=0;
 
-  u = l1c_malloc_double(Tdat.N);
+  u = l1c_malloc_double(Tdat.m);
   if ( !u ){
     fprintf(stderr, "Error Allocating Memory in 'test_newton_init()'. Aborting\n");
     status = L1C_OUT_OF_MEMORY;
@@ -386,15 +386,15 @@ START_TEST (test_newton_init)
   l1c_L1qcOpts params = {.mu=Tdat.mu, .lbtol=Tdat.lbtol,
                          .epsilon=Tdat.epsilon, .lbiter = 0};
 
-  ret= _l1c_l1qc_newton_init(Tdat.N, Tdat.x, u, &params);
+  ret= _l1c_l1qc_newton_init(Tdat.m, Tdat.x, u, &params);
 
   ck_assert_int_eq(0, ret);
-  ck_assert_double_array_eq_tol(Tdat.N, Tdat.u, u,  TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(Tdat.m, Tdat.u, u,  TOL_DOUBLE_SUPER);
   ck_assert_double_eq_tol(Tdat.tau, params.tau,  TOL_DOUBLE_SUPER*100);
   ck_assert_int_eq(Tdat.lbiter, params.lbiter);
 
   params.lbiter = 1;
-  ret= _l1c_l1qc_newton_init(Tdat.N, Tdat.x, u, &params);
+  ret= _l1c_l1qc_newton_init(Tdat.m, Tdat.x, u, &params);
   ck_assert_int_eq(1, params.lbiter);
 
 
@@ -424,14 +424,14 @@ START_TEST(test_l1qc_descent_dir)
 
   l1c_AxFuns ax_funs;
 
-  DWORK7 = l1c_malloc_double_2D(7, Tdat.N);
-  gd.w1p = l1c_malloc_double(Tdat.N);
-  gd.dx = l1c_malloc_double(Tdat.N);
-  gd.du = l1c_malloc_double(Tdat.N);
-  gd.gradf = l1c_malloc_double(2*Tdat.N);
-  gd.sig11 = l1c_malloc_double(Tdat.N);
-  gd.sig12 = l1c_malloc_double(Tdat.N);
-  gd.ntgu = l1c_malloc_double(Tdat.N);
+  DWORK7 = l1c_malloc_double_2D(7, Tdat.m);
+  gd.w1p = l1c_malloc_double(Tdat.m);
+  gd.dx = l1c_malloc_double(Tdat.m);
+  gd.du = l1c_malloc_double(Tdat.m);
+  gd.gradf = l1c_malloc_double(2*Tdat.m);
+  gd.sig11 = l1c_malloc_double(Tdat.m);
+  gd.sig12 = l1c_malloc_double(Tdat.m);
+  gd.ntgu = l1c_malloc_double(Tdat.m);
   if ( (!DWORK7) | (!gd.w1p) | (!gd.dx) | (!gd.du) | (!gd.gradf)
        |(!gd.sig11)| (!gd.sig12) |(!gd.ntgu) ){
     fprintf(stderr, "Error allocating memory in 'test_compute_descent'\n");
@@ -440,21 +440,21 @@ START_TEST(test_l1qc_descent_dir)
   }
 
   /* Setup the DCT */
-  l1c_dct1_setup(Tdat.N, Tdat.M, Tdat.pix_idx, &ax_funs);
+  l1c_dct1_setup(Tdat.m, Tdat.n, Tdat.pix_idx, &ax_funs);
 
   /* We must initialize gd.dx, because we have enabled warm starting*/
-  l1c_init_vec(Tdat.N, gd.dx, 0.0);
+  l1c_init_vec(Tdat.m, gd.dx, 0.0);
 
-  _l1c_l1qc_descent_dir(Tdat.N, Tdat.fu1, Tdat.fu2, Tdat.r, Tdat.fe,
+  _l1c_l1qc_descent_dir(Tdat.m, Tdat.fu1, Tdat.fu2, Tdat.r, Tdat.fe,
                              Tdat.tau0, gd, DWORK7, cgp, &cgr, ax_funs);
 
   /*The next three should already be checked by test_get_gradient, but we can
    do it here too, to make sure things are staying sane.*/
-  ck_assert_double_array_eq_tol(Tdat.N, Tdat.sig11, gd.sig11, TOL_DOUBLE*100);
-  ck_assert_double_array_eq_tol(Tdat.N, Tdat.sig12, gd.sig12, TOL_DOUBLE*100);
-  ck_assert_double_array_eq_tol(Tdat.N, Tdat.w1p, gd.w1p, TOL_DOUBLE*100);
-  ck_assert_double_array_eq_tol(Tdat.N, Tdat.dx, gd.dx, TOL_DOUBLE*100);
-  ck_assert_double_array_eq_tol(Tdat.N, Tdat.du, gd.du, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(Tdat.m, Tdat.sig11, gd.sig11, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(Tdat.m, Tdat.sig12, gd.sig12, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(Tdat.m, Tdat.w1p, gd.w1p, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(Tdat.m, Tdat.dx, gd.dx, TOL_DOUBLE*100);
+  ck_assert_double_array_eq_tol(Tdat.m, Tdat.du, gd.du, TOL_DOUBLE*100);
 
 
 
@@ -491,17 +491,17 @@ START_TEST(test_H11pfun)
   int status=0;
   l1c_AxFuns ax_funs;
 
-  h11p_z = l1c_malloc_double(Tdat.N);
-  z_orig = l1c_malloc_double(Tdat.N);
-  h11p_data.Dwork_1N = l1c_malloc_double(Tdat.N);
-  if (!h11p_z || !z_orig || !h11p_data.Dwork_1N){
+  h11p_z = l1c_malloc_double(Tdat.m);
+  z_orig = l1c_malloc_double(Tdat.m);
+  h11p_data.Dwork_1m = l1c_malloc_double(Tdat.m);
+  if (!h11p_z || !z_orig || !h11p_data.Dwork_1m){
     fprintf(stderr, "Unable to allocate memory\n");
     status = L1C_OUT_OF_MEMORY;
     goto exit;
   }
 
   /* Setup the DCT */
-  l1c_dct1_setup(Tdat.N, Tdat.M, Tdat.pix_idx, &ax_funs);
+  l1c_dct1_setup(Tdat.m, Tdat.n, Tdat.pix_idx, &ax_funs);
 
 
   h11p_data.one_by_fe = 1.0/Tdat.fe_rand;
@@ -511,21 +511,21 @@ START_TEST(test_H11pfun)
 
   h11p_data.AtAx = ax_funs.AtAx;
 
-  cblas_dcopy(Tdat.N, Tdat.z_rand, 1, z_orig, 1);
+  cblas_dcopy(Tdat.m, Tdat.z_rand, 1, z_orig, 1);
 
 
-  _l1c_l1qc_H11pfun(Tdat.N, Tdat.z_rand, h11p_z, &h11p_data);
+  _l1c_l1qc_H11pfun(Tdat.m, Tdat.z_rand, h11p_z, &h11p_data);
 
-  ck_assert_double_array_eq_tol(Tdat.N, Tdat.h11p_z, h11p_z, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Tdat.m, Tdat.h11p_z, h11p_z, TOL_DOUBLE);
   // Ensure we didnt overwrite data in z.
-  ck_assert_double_array_eq_tol(Tdat.N, Tdat.z_rand, z_orig, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(Tdat.m, Tdat.z_rand, z_orig, TOL_DOUBLE_SUPER);
 
 
   /* ----------------- Cleanup --------------- */
  exit:
   l1c_free_double(h11p_z);
   l1c_free_double(z_orig);
-  l1c_free_double(h11p_data.Dwork_1N);
+  l1c_free_double(h11p_data.Dwork_1m);
 
   ax_funs.destroy();
 
@@ -547,12 +547,12 @@ START_TEST(test_l1qc_hess_grad)
   double *sigx;
   int status = 0;
 
-  gd.sig11 = l1c_malloc_double(Tdat.N);
-  gd.sig12 = l1c_malloc_double(Tdat.N);
-  gd.gradf = l1c_malloc_double(2*Tdat.N);
-  gd.w1p = l1c_malloc_double(Tdat.N);
-  gd.ntgu = l1c_malloc_double(Tdat.N);
-  sigx = l1c_malloc_double(Tdat.N);
+  gd.sig11 = l1c_malloc_double(Tdat.m);
+  gd.sig12 = l1c_malloc_double(Tdat.m);
+  gd.gradf = l1c_malloc_double(2*Tdat.m);
+  gd.w1p = l1c_malloc_double(Tdat.m);
+  gd.ntgu = l1c_malloc_double(Tdat.m);
+  sigx = l1c_malloc_double(Tdat.m);
   if (!gd.sig11 || !gd.sig12 || !gd.gradf || !gd.w1p || !gd.ntgu || !sigx){
     fprintf(stderr, "Error Allocating Memory in 'test_get_gradient'\n");
     status = L1C_OUT_OF_MEMORY;
@@ -560,15 +560,15 @@ START_TEST(test_l1qc_hess_grad)
   }
 
   /*-------------- Compute --------------------------- */
-  _l1c_l1qc_hess_grad(Tdat.N, Tdat.fu1, Tdat.fu2, sigx, Tdat.atr, Tdat.fe, Tdat.tau0, gd);
+  _l1c_l1qc_hess_grad(Tdat.m, Tdat.fu1, Tdat.fu2, sigx, Tdat.atr, Tdat.fe, Tdat.tau0, gd);
 
   /* ----- Check -------*/
-  ck_assert_double_array_eq_tol(Tdat.N, Tdat.sig11, gd.sig11, TOL_DOUBLE_SUPER*100);
-  ck_assert_double_array_eq_tol(Tdat.N, Tdat.sig12, gd.sig12, TOL_DOUBLE_SUPER*100);
-  ck_assert_double_array_eq_tol(Tdat.N, Tdat.w1p, gd.w1p, TOL_DOUBLE_SUPER*100);
-  ck_assert_double_array_eq_tol(Tdat.N, Tdat.sigx, sigx, TOL_DOUBLE_SUPER*100);
-  ck_assert_double_array_eq_tol(Tdat.N, Tdat.ntgu, gd.ntgu, TOL_DOUBLE_SUPER*100);
-  ck_assert_double_array_eq_tol(Tdat.N*2, Tdat.gradf, gd.gradf, TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(Tdat.m, Tdat.sig11, gd.sig11, TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(Tdat.m, Tdat.sig12, gd.sig12, TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(Tdat.m, Tdat.w1p, gd.w1p, TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(Tdat.m, Tdat.sigx, sigx, TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(Tdat.m, Tdat.ntgu, gd.ntgu, TOL_DOUBLE_SUPER*100);
+  ck_assert_double_array_eq_tol(Tdat.m*2, Tdat.gradf, gd.gradf, TOL_DOUBLE_SUPER*100);
 
   /* ----------------- Cleanup --------------- */
 
@@ -599,14 +599,14 @@ START_TEST (test_find_max_step)
 
   gd.dx = Tdat.dx_rand1;
   gd.du = Tdat.du_rand1;
-  double *DWORK = l1c_malloc_double(Tdat.N);
+  double *DWORK = l1c_malloc_double(Tdat.m);
 
   l1c_AxFuns ax_funs;
 
   /* Setup the DCT */
-  l1c_dct1_setup(Tdat.N, Tdat.M, Tdat.pix_idx, &ax_funs);
+  l1c_dct1_setup(Tdat.m, Tdat.n, Tdat.pix_idx, &ax_funs);
 
-  smax = _l1c_l1qc_find_max_step(Tdat.N, gd, Tdat.fu1, Tdat.fu2, Tdat.M, Tdat.r, DWORK,
+  smax = _l1c_l1qc_find_max_step(Tdat.m, gd, Tdat.fu1, Tdat.fu2, Tdat.n, Tdat.r, DWORK,
                              Tdat.epsilon, ax_funs);
 
   ck_assert_double_eq_tol(Tdat.smax, smax,  TOL_DOUBLE);
@@ -635,7 +635,7 @@ START_TEST(test_line_search)
   l1c_AxFuns ax_funs;
 
   //double sm;
-  l1c_int N,N2, M, status=0;
+  l1c_int m,m2, n, status=0;
   l1c_int *pix_idx=NULL;
   char *fpath_linesearch = fullfile(test_data_dir, "line_search_data.json");
 
@@ -645,15 +645,15 @@ START_TEST(test_line_search)
   }
 
   // Inputs to line_search
-  status +=extract_json_double_array(test_data_json, "x", &x, &N);
-  status +=extract_json_double_array(test_data_json, "u", &u, &N);
-  status +=extract_json_double_array(test_data_json, "r", &r, &M);
-  status +=extract_json_double_array(test_data_json, "b", &b, &M);
-  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
+  status +=extract_json_double_array(test_data_json, "x", &x, &m);
+  status +=extract_json_double_array(test_data_json, "u", &u, &m);
+  status +=extract_json_double_array(test_data_json, "r", &r, &n);
+  status +=extract_json_double_array(test_data_json, "b", &b, &n);
+  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &n);
 
-  status +=extract_json_double_array(test_data_json, "dx", &dx, &N);
-  status +=extract_json_double_array(test_data_json, "du", &du, &N);
-  status +=extract_json_double_array(test_data_json, "gradf", &gradf, &N2);
+  status +=extract_json_double_array(test_data_json, "dx", &dx, &m);
+  status +=extract_json_double_array(test_data_json, "du", &du, &m);
+  status +=extract_json_double_array(test_data_json, "gradf", &gradf, &m2);
 
   status +=extract_json_double(test_data_json, "f", &f);
   status +=extract_json_double(test_data_json, "tau", &tau);
@@ -663,11 +663,11 @@ START_TEST(test_line_search)
   status +=extract_json_double(test_data_json, "s_init", &s_init);
 
   // Expected outputs
-  status +=extract_json_double_array(test_data_json, "xp", &xp_exp, &N);
-  status +=extract_json_double_array(test_data_json, "up", &up_exp, &N);
-  status +=extract_json_double_array(test_data_json, "rp", &rp_exp, &N);
-  status +=extract_json_double_array(test_data_json, "fu1p", &fu1p_exp, &N);
-  status +=extract_json_double_array(test_data_json, "fu2p", &fu2p_exp, &N);
+  status +=extract_json_double_array(test_data_json, "xp", &xp_exp, &m);
+  status +=extract_json_double_array(test_data_json, "up", &up_exp, &m);
+  status +=extract_json_double_array(test_data_json, "rp", &rp_exp, &m);
+  status +=extract_json_double_array(test_data_json, "fu1p", &fu1p_exp, &m);
+  status +=extract_json_double_array(test_data_json, "fu2p", &fu2p_exp, &m);
   status +=extract_json_double(test_data_json, "fep", &fep_exp);
   status +=extract_json_double(test_data_json, "fp", &fp_exp);
 
@@ -687,15 +687,15 @@ START_TEST(test_line_search)
   gd.du = du;
   gd.gradf = gradf;
 
-  DWORK5 = l1c_malloc_double_2D(5, N);
+  DWORK5 = l1c_malloc_double_2D(5, m);
   if(!DWORK5){
     printf("Allocation failed\n");
   }
-  fu1p = l1c_malloc_double(N);
-  fu2p = l1c_malloc_double(N);
-  l1c_dct1_setup(N, M, pix_idx, &ax_funs);
+  fu1p = l1c_malloc_double(m);
+  fu2p = l1c_malloc_double(m);
+  l1c_dct1_setup(m, n, pix_idx, &ax_funs);
 
-  ls_stat = _l1c_l1qc_line_search(N, M, x, u, r, b, fu1p, fu2p, gd, ls_params,
+  ls_stat = _l1c_l1qc_line_search(m, n, x, u, r, b, fu1p, fu2p, gd, ls_params,
                                   DWORK5, &fe, &f, ax_funs);
 
   // /* ----- Now check -------*/
@@ -706,12 +706,12 @@ START_TEST(test_line_search)
   ck_assert_double_eq_tol(flu_exp, ls_stat.flu, TOL_DOUBLE*100);
   ck_assert_double_eq_tol(flin_exp, ls_stat.flin, TOL_DOUBLE);
 
-  ck_assert_double_array_eq_tol(N, xp_exp, x, TOL_DOUBLE);
-  ck_assert_double_array_eq_tol(N, up_exp, u, TOL_DOUBLE);
-  ck_assert_double_array_eq_tol(N, fu1p_exp, fu1p, TOL_DOUBLE);
-  ck_assert_double_array_eq_tol(N, fu2p_exp, fu2p, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(m, xp_exp, x, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(m, up_exp, u, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(m, fu1p_exp, fu1p, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(m, fu2p_exp, fu2p, TOL_DOUBLE);
 
-  ck_assert_double_array_eq_tol(M, rp_exp, r, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(n, rp_exp, r, TOL_DOUBLE);
 
 
   /* ----------------- Cleanup --------------- */
@@ -757,11 +757,11 @@ START_TEST(test_f_eval)
   int status = 0;
   l1c_AxFuns ax_funs;
 
-  l1c_dct1_setup(Tdat.N, Tdat.M, Tdat.pix_idx, &ax_funs);
+  l1c_dct1_setup(Tdat.m, Tdat.n, Tdat.pix_idx, &ax_funs);
 
-  fu1 = l1c_malloc_double(Tdat.N);
-  fu2 = l1c_malloc_double(Tdat.N);
-  r = l1c_malloc_double(Tdat.M);
+  fu1 = l1c_malloc_double(Tdat.m);
+  fu2 = l1c_malloc_double(Tdat.m);
+  r = l1c_malloc_double(Tdat.n);
 
   if (!fu1 || !fu2 || !r){
     fprintf(stderr, "Error allocating memory in test_f_eval\n");
@@ -769,14 +769,14 @@ START_TEST(test_f_eval)
     goto exit;
   }
 
-  _l1c_l1qc_f_eval(Tdat.N,  Tdat.x, Tdat.u, Tdat.M, r, Tdat.b, Tdat.tau0,
+  _l1c_l1qc_f_eval(Tdat.m,  Tdat.x, Tdat.u, Tdat.n, r, Tdat.b, Tdat.tau0,
                    Tdat.epsilon, fu1, fu2, &fe, &f, ax_funs);
 
   /* ----- Now check -------*/
   ck_assert_double_eq_tol(Tdat.fe, fe, TOL_DOUBLE);
-  ck_assert_double_array_eq_tol(Tdat.N, Tdat.fu1, fu1, TOL_DOUBLE);
-  ck_assert_double_array_eq_tol(Tdat.N, Tdat.fu2, fu2, TOL_DOUBLE);
-  ck_assert_double_array_eq_tol(Tdat.M, Tdat.r, r, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Tdat.m, Tdat.fu1, fu1, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Tdat.m, Tdat.fu2, fu2, TOL_DOUBLE);
+  ck_assert_double_array_eq_tol(Tdat.n, Tdat.r, r, TOL_DOUBLE);
 
   ck_assert_double_eq_tol(Tdat.f, f, TOL_DOUBLE);
 

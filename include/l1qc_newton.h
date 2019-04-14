@@ -16,7 +16,7 @@ typedef struct Hess_data_ {
   double one_by_fe_sqrd;
   double *atr;
   double *sigx;
-  double *Dwork_1N;
+  double *Dwork_1m;
   void(*AtAx)(double *x, double *z);
 }Hess_data;
 
@@ -51,28 +51,28 @@ typedef struct GradData{
 /* These could be static. But that makes them hard to test. They are complicated enough I think
  they should be tested on their own. I.e., I dont want to *just* test l1qc_newton()
 */
-double _l1c_l1qc_find_max_step(l1c_int N, GradData gd, double *fu1,
-                               double *fu2, int M, double *r, double *DWORK,
+double _l1c_l1qc_find_max_step(l1c_int m, GradData gd, double *fu1,
+                               double *fu2, int n, double *r, double *DWORK,
                                double epsilon, l1c_AxFuns Ax_funs);
 
-LSStat _l1c_l1qc_line_search(l1c_int N, l1c_int M, double *x, double *u, double *r, double *b,
+LSStat _l1c_l1qc_line_search(l1c_int m, l1c_int n, double *x, double *u, double *r, double *b,
                              double *fu1, double *fu2, GradData gd, LSParams ls_params,
                              double **DWORK5, double *fe, double *f, l1c_AxFuns Ax_funs);
 
-void _l1c_l1qc_hess_grad(l1c_int N, double *fu1, double *fu2, double *sigx, double *atr,
+void _l1c_l1qc_hess_grad(l1c_int m, double *fu1, double *fu2, double *sigx, double *atr,
                          double fe,  double tau, GradData gd);
 
-int _l1c_l1qc_descent_dir(l1c_int N, double *fu1, double *fu2, double *r, double fe, double tau,
+int _l1c_l1qc_descent_dir(l1c_int m, double *fu1, double *fu2, double *r, double fe, double tau,
                           GradData gd, double **Dwork7, l1c_CgParams cg_params, l1c_CgResults *cg_result,
                           l1c_AxFuns Ax_funs);
 
-void _l1c_l1qc_H11pfun(l1c_int N, double *z, double *y,  void *hess_data_in);
+void _l1c_l1qc_H11pfun(l1c_int m, double *z, double *y,  void *hess_data_in);
 
 /* Evalutes the value function */
-void _l1c_l1qc_f_eval(l1c_int N, double *x, double *u, l1c_int M, double *r, double *b,
+void _l1c_l1qc_f_eval(l1c_int m, double *x, double *u, l1c_int n, double *r, double *b,
                       double tau, double epsilon, double *fu1, double *fu2, double *fe,
                       double *f, l1c_AxFuns Ax_funs);
 
-int _l1c_l1qc_newton_init(l1c_int N, double *x, double *u,  l1c_L1qcOpts *params);
+int _l1c_l1qc_newton_init(l1c_int m, double *x, double *u,  l1c_L1qcOpts *params);
 
 #endif
