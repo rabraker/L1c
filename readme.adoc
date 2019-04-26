@@ -28,7 +28,7 @@ using a log-barrier algorithm, which is based on the implementation in https://s
 
 * Solving the Anistropic Total Variation (TV) denoising using  https://www.ece.rice.edu/~tag7/Tom_Goldstein/Split_Bregman.html[Bregman Splitting]. Given a noisy latexmath:[n] by latexmath:[m] image latexmath:[f], this solves the problem
 +
-latexmath:[\min_{u} ||\nabla_{x}u||_{1} + ||\nabla_{y}u||_{1} + ||u-f||_{2}. ]
+latexmath:[\min_{u} ||\nabla_{x}u||_{1} + ||\nabla_{y}u||_{1} + \mu ||u-f||_{2}. ]
 
 * 1D and 2D discrete cosine transforms (using FFTW).
 
