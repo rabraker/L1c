@@ -268,7 +268,7 @@ In the original code, the functional latexmath:[f(z)] is only evaluated explicit
 . Other optimization routines. On the list are
 ** The isotropic TV-denoising problem using Bregman iteration. 
 ** https://web.stanford.edu/~boyd/l1_ls/[l1-ls] from Stephen Boyd's research group.
-** NESTA, which from my cursory inspection, seems to depend on l1-ls.
+** NESTA. This seems quite fast.
 
 . Generalize the backtracking line search. There is really no reason that it needs to be specific to the l1qc algorithm. All it needs is a way to evaluate the functional and gradient at different step sizes.
 
