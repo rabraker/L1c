@@ -16,8 +16,6 @@ typedef struct BregFuncs{
 
   void(* breg_mxpy_z)(l1c_int N, double * restrict x, double * restrict y, double *z);
 
-  double(* l1c_norm2_err)(l1c_int N, double * restrict x, double * restrict y);
-
   void (* breg_anis_jacobi)(int n, int m, double* uk_1, double *uk, double *rhs, double *D,
                         double lambda);
 

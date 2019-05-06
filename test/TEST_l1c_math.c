@@ -138,7 +138,53 @@ START_TEST(test_l1c_dlogsum)
 }
 END_TEST
 
+START_TEST(test_l1c_dnrm2_err)
+{
+  l1c_int N = 6;
+  double x_[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+  double y_[] = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0};
 
+  double *x = l1c_malloc_double(N);
+  double *y = l1c_malloc_double(N);
+  if (!x || !y){
+    ck_abort_msg("Out of memory\n");
+  }
+  for (int i=0; i<N; i++){
+    x[i] = x_[i];
+    y[i] = y_[i];
+  }
+
+  double nrm_x_y = l1c_dnrm2_err(N, x, y);
+
+  ck_assert_double_eq_tol(nrm_x_y, sqrt(N), TOL_DOUBLE_SUPER);
+
+  // setup_vectors_SC();
+}
+END_TEST
+
+START_TEST(test_l1c_dnrm2_rel_err)
+{
+  l1c_int N = 6;
+  double x_[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+  double y_[] = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0};
+
+  double *x = l1c_malloc_double(N);
+  double *y = l1c_malloc_double(N);
+  if (!x || !y){
+    ck_abort_msg("Out of memory\n");
+  }
+  for (int i=0; i<N; i++){
+    x[i] = x_[i];
+    y[i] = y_[i];
+  }
+
+  double nrm_x_y = l1c_dnrm2_rel_err(N, x, y);
+
+  ck_assert_double_eq_tol(nrm_x_y, sqrt(N)/sqrt(55.0), TOL_DOUBLE_SUPER);
+
+  // setup_vectors_SC();
+}
+END_TEST
 
 
 Suite *l1c_math_suite(void)
@@ -159,6 +205,8 @@ Suite *l1c_math_suite(void)
   tcase_add_test(tc_l1c_math, test_l1c_dsum);
   tcase_add_test(tc_l1c_math, test_l1c_dnorm1);
   tcase_add_test(tc_l1c_math, test_l1c_dlogsum);
+  tcase_add_test(tc_l1c_math, test_l1c_dnrm2_err);
+  tcase_add_test(tc_l1c_math, test_l1c_dnrm2_rel_err);
 
   /*Add test cases to the suite */
   suite_add_tcase(s, tc_l1c_math);

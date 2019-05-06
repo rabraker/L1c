@@ -30,6 +30,7 @@ libl1c_la_SOURCES = l1qc_newton.c \
 					dct_transforms.c \
                     dct1.c \
 					dct2.c \
+					nesta.c \
 					$(top_srcdir)/include/bregman.h \
 					$(top_srcdir)/include/json_utils.h \
 					$(top_srcdir)/include/l1c_math.h \
