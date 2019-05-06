@@ -45,7 +45,7 @@ double _l1c_l1qc_f_eval(void *problem_data, double *x, double *u){
   /* fu1 = x - u */
   l1c_daxpy_z(m, -1.0, u, x, Prb->fu1);
   /* fu2 = -x - u */
-  axpby_z(m, -1.0, x, -1.0, u, Prb->fu2);
+  l1c_daxpby_z(m, -1.0, x, -1.0, u, Prb->fu2);
 
   Prb->fe_val = 0.5 * (cblas_ddot(n, Prb->r, 1, Prb->r, 1) - epsilon * epsilon);
 

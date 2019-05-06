@@ -130,7 +130,7 @@ int l1c_nesta(l1c_int m, double *xk, double *x0, double mu, l1c_int n, double *b
 
     /* ---- Update xk ----------------*/
     /* xk = tau_k * zk + (1-tau_k) * yk*/
-    axpby_z(m, tau_k, zk, (1-tau_k), yk, xk);
+    l1c_daxpby_z(m, tau_k, zk, (1-tau_k), yk, xk);
   }
 
 

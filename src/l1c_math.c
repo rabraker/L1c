@@ -57,7 +57,8 @@ void l1c_dxmuly_z(l1c_int N, double * restrict x, double * restrict y, double * 
    z = alpha*x + beta*y. Similar to cblas_daxpy, but for the situation when the result should not overwrite y.
 
 */
-void axpby_z(l1c_int N, double alpha, double * restrict x, double beta, double * restrict y, double * restrict z){
+void l1c_daxpby_z(l1c_int N, double alpha, double * restrict x,
+                  double beta, double * restrict y, double * restrict z){
   /* Computes z = a * x + y. Similary to cblas_axpy, but for when you don't want to overwrite y.
      This way, we avoid a call to cblas_dcopy().
 

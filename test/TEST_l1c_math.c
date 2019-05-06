@@ -83,6 +83,25 @@ START_TEST(test_l1c_daxpy_z)
 }
 END_TEST
 
+START_TEST(test_l1c_daxpby_z)
+{
+  l1c_int N = 6;
+  double a = 3;
+  double b = 2;
+
+  double x[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+  double y[] = {2.0, 2.0, 2.0, 2.0, 2.0, 2.0};
+  double z[] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+  double z_exp[] = {7.0, 10.0, 13.0, 16.0, 19.0, 22.0};
+
+
+  l1c_daxpby_z(N, a, x, b, y, z);
+
+  ck_assert_double_array_eq_tol(N, z_exp, z, TOL_DOUBLE);
+}
+END_TEST
+
 
 START_TEST(test_l1c_dxmuly_z)
 {
@@ -202,6 +221,7 @@ Suite *l1c_math_suite(void)
   tcase_add_test(tc_l1c_math, test_l1c_daxpy_z2);
   tcase_add_test(tc_l1c_math, test_l1c_dxmuly_z);
   tcase_add_test(tc_l1c_math, test_l1c_daxpy_z);
+  tcase_add_test(tc_l1c_math, test_l1c_daxpby_z);
   tcase_add_test(tc_l1c_math, test_l1c_dsum);
   tcase_add_test(tc_l1c_math, test_l1c_dnorm1);
   tcase_add_test(tc_l1c_math, test_l1c_dlogsum);

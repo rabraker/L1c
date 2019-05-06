@@ -33,7 +33,7 @@ void l1c_daxpy_z(l1c_int N,
                  double *y,
                  double *z);
 
-void axpby_z(l1c_int N,
+void l1c_daxpby_z(l1c_int N,
              double alpha,
              double *x,
              double beta,
