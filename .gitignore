@@ -79,3 +79,6 @@ deprecated/
 __pycache__/
 
 py-compile
+doc/auto
+doc/html
+doc/latex
