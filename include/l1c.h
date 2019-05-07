@@ -105,18 +105,18 @@ typedef struct l1c_AxFuns {
 
   /* Optional. Used by dct and dct2.*/
   /** Compute x=Mx*/
-  void(*M)(double *x, double *y);
+  void(*Mx)(double *x, double *y);
   /** Compute y=Mty*/
-  void(*Mt)(double *y, double *x);
+  void(*Mty)(double *y, double *x);
 
   /** Currently unused.
       Should compute y = E * x
    */
-  void(*E)(double *x, double *y);
+  void(*Ex)(double *x, double *y);
   /** Currently unused.
       Should compute x = E^T * x
    */
-  void(*Et)(double *y, double *x);
+  void(*Ety)(double *y, double *x);
 
   /**Release data allocated by the associated setup function.
      All implementations must define .`destroy`.

@@ -140,10 +140,10 @@ int l1c_dct1_setup(l1c_int m, l1c_int n, l1c_int *pix_mask_idx, l1c_AxFuns *ax_f
   ax_funs->Ax = dct_EMx;
   ax_funs->Aty = dct_MtEty;
   ax_funs->AtAx = dct_MtEt_EMx;
-  ax_funs->M = dct_idct;
-  ax_funs->Mt = dct_dct;
-  ax_funs->E = NULL;
-  ax_funs->Et = NULL;
+  ax_funs->Mx = dct_idct;
+  ax_funs->Mty = dct_dct;
+  ax_funs->Ex = NULL;
+  ax_funs->Ety = NULL;
 
   ax_funs->destroy = dct_destroy;
   ax_funs->data = NULL;

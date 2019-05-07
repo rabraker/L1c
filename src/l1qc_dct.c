@@ -78,7 +78,7 @@ int l1qc_dct(int mrow, int mcol, double *x_out, int n, double *b, l1c_int *pix_i
      standard coorbbdinates.
   */
 
-  ax_funs.M(eta_0, x_out);
+  ax_funs.Mx(eta_0, x_out);
 
   cblas_dcopy(mtot, eta_0, 1, x_out, 1);
 

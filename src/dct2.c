@@ -162,10 +162,10 @@ int l1c_dct2_setup(l1c_int mrow, l1c_int mcol, l1c_int n, l1c_int *pix_mask_idx,
   ax_funs->Ax = dct2_EMx;
   ax_funs->Aty = dct2_MtEty;
   ax_funs->AtAx = dct2_MtEt_EMx;
-  ax_funs->M = dct2_idct;
-  ax_funs->Mt = dct2_dct;
-  ax_funs->E = NULL;
-  ax_funs->Et = NULL;
+  ax_funs->Mx = dct2_idct;
+  ax_funs->Mty = dct2_dct;
+  ax_funs->Ex = NULL;
+  ax_funs->Ety = NULL;
 
   ax_funs->destroy = dct2_destroy;
   ax_funs->data = NULL;

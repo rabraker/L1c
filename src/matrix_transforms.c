@@ -53,10 +53,10 @@ int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_
   ax_funs->Aty = Aty;
   ax_funs->AtAx = AtAx;
   ax_funs->destroy = destroy_matrix_transforms;
-  ax_funs->M=NULL;
-  ax_funs->Mt=NULL;
-  ax_funs->E=NULL;
-  ax_funs->Et=NULL;
+  ax_funs->Mx=NULL;
+  ax_funs->Mty=NULL;
+  ax_funs->Ex=NULL;
+  ax_funs->Ety=NULL;
   ax_funs->data=NULL;
 
   return 0;

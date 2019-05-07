@@ -214,7 +214,7 @@ END_TEST
 
 START_TEST(test_dct_Mx)
 {
-  ax_funs.M(dctd->x_in, dctd->Mx_act);
+  ax_funs.Mx(dctd->x_in, dctd->Mx_act);
 
   ck_assert_double_array_eq_tol(dctd->n, dctd->Mx_exp,
                                 dctd->Mx_act, TOL_DCT);
@@ -224,7 +224,7 @@ END_TEST
 
 START_TEST(test_dct_Mty)
 {
-  ax_funs.Mt(dctd->z_in, dctd->Mty_act);
+  ax_funs.Mty(dctd->z_in, dctd->Mty_act);
 
   ck_assert_double_array_eq_tol(dctd->n, dctd->Mty_exp,
                                 dctd->Mty_act, 2*TOL_DCT);

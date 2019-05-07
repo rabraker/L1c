@@ -18,9 +18,9 @@ void nesta_project(l1c_int m, double *x, double *g, double *Atb, double *vk, dou
   double tmp2=0, lambda=0, tmp1=0;
 
   l1c_daxpy_z(m, (-1/L_by_mu), g, x, vk);
-  if( ax_funs.E  && ax_funs.Et){
-    ax_funs.E(vk, Aq);
-    ax_funs.Et(Aq, AtAq);
+  if( ax_funs.Ex  && ax_funs.Ety){
+    ax_funs.Ex(vk, Aq);
+    ax_funs.Ety(Aq, AtAq);
   }else{
     ax_funs.Ax(vk, Aq);
     ax_funs.Aty(Aq, AtAq);
@@ -48,10 +48,10 @@ void nesta_l1_feval(l1c_int m, double *x, double *u, double *gradf, double *fx,
   double nrm_u2=0;
   /* If E and Et are void, we are doing synthesis, otherwise, analysis.
    */
-  if( !ax_funs.E  && !ax_funs.Et){
+  if( !ax_funs.Ex  && !ax_funs.Ety){
     cblas_dcopy(m, x, 1, u, 1);
   }else{
-    ax_funs.M(x, u);
+    ax_funs.Mx(x, u);
   }
 
   for (int i=0; i<m; i++){
@@ -64,7 +64,7 @@ void nesta_l1_feval(l1c_int m, double *x, double *u, double *gradf, double *fx,
 
   *fx = cblas_ddot(m, u, 1, x, 1) - 0.5*mu * nrm_u2;
 
-  ax_funs.Mt(u, gradf);
+  ax_funs.Mty(u, gradf);
 }
 
 
