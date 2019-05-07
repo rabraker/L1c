@@ -109,12 +109,12 @@ typedef struct l1c_AxFuns {
   /** Compute y=Mty*/
   void(*Mty)(double *y, double *x);
 
-  /** Currently unused.
-      Should compute y = E * x
+  /** Computes y = E * x
    */
   void(*Ex)(double *x, double *y);
-  /** Currently unused.
-      Should compute x = E^T * x
+
+  /** Computes x = E^T * x. x should already be
+      initialized.
    */
   void(*Ety)(double *y, double *x);
 

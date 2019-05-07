@@ -352,6 +352,8 @@ static void dct2_Ex(double *x, double *y){
   Apply the adjoint of the sub-sampling operation,
   x = E^T * y
   I.e., x = zeros(n), x[pix_idx] = y.
+
+  x should already be initialized.
  */
 static void dct2_Ety(double *y, double *x){
 
