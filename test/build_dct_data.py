@@ -25,39 +25,7 @@ def Atdct_factory(pix_idx, m):
     return Atdct
 
 
-def dct_test_data(m, eta_vec, z_vec, pix_idx):
-    Adct = Adct_factory(pix_idx)
-    Atdct = Atdct_factory(pix_idx, m)
-
-    # Another small example with randomly generated data.
-
-    # y = E*M*eta
-    y_vec = dct(eta_vec, norm='ortho', type=3)[pix_idx]
-
-    Mx = dct(eta_vec, type=3, norm='ortho')
-    Mty = dct(z_vec, type=2, norm='ortho')
-    EMx = Adct(eta_vec)
-    MtEty = Atdct(y_vec)
-    MtEt_EMx = Atdct(Adct(eta_vec))
-
-    return y_vec, Mx, Mty, EMx, MtEty, MtEt_EMx
-
-
-def save_dct_test_data(fname, eta, y, z, Mx, Mty, EMx, MtEty, MtEt_EMx, pix_idx):
-    data = {'x_in': eta,
-            'y_in': y,
-            'z_in': z,
-            'EMx': EMx,
-            'Mx': Mx,
-            'Mty': Mty,
-            'pix_idx': pix_idx,
-            'MtEty': MtEty,
-            'MtEt_EMx': MtEt_EMx}
-    data = TDU.jsonify(data)
-    TDU.save_json(data, fname)
-
-
-def build_dct_rand_test_data(fname, pix_idx, m):
+def build_dct_test_data(fname, pix_idx, m, eta_vec=None):
     """
     Build a small example with random test data for the eta vector.
     y = EM * eta
@@ -65,14 +33,45 @@ def build_dct_rand_test_data(fname, pix_idx, m):
     """
 
     seed(0)
-    eta_vec = rand(m)
-    z = rand(m)
-    y_vec, Mx, Mty, EMx, MtEty, MtEt_EMx = dct_test_data(m, eta_vec, z, pix_idx)
+    if eta_vec is None:
+        eta_vec = rand(m)
 
-    save_dct_test_data(fname, eta_vec, y_vec, z, Mx, Mty, EMx, MtEty, MtEt_EMx, pix_idx)
+    z_vec = rand(m)
+
+    Adct = Adct_factory(pix_idx)
+    Atdct = Atdct_factory(pix_idx, m)
+
+    # Another small example with randomly generated data.
+
+    # y = E*M*eta
+    y_vec = dct(eta_vec, norm='ortho', type=3)[pix_idx]
+    Mx = dct(eta_vec, type=3, norm='ortho')
+    Mty = dct(z_vec, type=2, norm='ortho')
+    Ex = eta_vec[pix_idx]
+    Ety = np.zeros_like(eta_vec)
+    Ety[pix_idx] = y_vec
+
+    EMx = Adct(eta_vec)
+    MtEty = Atdct(y_vec)
+    MtEt_EMx = Atdct(Adct(eta_vec))
+
+    data = {'x_in': eta_vec,
+            'y_in': y_vec,
+            'z_in': z_vec,
+            'EMx': EMx,
+            'Mx': Mx,
+            'Mty': Mty,
+            'Ex': Ex,
+            'Ety': Ety,
+            'pix_idx': pix_idx,
+            'MtEty': MtEty,
+            'MtEt_EMx': MtEt_EMx}
+
+    data = TDU.jsonify(data)
+    TDU.save_json(data, fname)
 
 
-def build_dct_large(fname, npix):
+def cs20ng_example(npix):
     """
     Build a small example derived from the simulated CS20NG sample grating,
     with a mu-path mask applied.
@@ -85,11 +84,8 @@ def build_dct_large(fname, npix):
 
     x = img.flatten()
     eta = dct(x, norm='ortho', type=2)
-    z = rand(m);
 
-    y_vec, Mx, Mty, EMx, MtEty, MtEt_EMx = dct_test_data(m, eta, z, pix_idx)
-
-    save_dct_test_data(fname, eta, y_vec, z, Mx, Mty, EMx, MtEty, MtEt_EMx, pix_idx)
+    return eta,  pix_idx, m
 
 
 srcdir = os.getenv("srcdir")
@@ -102,17 +98,18 @@ data_dir = srcdir+"/test_data"
 fname = data_dir+"/dct_small.json"
 m = 50
 pix_idx = np.array([2, 10, 15, 20, 25, 30, 35, 40, 45, 49])
+build_dct_test_data(fname, pix_idx, m)
 
 # ------------- A small example, without sub-sampling ------------
 # This checks that we get the right result for a pure dct, and in
 # particular, that we got the scaling at the first element correct.
-build_dct_rand_test_data(fname, pix_idx, m)
 pix_idx = np.arange(50)
 fname = data_dir+"/dct_small_pure_dct.json"
-build_dct_rand_test_data(fname, pix_idx, m)
+build_dct_test_data(fname, pix_idx, m)
 
 
 # -------- A large set of test data -------------
 fname = data_dir+"/dct_large.json"
 npix = 256
-build_dct_large(fname, npix)
+eta, pix_idx, m = cs20ng_example(npix)
+build_dct_test_data(fname, pix_idx, m, eta_vec=eta)
