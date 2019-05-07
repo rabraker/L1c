@@ -198,7 +198,7 @@ static void teardown_pure_square(void){
 }
 
 
-START_TEST(test_dct2_MtEt_EMx_small)
+START_TEST(test_dct2_MtEt_EMx)
 {
   /* Provided and freed by setup_small() and teardown_small()*/
   ax_funs.AtAx(dctd->x_in, dctd->MtEty_EMx_act);
@@ -210,7 +210,7 @@ START_TEST(test_dct2_MtEt_EMx_small)
 END_TEST
 
 
-START_TEST(test_dct2_MtEty_small)
+START_TEST(test_dct2_MtEty)
 {
   ax_funs.Aty(dctd->y_in, dctd->MtEty_act);
 
@@ -220,7 +220,7 @@ START_TEST(test_dct2_MtEty_small)
 }
 END_TEST
 
-START_TEST(test_dct2_EMx_new_small)
+START_TEST(test_dct2_EMx)
 {
   ax_funs.Ax(dctd->x_in, dctd->EMx_act);
 
@@ -264,9 +264,9 @@ Suite *dct2_suite(void)
 
   tc_dct2_square = tcase_create("dct2_small");
   tcase_add_checked_fixture(tc_dct2_square, setup_square, teardown_square);
-  tcase_add_test(tc_dct2_square, test_dct2_MtEt_EMx_small);
-  tcase_add_test(tc_dct2_square, test_dct2_MtEty_small);
-  tcase_add_test(tc_dct2_square, test_dct2_EMx_new_small);
+  tcase_add_test(tc_dct2_square, test_dct2_MtEt_EMx);
+  tcase_add_test(tc_dct2_square, test_dct2_MtEty);
+  tcase_add_test(tc_dct2_square, test_dct2_EMx);
   tcase_add_test(tc_dct2_square, test_dct2_Mx);
   tcase_add_test(tc_dct2_square, test_dct2_Mty);
 
@@ -279,9 +279,9 @@ Suite *dct2_suite(void)
 
   tc_dct2_pure = tcase_create("dct2_pure");
   tcase_add_checked_fixture(tc_dct2_pure, setup_pure_square, teardown_pure_square);
-  tcase_add_test(tc_dct2_pure, test_dct2_MtEt_EMx_small);
-  tcase_add_test(tc_dct2_pure, test_dct2_MtEty_small);
-  tcase_add_test(tc_dct2_pure, test_dct2_EMx_new_small);
+  tcase_add_test(tc_dct2_pure, test_dct2_MtEt_EMx);
+  tcase_add_test(tc_dct2_pure, test_dct2_MtEty);
+  tcase_add_test(tc_dct2_pure, test_dct2_EMx);
   tcase_add_test(tc_dct2_pure, test_dct2_Mx);
   tcase_add_test(tc_dct2_pure, test_dct2_Mty);
 
@@ -292,9 +292,9 @@ Suite *dct2_suite(void)
 
   tc_dct2_tall = tcase_create("dct2_tall");
   tcase_add_checked_fixture(tc_dct2_tall, setup_tall, teardown_tall);
-  tcase_add_test(tc_dct2_tall, test_dct2_MtEt_EMx_small);
-  tcase_add_test(tc_dct2_tall, test_dct2_MtEty_small);
-  tcase_add_test(tc_dct2_tall, test_dct2_EMx_new_small);
+  tcase_add_test(tc_dct2_tall, test_dct2_MtEt_EMx);
+  tcase_add_test(tc_dct2_tall, test_dct2_MtEty);
+  tcase_add_test(tc_dct2_tall, test_dct2_EMx);
   tcase_add_test(tc_dct2_tall, test_dct2_Mx);
   tcase_add_test(tc_dct2_tall, test_dct2_Mty);
 
@@ -304,9 +304,9 @@ Suite *dct2_suite(void)
   */
   tc_dct2_wide = tcase_create("dct2_wide");
   tcase_add_checked_fixture(tc_dct2_wide, setup_wide, teardown_wide);
-  tcase_add_test(tc_dct2_wide, test_dct2_MtEt_EMx_small);
-  tcase_add_test(tc_dct2_wide, test_dct2_MtEty_small);
-  tcase_add_test(tc_dct2_wide, test_dct2_EMx_new_small);
+  tcase_add_test(tc_dct2_wide, test_dct2_MtEt_EMx);
+  tcase_add_test(tc_dct2_wide, test_dct2_MtEty);
+  tcase_add_test(tc_dct2_wide, test_dct2_EMx);
   tcase_add_test(tc_dct2_wide, test_dct2_Mx);
   tcase_add_test(tc_dct2_wide, test_dct2_Mty);
 
