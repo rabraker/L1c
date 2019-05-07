@@ -60,6 +60,9 @@ def build_dct_rand_test_data(fname, pix_idx, mrow, mcol):
     y_vec = dct(eta_vec, norm='ortho', type=3)[pix_idx]
     Mx = Mx_fun(eta_vec, mrow, mcol)
     Mty = Mty_fun(z_vec, mrow, mcol)
+    Ex = eta_vec[pix_idx]
+    Ety = np.zeros_like(eta_vec)
+    Ety[pix_idx] = y_vec
 
     EMx = Adct(eta_vec)
     MtEty = Atdct(y_vec)
@@ -71,6 +74,8 @@ def build_dct_rand_test_data(fname, pix_idx, mrow, mcol):
             'EMx': EMx,
             'Mx': Mx,
             'Mty': Mty,
+            'Ex': Ex,
+            'Ety': Ety,
             'pix_idx': pix_idx,
             'MtEty': MtEty,
             'MtEt_EMx': MtEt_EMx,

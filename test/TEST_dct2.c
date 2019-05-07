@@ -37,9 +37,13 @@ typedef struct DctData{
 
   double *Mx_act;
   double *Mx_exp;
-
   double *Mty_act;
   double *Mty_exp;
+
+  double *Ex_act;
+  double *Ex_exp;
+  double *Ety_act;
+  double *Ety_exp;
 
   double *x_in;
   double *y_in;
@@ -87,6 +91,8 @@ static void setup(DctData *dct_dat){
 
   setup_status +=extract_json_double_array(test_data_json, "Mx", &dct_dat->Mx_exp, &dct_dat->mtot);
   setup_status +=extract_json_double_array(test_data_json, "Mty", &dct_dat->Mty_exp, &dct_dat->mtot);
+  setup_status +=extract_json_double_array(test_data_json, "Ex", &dct_dat->Ex_exp, &dct_dat->n);
+  setup_status +=extract_json_double_array(test_data_json, "Ety", &dct_dat->Ety_exp, &dct_dat->mtot);
 
   setup_status +=extract_json_int_array(test_data_json, "pix_idx", &dct_dat->pix_idx, &dct_dat->n);
   setup_status +=extract_json_int(test_data_json, "mrow", &dct_dat->mrow);
@@ -103,6 +109,8 @@ static void setup(DctData *dct_dat){
   dct_dat->EMx_act = l1c_malloc_double(dct_dat->mtot);
   dct_dat->Mx_act = l1c_malloc_double(dct_dat->mtot);
   dct_dat->Mty_act = l1c_malloc_double(dct_dat->mtot);
+  dct_dat->Ex_act = l1c_calloc_double(dct_dat->n);
+  dct_dat->Ety_act = l1c_malloc_double(dct_dat->mtot);
 
   l1c_dct2_setup(dct_dat->mrow, dct_dat->mcol, dct_dat->n, dct_dat->pix_idx, &ax_funs);
 
@@ -119,12 +127,16 @@ static void teardown(DctData *dct_dat){
   l1c_free_double(dct_dat->EMx_exp);
   l1c_free_double(dct_dat->Mx_exp);
   l1c_free_double(dct_dat->Mty_exp);
+  l1c_free_double(dct_dat->Ex_exp);
+  l1c_free_double(dct_dat->Ety_exp);
 
   l1c_free_double(dct_dat->MtEty_EMx_act);
   l1c_free_double(dct_dat->MtEty_act);
   l1c_free_double(dct_dat->EMx_act);
   l1c_free_double(dct_dat->Mx_act);
   l1c_free_double(dct_dat->Mty_act);
+  l1c_free_double(dct_dat->Ex_act);
+  l1c_free_double(dct_dat->Ety_act);
 
   free(dct_dat->pix_idx);
   ax_funs.destroy();
@@ -250,6 +262,25 @@ START_TEST(test_dct2_Mty)
 }
 END_TEST
 
+START_TEST(test_dct2_Ex)
+{
+  ax_funs.Ex(dctd->x_in, dctd->Ex_act);
+
+  ck_assert_double_array_eq_tol(dctd->n, dctd->Ex_exp,
+                                dctd->Ex_act, TOL_DOUBLE_SUPER);
+
+}
+END_TEST
+
+START_TEST(test_dct2_Ety)
+{
+  ax_funs.Ety(dctd->y_in, dctd->Ety_act);
+
+  ck_assert_double_array_eq_tol(dctd->mtot, dctd->Ety_exp,
+                                dctd->Ety_act, TOL_DOUBLE_SUPER);
+
+}
+END_TEST
 
 /* Add all the test cases to our suite
  */
@@ -269,6 +300,8 @@ Suite *dct2_suite(void)
   tcase_add_test(tc_dct2_square, test_dct2_EMx);
   tcase_add_test(tc_dct2_square, test_dct2_Mx);
   tcase_add_test(tc_dct2_square, test_dct2_Mty);
+  tcase_add_test(tc_dct2_square, test_dct2_Ex);
+  tcase_add_test(tc_dct2_square, test_dct2_Ety);
 
   suite_add_tcase(s, tc_dct2_square);
 
@@ -284,6 +317,8 @@ Suite *dct2_suite(void)
   tcase_add_test(tc_dct2_pure, test_dct2_EMx);
   tcase_add_test(tc_dct2_pure, test_dct2_Mx);
   tcase_add_test(tc_dct2_pure, test_dct2_Mty);
+  tcase_add_test(tc_dct2_pure, test_dct2_Ex);
+  tcase_add_test(tc_dct2_pure, test_dct2_Ety);
 
   suite_add_tcase(s, tc_dct2_pure);
 
@@ -297,6 +332,8 @@ Suite *dct2_suite(void)
   tcase_add_test(tc_dct2_tall, test_dct2_EMx);
   tcase_add_test(tc_dct2_tall, test_dct2_Mx);
   tcase_add_test(tc_dct2_tall, test_dct2_Mty);
+  tcase_add_test(tc_dct2_tall, test_dct2_Ex);
+  tcase_add_test(tc_dct2_tall, test_dct2_Ety);
 
   suite_add_tcase(s, tc_dct2_tall);
 
@@ -309,6 +346,8 @@ Suite *dct2_suite(void)
   tcase_add_test(tc_dct2_wide, test_dct2_EMx);
   tcase_add_test(tc_dct2_wide, test_dct2_Mx);
   tcase_add_test(tc_dct2_wide, test_dct2_Mty);
+  tcase_add_test(tc_dct2_wide, test_dct2_Ex);
+  tcase_add_test(tc_dct2_wide, test_dct2_Ety);
 
   suite_add_tcase(s, tc_dct2_wide);
 
