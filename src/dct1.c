@@ -13,7 +13,8 @@
 static void dct_destroy();
 static void dct_EMx(double *x_fftw, double *y);
 static void dct_MtEty(double *y, double *x);
-static void dct_idct(double *x_fftw);
+static void dct_idct(double *x, double *y);
+static void dct_dct(double *y, double *x);
 static void dct_MtEt_EMx(double *x_fftw, double *z);
 
 
@@ -116,7 +117,11 @@ int l1c_dct1_setup(l1c_int m, l1c_int n, l1c_int *pix_mask_idx, l1c_AxFuns *ax_f
 
   dct_root_1_by_2N = sqrt(1.0 / ( (double) dct_m * 2)); // Normalization constant.
 
-  // FFTW_PATIENT | FFTW_DESTROY_INPUT| FFTW_PRESERVE_INPUT; | FFTW_PRESERVE_INPUT;
+  /* Note: except for c2r and hc2r, the default is FFTW_PRESERVE_INPUT.
+     It could be worth trying FFTW_DESTROY_INPUT, since this can potentially
+     allow more efficient algorithms.
+   */
+  // FFTW_DESTROY_INPUT
   // FFTW_PATIENT seems to give us about 2.5 seconds for the 512x512 test image.
   unsigned flags = FFTW_PATIENT;
 
@@ -136,7 +141,7 @@ int l1c_dct1_setup(l1c_int m, l1c_int n, l1c_int *pix_mask_idx, l1c_AxFuns *ax_f
   ax_funs->Aty = dct_MtEty;
   ax_funs->AtAx = dct_MtEt_EMx;
   ax_funs->M = dct_idct;
-  ax_funs->Mt = NULL;
+  ax_funs->Mt = dct_dct;
   ax_funs->E = NULL;
   ax_funs->Et = NULL;
 
@@ -162,19 +167,43 @@ static void dct_destroy(){
 }
 
 
-static void dct_idct(double *x){
+static void dct_idct(double *x, double *y){
   // double *x_ = __builtin_assume_aligned(x, DALIGN);
 
-  cblas_dcopy(dct_m, x, 1, dct_x, 1);
-  dct_x[0] = dct_x[0] * sqrt(2.0); //proper scaling
+  x[0] = x[0] * sqrt(2.0); //proper scaling
 
-  fftw_execute_r2r(dct_plan_EMx, dct_x, x);
+  fftw_execute_r2r(dct_plan_EMx, x, y);
   // normalize
   for (int i=0; i<dct_m; i++){
-    x[i] =x[i] * dct_root_1_by_2N;
+    y[i] =y[i] * dct_root_1_by_2N;
+  }
+
+  x[0] = x[0] / sqrt(2.0); //undo scaling
+}
+
+static void dct_dct( double *y, double *x){
+  /*Apply x = M^T * y.
+    The results are normalized to matlabs convention. That is, divided by 1/sqrt(2*N) and
+    x[0] <- x[0] * /sqrt(2).
+
+    -- y should have dimension at least dct_m.
+       Should be aligned to 16 byte boundary for FFTW
+    -- x should have dimension at least dct_m. Should be aligned
+       to DALIGN boundary, for us.
+   */
+  double *x_a = __builtin_assume_aligned(x, DALIGN);
+
+  l1c_int i=0;
+  // Result contained in x_a.
+  fftw_execute_r2r(dct_plan_MtEty, y, x_a); //  M^T * dct_y_sparse
+
+  x_a[0] = x_a[0]/sqrt(2.0);
+  for(i=0; i<dct_m; i++){
+    x_a[i] = x_a[i]  * dct_root_1_by_2N;
   }
 
 }
+
 
 static void dct_EMx(double *x, double * restrict y){
   /* Compute y = E * M *dct_x, where M is the IDCT, and E is the subsampling matrix.

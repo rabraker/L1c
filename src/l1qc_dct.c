@@ -18,9 +18,10 @@
  *
  * @param[in] mrow number of rows of the underlying signal `x`
  * @param[in] mcol number of columns of the underlying signal `x`
- * @param[out] x_out An array of size mrow*mcol, which will contain the result of the optimization.
+ * @param[out] x_out An array of size mrow*mcol, which will contain the
+ *             result of the optimization. Assumed aligned to DALIGN boundary.
  * @param[in] n The size of the observation array, b. In general, n << mrow*mcol.
- * @param[in] b The array of measurements or observations.
+ * @param[in] b The array of measurements or observations. Need NOT be aligned.
  * @param[in] pix_idx An array of indeces, such that, given the true mcol*mrow vectorx
  *            then x[pix_idx] = b, in python notation.
  * @param[in] opts A struct of options for the optimization.
@@ -76,7 +77,8 @@ int l1qc_dct(int mrow, int mcol, double *x_out, int n, double *b, l1c_int *pix_i
   /* We solved for eta in the DCT domain. Transform back to
      standard coorbbdinates.
   */
-  ax_funs.M(eta_0);
+
+  ax_funs.M(eta_0, x_out);
 
   cblas_dcopy(mtot, eta_0, 1, x_out, 1);
 

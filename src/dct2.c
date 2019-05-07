@@ -11,8 +11,8 @@
 
 /* ----- Forward Declarations -----*/
 static void dct2_destroy();
-static void dct2_idct(double *x_fftw);
-static void dct2_dct(double *x);
+static void dct2_idct(double *x, double *y);
+static void dct2_dct(double *y, double *x);
 static void dct2_EMx(double *x_fftw, double *y);
 static void dct2_MtEty(double *y, double *x);
 static void dct2_MtEt_EMx(double *x_fftw, double *z);
@@ -191,19 +191,17 @@ static void dct2_destroy(){
 }
 
 
-static void dct2_dct(double *x){
+/*
+  Computes x = M^T * x
+ */
+static void dct2_dct(double *y, double *x){
 
   double one_by_root2 = 1.0/sqrt(2);
-  int i;
-  cblas_dcopy(dct2_mrow * dct2_mcol, x, 1, dct2_Ety_sparse, 1);
 
-
-  fftw_execute(dct2_plan_MtEty); //-->dct2_x
+  fftw_execute_r2r(dct2_plan_MtEty, y, x); //-->dct2_x
 
   // normalize by 1/sqrt(2*N) * 1/sqrt(2*M)
-  for (i=0; i<dct2_mrow * dct2_mcol; i++){
-    x[i] = dct2_x[i] * dct2_root_1_by_4NM;
-  }
+  cblas_dscal(dct2_mrow * dct2_mcol, dct2_root_1_by_4NM, x, 1);
 
   x[0] = x[0]*0.5;
   // Across the columns of the first row.
@@ -211,11 +209,12 @@ static void dct2_dct(double *x){
 
   // Down the rows of the first column.
   cblas_dscal(dct2_mrow-1, one_by_root2, x+dct2_mcol, dct2_mcol);
-
 }
 
-
-static void dct2_idct(double *x){
+/*
+  Computes y = M * x
+ */
+static void dct2_idct(double *x, double *y){
 
   double root2 = sqrt(2);
   cblas_dcopy(dct2_mrow * dct2_mcol, x, 1, dct2_x, 1);
@@ -224,15 +223,15 @@ static void dct2_idct(double *x){
   dct2_x[0] = dct2_x[0]*2.0;
 
   // Across the columns of the first row.
-  cblas_dscal(dct2_mrow-1, root2, dct2_x+1, 1);
+  cblas_dscal(dct2_mcol-1, root2, dct2_x+1, 1);
 
   // Down the rows of the first column.
   cblas_dscal(dct2_mrow-1, root2, dct2_x+dct2_mcol, dct2_mcol);
 
-  fftw_execute_r2r(dct2_plan_EMx, dct2_x, x);
+  fftw_execute_r2r(dct2_plan_EMx, dct2_x, y);
 
   // normalize by 1/sqrt(2*N) * 1/sqrt(2*M)
-  cblas_dscal(dct2_mrow*dct2_mcol, dct2_root_1_by_4NM, x, 1);
+  cblas_dscal(dct2_mrow*dct2_mcol, dct2_root_1_by_4NM, y, 1);
 
 }
 

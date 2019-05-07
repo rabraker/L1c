@@ -25,7 +25,7 @@ def Atdct_factory(pix_idx, m):
     return Atdct
 
 
-def dct_test_data(m, eta_vec, pix_idx):
+def dct_test_data(m, eta_vec, z_vec, pix_idx):
     Adct = Adct_factory(pix_idx)
     Atdct = Atdct_factory(pix_idx, m)
 
@@ -34,21 +34,26 @@ def dct_test_data(m, eta_vec, pix_idx):
     # y = E*M*eta
     y_vec = dct(eta_vec, norm='ortho', type=3)[pix_idx]
 
+    Mx = dct(eta_vec, type=3, norm='ortho')
+    Mty = dct(z_vec, type=2, norm='ortho')
     EMx = Adct(eta_vec)
     MtEty = Atdct(y_vec)
     MtEt_EMx = Atdct(Adct(eta_vec))
 
-    return y_vec, EMx, MtEty, MtEt_EMx
+    return y_vec, Mx, Mty, EMx, MtEty, MtEt_EMx
 
 
-def save_dct_test_data(fname, eta, y, EMx, MtEty, MtEt_EMx, pix_idx):
-    data = {'x_in': eta.flatten().tolist(),
-            'y_in': y.flatten().tolist(),
-            'EMx': EMx.flatten().tolist(),
-            'pix_idx': pix_idx.flatten().tolist(),
-            'MtEty': MtEty.flatten().tolist(),
-            'MtEt_EMx': MtEt_EMx.flatten().tolist()}
-
+def save_dct_test_data(fname, eta, y, z, Mx, Mty, EMx, MtEty, MtEt_EMx, pix_idx):
+    data = {'x_in': eta,
+            'y_in': y,
+            'z_in': z,
+            'EMx': EMx,
+            'Mx': Mx,
+            'Mty': Mty,
+            'pix_idx': pix_idx,
+            'MtEty': MtEty,
+            'MtEt_EMx': MtEt_EMx}
+    data = TDU.jsonify(data)
     TDU.save_json(data, fname)
 
 
@@ -61,9 +66,10 @@ def build_dct_rand_test_data(fname, pix_idx, m):
 
     seed(0)
     eta_vec = rand(m)
-    y_vec, EMx, MtEty, MtEt_EMx = dct_test_data(m, eta_vec, pix_idx)
+    z = rand(m)
+    y_vec, Mx, Mty, EMx, MtEty, MtEt_EMx = dct_test_data(m, eta_vec, z, pix_idx)
 
-    save_dct_test_data(fname, eta_vec, y_vec, EMx, MtEty, MtEt_EMx, pix_idx)
+    save_dct_test_data(fname, eta_vec, y_vec, z, Mx, Mty, EMx, MtEty, MtEt_EMx, pix_idx)
 
 
 def build_dct_large(fname, npix):
@@ -79,10 +85,11 @@ def build_dct_large(fname, npix):
 
     x = img.flatten()
     eta = dct(x, norm='ortho', type=2)
+    z = rand(m);
 
-    y_vec, EMx, MtEty, MtEt_EMx = dct_test_data(m, eta, pix_idx)
+    y_vec, Mx, Mty, EMx, MtEty, MtEt_EMx = dct_test_data(m, eta, z, pix_idx)
 
-    save_dct_test_data(fname, eta, y_vec, EMx, MtEty, MtEt_EMx, pix_idx)
+    save_dct_test_data(fname, eta, y_vec, z, Mx, Mty, EMx, MtEty, MtEt_EMx, pix_idx)
 
 
 srcdir = os.getenv("srcdir")

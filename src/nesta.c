@@ -51,8 +51,7 @@ void nesta_l1_feval(l1c_int m, double *x, double *u, double *gradf, double *fx,
   if( !ax_funs.E  && !ax_funs.Et){
     cblas_dcopy(m, x, 1, u, 1);
   }else{
-    cblas_dcopy(m, x, 1, u, 1);
-    ax_funs.M(u);
+    ax_funs.M(x, u);
   }
 
   for (int i=0; i<m; i++){
@@ -65,8 +64,7 @@ void nesta_l1_feval(l1c_int m, double *x, double *u, double *gradf, double *fx,
 
   *fx = cblas_ddot(m, u, 1, x, 1) - 0.5*mu * nrm_u2;
 
-  cblas_dcopy(m, u, 1, gradf, 1);
-  ax_funs.Mt(gradf);
+  ax_funs.Mt(u, gradf);
 }
 
 

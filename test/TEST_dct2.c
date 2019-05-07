@@ -34,8 +34,16 @@ typedef struct DctData{
   double *MtEty_exp;
   double *EMx_act;
   double *EMx_exp;
+
+  double *Mx_act;
+  double *Mx_exp;
+
+  double *Mty_act;
+  double *Mty_exp;
+
   double *x_in;
   double *y_in;
+  double *z_in;
 
   /* Transform is n by mtot. mtot = mrow*mcol.*/
   l1c_int mrow;
@@ -69,12 +77,16 @@ static void setup(DctData *dct_dat){
 
   setup_status +=extract_json_double_array(test_data_json, "x_in", &dct_dat->x_in, &dct_dat->mtot);
   setup_status +=extract_json_double_array(test_data_json, "y_in", &dct_dat->y_in, &dct_dat->n);
+  setup_status +=extract_json_double_array(test_data_json, "z_in", &dct_dat->z_in, &dct_dat->mtot);
 
   setup_status +=extract_json_double_array(test_data_json, "MtEt_EMx", &dct_dat->MtEty_EMx_exp, &dct_dat->mtot);
 
   setup_status +=extract_json_double_array(test_data_json, "MtEty", &dct_dat->MtEty_exp, &dct_dat->mtot);
 
   setup_status +=extract_json_double_array(test_data_json, "EMx", &dct_dat->EMx_exp, &dct_dat->n);
+
+  setup_status +=extract_json_double_array(test_data_json, "Mx", &dct_dat->Mx_exp, &dct_dat->mtot);
+  setup_status +=extract_json_double_array(test_data_json, "Mty", &dct_dat->Mty_exp, &dct_dat->mtot);
 
   setup_status +=extract_json_int_array(test_data_json, "pix_idx", &dct_dat->pix_idx, &dct_dat->n);
   setup_status +=extract_json_int(test_data_json, "mrow", &dct_dat->mrow);
@@ -89,6 +101,8 @@ static void setup(DctData *dct_dat){
   dct_dat->MtEty_EMx_act = l1c_malloc_double(dct_dat->mtot);
   dct_dat->MtEty_act = l1c_malloc_double(dct_dat->mtot);
   dct_dat->EMx_act = l1c_malloc_double(dct_dat->mtot);
+  dct_dat->Mx_act = l1c_malloc_double(dct_dat->mtot);
+  dct_dat->Mty_act = l1c_malloc_double(dct_dat->mtot);
 
   l1c_dct2_setup(dct_dat->mrow, dct_dat->mcol, dct_dat->n, dct_dat->pix_idx, &ax_funs);
 
@@ -98,15 +112,19 @@ static void setup(DctData *dct_dat){
 static void teardown(DctData *dct_dat){
   l1c_free_double(dct_dat->x_in);
   l1c_free_double(dct_dat->y_in);
+  l1c_free_double(dct_dat->z_in);
 
   l1c_free_double(dct_dat->MtEty_EMx_exp);
   l1c_free_double(dct_dat->MtEty_exp);
   l1c_free_double(dct_dat->EMx_exp);
+  l1c_free_double(dct_dat->Mx_exp);
+  l1c_free_double(dct_dat->Mty_exp);
 
   l1c_free_double(dct_dat->MtEty_EMx_act);
   l1c_free_double(dct_dat->MtEty_act);
   l1c_free_double(dct_dat->EMx_act);
-
+  l1c_free_double(dct_dat->Mx_act);
+  l1c_free_double(dct_dat->Mty_act);
 
   free(dct_dat->pix_idx);
   ax_funs.destroy();
@@ -212,6 +230,25 @@ START_TEST(test_dct2_EMx_new_small)
 }
 END_TEST
 
+START_TEST(test_dct2_Mx)
+{
+  ax_funs.M(dctd->x_in, dctd->Mx_act);
+
+  ck_assert_double_array_eq_tol(dctd->mtot, dctd->Mx_exp,
+                                dctd->Mx_act, TOL_DOUBLE_SUPER);
+
+}
+END_TEST
+
+START_TEST(test_dct2_Mty)
+{
+  ax_funs.Mt(dctd->z_in, dctd->Mty_act);
+
+  ck_assert_double_array_eq_tol(dctd->mtot, dctd->Mty_exp,
+                                dctd->Mty_act, TOL_DOUBLE_SUPER);
+
+}
+END_TEST
 
 
 /* Add all the test cases to our suite
@@ -230,6 +267,8 @@ Suite *dct2_suite(void)
   tcase_add_test(tc_dct2_square, test_dct2_MtEt_EMx_small);
   tcase_add_test(tc_dct2_square, test_dct2_MtEty_small);
   tcase_add_test(tc_dct2_square, test_dct2_EMx_new_small);
+  tcase_add_test(tc_dct2_square, test_dct2_Mx);
+  tcase_add_test(tc_dct2_square, test_dct2_Mty);
 
   suite_add_tcase(s, tc_dct2_square);
 
@@ -241,8 +280,10 @@ Suite *dct2_suite(void)
   tc_dct2_pure = tcase_create("dct2_pure");
   tcase_add_checked_fixture(tc_dct2_pure, setup_pure_square, teardown_pure_square);
   tcase_add_test(tc_dct2_pure, test_dct2_MtEt_EMx_small);
-  tcase_add_test(tc_dct2_pure, test_dct2_EMx_new_small);
   tcase_add_test(tc_dct2_pure, test_dct2_MtEty_small);
+  tcase_add_test(tc_dct2_pure, test_dct2_EMx_new_small);
+  tcase_add_test(tc_dct2_pure, test_dct2_Mx);
+  tcase_add_test(tc_dct2_pure, test_dct2_Mty);
 
   suite_add_tcase(s, tc_dct2_pure);
 
@@ -252,8 +293,10 @@ Suite *dct2_suite(void)
   tc_dct2_tall = tcase_create("dct2_tall");
   tcase_add_checked_fixture(tc_dct2_tall, setup_tall, teardown_tall);
   tcase_add_test(tc_dct2_tall, test_dct2_MtEt_EMx_small);
-  tcase_add_test(tc_dct2_tall, test_dct2_EMx_new_small);
   tcase_add_test(tc_dct2_tall, test_dct2_MtEty_small);
+  tcase_add_test(tc_dct2_tall, test_dct2_EMx_new_small);
+  tcase_add_test(tc_dct2_tall, test_dct2_Mx);
+  tcase_add_test(tc_dct2_tall, test_dct2_Mty);
 
   suite_add_tcase(s, tc_dct2_tall);
 
@@ -262,8 +305,10 @@ Suite *dct2_suite(void)
   tc_dct2_wide = tcase_create("dct2_wide");
   tcase_add_checked_fixture(tc_dct2_wide, setup_wide, teardown_wide);
   tcase_add_test(tc_dct2_wide, test_dct2_MtEt_EMx_small);
-  tcase_add_test(tc_dct2_wide, test_dct2_EMx_new_small);
   tcase_add_test(tc_dct2_wide, test_dct2_MtEty_small);
+  tcase_add_test(tc_dct2_wide, test_dct2_EMx_new_small);
+  tcase_add_test(tc_dct2_wide, test_dct2_Mx);
+  tcase_add_test(tc_dct2_wide, test_dct2_Mty);
 
   suite_add_tcase(s, tc_dct2_wide);
 

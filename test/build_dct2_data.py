@@ -8,6 +8,21 @@ from scipy.fftpack import dct
 import L1cTestDataUtils as TDU
 
 
+def Mx_fun(x, mrow, mcol):
+    x = x.reshape((mrow, mcol))
+    y = dct(x, axis=0, type=3, norm='ortho')
+    y = dct(y, axis=1, type=3, norm='ortho')
+    y = y.flatten()
+    return y
+
+
+def Mty_fun(z, mrow, mcol):
+    z = z.reshape((mrow, mcol))
+    x = dct(z, axis=0, type=2, norm='ortho')
+    x = dct(x, axis=1, type=2, norm='ortho')
+    return x
+
+
 def Adct_factory(pix_idx, mrow, mcol):
     def Adct(x):
         x = x.reshape((mrow, mcol))
@@ -35,7 +50,7 @@ def build_dct_rand_test_data(fname, pix_idx, mrow, mcol):
     seed(0)
 
     eta_vec = rand(mrow*mcol)
-
+    z_vec = rand(mrow*mcol)
     Adct = Adct_factory(pix_idx, mrow, mcol)
     Atdct = Atdct_factory(pix_idx, mrow, mcol)
 
@@ -43,20 +58,26 @@ def build_dct_rand_test_data(fname, pix_idx, mrow, mcol):
 
     # y = E*M*x
     y_vec = dct(eta_vec, norm='ortho', type=3)[pix_idx]
+    Mx = Mx_fun(eta_vec, mrow, mcol)
+    Mty = Mty_fun(z_vec, mrow, mcol)
 
     EMx = Adct(eta_vec)
     MtEty = Atdct(y_vec)
     MtEt_EMx = Atdct(Adct(eta_vec))
 
-    data = {'x_in': eta_vec.flatten().tolist(),
-            'y_in': y_vec.flatten().tolist(),
-            'EMx': EMx.flatten().tolist(),
-            'pix_idx': pix_idx.flatten().tolist(),
-            'MtEty': MtEty.flatten().tolist(),
-            'MtEt_EMx': MtEt_EMx.flatten().tolist(),
+    data = {'x_in': eta_vec,
+            'y_in': y_vec,
+            'z_in': z_vec,
+            'EMx': EMx,
+            'Mx': Mx,
+            'Mty': Mty,
+            'pix_idx': pix_idx,
+            'MtEty': MtEty,
+            'MtEt_EMx': MtEt_EMx,
             'mrow': mrow,
             'mcol': mcol}
 
+    data = TDU.jsonify(data)
     TDU.save_json(data, fname)
 
 
