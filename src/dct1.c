@@ -13,9 +13,12 @@
 static void dct_destroy();
 static void dct_EMx(double *x_fftw, double *y);
 static void dct_MtEty(double *y, double *x);
-static void dct_idct(double *x, double *y);
-static void dct_dct(double *y, double *x);
 static void dct_MtEt_EMx(double *x_fftw, double *z);
+
+static void dct_Mx(double *x, double *y);
+static void dct_Mty(double *y, double *x);
+static void dct_Ex(double *x, double *y);
+static void dct_Ety(double *y, double *x);
 
 
 static fftw_plan dct_plan_MtEty;
@@ -140,10 +143,10 @@ int l1c_dct1_setup(l1c_int m, l1c_int n, l1c_int *pix_mask_idx, l1c_AxFuns *ax_f
   ax_funs->Ax = dct_EMx;
   ax_funs->Aty = dct_MtEty;
   ax_funs->AtAx = dct_MtEt_EMx;
-  ax_funs->Mx = dct_idct;
-  ax_funs->Mty = dct_dct;
-  ax_funs->Ex = NULL;
-  ax_funs->Ety = NULL;
+  ax_funs->Mx = dct_Mx;
+  ax_funs->Mty = dct_Mty;
+  ax_funs->Ex = dct_Ex;
+  ax_funs->Ety = dct_Ety;
 
   ax_funs->destroy = dct_destroy;
   ax_funs->data = NULL;
@@ -167,7 +170,7 @@ static void dct_destroy(){
 }
 
 
-static void dct_idct(double *x, double *y){
+static void dct_Mx(double *x, double *y){
   // double *x_ = __builtin_assume_aligned(x, DALIGN);
 
   x[0] = x[0] * sqrt(2.0); //proper scaling
@@ -181,7 +184,7 @@ static void dct_idct(double *x, double *y){
   x[0] = x[0] / sqrt(2.0); //undo scaling
 }
 
-static void dct_dct( double *y, double *x){
+static void dct_Mty( double *y, double *x){
   /*Apply x = M^T * y.
     The results are normalized to matlabs convention. That is, divided by 1/sqrt(2*N) and
     x[0] <- x[0] * /sqrt(2).
@@ -309,3 +312,29 @@ static void dct_MtEt_EMx(double * restrict x, double * restrict z){
 
 }
 
+
+/* Apply the subsampling y = E * x,
+   i.e., y = x[pix_idx]
+*/
+static void dct_Ex(double *x, double *y){
+  for(int i=0; i<dct_n; i++){
+    y[i] = x[dct_pix_mask_idx[i]];
+  }
+}
+
+
+/*
+  Apply the adjoint of the sub-sampling operation,
+  x = E^T * y
+  I.e., x = zeros(n), x[pix_idx] = y.
+
+  x should already be initialized.
+*/
+static void dct_Ety(double *y, double *x){
+
+  cblas_dscal(dct_m, 0, x, 1);
+
+  for (int i=0; i<dct_n; i++){
+    x[dct_pix_mask_idx[i]] = y[i];
+  }
+}
