@@ -45,8 +45,6 @@ test "$PKG_CONFIG" == "no" && AC_MSG_ERROR([Required program 'pkg-config' not fo
 
 PKG_PROG_PKG_CONFIG
 
-PKG_PROG_PKG_CONFIG
-
 dnl This is necessary, otherwise, when we use AC_CHECK_HEADER inside the conditional,
 dnl AC_PROG_CPP will be expanded in the else, and not visible outside, which leads to
 dnl warnings like WARNING: check.h: accepted by the compiler, rejected by the preprocessor!
@@ -308,6 +306,7 @@ AC_CHECK_HEADER([fftw3.h], [], [AC_MSG_ERROR("Cannot find fftw3.h")])
 
 AC_CHECK_LIB([fftw3], [fftw_plan_r2r_1d],[],[
                       AC_MSG_ERROR(fftw3 library is required for this program)])
+_fftw_ldlibs="-lfftw3"
 # Figure out which threading library we are supposed to use, if any.
 have_fftw_threads=no
 maybe_suffx="combined omp threads"
@@ -324,18 +323,20 @@ for suffx in $maybe_suffx; do
              ;;
          *)
     esac
-
+    # If user specified a specific threading library,
+    # skip until the loop reaches it.
     if test x$suffx = x$with_fftw3_threads ||test x$with_fftw3_threads = xyes   ; then
        AC_CHECK_LIB([$lib], [fftw_init_threads],[have_fftw_threads=yes],[have_fftw_threads=no])
     fi
 
     if test x$have_fftw_threads = xyes; then
        LIBS="$LIBS -l$lib"
+       _fftw_ldlibs="-l$lib $_fftw_ldlibs"
        break
     fi
 done
 
-if test x$with_fftw3_threads = xyes && test x$have_fftw_threads = xno; then
+if test ! x$with_fftw3_threads = xno && test x$have_fftw_threads = xno; then
    AC_MSG_ERROR(fftw3 threading library not found)]
 elif test x$have_fftw_threads = xyes; then
    AC_DEFINE([HAVE_FFTW3_THREADS], [1], [Compile with fftw threading support])
@@ -501,7 +502,7 @@ AC_MSG_NOTICE(Configuration summary:)
 AC_MSG_NOTICE(L1C will be built with l1c_cflags = $l1c_cflags)
 AC_MSG_NOTICE(L1C will be built with l1c_cxxflags = $l1c_cxxflags)
 AC_MSG_NOTICE(L1C will be built with l1c_cppflags = $l1c_cppflags)
-AC_MSG_NOTICE(Compile with FFTW threads? $have_fftw_threads)
+AC_MSG_NOTICE(Compile with FFTW threads? $have_fftw_threads: $_fftw_ldlibs)
 AC_MSG_NOTICE(Compile python bindings? $enable_python)
 AC_MSG_NOTICE(Compile mex bindings? $enable_mex)
 
