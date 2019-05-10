@@ -17,10 +17,10 @@ then
 
     VALGRIND_OPTS="--leak-check=full --errors-for-leak-kinds=definite --error-exitcode=1"
     # CK_RUN_CASE=l1qc_gradient
-    $LT --mode=execute valgrind $VALGRIND_OPTS ./test_l1c
+    $LT --mode=execute valgrind $VALGRIND_OPTS "${TOP_BUILDDIR}/test/test_l1c.test"
 
     data_path="${ABS_TOP_SRCDIR}/test/test_data/example_img_data127.json"
-    $LT --mode=execute valgrind $VALGRIND_OPTS "${TOP_BUILDDIR}/interfaces/l1qc_dct_c" "${data_path}"
+    $LT --mode=execute valgrind $VALGRIND_OPTS "${TOP_BUILDDIR}/examples/c/l1qc_dct_c" "${data_path}"
 else
     exit 77
 fi
