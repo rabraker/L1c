@@ -364,7 +364,7 @@ dnl as a shared library.
 dnl Also, if third arg to AC_CHECK_LIB is missing, it will automatically append, e.g.,
 dnl -lmex to $LIBS, which will make the rest of the checks fail.
     tmp_cflags=$CFLAGS
-    CFLAGS="-shared $CFLAGS"
+    CFLAGS="-shared -fPIC $CFLAGS"
     AC_CHECK_LIB([mex], [mexErrMsgTxt],[mex_ldlibs="-lmex"],[
                  AC_MSG_ERROR(Matlab libmex library not found.)])
     AC_CHECK_LIB([mx], [mxIsScalar], [mex_ldlibs="$mex_ldlibs -lmx"],
