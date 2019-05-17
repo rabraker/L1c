@@ -24,14 +24,9 @@ typedef struct LineSearchParams {
   double s;
   double alpha;
   double beta;
-  double epsilon;
-  double tau;
-
 } LSParams;
 
 typedef struct LSStat {
-  double flx;
-  double flu;
   double flin;
   double step;
   int iter;
@@ -48,30 +43,57 @@ typedef struct GradData{
   double *gradf;
 }GradData;
 
+typedef struct l1c_l1qcProb {
+  /*Static problem data.*/
+  l1c_int m;
+  l1c_int n;
+  double *b;
+  double tau;
+  double epsilon;
+  /*Internal, dynamic data*/
+  double *r;
+  double *fu1;
+  double *fu2;
+  double fe_val;
+  double f_val;
+  /* gradient and hessian data*/
+  double *w1p;
+  double *dx;
+  double *du;
+  double *sig11;
+  double *sig12;
+  double *ntgu;
+  double *gradf;
+  double **DWORK7;
+
+  l1c_AxFuns ax_funs;
+}l1c_l1qcProb;
+
+
 /* These could be static. But that makes them hard to test. They are complicated enough I think
  they should be tested on their own. I.e., I dont want to *just* test l1qc_newton()
 */
-double _l1c_l1qc_find_max_step(l1c_int m, GradData gd, double *fu1,
-                               double *fu2, int n, double *r, double *DWORK,
-                               double epsilon, l1c_AxFuns Ax_funs);
+double _l1c_l1qc_find_max_step(l1c_l1qcProb *Prb);
 
-LSStat _l1c_l1qc_line_search(l1c_int m, l1c_int n, double *x, double *u, double *r, double *b,
-                             double *fu1, double *fu2, GradData gd, LSParams ls_params,
-                             double **DWORK5, double *fe, double *f, l1c_AxFuns Ax_funs);
+LSStat _l1c_l1qc_line_search(l1c_int m, double *x, double *u,
+                             l1c_l1qcProb *l1qc_prob, double g_dot_dxu,
+                             LSParams ls_params, double **DWORK5);
 
-void _l1c_l1qc_hess_grad(l1c_int m, double *fu1, double *fu2, double *sigx, double *atr,
-                         double fe,  double tau, GradData gd);
+void _l1c_l1qc_hess_grad(l1c_l1qcProb *l1qc_prob, double *sigx, double *atr);
 
-int _l1c_l1qc_descent_dir(l1c_int m, double *fu1, double *fu2, double *r, double fe, double tau,
-                          GradData gd, double **Dwork7, l1c_CgParams cg_params, l1c_CgResults *cg_result,
-                          l1c_AxFuns Ax_funs);
+int _l1c_l1qc_descent_dir(l1c_l1qcProb *l1qc_prob, l1c_CgParams cg_params,
+                          l1c_CgResults *cg_result);
 
 void _l1c_l1qc_H11pfun(l1c_int m, double *z, double *y,  void *hess_data_in);
 
 /* Evalutes the value function */
-void _l1c_l1qc_f_eval(l1c_int m, double *x, double *u, l1c_int n, double *r, double *b,
-                      double tau, double epsilon, double *fu1, double *fu2, double *fe,
-                      double *f, l1c_AxFuns Ax_funs);
+// void _l1c_l1qc_f_eval(l1c_int m, double *x, double *u, l1c_int n, double *r, double *b,
+//                       double tau, double epsilon, double *fu1, double *fu2, double *fe,
+//                       double *f, l1c_AxFuns Ax_funs);
+
+int _l1c_l1qc_check_feasible_start(l1c_l1qcProb *Prbm, double *x);
+
+void _l1c_l1qc_f_eval(l1c_l1qcProb *prob_data, double *x, double *u);
 
 int _l1c_l1qc_newton_init(l1c_int m, double *x, double *u,  l1c_L1qcOpts *params);
 
