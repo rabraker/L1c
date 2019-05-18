@@ -2,7 +2,6 @@
 
 =======
 . Untested functions:
-.. _l1c_l1qc_check_feasible_start
 .. _l1c_l1qcProb_new Should check somehow that the right things happens if malloc fails.
 .. _l1c_l1qcProb_delete Dont know what to test here. I guess I can pass a null pointer, and otherwise leave it up to valgrind to check the whole thing got freed.
 .. test_l1c_malloc_double_2D need to check it returns NULL if an inner malloc fails.

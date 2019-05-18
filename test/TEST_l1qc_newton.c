@@ -710,6 +710,7 @@ Suite *l1qc_newton_suite(void)
   tc_newton_init = tcase_create("newton_init");
   tcase_add_test(tc_newton_init, test_newton_init);
   tcase_add_test(tc_newton_init, test_newton_init_regres1);
+  tcase_add_test(tc_newton_init, test_l1qc_check_feasible_start);
 
   tc_feval = tcase_create("f_eval");
   tcase_add_test(tc_feval, test_f_eval);
