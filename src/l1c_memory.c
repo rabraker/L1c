@@ -118,7 +118,7 @@ double** l1c_malloc_double_2D(l1c_int nrow, l1c_int ncol){
  fail1:
   free(dwork);
 
-  return dwork;
+  return NULL;
 
 }
 
@@ -131,8 +131,11 @@ double** l1c_malloc_double_2D(l1c_int nrow, l1c_int ncol){
  */
 void l1c_free_double_2D(int nrow, double **ddptr){
 
-  for (int k=0; k<nrow; k++){
-    l1c_free_double(ddptr[k]);
+  /* If ddptr is NULL, we cant free the inner arrays.*/
+  if (ddptr){
+    for (int k=0; k<nrow; k++){
+      l1c_free_double(ddptr[k]);
+    }
   }
   free(ddptr);
 }
