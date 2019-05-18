@@ -74,9 +74,18 @@ test_l1c_test_SOURCES = TEST_cgsolve.c       \
 					test_l1c.c               \
 					TEST_dct.c               \
 					TEST_dct2.c              \
-					$(top_srcdir)/include/TEST.h \
+					$(top_srcdir)/include/bregman.h        \
+					$(top_srcdir)/include/check_utils.h    \
+					$(top_srcdir)/include/json_utils.h     \
+					$(top_srcdir)/include/l1c.h            \
+					$(top_srcdir)/include/l1c_math.h       \
+					$(top_srcdir)/include/l1c_timing.h     \
+					$(top_srcdir)/include/l1qc_newton.h    \
 					$(top_srcdir)/include/test_constants.h \
-					$(top_srcdir)/include/check_utils.h
+					$(top_srcdir)/include/TEST.h           \
+					$(top_srcdir)/include/TV.h             \
+					$(top_srcdir)/include/vcl_math.h
+
 
 
 
