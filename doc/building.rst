@@ -36,10 +36,8 @@ Running the full build requires the following dependencies
 * Python3-dev and python3-setuptools, if building the the python interface.
 * Matplotlib is needed for plotting in some examples
 * Valgrind (optional) to run the memory leak tests.
-* Two test cases still rely on matlab to produce the required data. If matlab is unavailible, you can run the tests anyway but
 
-:code:`test_line_search` and :code:`test_l1qc_newton_1iter` will fail.
-Details and suggestions follow. Or run :code:`./configure --help` if this is old hat to you. 
+Details and suggestions follow. Or run :code:`./configure --help` if this is old hat to you.
 
 Presently, the configure script will not finish if it does not find :code:`cJSON` or :code:`check`.
 
@@ -128,8 +126,4 @@ By default, this will skip the memory leak test, which is very time consuming. T
 
 
 
-TODO: Remove dependency on Matlab
-==================================
-The data for the line search still relies on Matlab. 
-It remains an outstanding goal to remove the dependency on Matlab for the test data.
 

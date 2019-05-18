@@ -24,8 +24,6 @@ script:
         - ./bootstrap.sh 
         - CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/lib ./configure --enable-python
         - make
-        - wget https://rabraker.com/l1c_data/l1c_extra_data.tar
-        - tar -xvf l1c_extra_data.tar -C test/test_data/
         - OMP_NUM_THREADS=4 make check
 
 

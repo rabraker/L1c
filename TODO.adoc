@@ -8,6 +8,6 @@
 .. test_l1c_malloc_double_2D need to check it returns NULL if an inner malloc fails.
 .. l1c_free_double_2D, should check it works when ddptr==NULL
 
-
++
 . The dct/dct2 should not store their state as local-globals. This limits the user to seting up a single optimization. Rather, the state should be stored, possibly, as an opaqe  field in the struct of function pointers.
 

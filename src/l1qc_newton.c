@@ -9,7 +9,7 @@
 #include "vcl_math.h"
 #include "l1c_math.h"
 #include "l1qc_newton.h"
-
+#include "linesearch.h"
 
 /* ---------------- Forward Declarations ---------------------- */
 
@@ -21,32 +21,17 @@ static void newton_report(int iter, int m, l1c_l1qcProb *Prb, double lambda2,
 
 
 
-/* Return pointers to all the static functions. To by called by testing code only.*/
+/*
+  Returns the value of the function at the current point (x, u)
 
+  void *problem_data should be a struct of l1c_l1qcProb.
 
-/* Evalutes the value functional */
-void _l1c_l1qc_f_eval( l1c_l1qcProb *Prb, double *x, double *u){
-  /*
-    inputs
-    ------
-    m : length of vectors
-    r,x,u : input data, of length m
-    tau : barrier relaxation paremeter
-    epsilon: scalar
+   The function will update .fu1, .fu2, .fe_val, .f_val.
+   x and u should have length .m
+ */
+double _l1c_l1qc_f_eval(void *problem_data, double *x, double *u){
 
-    outputs
-    -------
-    fu1 = x - u
-    fu2 = -x - u
-
-    fe  = <r, r> - epsilon ^2
-    f = total cost function value
-
-    work space
-    ----------
-    Dwork : should have length 2*m
-   */
-
+  l1c_l1qcProb *Prb = (l1c_l1qcProb*)problem_data;
   double a1=0, a2=0, a3=0;
 
   double epsilon = Prb->epsilon;
@@ -57,9 +42,9 @@ void _l1c_l1qc_f_eval( l1c_l1qcProb *Prb, double *x, double *u){
   Prb->ax_funs.Ax(x, Prb->r);
   cblas_daxpy(n, -1.0, Prb->b, 1, Prb->r, 1);
 
-  // fu1 = x - u
+  /* fu1 = x - u */
   l1c_daxpy_z(m, -1.0, u, x, Prb->fu1);
-  // fu2 = -x - u
+  /* fu2 = -x - u */
   axpby_z(m, -1.0, x, -1.0, u, Prb->fu2);
 
   Prb->fe_val = 0.5 * (cblas_ddot(n, Prb->r, 1, Prb->r, 1) - epsilon * epsilon);
@@ -69,34 +54,15 @@ void _l1c_l1qc_f_eval( l1c_l1qcProb *Prb, double *x, double *u){
   a3 = log(- (Prb->fe_val));
   Prb->f_val = vcl_sum(m, u) - (1.0/Prb->tau) * ( a1 + a2 +a3);
 
+  return Prb->f_val;
 }
 
 
 /* Computes the H11 part of the hessian. Used to call cgsolve.
  */
 void _l1c_l1qc_H11pfun(l1c_int m, double *z, double *y,  void *hess_data_in){
-  /*
-
-   */
-
-  // Hess_data h11p_data = *((Hess_data *) hess_data_in);
-  // // // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
-
-  // double *ATA_z = h11p_data.Dwork_1m;
-  // double atr_dot_z_fe = 0.0;
-
-  // atr_dot_z_fe = cblas_ddot(m, h11p_data.atr, 1, z, 1);
-  // atr_dot_z_fe = atr_dot_z_fe * h11p_data.one_by_fe_sqrd; //1/fe^2*(atr'*z)
-
-
-  // h11p_data.AtAx(z, ATA_z);                               // AtA_z
-  // l1c_dxmuly_z(m, h11p_data.sigx, z, y);                  // y = sigx.*z
-  // cblas_daxpy(m, -h11p_data.one_by_fe, ATA_z, 1, y, 1);   // y = sigx.*z (1/fe)*ATA_z
-  // cblas_daxpy(m, atr_dot_z_fe, h11p_data.atr, 1, y, 1);
 
   Hess_data h11p_data = *((Hess_data *) hess_data_in);
-  // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
-
   double atr_dot_z_fe = 0.0;
 
   atr_dot_z_fe = cblas_ddot(m, h11p_data.atr, 1, z, 1);
@@ -104,11 +70,10 @@ void _l1c_l1qc_H11pfun(l1c_int m, double *z, double *y,  void *hess_data_in){
 
 
   // h11pfun = @(z) sigx.*z - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
-  h11p_data.AtAx(z, y);                               // y = A^T*A*z
-  l1c_daxpby(m, atr_dot_z_fe, h11p_data.atr,          // y = - (1/fe)*At(A(z)) + 1/fe^2*(atr'*z)*atr;
+  h11p_data.AtAx(z, y);
+  l1c_daxpby(m, atr_dot_z_fe, h11p_data.atr,
                -h11p_data.one_by_fe, y);
-  vcl_dxMy_pz(m, h11p_data.sigx, z, y);                // y = sigx.*z + A^T*A*z
-
+  vcl_dxMy_pz(m, h11p_data.sigx, z, y);
 
 }
 
@@ -191,26 +156,11 @@ void _l1c_l1qc_hess_grad(l1c_l1qcProb *Prb, double *sigx, double *atr){
 
   The Hessian is split into 4 blocks: only the H11 part is dense.
   The rest (H12, H21, and H22) are diagonal.
+
+  Will update the Prb fields: .dx, .du, .ntgu, .sig12, .sig11
  */
 int _l1c_l1qc_descent_dir(l1c_l1qcProb *Prb, l1c_CgParams cg_params, l1c_CgResults *cg_result){
-  /* inputs
-   --------
-   *fu1, *fu2, *atr, fe, tau
 
-   cg_params
-
-   outputs
-   -------
-     dx
-     du
-     cg_results
-     gd.*
-
-  work
-  ----
-    *Dwork_5m
-
-  */
   l1c_int i=0;
   Hess_data h11p_data;
   double *sigx, *atr;
@@ -222,7 +172,7 @@ int _l1c_l1qc_descent_dir(l1c_l1qcProb *Prb, l1c_CgParams cg_params, l1c_CgResul
   atr = Prb->DWORK7[2];
   Dwork_4m = Prb->DWORK7 + 3;
 
-  Prb->ax_funs.Aty(Prb->r, atr); //atr = A'*r.
+  Prb->ax_funs.Aty(Prb->r, atr);
 
   _l1c_l1qc_hess_grad(Prb, sigx, atr);
 
@@ -241,7 +191,6 @@ int _l1c_l1qc_descent_dir(l1c_l1qcProb *Prb, l1c_CgParams cg_params, l1c_CgResul
 
 #pragma omp parallel for
   for (i=0; i < Prb->m; i++){
-    // gd.du[i] = (gd.ntgu[i] - gd.sig12[i] * gd.dx[i] ) / gd.sig11[i];
     Prb->du[i] = (1.0/Prb->sig11[i]) * Prb->ntgu[i]
       - (Prb->sig12[i] / Prb->sig11[i]) * Prb->dx[i];
   }
@@ -276,7 +225,7 @@ double _l1c_l1qc_find_max_step(l1c_l1qcProb *Prb){
 
   double epsilon = Prb->epsilon;
   l1c_int i=0;
-  Prb->ax_funs.Ax(Prb->dx, Adx);  //Adx = A*dx
+  Prb->ax_funs.Ax(Prb->dx, Adx);
 
   aqe = cblas_ddot(n, Adx, 1, Adx, 1);
   bqe = 2.0 * cblas_ddot(n, Prb->r, 1, Adx, 1);
@@ -325,71 +274,8 @@ double _l1c_l1qc_find_max_step(l1c_l1qcProb *Prb){
 }
 
 
-LSStat _l1c_l1qc_line_search(l1c_int m, double *x, double *u, l1c_l1qcProb *Prb,
-                             double g_dot_dxu, LSParams ls_params, double **DWORK5){
-
-  LSStat ls_stat = {.flin=0, .step=0, .status=0};
-  int iter=0;
-  double flin = 0.0;
-
-  double step = ls_params.s;
-  /* Make things accessible */
-  double *xp = DWORK5[0];
-  double *up = DWORK5[1];
-
-  double f0 = Prb->f_val;
-
-  for (iter=1; iter<=32; iter++){
-    /* xp = x + s*dx etc*/
-    l1c_daxpy_z(m, step, Prb->dx, x, xp);
-    l1c_daxpy_z(m, step, Prb->du, u, up);
-
-    /* Evaluate functional at the new point. */
-    _l1c_l1qc_f_eval(Prb, xp, up);
-
-    if ( isnan(Prb->f_val)) {
-      step = ls_params.beta * step;
-      continue;
-    }
-
-    /*
-      De-rated linear approximation at the current point. We have
-      g_dot_dxu = gradf'*[dx; du]
-      So flin = f(x0) + alp * s * [Del x; Del u] * [dx, du]
-    */
-    flin = f0 + ls_params.alpha * step * g_dot_dxu;
-
-    if (Prb->f_val <= flin){ /* Sufficient decrease test */
-      cblas_dcopy(m, xp, 1, x, 1);
-      cblas_dcopy(m, up, 1, u, 1);
-
-      ls_stat.flin = flin;
-      ls_stat.step = step;
-      ls_stat.iter = iter;
-      ls_stat.status = 0;
-      return ls_stat;
-    }
-
-    step = ls_params.beta * step;
-  }
-
-  char spc[] = "   ";
-  printf("%sBacktracking line search failed, returning previous iterate.\n", spc);
-  printf("%sLast line-search values:\n", spc);
-  printf("%s                        iter = %d\n", spc, iter);
-  printf("%s                        fp   = %.10e\n", spc, Prb->f_val);
-  printf("%s                        flin = %.10e\n", spc, flin);
-  printf("%s                        fp-flin = %.10f\n", spc, Prb->f_val - flin);
-  printf("%s                        step = %.10f\n", spc, step);
-  printf("%s                        ls_params.s = %.10f\n", spc, ls_params.s);
-
-  ls_stat.flin = flin;
-  ls_stat.step = step;
-  ls_stat.iter = min(iter, 32);
-  ls_stat.status = 1;
-  return ls_stat;
-}
-
+/* Initializes u to a feasible point and compuates the starting tau.
+ */
 int _l1c_l1qc_newton_init(l1c_int m, double *x, double *u,  l1c_L1qcOpts *params){
   l1c_int i = 0;
   double x_max = 0.0, tmp = 0.0;
@@ -404,13 +290,14 @@ int _l1c_l1qc_newton_init(l1c_int m, double *x, double *u,  l1c_L1qcOpts *params
   }
 
   /* choose initial value of tau so that the duality gap after the first
-     step will be about the original norm */
-  //tau = max((2*m+1)/sum(abs(x0)), 1);
+     step will be about the original norm
+     tau = max((2*m+1)/sum(abs(x0)), 1);
+  */
   tmp = l1c_dnorm1(m, x);
   tmp = (double)(2*m+1) / tmp;
   params->tau = max(tmp, 1);
 
-  // If user has set lbiter, dont compute a different one.
+  /* If user has set lbiter, dont compute a different one. */
   if (params->lbiter == 0){
     tmp = log (2 * (double)m + 1) - log(params->lbtol) - log(params->tau);
     params->lbiter =(int) ceil (tmp / log(params->mu));
@@ -432,16 +319,25 @@ int _l1c_l1qc_check_feasible_start(l1c_l1qcProb *Prb, double *x){
 
   double tmp = cblas_dnrm2(Prb->n, DWORK, 1)  - epsilon;
   if (tmp > 0){
-    // Using minimum-2 norm  x0 = At*inv(AAt)*y.') as they
-    // will require updates to cgsolve.
+    /* Using minimum-2 norm  x0 = At*inv(AAt)*y.') as they
+       will require updates to cgsolve.
+    */
     printf("epsilon = %f,  ||r|| = %.20f\n", epsilon, cblas_dnrm2(n, DWORK, 1));
     return L1C_INFEASIBLE_START;
   }else
     return 0;
 }
 
+/* Allocates memory and popules fields of the problem struct.
+ */
 int _l1c_l1qcProb_new(l1c_l1qcProb *Prb, l1c_int m, l1c_int n, double *b,
                       l1c_L1qcOpts params, l1c_AxFuns ax_funs){
+  /* Initialize problem struct to zero. */
+  *Prb  = (l1c_l1qcProb) {.m=0, .n=0, .b=NULL, .tau=0, .epsilon=0,
+                          .r=NULL, .fu1=NULL, .fu2=NULL,
+                          .f_val=0, .fe_val=0,
+                          .w1p=NULL, .dx=NULL, .du=NULL, .sig11=NULL,
+                          .sig12=NULL, .ntgu=NULL, .gradf=NULL, .DWORK7=NULL};
   Prb->m = m;
   Prb->n = n;
   Prb->b = b;
@@ -475,6 +371,9 @@ int _l1c_l1qcProb_new(l1c_l1qcProb *Prb, l1c_int m, l1c_int n, double *b,
 
 }
 
+/*
+  Releases the memory allocated for the problem struct.
+ */
 void _l1c_l1qcProb_delete(l1c_l1qcProb *Prb){
   /* Do nothing if we got a null pointer. */
   if (Prb){
@@ -507,25 +406,23 @@ void _l1c_l1qcProb_delete(l1c_l1qcProb *Prb){
 l1c_LBResult l1c_l1qc_newton(l1c_int m, double *x, l1c_int n, double *b,
                      l1c_L1qcOpts params, l1c_AxFuns Ax_funs){
 
-  // Line search parameters.
+  /* Line search parameters. */
   LSStat ls_stat = {.flin=0, .step=0, .status=0};
   LSParams ls_params = { .alpha = 0.01, .beta = 0.5, .s = 1.0};
 
+  /* Conjugate gradient solver parameters. */
   l1c_CgParams cg_params = {.tol = params.cg_tol,
                             .max_iter = params.cg_maxiter,
                             .verbose = params.cg_verbose};
   l1c_CgResults cg_results;
+  /* Log-barrier parameters. */
   l1c_LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
 
   int iter=0, lb_iter = 0;
 
   double lambda2 = 0.0, g_dot_dxu=0.0;
   double l1_prev = 0, l1 = 0, rate=0;
-  l1c_l1qcProb l1qc_prob = {.m=0, .n=0, .b=NULL, .tau=0, .epsilon=0,
-                            .r=NULL, .fu1=NULL, .fu2=NULL,
-                            .f_val=0, .fe_val=0,
-                            .w1p=NULL, .dx=NULL, .du=NULL, .sig11=NULL,
-                            .sig12=NULL, .ntgu=NULL, .gradf=NULL, .DWORK7=NULL};
+  l1c_l1qcProb l1qc_prob;
 
   double *u   = l1c_calloc_double(m);
 
@@ -533,13 +430,14 @@ l1c_LBResult l1c_l1qc_newton(l1c_int m, double *x, l1c_int n, double *b,
     lb_res.status = L1C_OUT_OF_MEMORY;
     goto exit;
   }
+
+  /* Initialize u and tau. Do this before initializing the l1qc_prob struct. */
+  _l1c_l1qc_newton_init(m, x, u, &params);
+
   if( _l1c_l1qcProb_new(&l1qc_prob, m, n, b, params, Ax_funs) ){
     lb_res.status = L1C_OUT_OF_MEMORY;
       goto exit;
   }
-
-  _l1c_l1qc_newton_init(m, x, u, &params);
-  l1qc_prob.tau = params.tau;
 
 
   if (_l1c_l1qc_check_feasible_start(&l1qc_prob, x) ){
@@ -560,7 +458,7 @@ l1c_LBResult l1c_l1qc_newton(l1c_int m, double *x, l1c_int n, double *b,
     /*Re-initialize dx to zero every lb-iteration. */
     l1c_init_vec(m, l1qc_prob.dx, 0.0);
 
-    _l1c_l1qc_f_eval(&l1qc_prob, x, u);
+    _l1c_l1qc_f_eval((void*)(&l1qc_prob), x, u);
 
     l1_prev = INFINITY;
     /* ---------------- MAIN Newton ITERATION --------------------- */
@@ -591,10 +489,13 @@ l1c_LBResult l1c_l1qc_newton(l1c_int m, double *x, l1c_int n, double *b,
       /* -------------- Line Search --------------------------- */
       ls_params.s = _l1c_l1qc_find_max_step(&l1qc_prob);
 
-      g_dot_dxu= cblas_ddot(m, l1qc_prob.gradf, 1, l1qc_prob.dx, 1)
+      g_dot_dxu = cblas_ddot(m, l1qc_prob.gradf, 1, l1qc_prob.dx, 1)
         + cblas_ddot(m, l1qc_prob.gradf+m, 1, l1qc_prob.du, 1);
 
-      ls_stat = _l1c_l1qc_line_search(m, x, u, &l1qc_prob, g_dot_dxu, ls_params, l1qc_prob.DWORK7);
+      ls_stat = l1c_linesearch_xu(m, x, u, l1qc_prob.dx, l1qc_prob.du,
+                                  &l1qc_prob.f_val, g_dot_dxu,
+                                  (void*)(&l1qc_prob), _l1c_l1qc_f_eval,
+                                  ls_params, l1qc_prob.DWORK7);
 
 
       if (ls_stat.status > 0){
@@ -648,8 +549,8 @@ l1c_LBResult l1c_l1qc_newton(l1c_int m, double *x, l1c_int n, double *b,
 
   } /* LB-iter */
 
-  /* ----- Cleanup -------------------- */
 
+  /* ----- Cleanup -------------------- */
 
  exit:
   l1c_free_double(u);

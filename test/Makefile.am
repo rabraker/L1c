@@ -64,27 +64,29 @@ XFAIL_TESTS=
 check_PROGRAMS   = test_l1c.test
 
 test_l1c_test_SOURCES = TEST_cgsolve.c       \
-					TEST_l1c_math.c     \
-					TEST_l1c_memory.c   \
-					TEST_l1qc_newton.c  \
-					TEST_vcl_math.c     \
-					TEST_bregman.c      \
-					TEST_TV.c           \
-					TEST_matrix_transforms.c \
-					test_l1c.c               \
-					TEST_dct.c               \
-					TEST_dct2.c              \
-					$(top_srcdir)/include/bregman.h        \
-					$(top_srcdir)/include/check_utils.h    \
-					$(top_srcdir)/include/json_utils.h     \
-					$(top_srcdir)/include/l1c.h            \
-					$(top_srcdir)/include/l1c_math.h       \
-					$(top_srcdir)/include/l1c_timing.h     \
-					$(top_srcdir)/include/l1qc_newton.h    \
-					$(top_srcdir)/include/test_constants.h \
-					$(top_srcdir)/include/TEST.h           \
-					$(top_srcdir)/include/TV.h             \
-					$(top_srcdir)/include/vcl_math.h
+						TEST_l1c_math.c     \
+						TEST_l1c_memory.c   \
+						TEST_l1qc_newton.c  \
+						TEST_vcl_math.c     \
+						TEST_bregman.c      \
+						TEST_TV.c           \
+						TEST_linesearch.c        \
+						TEST_matrix_transforms.c \
+						test_l1c.c               \
+						TEST_dct.c               \
+						TEST_dct2.c              \
+						$(top_srcdir)/include/bregman.h        \
+						$(top_srcdir)/include/check_utils.h    \
+						$(top_srcdir)/include/json_utils.h     \
+						$(top_srcdir)/include/l1c.h            \
+						$(top_srcdir)/include/l1c_math.h       \
+						$(top_srcdir)/include/l1c_timing.h     \
+						$(top_srcdir)/include/l1qc_newton.h    \
+						$(top_srcdir)/include/linesearch.h     \
+						$(top_srcdir)/include/test_constants.h \
+						$(top_srcdir)/include/TEST.h           \
+						$(top_srcdir)/include/TV.h             \
+						$(top_srcdir)/include/vcl_math.h
 
 
 

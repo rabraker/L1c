@@ -24,6 +24,7 @@ libl1c_la_SOURCES = l1qc_newton.c \
 					TV.c         \
 					bregman.c    \
 					l1qc_dct.c   \
+					linesearch.c \
 					l1c_memory.c \
 					matrix_transforms.c \
 					dct_transforms.c \
@@ -32,9 +33,11 @@ libl1c_la_SOURCES = l1qc_newton.c \
 					$(top_srcdir)/include/bregman.h \
 					$(top_srcdir)/include/json_utils.h \
 					$(top_srcdir)/include/l1c_math.h \
+					$(top_srcdir)/include/linesearch.h \
 					$(top_srcdir)/include/l1qc_newton.h \
 					$(top_srcdir)/include/TV.h \
 					$(top_srcdir)/include/l1c_timing.h
+
 
 
 

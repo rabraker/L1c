@@ -15,6 +15,8 @@ Suite *bregman_suite(void);
 
 Suite *TV_suite(void);
 
+Suite *l1c_linesearch_suite(void);
+
 Suite *l1c_math_suite(void);
 
 Suite *l1c_memory_suite(void);

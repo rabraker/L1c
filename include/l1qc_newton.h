@@ -75,9 +75,6 @@ typedef struct l1c_l1qcProb {
 */
 double _l1c_l1qc_find_max_step(l1c_l1qcProb *Prb);
 
-LSStat _l1c_l1qc_line_search(l1c_int m, double *x, double *u,
-                             l1c_l1qcProb *l1qc_prob, double g_dot_dxu,
-                             LSParams ls_params, double **DWORK5);
 
 void _l1c_l1qc_hess_grad(l1c_l1qcProb *l1qc_prob, double *sigx, double *atr);
 
@@ -86,14 +83,11 @@ int _l1c_l1qc_descent_dir(l1c_l1qcProb *l1qc_prob, l1c_CgParams cg_params,
 
 void _l1c_l1qc_H11pfun(l1c_int m, double *z, double *y,  void *hess_data_in);
 
-/* Evalutes the value function */
-// void _l1c_l1qc_f_eval(l1c_int m, double *x, double *u, l1c_int n, double *r, double *b,
-//                       double tau, double epsilon, double *fu1, double *fu2, double *fe,
-//                       double *f, l1c_AxFuns Ax_funs);
 
 int _l1c_l1qc_check_feasible_start(l1c_l1qcProb *Prbm, double *x);
 
-void _l1c_l1qc_f_eval(l1c_l1qcProb *prob_data, double *x, double *u);
+/* Evalutes the value function */
+double _l1c_l1qc_f_eval(void *prob_data, double *x, double *u);
 
 int _l1c_l1qc_newton_init(l1c_int m, double *x, double *u,  l1c_L1qcOpts *params);
 

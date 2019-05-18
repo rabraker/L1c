@@ -654,138 +654,6 @@ START_TEST (test_find_max_step)
 END_TEST
 
 
-START_TEST(test_line_search)
-{
-  LSStat ls_stat = {.flin=0, .step=0, .status=0};
-  LSParams ls_params;
-  l1c_l1qcProb Prb;
-  double *x, *u;
-  double alpha, beta, s_init; //loaded
-
-  double **DWORK5;
-  double *xp_exp, *up_exp, *rp_exp;
-  double *fu1p_exp, *fu2p_exp, fep_exp, fp_exp;
-  double flin_exp=0, g_dot_dxu=0.0;
-
-  l1c_AxFuns ax_funs;
-
-  l1c_int m,m2, n, status=0;
-  l1c_int *pix_idx=NULL;
-  char *fpath_linesearch = fullfile(test_data_dir, "line_search_data.json");
-
-  if (load_file_to_json(fpath_linesearch, &test_data_json)){
-    fprintf(stderr, "Error loading data in test_line_search\n");
-    ck_abort();
-  }
-
-  // Inputs to line_search
-  status +=extract_json_double_array(test_data_json, "x", &x, &Prb.m);
-  status +=extract_json_double_array(test_data_json, "u", &u, &m);
-  status +=extract_json_double_array(test_data_json, "r", &Prb.r, &Prb.n);
-  status +=extract_json_double_array(test_data_json, "b", &Prb.b, &n);
-  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &n);
-
-  status +=extract_json_double_array(test_data_json, "dx", &Prb.dx, &m);
-  status +=extract_json_double_array(test_data_json, "du", &Prb.du, &m);
-  status +=extract_json_double_array(test_data_json, "gradf", &Prb.gradf, &m2);
-
-  status +=extract_json_double(test_data_json, "f", &Prb.f_val);
-  status +=extract_json_double(test_data_json, "tau", &Prb.tau);
-  status +=extract_json_double(test_data_json, "epsilon", &Prb.epsilon);
-  status +=extract_json_double(test_data_json, "alpha", &alpha);
-  status +=extract_json_double(test_data_json, "beta", &beta);
-  status +=extract_json_double(test_data_json, "s_init", &s_init);
-
-  // Expected outputs
-  status +=extract_json_double_array(test_data_json, "xp", &xp_exp, &m);
-  status +=extract_json_double_array(test_data_json, "up", &up_exp, &m);
-  status +=extract_json_double_array(test_data_json, "rp", &rp_exp, &m);
-  status +=extract_json_double_array(test_data_json, "fu1p", &fu1p_exp, &m);
-  status +=extract_json_double_array(test_data_json, "fu2p", &fu2p_exp, &m);
-  status +=extract_json_double(test_data_json, "fep", &fep_exp);
-  status +=extract_json_double(test_data_json, "fp", &fp_exp);
-
-  status +=extract_json_double(test_data_json, "flin", &flin_exp);
-
-  if (status){
-    fprintf(stderr, "Error Loading json data in 'test_line_search()'. Aborting\n");
-    ck_abort();
-  }
-
-  ls_params = (LSParams){.alpha = alpha, .beta = beta, .s = s_init};
-
-  Prb.fe_val = 0;
-  Prb.m = m;
-  Prb.n = n;
-
-  Prb.fu1 = l1c_malloc_double(m);
-  Prb.fu2 = l1c_malloc_double(m);
-  DWORK5 = l1c_malloc_double_2D(5, m);
-  if(!DWORK5 || !Prb.fu1 || !Prb.fu2){
-    fprintf(stderr, "Allocation failed\n");
-    ck_abort();
-  }
-
-  if (l1c_dct1_setup(m, n, pix_idx, &ax_funs)){
-    fprintf(stderr, "Allocation failed\n");
-    ck_abort();
-  }
-
-  Prb.ax_funs = ax_funs;
-
-  /* ----------------- Compute --------------- */
-  g_dot_dxu= cblas_ddot(m, Prb.gradf, 1, Prb.dx, 1)
-    + cblas_ddot(m, Prb.gradf+m, 1, Prb.du, 1);
-
-  ls_stat = _l1c_l1qc_line_search(m, x, u, &Prb, g_dot_dxu, ls_params,
-                                  DWORK5);
-
-  /* ----- Now check -------*/
-  ck_assert_double_eq_tol(fep_exp, Prb.fe_val, TOL_DOUBLE);
-  ck_assert_double_eq_tol(fp_exp, Prb.f_val, 1e-7);
-
-  ck_assert_double_eq_tol(flin_exp, ls_stat.flin, TOL_DOUBLE);
-
-  ck_assert_double_array_eq_tol(m, xp_exp, x, TOL_DOUBLE);
-  ck_assert_double_array_eq_tol(m, up_exp, u, TOL_DOUBLE);
-  ck_assert_double_array_eq_tol(m, fu1p_exp, Prb.fu1, TOL_DOUBLE);
-  ck_assert_double_array_eq_tol(m, fu2p_exp, Prb.fu2, TOL_DOUBLE);
-
-  ck_assert_double_array_eq_tol(n, rp_exp, Prb.r, TOL_DOUBLE);
-
-
-  /* ----------------- Cleanup --------------- */
-  l1c_free_double(x);
-  l1c_free_double(u);
-  l1c_free_double(Prb.r);
-  l1c_free_double(Prb.b);
-  l1c_free_double(Prb.dx);
-  l1c_free_double(Prb.du);
-  l1c_free_double(Prb.gradf);
-  l1c_free_double(Prb.fu1);
-  l1c_free_double(Prb.fu2);
-
-  l1c_free_double(xp_exp);
-  l1c_free_double(up_exp);
-  l1c_free_double(rp_exp);
-
-  l1c_free_double(fu1p_exp);
-  l1c_free_double(fu2p_exp);
-  free(pix_idx);
-
-
-  l1c_free_double_2D(5, DWORK5);
-
-  ax_funs.destroy();
-
-  cJSON_Delete(test_data_json);
-  free(fpath_linesearch);
-
-}
-END_TEST
-
-
-
 START_TEST(test_f_eval)
 {
   L1qcTestData Tdat;
@@ -848,7 +716,7 @@ Suite *l1qc_newton_suite(void)
 
   tc_linesearch = tcase_create("l1qc_linesearch");
   tcase_add_test(tc_linesearch, test_find_max_step);
-  tcase_add_test(tc_linesearch, test_line_search);
+  // tcase_add_test(tc_linesearch, test_line_search);
 
   tc_gradient = tcase_create("l1qc_gradient");
   tcase_add_test(tc_gradient, test_l1qc_hess_grad);

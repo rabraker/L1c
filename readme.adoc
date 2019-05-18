@@ -63,7 +63,6 @@ Running the full build requires the following dependencies
 * Matplotlib is needed for plotting in some examples
 * Matlab is required if building the mex interface.
 * Valgrind (optional) to run the memory leak tests.
-* One test case still relies on Matlab to produce the required data. If Matlab is unavailible, you can run the tests anyway but `test_line_search` will fail. Alternatively, the data can be https://rabraker.com/l1c_data/l1c_extra_data.tar[downloaded] and should be unpacked into `test/test_data`.
 
 Details and suggestions follow. Or run `./configure --help` if this is old hat to you. 
 
@@ -143,12 +142,6 @@ To run the test suite, execute
 By default, this will skip the memory leak test, which is very time consuming. To run this also, execute
 
 `with_valgrind=yes make check`
-
-
-
-==== TODO: Remove dependency on Matlab ====
-The data for the line search still relies on Matlab. 
-It remains an outstanding goal to remove the dependency on Matlab for the test data.
 
 
 
