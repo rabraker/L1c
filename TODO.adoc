@@ -8,10 +8,6 @@
 .. test_l1c_malloc_double_2D need to check it returns NULL if an inner malloc fails.
 .. l1c_free_double_2D, should check it works when ddptr==NULL
 
-. Completely remove dependency on matlab for unit test data. This still exists in the following places
-	- l1qc_newton:test_l1qc_newton_1iter: Basically an integration test. Could replace this with a test that starts with a sparse signal with known L1 norm. Maybe use generic transform A, as a matrix.
-	- l1qc_linesearch:test_line_search. Not sure what to do with this.
-+
 
 . The dct/dct2 should not store their state as local-globals. This limits the user to seting up a single optimization. Rather, the state should be stored, possibly, as an opaqe  field in the struct of function pointers.
 

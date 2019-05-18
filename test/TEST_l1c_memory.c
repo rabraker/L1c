@@ -74,6 +74,24 @@ START_TEST(test_l1c_calloc_double_2D){
 }
 END_TEST
 
+START_TEST(test_l1c_free_double_2D_when_null){
+  double **dptr_2D=NULL;
+
+  /* Nothing should happen. If it enters the loop, we should get segfault,
+     and the test fails.
+  */
+  l1c_free_double_2D(2, dptr_2D);
+
+  dptr_2D = l1c_malloc_double_2D(2, 10);
+
+  /* I dont know what to do here, I guess just let the valgrind check
+     complain if this didnt work right.
+  */
+  l1c_free_double_2D(2, dptr_2D);
+
+}
+END_TEST
+
 
 START_TEST(test_l1c_calloc_double){
 
@@ -105,6 +123,7 @@ Suite *l1c_memory_suite(void)
   tcase_add_test(tc_common, test_l1c_calloc_double);
   tcase_add_test(tc_common, test_l1c_calloc_double_2D);
   tcase_add_test(tc_common, test_l1c_malloc_double_2D);
+  tcase_add_test(tc_common, test_l1c_free_double_2D_when_null);
 
   suite_add_tcase(s, tc_common);
 
