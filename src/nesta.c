@@ -202,12 +202,47 @@ void l1c_nesta_feval(l1c_NestaProb *NP){
 
 }
 
+void l1c_nesta_init(l1c_NestaProb *NP, double *beta_mu, double *beta_tol, int n_continue){
+
+  double mu_final = NP->mu;
+  double tol_final = NP->tol;
+
+  if (NP->flags | L1C_ANALYSIS){
+    NP->ax_funs.Ety(NP->b, NP->xo);
+  }else{
+    NP->ax_funs.Aty(NP->b, NP->xo);
+  }
+
+  double *Ux_ref = NP->dwork1;
+  NP->ax_funs.Mx(NP->xo, Ux_ref);
+
+  l1c_abs_vec(NP->m, Ux_ref, Ux_ref);
+  double mu0 = 0.9 * l1c_max_vec(NP->m, Ux_ref);
+  double tol0 = 0.1;
+
+  /* We need mu_final and beta such that beta^n_cont * mu0= mu_final
+     i.e., (beta^n_cont) = (mu_final/mu0)
+     i.e., log(beta) = log(mu_final/mu0) / n_cont
+     ie.,  beta = exp(log(mu_final/mu0) / n_cont)
+   */
+
+  *beta_mu = exp(log((mu_final / mu0)) / (double)n_continue);
+  *beta_tol = exp(log((tol_final / tol0)) / (double)n_continue);
+
+  /* After n continuation steps, NP->mu will again be what we said.*/
+  NP->mu = mu0;
+  NP->tol = tol0;
+
+}
 
 
 int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
               l1c_AxFuns ax_funs, double sigma){
 
-  int max_iter = 10000;
+  /* Later, make these options*/
+  int max_inner_iter = 10000;
+  int n_continuation = 5;
+
   int status=0; //, idx_fmu=0;
 
 
@@ -217,12 +252,9 @@ int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
   double L = 1;
   double tol = 1e-4;
   double fbar=0, rel_delta_fmu;
+  double beta_mu, beta_tol;
   unsigned flags = L1C_ANALYSIS;
 
-  // double fmu_store[L1C_NESTA_NMEAN+1];
-  // for (int i=0; i<L1C_NESTA_NMEAN+1; i++){
-  //   fmu_store[i] = 0;
-  // }
 
   l1c_NestaProb *NP = l1c_init_nesta_problem(n, m, b, ax_funs, sigma, mu, tol, L, flags);
 
@@ -231,43 +263,57 @@ int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
   }
 
 
-  l1c_init_vec(m,  NP->gradf_sum, 0.0);
+  /* Initialize*/
+  l1c_nesta_init(NP,  &beta_mu, &beta_tol, n_continuation);
+
   struct l1c_fmean_fifo fbar_fifo = _l1c_new_fmean_fifo();
 
+  for (int iter=1; iter<= n_continuation; iter++){
 
-  /* ---------------------------- MAIN ITERATION -------------------------- */
-  for (int k=0; k < max_iter; k++){
+    /* Reset everthing.*/
+    l1c_init_vec(L1C_NESTA_NMEAN, fbar_fifo.f_vals, 0);
+    fbar_fifo.next = fbar_fifo.f_vals;
 
-    l1c_nesta_feval(NP);
+    l1c_init_vec(m,  NP->gradf_sum, 0.0);
+    cblas_dcopy(NP->m, NP->xo, 1, NP->xk, 1);
+    /* ---------------------------- MAIN ITERATION -------------------------- */
+    for (int k=0; k < max_inner_iter; k++){
 
-    /* ----------------- Update yk ------------------------- */
-    l1c_nesta_project(NP, NP->xk, NP->gradf, NP->yk);
+      l1c_nesta_feval(NP);
 
-    /* From paragraph right before (2.3). Reference [43,50] proves convergence
-     for these alpha_k, tau_k
-    */
-    alpha_k = 0.5 * (double)(k + 1);
-    tau_k = 2.0 / ((double)k + 3.0);
+      /* ----------------- Update yk ------------------------- */
+      l1c_nesta_project(NP, NP->xk, NP->gradf, NP->yk);
 
-    /* Update cummulative, weighted sum of gradients (3.8)-(3.12).*/
-    cblas_daxpy(m, alpha_k, NP->gradf, 1, NP->gradf_sum, 1);
+      /* From paragraph right before (2.3). Reference [43,50] proves convergence
+         for these alpha_k, tau_k
+      */
+      alpha_k = 0.5 * (double)(k + 1);
+      tau_k = 2.0 / ((double)k + 3.0);
 
-    /* Projection for zk */
-    l1c_nesta_project(NP, NP->xo, NP->gradf_sum, NP->zk);
+      /* Update cummulative, weighted sum of gradients (3.8)-(3.12).*/
+      cblas_daxpy(m, alpha_k, NP->gradf, 1, NP->gradf_sum, 1);
 
-    /* ----------------- Update xk ----------------*/
-    /* xk = tau_k * zk + (1-tau_k) * yk*/
-    l1c_daxpby_z(m, tau_k, NP->zk, (1-tau_k), NP->yk, NP->xk);
+      /* Projection for zk */
+      l1c_nesta_project(NP, NP->xo, NP->gradf_sum, NP->zk);
 
-    /*------------ Check for exit -----------------*/
-    fbar = _l1c_mean_fmean_fifo(&fbar_fifo);
-    rel_delta_fmu = (NP->fx - fbar) / fbar;
+      /* ----------------- Update xk ----------------*/
+      /* xk = tau_k * zk + (1-tau_k) * yk*/
+      l1c_daxpby_z(m, tau_k, NP->zk, (1-tau_k), NP->yk, NP->xk);
 
-    _l1c_push_fmeans_fifo(&fbar_fifo, NP->fx);
+      /*------------ Check for exit -----------------*/
+      fbar = _l1c_mean_fmean_fifo(&fbar_fifo);
+      rel_delta_fmu = (NP->fx - fbar) / fbar;
 
-    if (rel_delta_fmu < NP->tol){
-      break;
-    }
+      _l1c_push_fmeans_fifo(&fbar_fifo, NP->fx);
+
+      if (rel_delta_fmu < NP->tol){
+        break;
+      }
+    } /* Inner iter*/
+
+    NP->mu = NP->mu * beta_mu;
+    NP->mu = NP->tol * beta_tol;
+    cblas_dcopy(NP->m, NP->xk, 1, NP->xo, 1);
   }
 
   cblas_dcopy(m, NP->xk, 1, xk, 1);
