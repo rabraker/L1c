@@ -22,4 +22,7 @@ Suite *l1c_math_suite(void);
 Suite *l1c_memory_suite(void);
 
 Suite *matrix_transform_suite(void);
+
+Suite *l1c_nesta_suite(void);
+
 #endif

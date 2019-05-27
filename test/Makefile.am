@@ -71,6 +71,7 @@ test_l1c_test_SOURCES = TEST_cgsolve.c       \
 						TEST_bregman.c      \
 						TEST_TV.c           \
 						TEST_linesearch.c        \
+						TEST_nesta.c             \
 						TEST_matrix_transforms.c \
 						test_l1c.c               \
 						TEST_dct.c               \
@@ -83,6 +84,7 @@ test_l1c_test_SOURCES = TEST_cgsolve.c       \
 						$(top_srcdir)/include/l1c_timing.h     \
 						$(top_srcdir)/include/l1qc_newton.h    \
 						$(top_srcdir)/include/linesearch.h     \
+						$(top_srcdir)/include/nesta.h          \
 						$(top_srcdir)/include/test_constants.h \
 						$(top_srcdir)/include/TEST.h           \
 						$(top_srcdir)/include/TV.h             \

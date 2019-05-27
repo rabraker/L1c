@@ -1,117 +1,201 @@
+#include <stdlib.h>
 #include<cblas.h>
 #include <math.h>
 #include "l1c.h"
 #include "l1c_math.h"
-
+#include "nesta.h"
 #define N_MEAN 10
 
 
-void nesta_project(l1c_int m, double *x, double *g, double *Atb, double *vk, double *dwork1,
-                   l1c_int n, double *b, double *dwork2,
-                   double L_by_mu, l1c_AxFuns ax_funs, double sigma){
+void l1c_free_nesta_problem(l1c_NestaProb *NP);
 
-  double *Aq = dwork2;
-  double *AtAq = dwork1;
+l1c_NestaProb* l1c_init_nesta_problem(l1c_int n, l1c_int m, double *b, l1c_AxFuns ax_funs,
+                                      double sigma, double mu, double tol, double L, unsigned flags);
 
-  /* Store q in vk.*/
+void nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk);
 
-  double tmp2=0, lambda=0, tmp1=0;
 
-  l1c_daxpy_z(m, (-1/L_by_mu), g, x, vk);
-  if( ax_funs.Ex  && ax_funs.Ety){
-    ax_funs.Ex(vk, Aq);
-    ax_funs.Ety(Aq, AtAq);
-  }else{
-    ax_funs.Ax(vk, Aq);
-    ax_funs.Aty(Aq, AtAq);
+/**
+   Initialize a l1c_NestaProblem struct. Memory will be allocated for all
+   arrays.
+ */
+l1c_NestaProb* l1c_init_nesta_problem(l1c_int n, l1c_int m, double *b, l1c_AxFuns ax_funs,
+                                      double sigma, double mu, double tol, double L, unsigned flags){
 
+  l1c_NestaProb *NP = malloc(sizeof(l1c_NestaProb));
+  if (!NP){
+    return NULL;
   }
 
-  tmp1 = L_by_mu * l1c_dnrm2_err(n, b, Aq);
-  tmp1 = tmp1/sigma - 1.0;
+  *NP = (l1c_NestaProb){.n=n, .m=m, .fx=0.0, .xo=NULL, .xk=NULL, .yk=NULL, .zk=NULL,
+                    .Atb=NULL, .gradf=NULL, .gradf_sum=NULL,
+                    .dwork1=NULL, .dwork2=NULL, .b=b, .ax_funs=ax_funs,
+                        .sigma=sigma, .mu=mu, .tol=tol, .L_by_mu=L/mu, .flags=flags};
 
-  lambda = max(0, tmp1);
 
-  tmp2 = lambda / (lambda + L_by_mu);
-  // vk = lambda/L_by_mu*(1 - gamma)*Atb + q - gamma*AtAq;
+  NP->xo = l1c_calloc_double(m);
+  NP->xk = l1c_calloc_double(m);
+  NP->yk = l1c_calloc_double(m);
+  NP->zk = l1c_calloc_double(m);
+  NP->Atb = l1c_calloc_double(m);
+  NP->gradf = l1c_calloc_double(m);
+  NP->gradf_sum = l1c_calloc_double(m);
+  NP->dwork1 = l1c_calloc_double(m);
+  NP->dwork2 = l1c_calloc_double(m);
 
-  cblas_daxpy(m, tmp1, Atb, 1, vk, 1);
+  if (!NP->xo ||!NP->xk || !NP->yk || !NP->zk
+      || !NP->Atb || !NP->gradf || !NP->gradf_sum
+      || !NP->dwork1 || !NP->dwork2){
+    l1c_free_nesta_problem(NP);
+    return NULL;
+  }
 
-  cblas_daxpy(m, -tmp2, AtAq, 1, vk, 1);
+  if(flags | L1C_ANALYSIS){
+    NP->ax_funs.Ety(b, NP->Atb);
+  }else{
+    ax_funs.Aty(b, NP->Atb);
+  }
+
+
+  return NP;
+}
+
+/**
+   Release the memory allocated l1c_init_nesta_problem().
+   The memory for .b and .ax_funs is not released, since those were not allocated
+   by l1c_init_nesta_problem().
+ */
+void l1c_free_nesta_problem(l1c_NestaProb *NP){
+  if (NP){
+    l1c_free_double(NP->xo);
+    l1c_free_double(NP->xk);
+    l1c_free_double(NP->yk);
+    l1c_free_double(NP->zk);
+    l1c_free_double(NP->Atb);
+    l1c_free_double(NP->gradf);
+    l1c_free_double(NP->gradf_sum);
+    l1c_free_double(NP->dwork1);
+    l1c_free_double(NP->dwork2);
+
+    free(NP);
+  }
+}
+
+/**
+ * By default, will use ax_funs.Ex() and ax_funs.Ety(), i.e., assuming the
+ * analysis formulation. To use the synthesis formulation, set ax_funs.Ex=NULL
+ * and ax_funs.Ety=NULL.
+ *
+ * @param [in] NP
+ * @param [in] xx
+ * @param [in] g
+ * @param [out] vk Solution vector
+ */
+void l1c_nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk){
+
+  l1c_int n = NP->n;
+  l1c_int m = NP->m;
+
+  double *Aq = NP->dwork2;
+  double *AtAq = NP->dwork1;
+  double Lmu = NP->L_by_mu;
+  double a0=0, a1=0, lambda=0;
+
+  /* Store q in vk.*/
+  l1c_daxpy_z(m, (-1.0/Lmu), g, xx, vk);
+
+  if(NP->flags | L1C_ANALYSIS){
+    NP->ax_funs.Ex(vk, Aq);
+    NP->ax_funs.Ety(Aq, AtAq);
+  }else{
+    NP->ax_funs.Ax(vk, Aq);
+    NP->ax_funs.Aty(Aq, AtAq);
+  }
+
+  // a0 = Lmu * [ ||Aq - b||/sigma  - 1]
+  a0 = l1c_dnrm2_err(n, NP->b, Aq);
+  a0 = Lmu * (a0/NP->sigma - 1.0);
+
+  lambda = max(0, a0);
+
+  a1 = lambda / (Lmu + lambda);
+
+
+  /* We start with vk = q, and will compute
+    vk = lambda/Lmu*(1 - a1)*Atb + q - a1*AtAq */
+
+  cblas_daxpy(m, (lambda/Lmu) * (1.0 - a1), NP->Atb, 1, vk, 1);
+  cblas_daxpy(m, -a1, AtAq, 1, vk, 1);
 
 }
 
 
-void nesta_l1_feval(l1c_int m, double *x, double *u, double *gradf, double *fx,
-                    double mu, l1c_AxFuns ax_funs){
+void l1c_nesta_feval(l1c_NestaProb *NP){
+  l1c_int m = NP->m;
 
   double nrm_u2=0;
+  double *Uxk = NP->dwork1;
+  double *u = NP->dwork2;
+
   /* If E and Et are void, we are doing synthesis, otherwise, analysis.
    */
-  if( !ax_funs.Ex  && !ax_funs.Ety){
-    cblas_dcopy(m, x, 1, u, 1);
+  if( NP->flags | L1C_ANALYSIS){
+    NP->ax_funs.Mx(NP->xk, Uxk);
   }else{
-    ax_funs.Mx(x, u);
+    cblas_dcopy(m, NP->xk, 1, Uxk, 1);
   }
 
   for (int i=0; i<m; i++){
-    u[i] = u[i] / max(mu, fabs(u[i]));
+    u[i] = Uxk[i] / max(NP->mu, fabs(Uxk[i]));
   }
 
 
   nrm_u2 = cblas_dnrm2(m, u, 1);
   nrm_u2 *= nrm_u2;
 
-  *fx = cblas_ddot(m, u, 1, x, 1) - 0.5*mu * nrm_u2;
+  NP->fx = cblas_ddot(m, u, 1, Uxk, 1) - 0.5 * NP->mu * nrm_u2;
 
-  ax_funs.Mty(u, gradf);
+  NP->ax_funs.Mty(u, NP->gradf);
+
 }
 
 
-int l1c_nesta(l1c_int m, double *xk, double *x0, double mu, l1c_int n, double *b,
+int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
               l1c_AxFuns ax_funs, double sigma){
 
   int max_iter = 10000;
   int status=0; //, idx_fmu=0;
-  double *Atb=NULL, *AtAAtb=NULL, *dwork1=NULL, *dwork2=NULL, *gradf_sum=NULL;
-  double *gradf=NULL, *uk=NULL, *yk=NULL, *zk=NULL;
-  double fx=0;
+
 
   double alpha_k=0, tau_k = 0;
 
   /*Lipschitz constant divided by mu */
-  double L_by_mu = 1; /* ----- FIX THIS ----- */
+  double L = 1;
+  double tol = 1e-4;
+
+  unsigned flags = L1C_ANALYSIS;
 
   // double fmu_store[N_MEAN+1];
   // for (int i=0; i<N_MEAN+1; i++){
   //   fmu_store[i] = 0;
   // }
 
-  Atb = l1c_calloc_double(m);
-  AtAAtb = l1c_calloc_double(m);
-  dwork1 = l1c_calloc_double(m);
-  dwork2 = l1c_calloc_double(m);
-  gradf = l1c_calloc_double(m);
-  gradf_sum = l1c_calloc_double(m);
-  uk = l1c_calloc_double(m);
-  yk = l1c_calloc_double(m);
-  zk = l1c_calloc_double(m);
+  l1c_NestaProb *NP = l1c_init_nesta_problem(n, m, b, ax_funs, sigma, mu, tol, L, flags);
 
-  if (!Atb || !AtAAtb || !dwork1 || !dwork2 || !gradf_sum
-      || !gradf || !uk || !yk || !zk){
-    status = L1C_OUT_OF_MEMORY;
-    goto exit;
+  if (!NP ){
+    return L1C_OUT_OF_MEMORY;
   }
 
+
+  l1c_init_vec(m,  NP->gradf_sum, 0.0);
 
   /* ---------------------------- MAIN ITERATION -------------------------- */
   for (int k=0; k < max_iter; k++){
 
-
-    nesta_l1_feval(m, xk, uk, gradf, &fx, mu, ax_funs);
+    l1c_nesta_feval(NP);
 
     /* ----------------- Update yk ------------------------- */
-    nesta_project(m, xk, gradf, Atb, yk, dwork1, n, b, dwork2, L_by_mu, ax_funs, sigma);
+    l1c_nesta_project(NP, NP->xk, NP->gradf, NP->yk);
 
     /* From paragraph right before (2.3). Reference [43,50] proves convergence
      for these alpha_k, tau_k
@@ -120,28 +204,17 @@ int l1c_nesta(l1c_int m, double *xk, double *x0, double mu, l1c_int n, double *b
     tau_k = 2.0 / ((double)k + 3.0);
 
     /* Update cummulative, weighted sum of gradients (3.8)-(3.12).*/
-    cblas_daxpy(m, alpha_k, gradf, 1, gradf_sum, 1);
+    cblas_daxpy(m, alpha_k, NP->gradf, 1, NP->gradf_sum, 1);
 
     /* Projection for zk */
-    nesta_project(m, x0, gradf_sum, Atb, zk, dwork1, n, b, dwork2, L_by_mu, ax_funs, sigma);
+    l1c_nesta_project(NP, NP->xo, NP->gradf_sum, NP->zk);
 
 
     /* ---- Update xk ----------------*/
     /* xk = tau_k * zk + (1-tau_k) * yk*/
-    l1c_daxpby_z(m, tau_k, zk, (1-tau_k), yk, xk);
+    l1c_daxpby_z(m, tau_k, NP->zk, (1-tau_k), NP->yk, NP->xk);
   }
 
-
- exit:
-  l1c_free_double(Atb);
-  l1c_free_double(AtAAtb);
-  l1c_free_double(dwork1);
-  l1c_free_double(dwork2);
-  l1c_free_double(gradf_sum);
-  l1c_free_double(gradf);
-  l1c_free_double(uk);
-  l1c_free_double(yk);
-  l1c_free_double(zk);
-
+  cblas_dcopy(m, NP->xk, 1, xk, 1);
   return status;
 }
