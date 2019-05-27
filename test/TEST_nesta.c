@@ -183,12 +183,96 @@ START_TEST (test_nesta_feval)
 
 }END_TEST
 
+START_TEST (test_l1c_new_fmean_fifo)
+{
+  struct l1c_fmean_fifo fifo = _l1c_new_fmean_fifo();
+
+  /*Just make sure this doesnt segfault.*/
+  fifo.f_vals[L1C_NESTA_NMEAN-1] = 1;
+
+  ck_assert_ptr_eq(fifo.f_vals, fifo.next);
+
+  free(fifo.f_vals);
+}END_TEST
+
+START_TEST (test_l1c_push_fmeans_fifo)
+{
+  int i=0;
+  double val;
+  struct l1c_fmean_fifo fifo = _l1c_new_fmean_fifo();
+
+  for (i=0; i<L1C_NESTA_NMEAN+1; i++){
+    val = (double)i;
+    _l1c_push_fmeans_fifo(&fifo, val);
+  }
+
+  ck_assert_int_eq(L1C_NESTA_NMEAN, fifo.n_total);
+
+  ck_assert_double_eq(fifo.f_vals[0], val);
+
+  free(fifo.f_vals);
+}END_TEST
+
+
+START_TEST (test_l1c_mean_fmean_fifo)
+{
+  int i=0;
+  double val;
+  double fbar_exp = 0, fbar=0;
+  struct l1c_fmean_fifo fifo = _l1c_new_fmean_fifo();
+
+  /* Ensure this works right for n_total < L1C_NESTA_NMEAN*/
+  for (i=0; i<4; i++){
+    val = (double)i;
+    _l1c_push_fmeans_fifo(&fifo, val);
+  }
+  fbar = _l1c_mean_fmean_fifo(&fifo);
+  /*mean([0, 1, 2, 3]) = 6/4 = 1.5*/
+  fbar_exp = 1.5;
+  ck_assert_double_eq_tol(fbar, fbar_exp, TOL_DOUBLE);
+
+
+  /* ----------------------------------------------------
+    Ensure this works right for n_total = L1C_NESTA_NMEAN
+  */
+  l1c_init_vec(L1C_NESTA_NMEAN, fifo.f_vals, 0);
+  fifo.next = fifo.f_vals;
+
+  for (i=0; i<L1C_NESTA_NMEAN; i++){
+    val = (double)i;
+    _l1c_push_fmeans_fifo(&fifo, val);
+  }
+  fbar = _l1c_mean_fmean_fifo(&fifo);
+  /*mean([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) = 45/10 = 4.5 */
+  fbar_exp = 4.5;
+  ck_assert_double_eq_tol(fbar, fbar_exp, TOL_DOUBLE);
+
+  /* ----------------------------------------------------
+     Ensure this works right for n_total == L1C_NESTA_NMEAN
+     and when we have circled around.
+  */
+  l1c_init_vec(L1C_NESTA_NMEAN, fifo.f_vals, 0);
+  fifo.next = fifo.f_vals;
+
+  for (i=0; i<L1C_NESTA_NMEAN+2; i++){
+    val = (double)i;
+    _l1c_push_fmeans_fifo(&fifo, val);
+  }
+  fbar = _l1c_mean_fmean_fifo(&fifo);
+  /*mean([10, 11, 2, 3, 4, 5, 6, 7, 8, 9]) = 65/10 = 6.5 */
+  fbar_exp = 6.5;
+  ck_assert_double_eq_tol(fbar, fbar_exp, TOL_DOUBLE);
+
+
+  free(fifo.f_vals);
+}END_TEST
+
 
 Suite *l1c_nesta_suite(void)
 {
   Suite *s;
 
-  TCase *tc_nesta;
+  TCase *tc_nesta, *tc_fifo;
 
   s = suite_create("nesta");
 
@@ -196,9 +280,14 @@ Suite *l1c_nesta_suite(void)
   tcase_add_test(tc_nesta, test_nesta_project);
   tcase_add_test(tc_nesta, test_nesta_feval);
 
+  tc_fifo = tcase_create("nesta_fifo");
+  tcase_add_test(tc_fifo, test_l1c_new_fmean_fifo);
+  tcase_add_test(tc_fifo, test_l1c_push_fmeans_fifo);
+  tcase_add_test(tc_fifo, test_l1c_mean_fmean_fifo);
 
   /*Add test cases to the suite */
   suite_add_tcase(s, tc_nesta);
+  suite_add_tcase(s, tc_fifo);
 
   return s;
 

@@ -1,6 +1,7 @@
 #ifndef __L1C_NESTA__
 #define __L1C_NESTA__
 
+#define L1C_NESTA_NMEAN 10
 
 
 typedef struct l1c_NestaProb {
@@ -31,6 +32,14 @@ typedef struct l1c_NestaProb {
 } l1c_NestaProb;
 
 
+struct l1c_fmean_fifo {
+  double *f_vals;
+  int n_total;
+  double *next; /*Pointer to the next location to write to.  */
+};
+
+
+
 void l1c_free_nesta_problem(l1c_NestaProb *NP);
 
 l1c_NestaProb* l1c_init_nesta_problem(l1c_int n, l1c_int m, double *b, l1c_AxFuns ax_funs,
@@ -39,6 +48,13 @@ l1c_NestaProb* l1c_init_nesta_problem(l1c_int n, l1c_int m, double *b, l1c_AxFun
 void l1c_nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk);
 
 void l1c_nesta_feval(l1c_NestaProb *NP);
+
+struct l1c_fmean_fifo _l1c_new_fmean_fifo(void);
+void _l1c_push_fmeans_fifo(struct l1c_fmean_fifo *fifo, double fval);
+double _l1c_mean_fmean_fifo(struct l1c_fmean_fifo *fifo);
+
+
+
 
 #define L1C_SYNTHESIS (1U << 0)
 #define L1C_ANALYSIS (1U << 1)

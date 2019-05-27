@@ -4,7 +4,51 @@
 #include "l1c.h"
 #include "l1c_math.h"
 #include "nesta.h"
-#define N_MEAN 10
+
+
+/* The next three functions basically implement a circular buffer for storing the vector
+ containing the last values L1C_NESTA_NMEAN's of fx
+*/
+
+struct l1c_fmean_fifo _l1c_new_fmean_fifo(void){
+  double *fvals = malloc(sizeof(double)*L1C_NESTA_NMEAN);
+
+  for (int i=0; i<L1C_NESTA_NMEAN; i++){
+    fvals[i] = 0.0;
+  }
+
+  struct l1c_fmean_fifo fifo = {.f_vals=fvals,
+                     .n_total=0,
+                     .next=fvals};
+  return fifo;
+}
+
+
+void _l1c_push_fmeans_fifo(struct l1c_fmean_fifo *fifo, double fval) {
+
+  *fifo->next = fval;
+
+  if (fifo->next + 1 > fifo->f_vals + L1C_NESTA_NMEAN-1){
+    fifo->next = fifo->f_vals;
+  }else{
+    fifo->next++;
+  }
+
+  if(fifo->n_total < L1C_NESTA_NMEAN){
+    fifo->n_total++;
+  }
+}
+
+double _l1c_mean_fmean_fifo(struct l1c_fmean_fifo *fifo) {
+
+  double mean = 0;
+  /* Always run the sum over the whole thing. Unused elements should be zero.*/
+  for (int i=0; i < L1C_NESTA_NMEAN; i++){
+    mean += fifo->f_vals[i];
+  }
+
+  return (mean / (double)fifo->n_total);
+}
 
 
 
@@ -172,11 +216,11 @@ int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
   /*Lipschitz constant divided by mu */
   double L = 1;
   double tol = 1e-4;
-
+  double fbar=0, rel_delta_fmu;
   unsigned flags = L1C_ANALYSIS;
 
-  // double fmu_store[N_MEAN+1];
-  // for (int i=0; i<N_MEAN+1; i++){
+  // double fmu_store[L1C_NESTA_NMEAN+1];
+  // for (int i=0; i<L1C_NESTA_NMEAN+1; i++){
   //   fmu_store[i] = 0;
   // }
 
@@ -188,6 +232,8 @@ int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
 
 
   l1c_init_vec(m,  NP->gradf_sum, 0.0);
+  struct l1c_fmean_fifo fbar_fifo = _l1c_new_fmean_fifo();
+
 
   /* ---------------------------- MAIN ITERATION -------------------------- */
   for (int k=0; k < max_iter; k++){
@@ -209,10 +255,19 @@ int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
     /* Projection for zk */
     l1c_nesta_project(NP, NP->xo, NP->gradf_sum, NP->zk);
 
-
-    /* ---- Update xk ----------------*/
+    /* ----------------- Update xk ----------------*/
     /* xk = tau_k * zk + (1-tau_k) * yk*/
     l1c_daxpby_z(m, tau_k, NP->zk, (1-tau_k), NP->yk, NP->xk);
+
+    /*------------ Check for exit -----------------*/
+    fbar = _l1c_mean_fmean_fifo(&fbar_fifo);
+    rel_delta_fmu = (NP->fx - fbar) / fbar;
+
+    _l1c_push_fmeans_fifo(&fbar_fifo, NP->fx);
+
+    if (rel_delta_fmu < NP->tol){
+      break;
+    }
   }
 
   cblas_dcopy(m, NP->xk, 1, xk, 1);
