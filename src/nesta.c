@@ -7,12 +7,6 @@
 #define N_MEAN 10
 
 
-void l1c_free_nesta_problem(l1c_NestaProb *NP);
-
-l1c_NestaProb* l1c_init_nesta_problem(l1c_int n, l1c_int m, double *b, l1c_AxFuns ax_funs,
-                                      double sigma, double mu, double tol, double L, unsigned flags);
-
-void nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk);
 
 
 /**
@@ -130,6 +124,11 @@ void l1c_nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk){
 }
 
 
+/**
+ * Evaluate the (smoothed) functional and compute the gradient.
+ *
+ * @param [in,out] NP On exist, NP->gradf and NP->fx will be updated.
+ */
 void l1c_nesta_feval(l1c_NestaProb *NP){
   l1c_int m = NP->m;
 
@@ -158,6 +157,7 @@ void l1c_nesta_feval(l1c_NestaProb *NP){
   NP->ax_funs.Mty(u, NP->gradf);
 
 }
+
 
 
 int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
