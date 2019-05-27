@@ -2,7 +2,7 @@
 
 import os
 import numpy as np
-# import numpy.testing as npt
+import numpy.testing as npt
 import L1cTestDataUtils as TDU
 from scipy.fftpack import dct
 
@@ -113,15 +113,13 @@ if __name__ == "__main__":
 
     fx, gradf = nesta_f_eval(U, Ut, xk, mu)
 
-    # I = np.eye(N)
     lhs = yk + (lam/Lmu)*At(A(yk))
     rhs = (lam/Lmu)*Atb + xk - (1.0/Lmu)*g
 
-    print(np.linalg.norm(b - A(yk)) - sigma < 0)
-    print(np.linalg.norm(b - A(yk)) - sigma)
-
-    # npt.assert_array_almost_equal(lhs, rhs)
-    print(lhs-rhs)
+    # print(np.linalg.norm(b - A(yk)) - sigma)
+    npt.assert_almost_equal(np.linalg.norm(b - A(yk)) - sigma, 0)
+    npt.assert_array_almost_equal(lhs, rhs)
+    # print(lhs-rhs)
 
     q = At(A(q))
     dat = {'N': N,
