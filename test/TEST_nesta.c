@@ -75,7 +75,7 @@ static void init_generic_data(NestaTestData *dat){
   l1c_AxFuns ax_funs;
 
   if (load_file_to_json(fpath_generic, &json_data)){
-    fprintf(stderr, "Error loading data in test_l1qc_newton_1iter\n");
+    fprintf(stderr, "Error loading data in %s of %s\n", __func__, __FILE__);
     ck_abort();
   }
   status +=extract_json_double_array(json_data, "xk", &dat->xk, &m);
