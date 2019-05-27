@@ -56,11 +56,23 @@ static inline double ck_min(double a,double b){
 /*
  * Check two double precision floating point numbers to determine if X <= Y
  *
- * Availible in check 0.11.0
+ * Availible in check 0.11.0, implemented here for older compatibility.
  */
 #define ck_assert_double_le(X, Y) _ck_assert_double(X, <=, Y)
 
 #endif
+
+
+#ifndef ck_assert_double_eq
+/*
+ * Check two double precision floating point numbers to determine if X == Y
+ *
+ * Availible in check 0.11.0, implemented here for older compatibility.
+ */
+#define ck_assert_double_eq(X, Y) _ck_assert_double(X, ==, Y)
+
+#endif
+
 
 /* Floating point tolerance Floating point relative tolerance comparison
    for arrays. Based on ck_assert_floating_absdiff_tol.
