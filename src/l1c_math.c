@@ -148,6 +148,41 @@ double l1c_dnrm2_rel_err(l1c_int N, double * restrict x, double * restrict y){
   return sqrt(nrm/ynrm);
 }
 
+
+
+/**
+ * Computes the maximum element of the array x.
+ */
+double l1c_max_vec(l1c_int n, double *x){
+
+  if (n<=0){
+    return NAN;
+  }
+
+  double xmax = x[0];
+  if (n==1){
+    return xmax;
+  }
+
+  for (int k=1; k < n; k++){
+    xmax = x[k] > xmax ? x[k] : xmax;
+  }
+
+  return xmax;
+}
+
+
+/**
+ * Computes the absoulte value of x and stores it in y.
+ */
+void l1c_abs_vec(l1c_int n, double *x, double *y){
+
+  for (int k=0; k < n; k++){
+    y[k] = fabs(x[k]);
+  }
+
+}
+
 /**
    Computes the 2-norm of error the error between x and y, i.e.,
    nrm = ||x - y||_2

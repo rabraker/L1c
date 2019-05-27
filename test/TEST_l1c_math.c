@@ -205,6 +205,61 @@ START_TEST(test_l1c_dnrm2_rel_err)
 }
 END_TEST
 
+START_TEST(test_l1c_max_vec)
+{
+  l1c_int N = 6;
+  double xmax;
+  double x_[] = {1.0, -2.0, -3.0, 4.0, 5.0, 6.0};
+
+  double *x=l1c_malloc_double(N);
+  if (!x){
+    ck_abort_msg("Out of memory\n");
+  }
+  for (int i=0; i<N; i++){
+    x[i] = x_[i];
+  }
+
+  xmax = l1c_max_vec(0, x);
+  //ck_assert_double_nan(xmax);
+  ck_assert_msg(isnan(xmax),  "Assertion is NaN failed: xmax == %f\n", xmax);
+
+
+  xmax = l1c_max_vec(1, x);
+  ck_assert_double_eq(1.0, xmax);
+
+  xmax = l1c_max_vec(N, x);
+  ck_assert_double_eq(6.0, xmax);
+
+  l1c_free_double(x);
+}
+END_TEST
+
+
+START_TEST(test_l1c_abs_vec)
+{
+  l1c_int N = 6;
+  double x_[]    = {1.0, -2.0, -3.0, 4.0, 5.0, 6.0};
+  double x_exp[] = {1.0,  2.0,  3.0, 4.0, 5.0, 6.0};
+
+  double *x = l1c_malloc_double(N);
+  double *xabs = l1c_malloc_double(N);
+  if (!x || !xabs){
+    ck_abort_msg("Out of memory\n");
+  }
+  for (int i=0; i<N; i++){
+    x[i] = x_[i];
+    xabs[i] = 10;
+  }
+
+  l1c_abs_vec(N, x, xabs);
+
+  ck_assert_double_array_eq_tol(N, xabs, x_exp, TOL_DOUBLE_SUPER);
+
+  l1c_free_double(x);
+  l1c_free_double(xabs);
+}
+END_TEST
+
 
 Suite *l1c_math_suite(void)
 {
@@ -227,6 +282,8 @@ Suite *l1c_math_suite(void)
   tcase_add_test(tc_l1c_math, test_l1c_dlogsum);
   tcase_add_test(tc_l1c_math, test_l1c_dnrm2_err);
   tcase_add_test(tc_l1c_math, test_l1c_dnrm2_rel_err);
+  tcase_add_test(tc_l1c_math, test_l1c_max_vec);
+  tcase_add_test(tc_l1c_math, test_l1c_abs_vec);
 
   /*Add test cases to the suite */
   suite_add_tcase(s, tc_l1c_math);
