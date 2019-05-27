@@ -29,6 +29,7 @@ TESTS = test_l1c.test                  \
 		build_dct_data.py              \
 		build_cgsolve_data.py          \
 		build_l1qc_data.py             \
+		build_nesta_data.py            \
 		build_TV_data.py               \
 		build_bregman_data.py          \
 		build_matrix_transform_data.py \
@@ -45,6 +46,7 @@ EXTRA_DIST =	build_CS20NG_example_data.py   \
 				build_dct_data.py  	  		   \
 				build_cgsolve_data.py 		   \
 				build_l1qc_data.py 	  		   \
+				build_nesta_data.py            \
 				build_TV_data.py   	  		   \
 				build_bregman_data.py 		   \
 				build_matrix_transform_data.py \
@@ -102,6 +104,7 @@ log_deps = 	build_CS20NG_example_data.log \
 			build_dct2_data.log \
 		   	build_dct_data.log \
 		   	build_cgsolve_data.log \
+			build_nesta_data.log   \
 			build_l1qc_data.log    \
 			build_TV_data.log      \
 			build_bregman_data.log \
