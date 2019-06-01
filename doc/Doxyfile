@@ -107,7 +107,7 @@ INPUT                 = ../src/dct1.c              \
                         ../src/cgsolve.c           \
                         ../src/l1c_memory.c        \
                         ../include/l1c.h           \
-
+                        ../src/nesta.c
 
 # If the value of the INPUT tag contains directories, you can use the
 # FILE_PATTERNS tag to specify one or more wildcard patterns (like *.cpp and

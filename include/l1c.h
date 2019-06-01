@@ -15,7 +15,7 @@ typedef int l1c_int;
 
 
 /**
- * \defgroup memory
+ * \defgroup memory Functions for dealing with memory allocation that are general to all of l1c.
  * Functions for managing memory, and in particular, aligned allocation
  * needed for vectorized math.
  * @{
@@ -59,8 +59,7 @@ void l1c_free_double_2D(int nrow, double **ddptr);
 
 
 /**
- * @defgroup transforms
- * Functions for linear transformations.
+ * @defgroup transforms Functions for linear transformations.
  * @{
  */
 
@@ -133,7 +132,7 @@ typedef struct l1c_AxFuns {
 /** @}*/
 
 /**
- * @defgroup lin_solve
+ * @defgroup lin_solve Routines for solving systems of linear equations.
  * @{*/
 /** Struct containing artifacts of the cgsolve routine. */
 typedef struct l1c_CgResults{

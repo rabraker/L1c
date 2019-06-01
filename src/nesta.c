@@ -1,3 +1,10 @@
+/** @file nesta.c
+ *
+ * This is an implementation of the l1-specialized version of Nesterovs algorithm
+ * described in @cite becker_nesta_2011.
+ *
+ */
+
 #include <stdlib.h>
 #include<cblas.h>
 #include <math.h>
@@ -7,9 +14,13 @@
 
 
 /* The next three functions basically implement a circular buffer for storing the vector
- containing the last values L1C_NESTA_NMEAN's of fx
+ containing the last L1C_NESTA_NMEAN values of fx. This is probably over-engineered...
 */
 
+/**
+   Returns a new instance of l1c_fmean_fifo, with the vector of
+   fvals initialized to zero.
+ */
 struct l1c_fmean_fifo _l1c_new_fmean_fifo(void){
   double *fvals = malloc(sizeof(double)*L1C_NESTA_NMEAN);
 
@@ -43,6 +54,13 @@ void _l1c_push_fmeans_fifo(struct l1c_fmean_fifo *fifo, double fval) {
   }
 }
 
+/**
+ * Compute the mean of fifo.fval. This is a standard mean,
+ * except it is normalized by fifo.n_total, not the length of the buffer.
+ * This is eq (3.13) in the paper.
+ *
+ * @param [in] fifo
+ */
 double _l1c_mean_fmean_fifo(struct l1c_fmean_fifo *fifo) {
 
   double mean = 0;
@@ -114,9 +132,22 @@ void l1c_free_nesta_problem(l1c_NestaProb *NP){
 }
 
 /**
- * By default, will use ax_funs.Ex() and ax_funs.Ety(), i.e., assuming the
+ * Implements the projections of yk and zk onto the (primal) feasible set Qp.
+ * These are described in in eqs (3.5)-(3.7) and (3.10)-(3.12). Both can be put
+ * the common framework of
+ *
+ * \f{align}{
+ *  vk = \textrm{arg } \min_{x\in \Q_p} \frac{L_{\mu}}{2} ||x - xx||_2^2 + \langle g, x\rangle
+ * \f}
+ *
+ * Note that we have droped \f$x_k\f$ from the inner product, because it is a constant,
+ * which justifies pushing (in step 3) the sum into the inner product, as is done in
+ * in (3.10)
+ *
+ *
+ * @note{By default, will use ax_funs.Ex() and ax_funs.Ety(), i.e., assuming the
  * analysis formulation. To use the synthesis formulation, set ax_funs.Ex=NULL
- * and ax_funs.Ety=NULL.
+ * and ax_funs.Ety=NULL, and ax_funs.Ax will be used.}
  *
  * @param [in] NP
  * @param [in] xx
