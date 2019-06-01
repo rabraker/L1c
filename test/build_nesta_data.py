@@ -94,7 +94,7 @@ if __name__ == "__main__":
     sigma = 0.1
     mu = 0.1
     Lmu = L / mu
-
+    np.random.seed(0)
     xk = np.random.randn(M)
     b = np.random.randn(N)
     g = np.random.randn(M)
