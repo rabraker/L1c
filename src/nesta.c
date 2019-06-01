@@ -23,7 +23,11 @@ struct l1c_fmean_fifo _l1c_new_fmean_fifo(void){
   return fifo;
 }
 
-
+/** Push a new value of fval into the fifo and increment fifo.n_total.
+ *
+ * @param [in,out] fifo An instance of l1c_fmean_fifo.
+ * @param [in] fval the new value of the functional, to be pushed into the fifo.
+ */
 void _l1c_push_fmeans_fifo(struct l1c_fmean_fifo *fifo, double fval) {
 
   *fifo->next = fval;
@@ -51,14 +55,11 @@ double _l1c_mean_fmean_fifo(struct l1c_fmean_fifo *fifo) {
 }
 
 
-
-
 /**
    Initialize a l1c_NestaProblem struct. Memory will be allocated for all
    arrays.
  */
-l1c_NestaProb* l1c_init_nesta_problem(l1c_int n, l1c_int m, double *b, l1c_AxFuns ax_funs,
-                                      double sigma, double mu, double tol, double L, unsigned flags){
+l1c_NestaProb* _l1c_NestaProb_new(l1c_int n, l1c_int m){
 
   l1c_NestaProb *NP = malloc(sizeof(l1c_NestaProb));
   if (!NP){
@@ -66,9 +67,9 @@ l1c_NestaProb* l1c_init_nesta_problem(l1c_int n, l1c_int m, double *b, l1c_AxFun
   }
 
   *NP = (l1c_NestaProb){.n=n, .m=m, .fx=0.0, .xo=NULL, .xk=NULL, .yk=NULL, .zk=NULL,
-                    .Atb=NULL, .gradf=NULL, .gradf_sum=NULL,
-                    .dwork1=NULL, .dwork2=NULL, .b=b, .ax_funs=ax_funs,
-                        .sigma=sigma, .mu=mu, .tol=tol, .L_by_mu=L/mu, .flags=flags};
+                        .Atb=NULL, .gradf=NULL, .gradf_sum=NULL,
+                        .dwork1=NULL, .dwork2=NULL, .b=NULL, .ax_funs={0},
+                        .sigma=0, .mu=0, .tol=0, .L_by_mu=0, .flags=0};
 
 
   NP->xo = l1c_calloc_double(m);
@@ -87,13 +88,6 @@ l1c_NestaProb* l1c_init_nesta_problem(l1c_int n, l1c_int m, double *b, l1c_AxFun
     l1c_free_nesta_problem(NP);
     return NULL;
   }
-
-  if(flags | L1C_ANALYSIS){
-    NP->ax_funs.Ety(b, NP->Atb);
-  }else{
-    ax_funs.Aty(b, NP->Atb);
-  }
-
 
   return NP;
 }
@@ -202,16 +196,39 @@ void l1c_nesta_feval(l1c_NestaProb *NP){
 
 }
 
-void l1c_nesta_init(l1c_NestaProb *NP, double *beta_mu, double *beta_tol, int n_continue){
 
-  double mu_final = NP->mu;
-  double tol_final = NP->tol;
+/**
+ * Populates an l1c_NestaProb instance NP. NP should already be allocated by
+ *  l1c_init_nesta_problem().
+ *
+ * @param [out] NP problem instance.
+ * @param [in,out] beta_mu Initial beta such that `beta^n_con * mu0 = mu_final`
+ * @param [in,out] beta_tol Factor such such that `beta_tol^n_con * tol0 = tol_final`
+ * @param [in,out] n_continue The number of continuation iterations.
+ *
+ */
+void l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
+                     int n_continue, double *b, l1c_AxFuns ax_funs, double sigma,
+                     double mu, double tol, double L, unsigned flags){
+
+  NP->b = b;
+  NP->n_continue = n_continue;
+  NP->ax_funs = ax_funs;
+  NP->sigma = sigma;
+  NP->mu = mu;
+  NP->L_by_mu = L/mu;
+  NP->tol = tol;
+  NP->flags = flags;
+
+  double mu_final = mu;
+  double tol_final = tol;
 
   if (NP->flags | L1C_ANALYSIS){
-    NP->ax_funs.Ety(NP->b, NP->xo);
+    NP->ax_funs.Ety(b, NP->Atb);
   }else{
-    NP->ax_funs.Aty(NP->b, NP->xo);
+    NP->ax_funs.Aty(NP->b, NP->Atb);
   }
+  cblas_dcopy(NP->m, NP->Atb, 1, NP->xo, 1);
 
   double *Ux_ref = NP->dwork1;
   NP->ax_funs.Mx(NP->xo, Ux_ref);
@@ -230,8 +247,8 @@ void l1c_nesta_init(l1c_NestaProb *NP, double *beta_mu, double *beta_tol, int n_
   *beta_tol = exp(log((tol_final / tol0)) / (double)n_continue);
 
   /* After n continuation steps, NP->mu will again be what we said.*/
-  NP->mu = mu0;
-  NP->tol = tol0;
+  NP->mu_j = mu0;
+  NP->tol_j = tol0;
 
 }
 
@@ -256,7 +273,7 @@ int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
   unsigned flags = L1C_ANALYSIS;
 
 
-  l1c_NestaProb *NP = l1c_init_nesta_problem(n, m, b, ax_funs, sigma, mu, tol, L, flags);
+  l1c_NestaProb *NP = _l1c_NestaProb_new(n, m);
 
   if (!NP ){
     return L1C_OUT_OF_MEMORY;
@@ -264,7 +281,8 @@ int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
 
 
   /* Initialize*/
-  l1c_nesta_init(NP,  &beta_mu, &beta_tol, n_continuation);
+  l1c_nesta_setup(NP,  &beta_mu, &beta_tol, n_continuation,
+                  b, ax_funs, sigma, mu, tol, L, flags);
 
   struct l1c_fmean_fifo fbar_fifo = _l1c_new_fmean_fifo();
 
@@ -311,8 +329,8 @@ int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
       }
     } /* Inner iter*/
 
-    NP->mu = NP->mu * beta_mu;
-    NP->mu = NP->tol * beta_tol;
+    NP->mu_j = NP->mu_j * beta_mu;
+    NP->tol_j = NP->tol_j * beta_tol;
     cblas_dcopy(NP->m, NP->xk, 1, NP->xo, 1);
   }
 

@@ -23,12 +23,21 @@ typedef struct l1c_NestaProb {
 
   /** Noise level, \f||Ax-b||\leq sigma \f*/
   double sigma;
-  /** Accuracy*/
+  /** (final) Accuracy*/
   double mu;
-  /** Termination tolerance.*/
+  /** (final) Termination tolerance.*/
   double tol;
+  /** Accuracy at continuation iteration j*/
+  double mu_j;
+  /** (final) Termination tolerance at continuation iteration j*/
+  double tol_j;
+
   double L_by_mu;
+
+  int n_continue;
+
   unsigned flags;
+
 } l1c_NestaProb;
 
 
@@ -42,12 +51,15 @@ struct l1c_fmean_fifo {
 
 void l1c_free_nesta_problem(l1c_NestaProb *NP);
 
-l1c_NestaProb* l1c_init_nesta_problem(l1c_int n, l1c_int m, double *b, l1c_AxFuns ax_funs,
-                                      double sigma, double mu, double tol, double L, unsigned flags);
+l1c_NestaProb* _l1c_NestaProb_new(l1c_int n, l1c_int m);
 
 void l1c_nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk);
 
 void l1c_nesta_feval(l1c_NestaProb *NP);
+
+void l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
+                     int n_continue, double *b, l1c_AxFuns ax_funs, double sigma,
+                     double mu, double tol, double L, unsigned flags);
 
 struct l1c_fmean_fifo _l1c_new_fmean_fifo(void);
 void _l1c_push_fmeans_fifo(struct l1c_fmean_fifo *fifo, double fval);

@@ -55,7 +55,10 @@ typedef struct NestaTestData {
   double *yk_exp;
   double *gradf_exp;
 
-  //for smax
+  //
+  int n_continue;
+  double beta_mu;
+  double beta_tol;
 
   l1c_NestaProb *NP;
 
@@ -66,6 +69,12 @@ static void free_generic_data(NestaTestData *Tdat);
 
 
 static void init_generic_data(NestaTestData *dat){
+
+  /* !!!!!!!!!!!!!!!! LOAD THIS FROM JSON LATER !!!!!!!!!!!!!!!!!!!*/
+  dat->n_continue = 5;
+  dat->tol = 1e-3;
+  dat->beta_mu = 0;
+  dat->beta_tol = 0;
 
   char *fpath_generic = fullfile(test_data_dir, "nesta_data.json");
   cJSON *json_data;
@@ -103,8 +112,7 @@ static void init_generic_data(NestaTestData *dat){
     goto exit;
   }
 
-  dat->NP = l1c_init_nesta_problem(n, m, dat->b, ax_funs, dat->sigma,
-                                   dat->mu, dat->tol, dat->L, L1C_ANALYSIS);
+  dat->NP = _l1c_NestaProb_new(n, m);
 
   if (!dat->NP){
     fprintf(stderr, "Failed to initialize Nesta Problem (in %s)\n", __func__);
@@ -113,6 +121,8 @@ static void init_generic_data(NestaTestData *dat){
   }
 
 
+  l1c_nesta_setup(dat->NP, &dat->beta_mu, &dat->beta_tol, dat->n_continue, dat->b, ax_funs, dat->sigma,
+                  dat->mu, dat->tol, dat->L, L1C_ANALYSIS);
   /* Copy the test data into NP*/
   cblas_dcopy(m, dat->xk, 1, dat->NP->xk, 1);
   cblas_dcopy(n, dat->b, 1, dat->NP->b, 1);
