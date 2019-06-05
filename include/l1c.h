@@ -253,6 +253,9 @@ int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_
 /**
  * @defgroup l1c_errors Error codes returned.
  * @{*/
+/** Successfull return status*/
+#define L1C_SUCCESS 0
+
 /** Initial guess was infeasible. */
 #define L1C_INFEASIBLE_START  (1U << 1)
 

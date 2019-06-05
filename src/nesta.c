@@ -281,6 +281,8 @@ void l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
   NP->mu_j = mu0;
   NP->tol_j = tol0;
 
+  return L1C_SUCCESS;
+
 }
 
 
