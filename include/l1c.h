@@ -274,6 +274,9 @@ int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_
 /** E.g., N<0.*/
 #define L1C_INVALID_ARGUMENT  (1U << 11)
 
+/** E.g., asking for analysis, but ax_funs.U==NULL*/
+#define L1C_INCONSISTENT_ARGUMENTS (1U<< 13)
+
 /** @}*/
 
 #endif

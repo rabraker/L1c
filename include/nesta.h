@@ -57,15 +57,16 @@ void l1c_nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk);
 
 void l1c_nesta_feval(l1c_NestaProb *NP);
 
-void l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
-                     int n_continue, double *b, l1c_AxFuns ax_funs, double sigma,
-                     double mu, double tol, double L, unsigned flags);
+int l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
+                    int n_continue, double *b, l1c_AxFuns ax_funs, double sigma,
+                    double mu, double tol, double L, unsigned flags);
 
 struct l1c_fmean_fifo _l1c_new_fmean_fifo(void);
 void _l1c_push_fmeans_fifo(struct l1c_fmean_fifo *fifo, double fval);
 double _l1c_mean_fmean_fifo(struct l1c_fmean_fifo *fifo);
 
-
+int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
+              l1c_AxFuns ax_funs, double sigma);
 
 
 #define L1C_SYNTHESIS (1U << 0)

@@ -238,10 +238,16 @@ void l1c_nesta_feval(l1c_NestaProb *NP){
  * @param [in,out] n_continue The number of continuation iterations.
  *
  */
-void l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
+int l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
                      int n_continue, double *b, l1c_AxFuns ax_funs, double sigma,
                      double mu, double tol, double L, unsigned flags){
 
+
+  /* Check that flags is consistent with functionality provided by ax_funs. */
+  if (flags & L1C_ANALYSIS) {
+    if (!ax_funs.Mx || !ax_funs.Mty)
+      return L1C_INCONSISTENT_ARGUMENTS;
+  }
   NP->b = b;
   NP->n_continue = n_continue;
   NP->ax_funs = ax_funs;
