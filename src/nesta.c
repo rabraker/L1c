@@ -13,6 +13,39 @@
 #include "nesta.h"
 
 
+static inline void _l1c_nesta_Wx(l1c_NestaProb *NP, double *x, double *z){
+  if (NP->flags & L1C_ANALYSIS){
+    NP->ax_funs.Mx(x, z);
+  }else{
+    cblas_dcopy(NP->m, x, 1, z, 1);
+  }
+}
+
+static inline void _l1c_nesta_Wty(l1c_NestaProb *NP, double *z, double *x){
+  if (NP->flags & L1C_ANALYSIS){
+    NP->ax_funs.Mty(z, x);
+  }else{
+    cblas_dcopy(NP->m, z, 1, x, 1);
+  }
+}
+
+static inline void _l1c_nesta_Rx(l1c_NestaProb *NP, double *x, double *y){
+  if (NP->flags & L1C_ANALYSIS){
+    NP->ax_funs.Ex(x, y);
+  }else{
+    NP->ax_funs.Ax(x, y);
+  }
+}
+
+static inline void _l1c_nesta_Rty(l1c_NestaProb *NP, double *y, double *x){
+  if (NP->flags & L1C_ANALYSIS){
+    NP->ax_funs.Ety(y, x);
+  }else{
+    NP->ax_funs.Aty(y, x);
+  }
+}
+
+
 /* The next three functions basically implement a circular buffer for storing the vector
  containing the last L1C_NESTA_NMEAN values of fx. This is probably over-engineered...
 */
@@ -167,13 +200,8 @@ void l1c_nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk){
   /* Store q in vk.*/
   l1c_daxpy_z(m, (-1.0/Lmu), g, xx, vk);
 
-  if(NP->flags | L1C_ANALYSIS){
-    NP->ax_funs.Ex(vk, Aq);
-    NP->ax_funs.Ety(Aq, AtAq);
-  }else{
-    NP->ax_funs.Ax(vk, Aq);
-    NP->ax_funs.Aty(Aq, AtAq);
-  }
+  _l1c_nesta_Rx(NP, vk, Aq);
+  _l1c_nesta_Rty(NP, Aq, AtAq);
 
   // a0 = Lmu * [ ||Aq - b||/sigma  - 1]
   a0 = l1c_dnrm2_err(n, NP->b, Aq);
@@ -197,6 +225,14 @@ void l1c_nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk){
  * Evaluate the (smoothed) functional and compute the gradient.
  *
  * @param [in,out] NP On exist, NP->gradf and NP->fx will be updated.
+
+ y = Ax = Rx,
+ y in R^n
+ x in R^m
+ u = Wx in R^p
+ R (or A) is n by m
+ W (or U) is p by m
+
  */
 void l1c_nesta_feval(l1c_NestaProb *NP){
   l1c_int m = NP->m;
@@ -207,23 +243,19 @@ void l1c_nesta_feval(l1c_NestaProb *NP){
 
   /* If E and Et are void, we are doing synthesis, otherwise, analysis.
    */
-  if( NP->flags | L1C_ANALYSIS){
-    NP->ax_funs.Mx(NP->xk, Uxk);
-  }else{
-    cblas_dcopy(m, NP->xk, 1, Uxk, 1);
-  }
+  _l1c_nesta_Wx(NP, NP->xk, Uxk);
 
   for (int i=0; i<m; i++){
-    u[i] = Uxk[i] / max(NP->mu, fabs(Uxk[i]));
+    u[i] = Uxk[i] / max(NP->mu_j, fabs(Uxk[i]));
   }
 
 
   nrm_u2 = cblas_dnrm2(m, u, 1);
   nrm_u2 *= nrm_u2;
 
-  NP->fx = cblas_ddot(m, u, 1, Uxk, 1) - 0.5 * NP->mu * nrm_u2;
+  NP->fx = cblas_ddot(m, u, 1, Uxk, 1) - 0.5 * NP->mu_j * nrm_u2;
 
-  NP->ax_funs.Mty(u, NP->gradf);
+  _l1c_nesta_Wty(NP, u, NP->gradf);
 
 }
 
@@ -245,7 +277,7 @@ int l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
 
   /* Check that flags is consistent with functionality provided by ax_funs. */
   if (flags & L1C_ANALYSIS) {
-    if (!ax_funs.Mx || !ax_funs.Mty)
+    if (!ax_funs.Mx || !ax_funs.Mty || !ax_funs.Ex || !ax_funs.Ety)
       return L1C_INCONSISTENT_ARGUMENTS;
   }
   NP->b = b;
@@ -260,15 +292,13 @@ int l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
   double mu_final = mu;
   double tol_final = tol;
 
-  if (NP->flags | L1C_ANALYSIS){
-    NP->ax_funs.Ety(b, NP->Atb);
-  }else{
-    NP->ax_funs.Aty(NP->b, NP->Atb);
-  }
+
+  _l1c_nesta_Rty(NP, NP->b, NP->Atb);
   cblas_dcopy(NP->m, NP->Atb, 1, NP->xo, 1);
 
   double *Ux_ref = NP->dwork1;
-  NP->ax_funs.Mx(NP->xo, Ux_ref);
+
+  _l1c_nesta_Wx(NP, NP->xo, Ux_ref);
 
   l1c_abs_vec(NP->m, Ux_ref, Ux_ref);
   double mu0 = 0.9 * l1c_max_vec(NP->m, Ux_ref);
@@ -309,7 +339,7 @@ int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
   double tol = 1e-4;
   double fbar=0, rel_delta_fmu;
   double beta_mu, beta_tol;
-  unsigned flags = L1C_ANALYSIS;
+  unsigned flags = L1C_SYNTHESIS;
 
 
   l1c_NestaProb *NP = _l1c_NestaProb_new(n, m);
@@ -320,23 +350,32 @@ int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
 
 
   /* Initialize*/
-  l1c_nesta_setup(NP,  &beta_mu, &beta_tol, n_continuation,
-                  b, ax_funs, sigma, mu, tol, L, flags);
+  status += l1c_nesta_setup(NP,  &beta_mu, &beta_tol, n_continuation,
+                            b, ax_funs, sigma, mu, tol, L, flags);
+  if (status){
+    return status;
+  }
 
   struct l1c_fmean_fifo fbar_fifo = _l1c_new_fmean_fifo();
+
+  cblas_dcopy(NP->m, NP->xo, 1, NP->xk, 1);
 
   for (int iter=1; iter<= n_continuation; iter++){
 
     /* Reset everthing.*/
     l1c_init_vec(L1C_NESTA_NMEAN, fbar_fifo.f_vals, 0);
     fbar_fifo.next = fbar_fifo.f_vals;
+    fbar_fifo.n_total = 0;
 
     l1c_init_vec(m,  NP->gradf_sum, 0.0);
-    cblas_dcopy(NP->m, NP->xo, 1, NP->xk, 1);
-    /* ---------------------------- MAIN ITERATION -------------------------- */
-    for (int k=0; k < max_inner_iter; k++){
 
-      l1c_nesta_feval(NP);
+    NP->L_by_mu = L/NP->mu_j;
+    printf("Starting nesta continuation iter %d, with muj = %f\n", iter, NP->mu_j);
+    /* ---------------------------- MAIN ITERATION -------------------------- */
+    printf("Iter |     fmu     |  Rel. Vartn fmu |  Residual  |\n");
+    printf("------------------------------------------------------\n");
+    for (int k=0; k < max_inner_iter; k++){
+        l1c_nesta_feval(NP);
 
       /* ----------------- Update yk ------------------------- */
       l1c_nesta_project(NP, NP->xk, NP->gradf, NP->yk);
