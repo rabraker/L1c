@@ -396,12 +396,15 @@ int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
       /* xk = tau_k * zk + (1-tau_k) * yk*/
       l1c_daxpby_z(m, tau_k, NP->zk, (1-tau_k), NP->yk, NP->xk);
 
-      /*------------ Check for exit -----------------*/
+      /*------------ Check for exit -----------------
+        Must compute fbar first, because it should not include current fx.
+       */
+
       fbar = _l1c_mean_fmean_fifo(&fbar_fifo);
-      rel_delta_fmu = (NP->fx - fbar) / fbar;
-
       _l1c_push_fmeans_fifo(&fbar_fifo, NP->fx);
+      rel_delta_fmu = fabs(NP->fx - fbar) / fbar;
 
+      printf("%d     %.3e       %.2e        %.2e\n", k+1, NP->fx, rel_delta_fmu, 0.0);
       if (rel_delta_fmu < NP->tol){
         break;
       }
