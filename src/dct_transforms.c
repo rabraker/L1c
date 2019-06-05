@@ -39,13 +39,12 @@
 int l1c_setup_dct_transforms(l1c_int mrow, l1c_int mcol, l1c_int n,
                              l1c_int *pix_idx, l1c_AxFuns *ax_funs){
 
-  if (mcol == 1){
+  if ((mcol == 1) || (mrow == 1)){
     //call setup_dct1
-    return l1c_dct1_setup(mrow, n, pix_idx, ax_funs);
-  }else if(mcol>1){
+    return l1c_dct1_setup(mrow*mcol, n, pix_idx, ax_funs);
+  }else if ((mcol>1) && (mrow > 1) ){
     // Call setup_dct2
     return l1c_dct2_setup(mrow, mcol, n, pix_idx, ax_funs);
-
   }else{
     return L1C_DCT_INIT_FAILURE;
   }
