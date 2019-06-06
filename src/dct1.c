@@ -118,14 +118,14 @@ int l1c_dct1_setup(l1c_int m, l1c_int n, l1c_int *pix_mask_idx, l1c_AxFuns *ax_f
   dct_n = n;
   dct_pix_mask_idx = pix_mask_idx;
 
-  dct_root_1_by_2N = sqrt(1.0 / ( (double) dct_m * 2)); // Normalization constant.
+  dct_root_1_by_2N = sqrt(1.0 / ( (double) dct_m * 2));
 
   /* Note: except for c2r and hc2r, the default is FFTW_PRESERVE_INPUT.
      It could be worth trying FFTW_DESTROY_INPUT, since this can potentially
      allow more efficient algorithms.
+
+     FFTW_PATIENT seems to give us about 2.5 seconds for the 512x512 test image.
    */
-  // FFTW_DESTROY_INPUT
-  // FFTW_PATIENT seems to give us about 2.5 seconds for the 512x512 test image.
   unsigned flags = FFTW_PATIENT;
 
   fftw_r2r_kind dct_kind_MtEty = FFTW_REDFT10; // DCT-II, "the" DCT
@@ -139,7 +139,10 @@ int l1c_dct1_setup(l1c_int m, l1c_int n, l1c_int *pix_mask_idx, l1c_AxFuns *ax_f
     goto fail;
   }
 
-
+  ax_funs->n = n;
+  ax_funs->m = m;
+  ax_funs->p = m;
+  ax_funs->norm_M = 1.0;
   ax_funs->Ax = dct_EMx;
   ax_funs->Aty = dct_MtEty;
   ax_funs->AtAx = dct_MtEt_EMx;

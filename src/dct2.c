@@ -162,6 +162,10 @@ int l1c_dct2_setup(l1c_int mrow, l1c_int mcol, l1c_int n, l1c_int *pix_mask_idx,
     goto fail;
   }
 
+  ax_funs->n = n;
+  ax_funs->m = mrow * mcol;
+  ax_funs->p = mrow * mcol;
+  ax_funs->norm_M = 1.0;
   ax_funs->Ax = dct2_EMx;
   ax_funs->Aty = dct2_MtEty;
   ax_funs->AtAx = dct2_MtEt_EMx;

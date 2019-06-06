@@ -31,7 +31,8 @@ double *xfm_dwork=NULL;
  * @warning   Do not free `A` until you are done.
  *
  *
- * @warning Do not free A until you are done.
+ * @note the ax_funs fields .Mx, .Mty, .Ex, .Ety and .data will be NULL on exit.
+ *       Additionally, .norm_M=0, and .n=n, .m=.p=m
  */
 int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_funs){
 
@@ -48,6 +49,14 @@ int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_
   xfm_A = A;
   xfm_N = n;
   xfm_M = m;
+
+  ax_funs->n = n;
+  ax_funs->m = m;
+  ax_funs->p = m;
+
+  /** We dont populate M, so norm is "zero". If wed rather replace Mx
+      with the identity, then it would make sense to change this to 1.!*/
+  ax_funs->norm_M = 0;
 
   ax_funs->Ax = Ax;
   ax_funs->Aty = Aty;

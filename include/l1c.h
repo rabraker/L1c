@@ -79,7 +79,7 @@ void l1c_free_double_2D(int nrow, double **ddptr);
  *
  * The remaining function pointers are, at this point, optional, and not required
  * by the low level optimizations. However, often in CS, the transform `A` can be
- * decomposed as `A=EM`, where `M` is an othogonal, `m` by `m` matrix (say, a
+ * decomposed as `A=EM`, where `M` is an othogonal, `m` by `p` matrix (say, a
  * DCT transform) and `E` is an `n` by `m` matrix, e.g., an identity with rows removed.
  * The remaining fields are there to provide access to those individual components.
  *
@@ -93,6 +93,10 @@ void l1c_free_double_2D(int nrow, double **ddptr);
  *
  */
 typedef struct l1c_AxFuns {
+  l1c_int n;
+  l1c_int m;
+  l1c_int p;
+  double norm_M;
   /*Everybody must implement these.*/
 
   /** Compute y=Ax */
