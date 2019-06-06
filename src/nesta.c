@@ -120,7 +120,7 @@ l1c_NestaProb* _l1c_NestaProb_new(l1c_int n, l1c_int m){
   *NP = (l1c_NestaProb){.n=n, .m=m, .fx=0.0, .xo=NULL, .xk=NULL, .yk=NULL, .zk=NULL,
                         .Atb=NULL, .gradf=NULL, .gradf_sum=NULL,
                         .dwork1=NULL, .dwork2=NULL, .b=NULL, .ax_funs={0},
-                        .sigma=0, .mu=0, .tol=0, .L_by_mu=0, .flags=0};
+                        .sigma=0, .mu=0, .tol=0, .L=0, .flags=0};
 
 
   NP->xo = l1c_calloc_double(m);
@@ -194,7 +194,7 @@ void l1c_nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk){
 
   double *Aq = NP->dwork2;
   double *AtAq = NP->dwork1;
-  double Lmu = NP->L_by_mu;
+  double Lmu = NP->L / NP->mu_j;
   double a0=0, a1=0, lambda=0;
 
   /* Store q in vk.*/
@@ -272,20 +272,27 @@ void l1c_nesta_feval(l1c_NestaProb *NP){
  */
 int l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
                      int n_continue, double *b, l1c_AxFuns ax_funs, double sigma,
-                     double mu, double tol, double L, unsigned flags){
+                     double mu, double tol, unsigned flags){
 
-
+double L=0;
   /* Check that flags is consistent with functionality provided by ax_funs. */
   if (flags & L1C_ANALYSIS) {
-    if (!ax_funs.Mx || !ax_funs.Mty || !ax_funs.Ex || !ax_funs.Ety)
+    if (!ax_funs.Mx || !ax_funs.Mty || !ax_funs.Ex || !ax_funs.Ety){
       return L1C_INCONSISTENT_ARGUMENTS;
+    }
+    L = ax_funs.norm_M;
+  }else{
+    /* When we are in synthesis mode, ||Wx||_1 = ||Ix||_1, ie, W=I, so
+     norm is 1.
+    */
+    L = 1.0;
   }
   NP->b = b;
   NP->n_continue = n_continue;
   NP->ax_funs = ax_funs;
   NP->sigma = sigma;
   NP->mu = mu;
-  NP->L_by_mu = L/mu;
+  NP->L = L;
   NP->tol = tol;
   NP->flags = flags;
 
@@ -302,6 +309,8 @@ int l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
 
   l1c_abs_vec(NP->m, Ux_ref, Ux_ref);
   double mu0 = 0.9 * l1c_max_vec(NP->m, Ux_ref);
+  /** @TODO tol=0.1 is a hueristic. What happens if user specifies tol > 0.1 ?
+   */
   double tol0 = 0.1;
 
   /* We need mu_final and beta such that beta^n_cont * mu0= mu_final
@@ -322,24 +331,20 @@ int l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
 }
 
 
-int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
-              l1c_AxFuns ax_funs, double sigma){
-
-  /* Later, make these options*/
-  int max_inner_iter = 10000;
-  int n_continuation = 5;
+int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
+              l1c_AxFuns ax_funs, l1c_NestaOpts opts){
 
   int status=0; //, idx_fmu=0;
 
 
   double alpha_k=0, tau_k = 0;
-
-  /*Lipschitz constant divided by mu */
-  double L = 1;
-  double tol = 1e-4;
   double fbar=0, rel_delta_fmu;
   double beta_mu, beta_tol;
-  unsigned flags = L1C_SYNTHESIS;
+
+  double mu = opts.mu;
+  double sigma = opts.sigma;
+  double tol = opts.tol;
+  unsigned flags = opts.flags;
 
 
   l1c_NestaProb *NP = _l1c_NestaProb_new(n, m);
@@ -350,8 +355,8 @@ int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
 
 
   /* Initialize*/
-  status += l1c_nesta_setup(NP,  &beta_mu, &beta_tol, n_continuation,
-                            b, ax_funs, sigma, mu, tol, L, flags);
+  status += l1c_nesta_setup(NP,  &beta_mu, &beta_tol, opts.n_continuation,
+                            b, ax_funs, sigma, mu, tol, flags);
   if (status){
     return status;
   }
@@ -360,7 +365,7 @@ int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
 
   cblas_dcopy(NP->m, NP->xo, 1, NP->xk, 1);
 
-  for (int iter=1; iter<= n_continuation; iter++){
+  for (int iter=1; iter<= opts.n_continuation; iter++){
 
     /* Reset everthing.*/
     l1c_init_vec(L1C_NESTA_NMEAN, fbar_fifo.f_vals, 0);
@@ -369,12 +374,11 @@ int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
 
     l1c_init_vec(m,  NP->gradf_sum, 0.0);
 
-    NP->L_by_mu = L/NP->mu_j;
     printf("Starting nesta continuation iter %d, with muj = %f\n", iter, NP->mu_j);
     /* ---------------------------- MAIN ITERATION -------------------------- */
     printf("Iter |     fmu     |  Rel. Vartn fmu |  Residual  |\n");
     printf("------------------------------------------------------\n");
-    for (int k=0; k < max_inner_iter; k++){
+    for (int k=0; k < L1C_NESTA_MAX_INNER_ITER; k++){
         l1c_nesta_feval(NP);
 
       /* ----------------- Update yk ------------------------- */

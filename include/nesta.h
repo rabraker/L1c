@@ -2,7 +2,15 @@
 #define __L1C_NESTA__
 
 #define L1C_NESTA_NMEAN 10
+#define L1C_NESTA_MAX_INNER_ITER 10000
 
+typedef struct l1c_NestaOpts {
+  double mu;
+  double tol;
+  double sigma;
+  int n_continuation;
+  unsigned flags;
+}l1c_NestaOpts;
 
 typedef struct l1c_NestaProb {
   l1c_int m;
@@ -31,11 +39,11 @@ typedef struct l1c_NestaProb {
   double mu_j;
   /** (final) Termination tolerance at continuation iteration j*/
   double tol_j;
-
-  double L_by_mu;
-
+  /* L, is the lipschitz constant of W (ie U), ie ||W||_2 */
+  double L;
+  /** Number of continuation iterations*/
   int n_continue;
-
+  /* One of L1C_ANALSYS or L1C_SYTHESIS*/
   unsigned flags;
 
 } l1c_NestaProb;
@@ -59,14 +67,14 @@ void l1c_nesta_feval(l1c_NestaProb *NP);
 
 int l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
                     int n_continue, double *b, l1c_AxFuns ax_funs, double sigma,
-                    double mu, double tol, double L, unsigned flags);
+                    double mu, double tol, unsigned flags);
 
 struct l1c_fmean_fifo _l1c_new_fmean_fifo(void);
 void _l1c_push_fmeans_fifo(struct l1c_fmean_fifo *fifo, double fval);
 double _l1c_mean_fmean_fifo(struct l1c_fmean_fifo *fifo);
 
-int l1c_nesta(l1c_int m, double *xk, double mu, l1c_int n, double *b,
-              l1c_AxFuns ax_funs, double sigma);
+int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
+              l1c_AxFuns ax_funs, l1c_NestaOpts opts);
 
 
 #define L1C_SYNTHESIS (1U << 0)

@@ -124,7 +124,7 @@ static void init_generic_data(NestaTestData *dat){
 
 
   if(l1c_nesta_setup(dat->NP, &dat->beta_mu, &dat->beta_tol, dat->n_continue, dat->b, ax_funs, dat->sigma,
-                     dat->mu, dat->tol, dat->L, L1C_ANALYSIS)){
+                     dat->mu, dat->tol, L1C_ANALYSIS)){
     status++;
     goto exit;
   }
@@ -215,10 +215,14 @@ START_TEST (test_l1c_nesta)
     goto exit1;
   }
 
-  double mu = 1e-5;
 
+  l1c_NestaOpts opts = {.mu=1e-5,
+                        .sigma=epsilon,
+                        .tol=1e-3,
+                        .n_continuation=5,
+                        .flags=L1C_SYNTHESIS};
   /* ------------------------------------------------------- */
-  int nesta_status = l1c_nesta(m, x0, mu, n, b, ax_funs, epsilon);
+  int nesta_status = l1c_nesta(m, x0, n, b, ax_funs, opts);
 
   ck_assert_int_eq(nesta_status, 0);
   /*
@@ -307,7 +311,7 @@ START_TEST (test_nesta_project)
 
   yk = l1c_calloc_double(Tdat.m);
 
-
+  Tdat.NP->mu_j = Tdat.mu;
   l1c_nesta_project(Tdat.NP, Tdat.xk, Tdat.g, yk);
 
   ck_assert_double_array_eq_tol(Tdat.m, yk, Tdat.yk_exp, TOL_DOUBLE);
@@ -426,7 +430,7 @@ START_TEST (test_l1c_nesta_setup)
   double beta_mu=0, beta_tol=0;
   double sigma = 1e-3, mu = 1e-5;
   double tol = 1e-3;
-  double L=1;
+
   int n_continue = 5;
   double *b = l1c_calloc_double(n);
   double *A = l1c_calloc_double(n*m);
@@ -441,7 +445,7 @@ START_TEST (test_l1c_nesta_setup)
   l1c_setup_matrix_transforms(n, m, A, &ax_funs);
 
   int status = l1c_nesta_setup(NP, &beta_mu, &beta_tol, n_continue, b, ax_funs, sigma,
-                               mu, tol, L, L1C_ANALYSIS);
+                               mu, tol, L1C_ANALYSIS);
   ck_assert_int_eq(status, L1C_INCONSISTENT_ARGUMENTS);
 
   ax_funs.destroy();
@@ -455,7 +459,7 @@ START_TEST (test_l1c_nesta_setup)
 
 
   status = l1c_nesta_setup(NP, &beta_mu, &beta_tol, n_continue, b, ax_funs, sigma,
-                                mu, tol, L, L1C_ANALYSIS);
+                                mu, tol, L1C_ANALYSIS);
 
   ck_assert_int_eq(status, L1C_SUCCESS);
   ck_assert_ptr_eq(b, NP->b);
