@@ -114,7 +114,7 @@ static void init_generic_data(NestaTestData *dat){
   ax_funs.Ax = ax_funs.Ex;
   ax_funs.Aty = ax_funs.Ety;
 
-  dat->NP = _l1c_NestaProb_new(n, m);
+  dat->NP = _l1c_NestaProb_new(n, m, ax_funs.p);
 
   if (!dat->NP){
     fprintf(stderr, "Failed to initialize Nesta Problem (in %s)\n", __func__);
@@ -425,7 +425,7 @@ START_TEST (test_l1c_nesta_setup)
 {
   l1c_int n = 5;
   l1c_int m = 10;
-  l1c_NestaProb *NP = _l1c_NestaProb_new(n, m);
+  l1c_NestaProb *NP = _l1c_NestaProb_new(n, m, m);
 
   double beta_mu=0, beta_tol=0;
   double sigma = 1e-3, mu = 1e-5;

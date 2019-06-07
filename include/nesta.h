@@ -15,6 +15,7 @@ typedef struct l1c_NestaOpts {
 typedef struct l1c_NestaProb {
   l1c_int m;
   l1c_int n;
+  l1c_int p;
   /** */
   double fx;
   double *xo;
@@ -59,7 +60,7 @@ struct l1c_fmean_fifo {
 
 void l1c_free_nesta_problem(l1c_NestaProb *NP);
 
-l1c_NestaProb* _l1c_NestaProb_new(l1c_int n, l1c_int m);
+l1c_NestaProb* _l1c_NestaProb_new(l1c_int n, l1c_int m, l1c_int p);
 
 void l1c_nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk);
 

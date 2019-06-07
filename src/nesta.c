@@ -110,14 +110,14 @@ double _l1c_mean_fmean_fifo(struct l1c_fmean_fifo *fifo) {
    Initialize a l1c_NestaProblem struct. Memory will be allocated for all
    arrays.
  */
-l1c_NestaProb* _l1c_NestaProb_new(l1c_int n, l1c_int m){
+l1c_NestaProb* _l1c_NestaProb_new(l1c_int n, l1c_int m, l1c_int p){
 
   l1c_NestaProb *NP = malloc(sizeof(l1c_NestaProb));
   if (!NP){
     return NULL;
   }
 
-  *NP = (l1c_NestaProb){.n=n, .m=m, .fx=0.0, .xo=NULL, .xk=NULL, .yk=NULL, .zk=NULL,
+  *NP = (l1c_NestaProb){.n=n, .m=m, .p=p, .fx=0.0, .xo=NULL, .xk=NULL, .yk=NULL, .zk=NULL,
                         .Atb=NULL, .gradf=NULL, .gradf_sum=NULL,
                         .dwork1=NULL, .dwork2=NULL, .b=NULL, .ax_funs={0},
                         .sigma=0, .mu=0, .tol=0, .L=0, .flags=0};
@@ -130,8 +130,8 @@ l1c_NestaProb* _l1c_NestaProb_new(l1c_int n, l1c_int m){
   NP->Atb = l1c_calloc_double(m);
   NP->gradf = l1c_calloc_double(m);
   NP->gradf_sum = l1c_calloc_double(m);
-  NP->dwork1 = l1c_calloc_double(m);
-  NP->dwork2 = l1c_calloc_double(m);
+  NP->dwork1 = l1c_calloc_double(imax(m, p));
+  NP->dwork2 = l1c_calloc_double(imax(m, p));
 
   if (!NP->xo ||!NP->xk || !NP->yk || !NP->zk
       || !NP->Atb || !NP->gradf || !NP->gradf_sum
@@ -330,7 +330,32 @@ double L=0;
 
 }
 
+/**
 
+   Solve the problem
+
+   min_x || U^T x||_1 s.t. ||Rx - b||_2^2 < sigma
+
+   if opts.flags | L1C_ANALYSIS
+
+   or
+
+   min_x || x||_1 s.t. ||Ax - b||_2^2 < sigma
+
+   if opts.flags | L1C_SYNTHESIS
+
+   The matrix operators should be defined in ax_funs such that
+
+   ax_funs.Ux = U, ax_funs.Uty = U^T
+   ax_funs.Ex = Rx, ax_funs.Ety= R^Ty
+
+   FOr synthesis, ax_funs.Ux, and ax_funs.Ex may be null and w
+   we only need
+   ax_funs.Ax = Ax, ax_funs.Aty= A^Ty
+
+   In general, A (or R) is n by m, n < m and U is m by p, with p >=m.
+
+ */
 int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
               l1c_AxFuns ax_funs, l1c_NestaOpts opts){
 
@@ -347,7 +372,7 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
   unsigned flags = opts.flags;
 
 
-  l1c_NestaProb *NP = _l1c_NestaProb_new(n, m);
+  l1c_NestaProb *NP = _l1c_NestaProb_new(n, m, ax_funs.p);
 
   if (!NP ){
     return L1C_OUT_OF_MEMORY;
