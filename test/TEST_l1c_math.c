@@ -260,6 +260,56 @@ START_TEST(test_l1c_abs_vec)
 }
 END_TEST
 
+START_TEST(l1c_math_max)
+{
+  double a=5, b=6, mx = 0;
+
+  mx = max(a, b);
+  ck_assert_double_eq(mx, b);
+
+  mx = max(a, -b);
+  ck_assert_double_eq(mx, a);
+}
+END_TEST
+
+START_TEST(l1c_math_min)
+{
+  double a=5, b=6, mx = 0;
+
+  mx = min(a, b);
+  ck_assert_double_eq(mx, a);
+
+  mx = min(a, -b);
+  ck_assert_double_eq(mx, -b);
+
+}
+END_TEST
+
+START_TEST(l1c_math_imax)
+{
+  l1c_int a=5, b=6, mx = 0;
+
+  mx = imax(a, b);
+  ck_assert_int_eq(mx, b);
+
+  mx = imax(a, -b);
+  ck_assert_int_eq(mx, a);
+}
+END_TEST
+
+START_TEST (l1c_math_imin)
+{
+  l1c_int a=5, b=6, mx = 0;
+
+  mx = imin(a, b);
+  ck_assert_double_eq(mx, a);
+
+  mx = imin(a, -b);
+  ck_assert_double_eq(mx, -b);
+
+}
+END_TEST
+
 
 Suite *l1c_math_suite(void)
 {
@@ -284,7 +334,10 @@ Suite *l1c_math_suite(void)
   tcase_add_test(tc_l1c_math, test_l1c_dnrm2_rel_err);
   tcase_add_test(tc_l1c_math, test_l1c_max_vec);
   tcase_add_test(tc_l1c_math, test_l1c_abs_vec);
-
+  tcase_add_test(tc_l1c_math, l1c_math_max);
+  tcase_add_test(tc_l1c_math, l1c_math_min);
+  tcase_add_test(tc_l1c_math, l1c_math_imax);
+  tcase_add_test(tc_l1c_math, l1c_math_imin);
   /*Add test cases to the suite */
   suite_add_tcase(s, tc_l1c_math);
 

@@ -4,6 +4,13 @@
 #include "l1c.h"
 
 
+static inline double imin(l1c_int a, l1c_int b){
+  return a < b ? a : b;
+}
+
+static inline double imax(l1c_int a, l1c_int b){
+  return a > b ? a : b;
+}
 
 static inline double min(double a,double b){
   return a < b ? a : b;
