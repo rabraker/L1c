@@ -68,13 +68,13 @@ def nesta_project(x, g, b, L_mu, A, At, epsilon):
     return vk, lam
 
 
-def nesta_f_eval(U, Ut, xk, mu):
-    Uxk = U(xk)
+def nesta_f_eval(W, Wt, xk, mu):
+    Wtxk = Ut(xk)
 
-    u = Uxk / np.fmax(mu, np.abs(Uxk))
+    u = Wtxk / np.fmax(mu, np.abs(Wtxk))
 
-    gradf = Ut(u)
-    fx = u.dot(Uxk) - 0.5 * mu * np.linalg.norm(u)**2
+    gradf = W(u)
+    fx = u.dot(Wtxk) - 0.5 * mu * np.linalg.norm(u)**2
 
     return fx, gradf
 

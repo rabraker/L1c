@@ -12,20 +12,40 @@
 #include "l1c_math.h"
 #include "nesta.h"
 
+/*
+  W is a possibly overcomplete dictionary, ie, W is m by p. Signal v is assumed sparse in
+  domain of W. In general, x = W*v \in \mathbb{R}^m, and v\in\mathbb{R}^p. This gives rise
+  to the synthesis and analysis prblems:
 
-static inline void _l1c_nesta_Wx(l1c_NestaProb *NP, double *x, double *z){
+  1) min_{v}  ||v||_1 s.t. || b - R * W * v||_2 \leq \sigma
+
+  2) min_{x}  ||W^T x||_1 s.t. || b - R * x||_2 \leq \sigma
+
+
+  In this code, when flags|synthesis, we set W=I_{m,m}, and use ax_funs.A.
+
+  In the case of analysys, we assume that ax_funs.E = R and ax_funs.M= W.
+  The following four functions provide wrappers to facilite this logic.
+
+  The goal is that, e.g., dct1 is fully compaitible with this scheme for both
+  synthesis and analysis. It might be better to rename ax_funs.E to R, since the
+  connotation is more general.
+ */
+static inline void _l1c_nesta_Wv(l1c_NestaProb *NP, double *v, double *x){
   if (NP->flags & L1C_ANALYSIS){
-    NP->ax_funs.Mx(x, z);
+    NP->ax_funs.Mx(v, x);
   }else{
-    cblas_dcopy(NP->m, x, 1, z, 1);
+    /* Identity operator on R^m, p==m */
+    cblas_dcopy(NP->m, v, 1, x, 1);
   }
 }
 
-static inline void _l1c_nesta_Wty(l1c_NestaProb *NP, double *z, double *x){
+static inline void _l1c_nesta_Wtx(l1c_NestaProb *NP, double *x, double *v){
   if (NP->flags & L1C_ANALYSIS){
-    NP->ax_funs.Mty(z, x);
+    NP->ax_funs.Mty(x, v);
   }else{
-    cblas_dcopy(NP->m, z, 1, x, 1);
+    /* Identity operator on R^m, p==m */
+    cblas_dcopy(NP->m, x, 1, v, 1);
   }
 }
 
@@ -229,33 +249,33 @@ void l1c_nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk){
  y = Ax = Rx,
  y in R^n
  x in R^m
- u = Wx in R^p
+ u = W^T * x in R^p (as in ||W^T * x||_1)
  R (or A) is n by m
- W (or U) is p by m
+ W (or U) is p by m, u is in R^p
 
+ See also eq (6.2). The transpose convention is different from their matlab code.
  */
 void l1c_nesta_feval(l1c_NestaProb *NP){
-  l1c_int m = NP->m;
-
+  // l1c_int m = NP->m;
+  l1c_int p = NP->p;
   double nrm_u2=0;
-  double *Uxk = NP->dwork1;
+  double *Wtxk = NP->dwork1;
   double *u = NP->dwork2;
 
   /* If E and Et are void, we are doing synthesis, otherwise, analysis.
    */
-  _l1c_nesta_Wx(NP, NP->xk, Uxk);
+  _l1c_nesta_Wtx(NP, NP->xk, Wtxk);
 
-  for (int i=0; i<m; i++){
-    u[i] = Uxk[i] / max(NP->mu_j, fabs(Uxk[i]));
+  for (int i=0; i<p; i++){
+    u[i] = Wtxk[i] / max(NP->mu_j, fabs(Wtxk[i]));
   }
 
-
-  nrm_u2 = cblas_dnrm2(m, u, 1);
+  nrm_u2 = cblas_dnrm2(p, u, 1);
   nrm_u2 *= nrm_u2;
 
-  NP->fx = cblas_ddot(m, u, 1, Uxk, 1) - 0.5 * NP->mu_j * nrm_u2;
+  NP->fx = cblas_ddot(p, u, 1, Wtxk, 1) - 0.5 * NP->mu_j * nrm_u2;
 
-  _l1c_nesta_Wty(NP, u, NP->gradf);
+  _l1c_nesta_Wv(NP, u, NP->gradf);
 
 }
 
@@ -298,17 +318,18 @@ double L=0;
 
   double mu_final = mu;
   double tol_final = tol;
+  double *Wtx_ref = NP->dwork1;
 
-
+  /*Section 3.6, paragraph preceeding (3.14) suggests that
+   \mu_0 = 0.9||A^Tb||_{\infty}, and we have A^T = W^T * R^T *b
+  */
   _l1c_nesta_Rty(NP, NP->b, NP->Atb);
   cblas_dcopy(NP->m, NP->Atb, 1, NP->xo, 1);
 
-  double *Ux_ref = NP->dwork1;
+  _l1c_nesta_Wtx(NP, NP->xo, Wtx_ref);
+  l1c_abs_vec(NP->m, Wtx_ref, Wtx_ref);
+  double mu0 = 0.9 * l1c_max_vec(NP->p, Wtx_ref);
 
-  _l1c_nesta_Wx(NP, NP->xo, Ux_ref);
-
-  l1c_abs_vec(NP->m, Ux_ref, Ux_ref);
-  double mu0 = 0.9 * l1c_max_vec(NP->m, Ux_ref);
   /** @TODO tol=0.1 is a hueristic. What happens if user specifies tol > 0.1 ?
    */
   double tol0 = 0.1;
@@ -334,7 +355,7 @@ double L=0;
 
    Solve the problem
 
-   min_x || U^T x||_1 s.t. ||Rx - b||_2^2 < sigma
+   min_x || W^T x||_1 s.t. ||Rx - b||_2^2 < sigma
 
    if opts.flags | L1C_ANALYSIS
 
@@ -346,10 +367,10 @@ double L=0;
 
    The matrix operators should be defined in ax_funs such that
 
-   ax_funs.Ux = U, ax_funs.Uty = U^T
+   ax_funs.Mx = W, ax_funs.Mty = W^T
    ax_funs.Ex = Rx, ax_funs.Ety= R^Ty
 
-   FOr synthesis, ax_funs.Ux, and ax_funs.Ex may be null and w
+   FOr synthesis, ax_funs.Mx, and ax_funs.Ex may be null and w
    we only need
    ax_funs.Ax = Ax, ax_funs.Aty= A^Ty
 
