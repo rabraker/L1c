@@ -291,12 +291,11 @@ void l1c_nesta_feval(l1c_NestaProb *NP){
  *
  */
 int l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
-                     int n_continue, double *b, l1c_AxFuns ax_funs, double sigma,
-                     double mu, double tol, unsigned flags){
+                    double *b, l1c_AxFuns ax_funs, l1c_NestaOpts *opts){
 
 double L=0;
   /* Check that flags is consistent with functionality provided by ax_funs. */
-  if (flags & L1C_ANALYSIS) {
+  if (opts->flags & L1C_ANALYSIS) {
     if (!ax_funs.Mx || !ax_funs.Mty || !ax_funs.Ex || !ax_funs.Ety){
       return L1C_INCONSISTENT_ARGUMENTS;
     }
@@ -308,16 +307,16 @@ double L=0;
     L = 1.0;
   }
   NP->b = b;
-  NP->n_continue = n_continue;
+  NP->n_continue = opts->n_continue;
   NP->ax_funs = ax_funs;
-  NP->sigma = sigma;
-  NP->mu = mu;
+  NP->sigma = opts->sigma;
+  NP->mu = opts->mu;
   NP->L = L;
-  NP->tol = tol;
-  NP->flags = flags;
+  NP->tol = opts->tol;
+  NP->flags = opts->flags;
 
-  double mu_final = mu;
-  double tol_final = tol;
+  double mu_final = opts->mu;
+  double tol_final = opts->tol;
   double *Wtx_ref = NP->dwork1;
 
   /*Section 3.6, paragraph preceeding (3.14) suggests that
@@ -340,8 +339,8 @@ double L=0;
      ie.,  beta = exp(log(mu_final/mu0) / n_cont)
    */
 
-  *beta_mu = exp(log((mu_final / mu0)) / (double)n_continue);
-  *beta_tol = exp(log((tol_final / tol0)) / (double)n_continue);
+  *beta_mu = exp(log((mu_final / mu0)) / (double)opts->n_continue);
+  *beta_tol = exp(log((tol_final / tol0)) / (double)opts->n_continue);
 
   /* After n continuation steps, NP->mu will again be what we said.*/
   NP->mu_j = mu0;
@@ -352,8 +351,7 @@ double L=0;
 }
 
 /**
-
-   Solve the problem
+   Solves the problem
 
    min_x || W^T x||_1 s.t. ||Rx - b||_2^2 < sigma
 
@@ -387,11 +385,6 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
   double fbar=0, rel_delta_fmu;
   double beta_mu, beta_tol;
 
-  double mu = opts.mu;
-  double sigma = opts.sigma;
-  double tol = opts.tol;
-  unsigned flags = opts.flags;
-
 
   l1c_NestaProb *NP = _l1c_NestaProb_new(n, m, ax_funs.p);
 
@@ -399,10 +392,8 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
     return L1C_OUT_OF_MEMORY;
   }
 
-
   /* Initialize*/
-  status += l1c_nesta_setup(NP,  &beta_mu, &beta_tol, opts.n_continuation,
-                            b, ax_funs, sigma, mu, tol, flags);
+  status += l1c_nesta_setup(NP,  &beta_mu, &beta_tol, b, ax_funs, &opts);
   if (status){
     return status;
   }
@@ -411,7 +402,7 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
 
   cblas_dcopy(NP->m, NP->xo, 1, NP->xk, 1);
 
-  for (int iter=1; iter<= opts.n_continuation; iter++){
+  for (int iter=1; iter<= opts.n_continue; iter++){
 
     /* Reset everthing.*/
     l1c_init_vec(L1C_NESTA_NMEAN, fbar_fifo.f_vals, 0);
@@ -434,7 +425,7 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
          for these alpha_k, tau_k
       */
       alpha_k = 0.5 * (double)(k + 1);
-      tau_k = 2.0 / ((double)k + 3.0);
+      tau_k = 2.0 / (double)(k + 3);
 
       /* Update cummulative, weighted sum of gradients (3.8)-(3.12).*/
       cblas_daxpy(m, alpha_k, NP->gradf, 1, NP->gradf_sum, 1);
@@ -442,8 +433,8 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
       /* Projection for zk */
       l1c_nesta_project(NP, NP->xo, NP->gradf_sum, NP->zk);
 
-      /* ----------------- Update xk ----------------*/
-      /* xk = tau_k * zk + (1-tau_k) * yk*/
+      /* ----------------- Update xk ----------------
+         xk = tau_k * zk + (1-tau_k) * yk  */
       l1c_daxpby_z(m, tau_k, NP->zk, (1-tau_k), NP->yk, NP->xk);
 
       /*------------ Check for exit -----------------

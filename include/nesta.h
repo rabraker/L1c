@@ -8,7 +8,7 @@ typedef struct l1c_NestaOpts {
   double mu;
   double tol;
   double sigma;
-  int n_continuation;
+  int n_continue;
   unsigned flags;
 }l1c_NestaOpts;
 
@@ -67,8 +67,7 @@ void l1c_nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk);
 void l1c_nesta_feval(l1c_NestaProb *NP);
 
 int l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
-                    int n_continue, double *b, l1c_AxFuns ax_funs, double sigma,
-                    double mu, double tol, unsigned flags);
+                    double *b, l1c_AxFuns ax_funs, l1c_NestaOpts *opts);
 
 struct l1c_fmean_fifo _l1c_new_fmean_fifo(void);
 void _l1c_push_fmeans_fifo(struct l1c_fmean_fifo *fifo, double fval);

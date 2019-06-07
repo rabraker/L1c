@@ -122,10 +122,11 @@ static void init_generic_data(NestaTestData *dat){
     goto exit;
   }
 
-
-  if(l1c_nesta_setup(dat->NP, &dat->beta_mu, &dat->beta_tol, dat->n_continue, dat->b, ax_funs, dat->sigma,
-                     dat->mu, dat->tol, L1C_ANALYSIS)){
-    status++;
+  l1c_NestaOpts opts = {.n_continue=dat->n_continue, .sigma=dat->sigma,
+                        .mu=dat->mu, .tol=dat->tol, .flags=L1C_ANALYSIS};
+  if(l1c_nesta_setup(dat->NP, &dat->beta_mu, &dat->beta_tol,
+                     dat->b, ax_funs, &opts)){
+     status++;
     goto exit;
   }
 
@@ -219,7 +220,7 @@ START_TEST (test_l1c_nesta)
   l1c_NestaOpts opts = {.mu=1e-5,
                         .sigma=epsilon,
                         .tol=1e-3,
-                        .n_continuation=5,
+                        .n_continue=5,
                         .flags=L1C_SYNTHESIS};
   /* ------------------------------------------------------- */
   int nesta_status = l1c_nesta(m, x0, n, b, ax_funs, opts);
@@ -443,9 +444,9 @@ START_TEST (test_l1c_nesta_setup)
   }
   l1c_AxFuns ax_funs;
   l1c_setup_matrix_transforms(n, m, A, &ax_funs);
+  l1c_NestaOpts opts = {.n_continue=5, .sigma=sigma, .mu=mu, .tol=tol, .flags=L1C_ANALYSIS};
+  int status = l1c_nesta_setup(NP, &beta_mu, &beta_tol, b, ax_funs, &opts);
 
-  int status = l1c_nesta_setup(NP, &beta_mu, &beta_tol, n_continue, b, ax_funs, sigma,
-                               mu, tol, L1C_ANALYSIS);
   ck_assert_int_eq(status, L1C_INCONSISTENT_ARGUMENTS);
 
   ax_funs.destroy();
@@ -458,8 +459,7 @@ START_TEST (test_l1c_nesta_setup)
   }
 
 
-  status = l1c_nesta_setup(NP, &beta_mu, &beta_tol, n_continue, b, ax_funs, sigma,
-                                mu, tol, L1C_ANALYSIS);
+  status = l1c_nesta_setup(NP, &beta_mu, &beta_tol, b, ax_funs, &opts);
 
   ck_assert_int_eq(status, L1C_SUCCESS);
   ck_assert_ptr_eq(b, NP->b);
