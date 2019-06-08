@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 struct timeval timecheck;
+
 static inline struct timeval
 l1c_get_time(){
   struct timeval tv;
