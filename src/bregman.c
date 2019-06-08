@@ -83,10 +83,10 @@ void breg_mxpy_z(l1c_int N, double * restrict x, double * restrict y, double *z)
 void breg_hess_eval(l1c_int n, l1c_int m, double *x, double *y, double mu, double lambda,
                     double *dwork1, double *dwork2){
 
-  l1c_DyTDy(n, m, lambda, x, dwork1);
-  l1c_DxTDx(n, m, lambda, x, dwork2);
+  l1c_DyTDy(n, m, 1.0, x, dwork1);
+  l1c_DxTDx(n, m, 1.0, x, dwork2);
   for(int i=0; i<n*m; i++){
-    y[i] = mu*x[i] + dwork1[i] + dwork2[i];
+    y[i] = mu*x[i] + lambda * dwork1[i] + lambda * dwork2[i];
   }
 }
 
@@ -375,10 +375,10 @@ int l1c_breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
     // printf("in-iter: %d, lambda: %f, dnrm_err: %f\n", iter, lambda, dnrm_err);
 
     /* Compute Dyu_b = Del_y*u + b. */
-    l1c_Dx(n, m, uk, Dxu_b);
+    l1c_Dx(n, m, 1.0, uk, Dxu_b);
     cblas_daxpy(N, 1.0, b_x, 1, Dxu_b, 1);
     /*  Dxu_b = Del_x*u + b. */
-    l1c_Dy(n, m, uk, Dyu_b);
+    l1c_Dy(n, m, 1.0, uk, Dyu_b);
     cblas_daxpy(N, 1.0, b_y, 1, Dyu_b, 1);
 
     /* Apply shrink operators. */

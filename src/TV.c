@@ -16,7 +16,7 @@
  */
 /* Forward declarations */
 
-void l1c_Dx(l1c_int n, l1c_int m, double *X, double *Dx);
+void l1c_Dx(l1c_int n, l1c_int m, double alpha, double *X, double *Dx);
 
 void l1c_DxT(l1c_int n, l1c_int m, double alpha, double *A, double *dxt);
 
@@ -26,7 +26,7 @@ void l1c_DyT(l1c_int n, l1c_int m, double alpha, double *A, double *dyt);
 
 void l1c_DyTDy(l1c_int n, l1c_int m, double alpha, double *A, double *dytdy);
 
-void l1c_Dy(l1c_int n, l1c_int m, double *X, double *Dy);
+void l1c_Dy(l1c_int n, l1c_int m, double alpha, double *X, double *Dy);
 
 /*
   I've changed this up from the initial implementation
@@ -80,11 +80,12 @@ static inline void ddiffT_z(l1c_int n, double alpha, double *x, double *dx){
   [ 0.  0   -1  1]
 */
 static inline void ddiff2_z(l1c_int n, double alpha, double *x, double *dx){
-  dx[0] = alpha * (x[0] - x[1]);
+  double alp2 = alpha * alpha;
+  dx[0] = alp2 * (x[0] - x[1]);
   for (int i=1; i<n-1; i++){
-    dx[i] = alpha * (-x[i-1] + 2 * x[i] - x[i+1]);
+    dx[i] = alp2 * (-x[i-1] + 2 * x[i] - x[i+1]);
   }
-  dx[n-1] = alpha * (x[n-1] - x[n-2]);
+  dx[n-1] = alp2 * (x[n-1] - x[n-2]);
 }
 
 /*
@@ -105,7 +106,7 @@ static inline void ddiff2_z(l1c_int n, double alpha, double *x, double *dx){
   [ 0. -0.  0.  0. -0.  0.  0. -0.  0.  0. -1.  1.]
   [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]]
  */
-void l1c_Dx(l1c_int n, l1c_int m, double * restrict X, double * restrict Dx){
+void l1c_Dx(l1c_int n, l1c_int m, double alpha, double * restrict X, double * restrict Dx){
   /*
     We go down the rows of the matrix X, and compute the difference
     Dx = X[i,j+1] - X[i,j]
@@ -115,7 +116,7 @@ void l1c_Dx(l1c_int n, l1c_int m, double * restrict X, double * restrict Dx){
   for (int i_row=0; i_row<n; i_row++){
     X_row = X + i_row*m;
     Dx_row = Dx + i_row*m;
-    ddiff_z(m, 1.0, X_row, Dx_row);
+    ddiff_z(m, alpha, X_row, Dx_row);
   }
 }
 
@@ -178,6 +179,18 @@ void l1c_DxTDx(l1c_int n, l1c_int m, double alpha,
 
 
 /*
+  ---------- PERFORMANCE NOTE ----------------------
+  For the Dy (vertical) operators, it is important to basically
+  take the diff between two adjacent rows. It is far slower to
+  Take a view of a column and compute its diff. In the code below,
+  the outer loop walks down the rows, and the inner loop subtracts
+  the two adjacent rows. In principle, the inner loop could be replaced
+  with something like cblas_daxpy(), but we dont want to overwrite
+  our vector.
+ */
+
+
+/*
   [[-1. -0. -0.  1.  0.  0.  0.  0.  0.  0.  0.  0.]
   [-0. -1. -0.  0.  1.  0.  0.  0.  0.  0.  0.  0.]
   [-0. -0. -1.  0.  0.  1.  0.  0.  0.  0.  0.  0.]
@@ -191,13 +204,13 @@ void l1c_DxTDx(l1c_int n, l1c_int m, double alpha,
   [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
   [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]]
  */
-void l1c_Dy(l1c_int n, l1c_int m, double * restrict X, double * restrict Dy){
+void l1c_Dy(l1c_int n, l1c_int m, double alpha, double * restrict X, double * restrict Dy){
   int row=0, col=0;
 
 #pragma omp parallel for private(col)
   for (row=0; row<n-1; row++){
     for(col = row * m; col < (row+1) * m; col++){
-      Dy[col] = X[col+m] - X[col];
+      Dy[col] = alpha * (X[col+m] - X[col]);
     }
   }
 
@@ -262,7 +275,7 @@ void l1c_DyT(l1c_int n, l1c_int m, double alpha,
  */
 void l1c_DyTDy(l1c_int n, l1c_int m, double alpha,
                double * restrict A, double * restrict dytdy){
-
+  double alp2 = alpha * alpha;
   double Ai_min_m=0, D_ii_Ai = 0, Ai_p_m=0;
   int i=0, Len=n*m;
 
@@ -272,7 +285,7 @@ void l1c_DyTDy(l1c_int n, l1c_int m, double alpha,
     D_ii_Ai = (i<m || i > m*(n-1)-1) ? A[i] : 2 * A[i];
     Ai_p_m = i < Len-m ? A[i+m] : 0;
 
-    dytdy[i] = alpha * (-Ai_min_m + D_ii_Ai - Ai_p_m);
+    dytdy[i] = alp2 * (-Ai_min_m + D_ii_Ai - Ai_p_m);
   }
 
 }

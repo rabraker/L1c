@@ -134,7 +134,7 @@ def DyTDy(A_vec, alpha, n, m):
         else:
             Ai_p_m = 0
 
-        dytdy[i] = alpha * (-Ai_min_m + D_ii_Ai - Ai_p_m)
+        dytdy[i] = (alpha**2) * (-Ai_min_m + D_ii_Ai - Ai_p_m)
 
     return dytdy
 
@@ -176,7 +176,7 @@ def DxTDx(A_vec, alpha, n, m):
             else:
                 Ai_p1 = A_vec[i+1]
 
-            dxtdx[i] = alpha * (-Ai_m1 + D_ii - Ai_p1)
+            dxtdx[i] = (alpha**2) * (-Ai_m1 + D_ii - Ai_p1)
 
     return dxtdx
 
@@ -211,8 +211,8 @@ def check_DxTDx(A, N, M):
 
     DxMat = DxMatRep(N, M)
 
-    dxTdx_exp = alpha*DxMat.T.dot(DxMat).dot(a_vec)
-    npt.assert_array_almost_equal(dxTdx, dxTdx_exp, decimal=14)
+    dxTdx_exp = alpha*DxMat.T.dot(alpha*DxMat.dot(a_vec))
+    npt.assert_array_almost_equal(dxTdx, dxTdx_exp, decimal=12)
 
 
 def check_DyTDy(A, N, M):
@@ -221,8 +221,8 @@ def check_DyTDy(A, N, M):
     dyTdy = DyTDy(a_vec, alpha, N, M)
 
     DyMat = DyMatRep(N, M)
-    dyTdy_exp = alpha*DyMat.T.dot(DyMat).dot(a_vec)
-    npt.assert_array_almost_equal(dyTdy, dyTdy_exp, decimal=14)
+    dyTdy_exp = alpha*DyMat.T.dot(alpha*DyMat.dot(a_vec))
+    npt.assert_array_almost_equal(dyTdy, dyTdy_exp, decimal=12)
 
 
 # To build the laplacian, we need a matrix representation of Dy^T and Dx^T.
@@ -256,8 +256,8 @@ def build_TV_data(N, M):
     dxTA = alpha*DxMat.T.dot(a_vec)
     dyTA = alpha*DyMat.T.dot(a_vec)
 
-    dxTdxA = alpha*DxMat.T.dot(DxMat).dot(a_vec)
-    dyTdyA = alpha*DyMat.T.dot(DyMat).dot(a_vec)
+    dxTdxA = alpha*DxMat.T.dot(alpha*DxMat.dot(a_vec))
+    dyTdyA = alpha*DyMat.T.dot(alpha*DyMat.dot(a_vec))
     data = {'A': a_vec,
             'DxA': dxA,
             'DyA': dyA,
