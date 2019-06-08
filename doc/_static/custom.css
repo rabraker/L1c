@@ -130,17 +130,17 @@ div.sphinxsidebar p.topless {
 /* } */
 div.sphinxsidebar toctree-l1{
     margin-left: 20px;
-    list-style-type:none;
+    list-style-type:disc;
 }
 .toctree-l2{
     /* margin-left: 20px; */
-    list-style-type:disc;
+    list-style-type:disclosure-closed
 }
 
 div.sphinxsidebar ul {
     margin: 10px;
     padding-left:10px;
-    list-style-type:none;
+    list-style-type:disc;
     /* color: {{ theme_sidebartextcolor }}; */
 }
 
@@ -223,7 +223,7 @@ a.headerlink:hover {
 
 div.body p, div.body dd, div.body li, div.body blockquote {
     text-align: justify;
-    line-height: 130%;
+    line-height: 110%;
 }
 
 div.admonition p.admonition-title + p {
@@ -279,7 +279,7 @@ pre {
 }
 
 code {
-    background-color: #ecf0f3;
+    /* background-color: #ecf0f3; */
     padding: 0 1px 0 1px;
     font-size: 0.95em;
 }
@@ -312,3 +312,26 @@ p.rubric {
     margin-top: 30px;
     font-weight: bold;
 }
+
+.member {
+    /* background-color:#ac9; */
+    color:#da8c18;
+}
+.member p{
+    margin-top: 2px;
+    margin-bottom: 4px;
+    color: black;
+}
+
+code.descname{
+    color:black;
+}
+.simple li{
+    margin-top: 5px;
+    margin-bottom: 2px;
+}
+
+/* span .target { */
+/*     background-color:#f4debf; */
+/*     color: orange; */
+/* } */
