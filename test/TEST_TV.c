@@ -175,7 +175,7 @@ START_TEST(test_l1c_Dx){
     dd->DxA_act[i] =1;
   }
 
-  l1c_Dx(N, M, 1.0, dd->A, dd->DxA_act);
+  l1c_Dx(N, M, dd->alpha, dd->A, dd->DxA_act);
 
   ck_assert_double_array_eq_tol(N*M, dd->DxA_exp,
                                 dd->DxA_act, TOL_DOUBLE_SUPER*10);
@@ -225,7 +225,7 @@ START_TEST(test_l1c_Dy){
     dd->DyA_act[i] =0;
   }
 
-  l1c_Dy(N, M, 1.0, dd->A, dd->DyA_act);
+  l1c_Dy(N, M, dd->alpha, dd->A, dd->DyA_act);
 
   ck_assert_double_array_eq_tol(N*M, dd->DyA_exp,
                                 dd->DyA_act, TOL_DOUBLE_SUPER*10);

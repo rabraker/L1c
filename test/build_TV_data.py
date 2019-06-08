@@ -250,8 +250,8 @@ def build_TV_data(N, M):
     DyMat = DyMatRep(N, M)
     DxMat = DxMatRep(N, M)
 
-    dxA = DxMat.dot(a_vec)
-    dyA = DyMat.dot(a_vec)
+    dxA = alpha*DxMat.dot(a_vec)
+    dyA = alpha*DyMat.dot(a_vec)
 
     dxTA = alpha*DxMat.T.dot(a_vec)
     dyTA = alpha*DyMat.T.dot(a_vec)
