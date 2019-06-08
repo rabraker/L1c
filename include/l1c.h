@@ -3,7 +3,7 @@
 /*
  * @file l1c.h
  *
- * The main API for l1c.
+ * The public API for l1c.
  */
 
 
@@ -25,7 +25,9 @@ typedef int l1c_int;
     The default is 64. This should be sufficient for up to AVX512. For SSE2
     and AVX2, you could redifine this 32.
  */
+#ifndef DALIGN
 #define DALIGN  64
+#endif
 
 /**
  * Allocate an array of doubles aligned to a DALGIN byte boundary.
@@ -57,11 +59,11 @@ void l1c_free_double_2D(int nrow, double **ddptr);
 /**@}*/
 
 
-
 /**
  * @defgroup transforms Functions for linear transformations.
  * @{
  */
+typedef struct _l1c_AxFuns l1c_AxFuns;
 
 /** A struct of function pointers for linear transforms.
  *
@@ -92,54 +94,59 @@ void l1c_free_double_2D(int nrow, double **ddptr);
  *      l1c_setup_matrix_transforms()
  *
  */
-typedef struct l1c_AxFuns {
+struct _l1c_AxFuns {
+  /** Length of observation vector. n < m <=p*/
   l1c_int n;
+
+  /** Length of true signal*/
   l1c_int m;
+
+  /** Size of vector in dictionary basis. p >=m. If M is square, m=p.*/
   l1c_int p;
+
+  /** The spectral norm of the operator M (or at least an upper bound.
+   Currently, only nesta requires this.*/
   double norm_M;
-  /*Everybody must implement these.*/
 
   /** Compute y=Ax */
   void(*Ax)(double *x, double *y);
+
   /** Compute x=Aty */
   void(*Aty)(double *y, double *x);
+
   /** Compute z=AtAx */
   void(*AtAx)(double *x, double *z);
 
-  /* Optional. Used by dct and dct2.*/
-  /** Compute x=Mx*/
+  /** Compute x=Mx */
   void(*Mx)(double *x, double *y);
-  /** Compute y=Mty*/
+
+  /** Compute y=Mty */
   void(*Mty)(double *y, double *x);
 
-  /** Computes y = E * x
-   */
+  /** Computes y = E * x */
   void(*Ex)(double *x, double *y);
 
   /** Computes x = E^T * x. x should already be
-      initialized.
-   */
+      initialized. */
   void(*Ety)(double *y, double *x);
 
   /**Release data allocated by the associated setup function.
-     All implementations must define .`destroy`.
-  */
+     All implementations must define .`destroy`. */
   void(*destroy)(void);
 
   /** Reserved for future use.*/
   void *data;
-}l1c_AxFuns;
-
-
-
+};
 
 /** @}*/
+
+
 
 /**
  * @defgroup lin_solve Routines for solving systems of linear equations.
  * @{*/
 /** Struct containing artifacts of the cgsolve routine. */
-typedef struct l1c_CgResults{
+typedef struct _l1c_CgResults{
   /** Residual */
   double cgres;
   /** Number of completed conjugate gradient iterations. */
@@ -151,7 +158,7 @@ typedef struct l1c_CgResults{
 /**
  * Parameters for the conjugate gradient solver.
  */
-typedef struct l1c_CgParams{
+typedef struct _l1c_CgParams{
   /** If 0, print nothing, if >0, print status every verbose-th iteration. */
   l1c_int verbose;
   /** Maximum number of solver iterations.*/
@@ -165,9 +172,15 @@ typedef struct l1c_CgParams{
 
 
 /**
- *  Contains the results of an l1qc_newton() optimizations.
+ * @defgroup l1qc_lb l1-minimization with quadratic constraint.
+ * @{*/
+
+
+typedef struct _l1c_LBResult l1c_LBResult;
+/**
+ * Contains the results of an l1qc_newton() optimizations.
  */
-typedef struct l1c_LBResult{
+struct _l1c_LBResult{
   /** Value of the objective function.*/
   double l1;
   /** Total number of newton interations, across all log-barrier iterations.*/
@@ -179,13 +192,14 @@ typedef struct l1c_LBResult{
       see \ref l1c_errors */
   int    status;
 
-}l1c_LBResult;
+};
 
 
+typedef struct _l1c_L1qcOpts l1c_L1qcOpts;
 /**
  * Options which control the l1qc_dct() optimization.
  */
-typedef struct l1c_L1qcOpts{
+struct _l1c_L1qcOpts{
   /** The epsilon in \f$||Ax-b||_2 < \epsilon\f$  */
   double epsilon;
   /** log-barier parameter. */
@@ -199,8 +213,8 @@ typedef struct l1c_L1qcOpts{
   /** This should be removed. */
   int lbiter;
   /** The newton iterations stop if
-   * \f$ 0.5\nabla f)^T \begin{bmatrix}d_x \\d_u\end{bmatrix} < newton_tol \f$
-   * The optimization continues into the next log-barrier iteration.
+   * \f$ 0.5(\nabla f)^T \begin{bmatrix}d_x \\d_u\end{bmatrix} < \texttt{newton}\_\texttt{tol} \f$
+   * and the optimization continues into the next log-barrier iteration.
   */
   double newton_tol;
   /** Maximum number of Newton iterations.*/
@@ -221,7 +235,9 @@ typedef struct l1c_L1qcOpts{
   /** Should the conjugate-gradient solver be warm-started?
    */
  int warm_start_cg;
-}l1c_L1qcOpts;
+};
+
+/** @}*/
 
 
 

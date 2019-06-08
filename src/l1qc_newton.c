@@ -10,6 +10,9 @@
 #include "l1c_math.h"
 #include "l1qc_newton.h"
 #include "linesearch.h"
+/**
+ * @file l1qc_newton.c
+ */
 
 /* ---------------- Forward Declarations ---------------------- */
 
@@ -394,7 +397,21 @@ void _l1c_l1qcProb_delete(l1c_l1qcProb *Prb){
 
 
 
-/**
+/** @ingroup l1qc_lb
+ *
+ * Performs the quadratically constrained \f$\ell_1\f$ optimization
+ *
+ * \f{align}{
+ *    \min_{x} ||x||_1 \text{ s.t. } ||Ax-b||_2 < \epsilon
+ * \f}
+ *
+ * using a log-barrier newton method. The algorithm is based on the
+ * description in `l1-magic` the manual
+ * \rsts
+ * :cite:`l1magic`.
+ * \endrsts
+ *
+ * @note This algorthm only operates in synthesis mode.
  *
  * @param[in] m size of x.
  * @param[in,out] x result of optimization.

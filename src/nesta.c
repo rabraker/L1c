@@ -17,12 +17,12 @@
   domain of W. In general, x = W*v \in \mathbb{R}^m, and v\in\mathbb{R}^p. This gives rise
   to the synthesis and analysis prblems:
 
-  1) min_{v}  ||v||_1 s.t. || b - R * W * v||_2 \leq \sigma
+  1) \f$ min_{v}  ||v||_1 s.t. || b - R * W * v||_2 \leq \sigma \f$
 
-  2) min_{x}  ||W^T x||_1 s.t. || b - R * x||_2 \leq \sigma
+  2) \f$ min_{x}  ||W^T x||_1 s.t. || b - R * x||_2 \leq \sigma \f$
 
 
-  In this code, when flags|synthesis, we set W=I_{m,m}, and use ax_funs.A.
+  In this code, when flags|synthesis, we set \f$W=I_{m,m}\f$, and use ax_funs.A.
 
   In the case of analysys, we assume that ax_funs.E = R and ax_funs.M= W.
   The following four functions provide wrappers to facilite this logic.
@@ -31,6 +31,7 @@
   synthesis and analysis. It might be better to rename ax_funs.E to R, since the
   connotation is more general.
  */
+
 static inline void _l1c_nesta_Wv(l1c_NestaProb *NP, double *v, double *x){
   if (NP->flags & L1C_ANALYSIS){
     NP->ax_funs.Mx(v, x);
@@ -70,7 +71,7 @@ static inline void _l1c_nesta_Rty(l1c_NestaProb *NP, double *y, double *x){
  containing the last L1C_NESTA_NMEAN values of fx. This is probably over-engineered...
 */
 
-/**
+/*
    Returns a new instance of l1c_fmean_fifo, with the vector of
    fvals initialized to zero.
  */
@@ -87,7 +88,7 @@ struct l1c_fmean_fifo _l1c_new_fmean_fifo(void){
   return fifo;
 }
 
-/** Push a new value of fval into the fifo and increment fifo.n_total.
+/** @private Push a new value of fval into the fifo and increment fifo.n_total.
  *
  * @param [in,out] fifo An instance of l1c_fmean_fifo.
  * @param [in] fval the new value of the functional, to be pushed into the fifo.
@@ -107,7 +108,7 @@ void _l1c_push_fmeans_fifo(struct l1c_fmean_fifo *fifo, double fval) {
   }
 }
 
-/**
+/** @private
  * Compute the mean of fifo.fval. This is a standard mean,
  * except it is normalized by fifo.n_total, not the length of the buffer.
  * This is eq (3.13) in the paper.
@@ -126,7 +127,7 @@ double _l1c_mean_fmean_fifo(struct l1c_fmean_fifo *fifo) {
 }
 
 
-/**
+/** @private
    Initialize a l1c_NestaProblem struct. Memory will be allocated for all
    arrays.
  */
@@ -163,7 +164,7 @@ l1c_NestaProb* _l1c_NestaProb_new(l1c_int n, l1c_int m, l1c_int p){
   return NP;
 }
 
-/**
+/*
    Release the memory allocated l1c_init_nesta_problem().
    The memory for .b and .ax_funs is not released, since those were not allocated
    by l1c_init_nesta_problem().
@@ -184,13 +185,13 @@ void l1c_free_nesta_problem(l1c_NestaProb *NP){
   }
 }
 
-/**
+/*
  * Implements the projections of yk and zk onto the (primal) feasible set Qp.
  * These are described in in eqs (3.5)-(3.7) and (3.10)-(3.12). Both can be put
  * the common framework of
  *
  * \f{align}{
- *  vk = \textrm{arg } \min_{x\in \Q_p} \frac{L_{\mu}}{2} ||x - xx||_2^2 + \langle g, x\rangle
+ *  vk = \textrm{arg } \min_{x\in Q_p} \frac{L_{\mu}}{2} ||x - xx||_2^2 + \langle g, x\rangle
  * \f}
  *
  * Note that we have droped \f$x_k\f$ from the inner product, because it is a constant,
@@ -241,7 +242,7 @@ void l1c_nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk){
 }
 
 
-/**
+/*
  * Evaluate the (smoothed) functional and compute the gradient.
  *
  * @param [in,out] NP On exist, NP->gradf and NP->fx will be updated.
@@ -280,14 +281,16 @@ void l1c_nesta_feval(l1c_NestaProb *NP){
 }
 
 
-/**
+/*
  * Populates an l1c_NestaProb instance NP. NP should already be allocated by
  *  l1c_init_nesta_problem().
  *
  * @param [out] NP problem instance.
  * @param [in,out] beta_mu Initial beta such that `beta^n_con * mu0 = mu_final`
  * @param [in,out] beta_tol Factor such such that `beta_tol^n_con * tol0 = tol_final`
- * @param [in,out] n_continue The number of continuation iterations.
+ * @param [in,out] b
+ * @param [in] ax_funs
+ * @param [in,out] opts
  *
  */
 int l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
@@ -329,7 +332,7 @@ double L=0;
   l1c_abs_vec(NP->m, Wtx_ref, Wtx_ref);
   double mu0 = 0.9 * l1c_max_vec(NP->p, Wtx_ref);
 
-  /** @TODO tol=0.1 is a hueristic. What happens if user specifies tol > 0.1 ?
+  /** @todo tol=0.1 is a hueristic. What happens if user specifies tol > 0.1 ?
    */
   double tol0 = 0.1;
 
@@ -350,30 +353,40 @@ double L=0;
 
 }
 
-/**
-   Solves the problem
-
-   min_x || W^T x||_1 s.t. ||Rx - b||_2^2 < sigma
-
-   if opts.flags | L1C_ANALYSIS
-
-   or
-
-   min_x || x||_1 s.t. ||Ax - b||_2^2 < sigma
-
-   if opts.flags | L1C_SYNTHESIS
-
-   The matrix operators should be defined in ax_funs such that
-
-   ax_funs.Mx = W, ax_funs.Mty = W^T
-   ax_funs.Ex = Rx, ax_funs.Ety= R^Ty
-
-   FOr synthesis, ax_funs.Mx, and ax_funs.Ex may be null and w
-   we only need
-   ax_funs.Ax = Ax, ax_funs.Aty= A^Ty
-
-   In general, A (or R) is n by m, n < m and U is m by p, with p >=m.
-
+/** @ingroup nesta
+ * Solves the problem
+ *
+ *   \f{align}{
+ *   \min_x || W^T x||_1 \quad \textrm{s.t.}\quad ||Rx - b||_2 < \sigma
+ *   \f}
+ *
+ *   if `opts.flags | L1C_ANALYSIS`
+ *
+ *   or
+ *
+ *   \f{align}{
+ *   \min_x || x||_1 \quad \textrm{s.t.}\quad ||Ax - b||_2 < \sigma
+ *   \f}
+ *
+ *   if `opts.flags | L1C_SYNTHESIS`
+ *
+ *   The matrix operators should be defined in ax_funs such that
+ *
+ *   `ax_funs.Mx =` \f$W\f$,  `ax_funs.Mty` = \f$ W^T\f$
+ *   `ax_funs.Ex =` \f$Rx\f$, `ax_funs.Ety`= \f$ R^Ty\f$
+ *
+ *   FOr synthesis, `ax_funs.Mx`, and `ax_funs.Ex` may be `null` and
+ *   we only need
+ *   `ax_funs.Ax =` \f$Ax\f$, `ax_funs.Aty=` \f$A^Ty\f$
+ *
+ *   In general, `A` (or `R`) is `n` by `m`, `n < m` and `W` is `m` by `p`, with `p >=m`.
+ *
+ *   @param[in] m Length of true signal and xk.
+ *   @param[out] xk On exit, contains optimal value.
+ *   @param[in] n Length of the measurements b.
+ *   @param[in] b Measurement vector.
+ *   @param[in] ax_funs See above.
+ *   @param[in] opts See l1c_NestaOpts.
  */
 int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
               l1c_AxFuns ax_funs, l1c_NestaOpts opts){

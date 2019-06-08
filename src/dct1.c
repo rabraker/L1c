@@ -35,7 +35,7 @@ static double dct_root_1_by_2N;
 
 
 /**
- * @ingroup transforms
+ * @ingroup transforms Sub-sampled 1D DCT transform set.
  *
  * The function will populate an
  * l1c_AxFuns struct such that
