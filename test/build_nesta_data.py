@@ -45,7 +45,7 @@ def nesta_project(x, g, b, L_mu, A, At, epsilon):
     Implements the closed form solution to
 
     yk = argmin_{x\\in Q_p} (Lmu/2) || xk - x||_2^2 + <\\Nabla f_mu(xk), x-xk> (3.3)
-    where Q_p = ||b - Ayk||_2^2 <= \epsilon
+    where Q_p = ||b - Ayk||_2^2 <= \\epsilon
 
     i.e., eq (3.5) and (3.6) and (3.7)
 

@@ -3,9 +3,8 @@ import os
 import sys
 import numpy as np
 from scipy.fftpack import dct
-import json
-import codecs
 import L1cTestDataUtils as TDU
+
 
 def build_lb_test_data(lb_data_path, m, T, K):
     """
@@ -30,13 +29,13 @@ def build_lb_test_data(lb_data_path, m, T, K):
 
     # Add some noise.
     sigma = 0.005
-    e =  np.random.randn(K, 1)*sigma
+    e = np.random.randn(K, 1)*sigma
     b = A.dot(x) + e
     x0 = A.T.dot(b)
 
     enrm1 = np.linalg.norm(e, ord=1)
-    print("||e|| = %f" % enrm1)
-    print("||x|| = %f" % np.linalg.norm(x, ord=1))
+    # print("||e|| = %f" % enrm1)
+    # print("||x|| = %f" % np.linalg.norm(x, ord=1))
 
     n, m = A.shape
     if False:
@@ -193,7 +192,7 @@ def Hess_gradf(tau, fe, fu1, fu2, atr, A):
     dx = np.linalg.solve(H11_prime, w1p)
     du = (1/sig11)*ntgu - (sig12/sig11)*dx
     m = dx.shape[0]
-    print("================ %d ==========\n" %m)
+
     np.testing.assert_array_almost_equal(dx, dxdu[0:m])
     np.testing.assert_array_almost_equal(du, dxdu[m:])
 
@@ -288,9 +287,7 @@ def build_l1qc_main(l1qc_data_path):
                  'dx': dxdu[0:m],
                  'du': dxdu[m:]}
 
-
-    l1qc_data_json = TDU.jsonify(l1qc_data)
-
+    l1qc_data = TDU.jsonify(l1qc_data)
     TDU.save_json(l1qc_data, l1qc_data_path)
 
 
