@@ -1,8 +1,14 @@
 #include "config.h"
+#include <cblas.h>
+#include <stddef.h>
+#include <stdio.h>
+
 #include "l1c.h"
 #include "TV.h"
-#include <stddef.h>
 
+
+#define _JOB_TV_V (1u << 1)
+#define _JOB_TV_H (1u << 3)
 
 /* Local functions */
 static void destroy();
@@ -25,7 +31,8 @@ static double _alp_v;
 
 static l1c_AxFuns ax_funs_local;
 static double *u;
-
+static l1c_int _inc_TVH, _inc_TVV;
+static unsigned jobs;
 
 
 
@@ -38,24 +45,43 @@ static double *u;
 int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
                                double alp_v, double alp_h, l1c_int *pix_idx,
                                l1c_AxFuns *ax_funs){
+  jobs = 0;
   int status = L1C_SUCCESS;
   _mrow = mrow;
   _mcol = mcol;
   _m = mrow * mcol;
-
   _p = _m;
+  _alp_v = alp_v;
+  _alp_h = alp_h;
+  _inc_TVV = 0;
+  _inc_TVH = 0;
+
   ax_funs->norm_M += 1;
+
+  /* Check which jobs we are do to do. We partion local variable u as
+   u = [u, u_TVV, u_TVH], for vertical, horizontal parts.
+   Also, set inc_TVH, and inc_TVV, to proper increment for aguements below.
+
+  */
 
   if (alp_v <0){
     return L1C_INVALID_ARGUMENT;
+  }else if(alp_v > 0){
+    jobs |= _JOB_TV_V;
+    _inc_TVV = _m;
   }
+
   if (alp_h <0){
     return L1C_INVALID_ARGUMENT;
+  }else if (alp_h > 0) {
+    jobs |= _JOB_TV_H;
+    _inc_TVH = _inc_TVV + _m;
   }
 
   if (alp_v > 0 && (mrow <=2 || mcol <=2) ){
     return L1C_INVALID_ARGUMENT;
   }
+
   if (alp_h > 0 && (mrow <=2 || mcol <=2) ){
     return L1C_INVALID_ARGUMENT;
   }
@@ -103,7 +129,7 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
 
 
 static void destroy(){
-  ax_funs_local.destroy();
+  // ax_funs_local.destroy();
   l1c_free_double(u);
 }
 
@@ -114,19 +140,22 @@ static void destroy(){
   x \in \mathbb{R}^p, p=3*m
  */
 static void Wv (double *v, double *y){
-  double *u0 = u;
-  double *u1 = u + _m;
-  double *u2 = u + 2*_m;
 
-  ax_funs_local.Mx(v, u0);
-  l1c_Dx(_mrow, _mcol, _alp_h, v+_m, u1);
-  l1c_Dy(_mrow, _mcol, _alp_v, v+2*_m, u2);
-  // l1c_Dx(_mrow, _mcol, v+_m, u1);
-  // l1c_Dy(_mrow, _mcol, v+2*_m, u2);
+  double *u_TVV = u + _inc_TVV;
+  double *u_TVH = u + _inc_TVH;
+  ax_funs_local.Mx(v, u);
+  cblas_dcopy(_m, u, 1, y, 1);
 
-  for (int i=0; i<_m; i++){
-    y[i] = u0[i] + u1[i] + u[2];
+  if (jobs & _JOB_TV_V){
+    l1c_Dy(_mrow, _mcol, _alp_v, v+_inc_TVV, u_TVV);
+    cblas_daxpy(_m, 1, u_TVV, 1, y, 1);
   }
+
+  if (jobs & _JOB_TV_H){
+    l1c_Dx(_mrow, _mcol, _alp_h, v+_inc_TVH, u_TVH);
+    cblas_daxpy(_m, 1, u_TVH, 1, y, 1);
+  }
+
 }
 
 /*
@@ -137,10 +166,20 @@ static void Wv (double *v, double *y){
  x \in \mathbb{R}^p, p=3*m
 */
 static void Wtx (double *x, double *v){
+  double *v0 = v;
+  double *v_dxv = v + _inc_TVV;
+  double *v_dxh = v + _inc_TVH;
 
-  ax_funs_local.Mty(x, v);
-  l1c_DxT(_mrow, _mcol, _alp_h, x, v + _m);
-  l1c_DyT(_mrow, _mcol, _alp_v, x, v + 2*_m);
+  ax_funs_local.Mty(x, v0);
+
+  if (jobs & _JOB_TV_V){
+    l1c_DyT(_mrow, _mcol, _alp_v, x, v_dxv);
+  }
+  if (jobs & _JOB_TV_H){
+    l1c_DxT(_mrow, _mcol, _alp_h, x, v_dxh);
+  }
+
+
 
 }
 

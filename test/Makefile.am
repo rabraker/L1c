@@ -27,6 +27,7 @@ TESTS = test_l1c.test                  \
 		build_CS20NG_example_data.py   \
 		build_dct2_data.py             \
 		build_dct_data.py              \
+		build_dctTV_data.py  		   \
 		build_cgsolve_data.py          \
 		build_l1qc_data.py             \
 		build_nesta_data.py            \
@@ -44,6 +45,7 @@ TEST_EXTENSIONS = .py .sh .test
 EXTRA_DIST =	build_CS20NG_example_data.py   \
 				build_dct2_data.py 	   		   \
 				build_dct_data.py  	  		   \
+				build_dctTV_data.py  		   \
 				build_cgsolve_data.py 		   \
 				build_l1qc_data.py 	  		   \
 				build_nesta_data.py            \
@@ -104,6 +106,7 @@ test_l1c_test_LDFLAGS = $(LDFLAGS)
 log_deps = 	build_CS20NG_example_data.log \
 			build_dct2_data.log \
 		   	build_dct_data.log \
+			build_dctTV_data.log   \
 		   	build_cgsolve_data.log \
 			build_nesta_data.log   \
 			build_l1qc_data.log    \
