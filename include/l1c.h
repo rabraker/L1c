@@ -267,6 +267,10 @@ int l1c_dct1_setup(l1c_int m, l1c_int n, l1c_int *pix_mask_idx, l1c_AxFuns *ax_f
 int l1c_setup_dct_transforms(l1c_int mrow, l1c_int mcol, l1c_int n,
                              l1c_int *pix_idx, l1c_AxFuns *ax_funs);
 
+int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
+                               double alp_v, double alp_h, l1c_int *pix_idx,
+                               l1c_AxFuns *ax_funs);
+
 int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_funs);
 
 

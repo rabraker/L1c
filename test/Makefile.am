@@ -78,6 +78,7 @@ test_l1c_test_SOURCES = TEST_cgsolve.c       \
 						test_l1c.c               \
 						TEST_dct.c               \
 						TEST_dct2.c              \
+						TEST_dct_tv.c            \
 						$(top_srcdir)/include/bregman.h        \
 						$(top_srcdir)/include/check_utils.h    \
 						$(top_srcdir)/include/json_utils.h     \

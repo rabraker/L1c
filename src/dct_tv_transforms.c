@@ -38,7 +38,7 @@ static double *u;
 int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
                                double alp_v, double alp_h, l1c_int *pix_idx,
                                l1c_AxFuns *ax_funs){
-  int status = 0;
+  int status = L1C_SUCCESS;
   _mrow = mrow;
   _mcol = mcol;
   _m = mrow * mcol;
@@ -69,6 +69,10 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
     ax_funs->norm_M += 4;
     _p += _m;
   }
+
+  ax_funs->n = n;
+  ax_funs->m = _m;
+  ax_funs->p = _p;
 
   u = l1c_malloc_double(_p);
 

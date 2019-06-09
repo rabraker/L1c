@@ -1,3 +1,4 @@
+
 /*
 
   Entry point for the L1c test suite.
@@ -43,6 +44,7 @@ int main(void)
 
 
   srunner_add_suite(sr, dct2_suite());
+  srunner_add_suite(sr, dctTV_suite());
   srunner_add_suite(sr, cgsolve_suite());
   srunner_add_suite(sr, l1qc_newton_suite());
   srunner_add_suite(sr, vcl_math_suite());

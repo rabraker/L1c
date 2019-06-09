@@ -9,6 +9,8 @@ Suite * dct_suite(void);
 
 Suite * dct2_suite(void);
 
+Suite * dctTV_suite(void);
+
 Suite *vcl_math_suite(void);
 
 Suite *bregman_suite(void);
