@@ -25,7 +25,7 @@ import sys
 project = 'L1c'
 copyright = '2019, Arnold Braker'
 author = 'Arnold Braker'
-
+html_context = {"header_txt": "libl1C User Guide"}
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags

@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 =====================
-Documentation for L1C
+About L1C 
 =====================
 
 .. toctree::

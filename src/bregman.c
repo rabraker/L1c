@@ -301,6 +301,9 @@ void breg_anis_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, doub
 }
 
 
+/**
+ * @defgroup bregman Optimizations which use Bregman splitting.
+ * @{*/
 
 /**
  * Given an `n` by `m` image `f`, solves the anistropic TV denoising problem
@@ -416,3 +419,5 @@ int l1c_breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
 
   return status;
 }
+
+/** @}*/

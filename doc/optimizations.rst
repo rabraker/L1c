@@ -2,9 +2,10 @@ Optimizations
 =============
 
 
+
 Nesta
 ------
-  This is an implementation of the l1-specialized version of Nesterovs algorithm described in :cite:`becker_nesta_2011`. This method is to be prefered for large scale problems.
+  This is an implementation of the l1-specialized version of Nesterov's algorithm described in :cite:`becker_nesta_2011`. This method is to be prefered for large scale problems.
 
 .. doxygengroup:: nesta
    :content-only:
@@ -13,7 +14,11 @@ Nesta
 
 TV de-noising via Bregman Splitting
 -----------------------------------
-TODO: document this. This code is based on the Goldstiend paper :cite:`goldstein_splitbregman_2009`.
+This algorithm is based on the Goldstien paper :cite:`goldstein_splitbregman_2009`.
+
+.. doxygengroup:: bregman
+   :content-only:
+   :members:
 
 Quadratically Constrained Log-barrier
 --------------------------------------
