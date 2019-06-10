@@ -470,5 +470,7 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
   }
 
   cblas_dcopy(m, NP->xk, 1, xk, 1);
+  l1c_free_nesta_problem(NP);
+  free(fbar_fifo.f_vals);
   return status;
 }
