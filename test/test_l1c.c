@@ -106,7 +106,9 @@ char* fullfile(char *base_path, char *name){
 
   /*Add 2: 1 for \0 and one for '/', path separator. */
   char *full_path = malloc( (len_base + len_name + 2)*sizeof(char));
-
+  if (!full_path){
+    return NULL;
+  }
   /*Includes \0*/
   strcpy(full_path, base_path);
   full_path[len_base] = '/';

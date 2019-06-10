@@ -86,6 +86,10 @@ static void setup(char *fname){
   }
 
   dctd->fpath = fullfile(test_data_dir, fname);
+  if (!dctd->fpath){
+    fprintf(stderr, "Memory allocation failed in %s\n", __func__);
+    ck_abort();
+  }
 
   if (load_file_to_json(dctd->fpath, &test_data_json)){
     fprintf(stderr, "Error loading data in test_dct\n");
