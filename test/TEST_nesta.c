@@ -149,20 +149,19 @@ static void init_generic_data(NestaTestData *dat){
 
 static void free_generic_data(NestaTestData *Tdat){
 
-    l1c_free_double(Tdat->b);
-    l1c_free_double(Tdat->xk);
+  l1c_free_double(Tdat->xk);
+  l1c_free_double(Tdat->b);
+  l1c_free_double(Tdat->g);
+  l1c_free_double(Tdat->yk_exp);
+  l1c_free_double(Tdat->gradf_exp);
 
-    l1c_free_double(Tdat->g);
-    l1c_free_double(Tdat->yk_exp);
-    l1c_free_double(Tdat->gradf_exp);
+  free(Tdat->pix_idx);
 
-    free(Tdat->pix_idx);
+  if (Tdat->NP){
+    Tdat->NP->ax_funs.destroy();
+  }
 
-    if (Tdat->NP){
-      Tdat->NP->ax_funs.destroy();
-    }
-
-    l1c_free_nesta_problem(Tdat->NP);
+  l1c_free_nesta_problem(Tdat->NP);
 
 }
 
@@ -213,7 +212,7 @@ START_TEST (test_l1c_nesta)
   }
 
   if(l1c_setup_matrix_transforms(n, m, A, &ax_funs)){
-    goto exit1;
+    goto exit0;
   }
 
 
@@ -280,7 +279,7 @@ START_TEST (test_l1c_nesta)
   /* e. We should exit cleanly for this problem.*/
   ck_assert_int_eq(0, nesta_status);
 
-
+ exit0:
   ax_funs.destroy();
  exit1:
   l1c_free_double(x0);
@@ -318,6 +317,7 @@ START_TEST (test_nesta_project)
   ck_assert_double_array_eq_tol(Tdat.m, yk, Tdat.yk_exp, TOL_DOUBLE);
 
   free_generic_data(&Tdat);
+  l1c_free_double(yk);
 
 }END_TEST
 
@@ -439,7 +439,7 @@ START_TEST (test_l1c_nesta_setup)
   for (int i=0; i<n; i++){
     b[i] = ((double)rand())/(double)RAND_MAX;
   }
-    for (int i=0; i<n*m; i++){
+  for (int i=0; i<n*m; i++){
       A[i] = ((double)rand())/(double)RAND_MAX;
   }
   l1c_AxFuns ax_funs;
@@ -450,7 +450,6 @@ START_TEST (test_l1c_nesta_setup)
   ck_assert_int_eq(status, L1C_INCONSISTENT_ARGUMENTS);
 
   ax_funs.destroy();
-  l1c_free_double(A);
 
   int pix_idx[5] = {1, 3, 4, 6, 8};
   if (l1c_setup_dct_transforms(m, 1, n, pix_idx, &ax_funs)){
@@ -478,8 +477,10 @@ START_TEST (test_l1c_nesta_setup)
   ck_assert_double_eq_tol(mu_j, mu, TOL_DOUBLE);
   ck_assert_double_eq_tol(tol_j, tol, TOL_DOUBLE);
 
+  l1c_free_nesta_problem(NP);
   ax_funs.destroy();
   l1c_free_double(b);
+  l1c_free_double(A);
 
 } END_TEST
 
