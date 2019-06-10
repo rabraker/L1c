@@ -11,8 +11,6 @@ import build_dct2_data as dct2
 # import build_dct_data as dct1
 import build_TV_data as TV
 
-import ipdb
-
 
 def Wz_factory(mrow, mcol, alp_v, alp_h):
     Dy_mat = TV.DyMatRep(mrow, mcol)
