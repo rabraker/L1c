@@ -171,7 +171,7 @@ if __name__ == "__main__":
     pix_idx = np.array([0, 2, 10, 15, 20, 25, 30, 35, 40, 45, 49])
     alp_v = 0
     alp_h = 0
-    # build_dct2_TV_vh(fname, pix_idx, mrow, mcol, alp_v, alp_h)
+    build_dct2_TV_vh(fname, pix_idx, mrow, mcol, alp_v, alp_h)
 
     # -------------------------------------------------------- #
     fname = data_dir+"/dct2_tv_vh_square.json"
