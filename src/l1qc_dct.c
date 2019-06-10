@@ -46,7 +46,7 @@ int l1qc_dct(int mrow, int mcol, double *x_out, int n, double *b, l1c_int *pix_i
    */
   printf("mrow = %d, mcol=%d, n=%d\n", mrow, mcol, n);
 
-  status = l1c_setup_dct_transforms(mrow, mcol, n, pix_idx, &ax_funs);
+  status = l1c_setup_dct_transforms(n, mrow, mcol, pix_idx, &ax_funs);
 
   if (status != 0 || !ax_funs.Ax || !ax_funs.Aty || !ax_funs.AtAx){
     fprintf(stderr, "Error setup up dct. Exiting.\n");

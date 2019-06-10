@@ -106,7 +106,7 @@ static void init_generic_data(NestaTestData *dat){
   dat->n = n;
   dat->m = m;
 
-  if(l1c_dct1_setup(dat->m, dat->n, dat->pix_idx, &ax_funs) ){
+  if(l1c_dct1_setup(dat->n, dat->m, dat->pix_idx, &ax_funs) ){
     fprintf(stderr, "Failed to initialize DCT in %s\n", __func__);
     status += 1;
     goto exit;
@@ -452,7 +452,7 @@ START_TEST (test_l1c_nesta_setup)
   ax_funs.destroy();
 
   int pix_idx[5] = {1, 3, 4, 6, 8};
-  if (l1c_setup_dct_transforms(m, 1, n, pix_idx, &ax_funs)){
+  if (l1c_setup_dct_transforms(n, m, 1, pix_idx, &ax_funs)){
     fprintf(stderr, "Memory allocation failed in %s\n", __func__);
     ck_abort();
   }

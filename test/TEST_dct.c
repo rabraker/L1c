@@ -104,7 +104,7 @@ static void setup(DctData *dct_dat){
   dct_dat->Ex_act = l1c_calloc_double(dct_dat->n);
   dct_dat->Ety_act = l1c_malloc_double(dct_dat->m);
 
-  l1c_dct1_setup(dct_dat->m, dct_dat->n, dct_dat->pix_idx, &ax_funs);
+  l1c_dct1_setup( dct_dat->n, dct_dat->m, dct_dat->pix_idx, &ax_funs);
 
   cJSON_Delete(test_data_json);
 }

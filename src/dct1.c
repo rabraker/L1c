@@ -73,9 +73,9 @@ static double dct_root_1_by_2N;
  *    matrix in columm major order.
  *
  *
+ * @param[in] n Number of elements in pix_mask_idx, and number of rows `A`.
  * @param[in] m Number of columns in the transform `A` and the number of
  *            of elements in the underlying signal.
- * @param[in]  n Number of elements in pix_mask_idx, and number of rows `A`.
  * @param[in]  pix_mask_idx indeces of locations of the subsampling.
  * @param[out] ax_funs A structure of function pointers which will be populated.
  *             On successfull exit, The fields Ax, Aty, AtAx, destroy, and M
@@ -88,7 +88,7 @@ static double dct_root_1_by_2N;
  * @warning This function assumes that its inputs have already been sanitized. In
  *          particular, if `max(pix_mask_idx) > m`, then segfaults are likely to occur.
  */
-int l1c_dct1_setup(l1c_int m, l1c_int n, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs){
+int l1c_dct1_setup(l1c_int n, l1c_int m, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs){
 
   int status = 0;
 #if defined(HAVE_FFTW3_THREADS)

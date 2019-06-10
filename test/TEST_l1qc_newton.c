@@ -165,7 +165,7 @@ static void init_generic_data(L1qcTestData *dat){
   params.epsilon = dat->epsilon;
   params.tau = dat->tau;
 
-  if(l1c_dct1_setup(dat->m, dat->n, dat->pix_idx, &ax_funs) ){
+  if(l1c_dct1_setup(dat->n, dat->m, dat->pix_idx, &ax_funs) ){
     ck_abort();
   }
 

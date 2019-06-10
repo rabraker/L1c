@@ -106,7 +106,7 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
     return L1C_OUT_OF_MEMORY;
   }
 
-  status =l1c_setup_dct_transforms(mrow, mcol, n, pix_idx, &ax_funs_local);
+  status =l1c_setup_dct_transforms(n, mrow, mcol, pix_idx, &ax_funs_local);
   if (status){
     goto fail;
   }

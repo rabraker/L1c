@@ -259,12 +259,12 @@ int l1c_breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
                        double mu, double tol, int max_iter, int max_jac_iter);
 
 
-int l1c_dct2_setup(l1c_int mrow, l1c_int mcol, l1c_int n, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs);
+int l1c_dct2_setup(l1c_int n, l1c_int mrow, l1c_int mcol, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs);
 
-int l1c_dct1_setup(l1c_int m, l1c_int n, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs);
+int l1c_dct1_setup(l1c_int n, l1c_int m, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs);
 
 
-int l1c_setup_dct_transforms(l1c_int mrow, l1c_int mcol, l1c_int n,
+int l1c_setup_dct_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
                              l1c_int *pix_idx, l1c_AxFuns *ax_funs);
 
 int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,

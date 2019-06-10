@@ -110,7 +110,7 @@ static double dct2_root_1_by_4NM;
  * @warning This function assumes that its inputs have already been sanitized. In
  *          particular, if `max(pix_mask_idx) > mrow*mcol`, then segfaults are likely to occur.
  */
-int l1c_dct2_setup(l1c_int mrow, l1c_int mcol, l1c_int n, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs){
+int l1c_dct2_setup( l1c_int n, l1c_int mrow, l1c_int mcol, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs){
   int status = 0;
 #if defined(HAVE_FFTW3_THREADS)
   fftw_init_threads();
