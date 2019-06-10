@@ -49,120 +49,103 @@ typedef struct ImDiffData{
   int N;
   int M;
   int NM;
-  char *fpath;
+
 }ImgDiffData;
 
 ImgDiffData *dd;
 
 
-static void setup(ImgDiffData *ddat){
+static void setup(char *fname){
   cJSON *test_data_json;
   int setup_status=0;
   int tmp=0, NM=0;
-  if (load_file_to_json(ddat->fpath, &test_data_json)){
+  dd = malloc(sizeof(ImgDiffData));
+  if (!dd){
+    fprintf(stderr, "Memory allocation failed in %s() of file %s\n", __func__, __FILE__);
+    ck_abort();
+  }
+  char *fpath = fullfile(test_data_dir, fname);
+  /*TODO: properly free prior allocations if these fail.*/
+  if (!fpath){
+    fprintf(stderr, "Memory allocation failed in %s() of file %s\n", __func__, __FILE__);
+    ck_abort();
+  }
+  if (load_file_to_json(fpath, &test_data_json)){
     fprintf(stderr, "Error loading data in TV_suite\n");
     ck_abort();
   }
 
-  setup_status +=extract_json_double_array(test_data_json, "A", &ddat->A, &ddat->NM);
-  setup_status +=extract_json_double_array(test_data_json, "DxA", &ddat->DxA_exp, &tmp);
-  setup_status +=extract_json_double_array(test_data_json, "DyA", &ddat->DyA_exp, &tmp);
-  setup_status +=extract_json_double_array(test_data_json, "DxTA", &ddat->DxTA_exp, &tmp);
-  setup_status +=extract_json_double_array(test_data_json, "DyTA", &ddat->DyTA_exp, &tmp);
-  setup_status +=extract_json_double_array(test_data_json, "DxTDxA", &ddat->DxTDxA_exp, &tmp);
-  setup_status +=extract_json_double_array(test_data_json, "DyTDyA", &ddat->DyTDyA_exp, &tmp);
+  setup_status +=extract_json_double_array(test_data_json, "A", &dd->A, &dd->NM);
+  setup_status +=extract_json_double_array(test_data_json, "DxA", &dd->DxA_exp, &tmp);
+  setup_status +=extract_json_double_array(test_data_json, "DyA", &dd->DyA_exp, &tmp);
+  setup_status +=extract_json_double_array(test_data_json, "DxTA", &dd->DxTA_exp, &tmp);
+  setup_status +=extract_json_double_array(test_data_json, "DyTA", &dd->DyTA_exp, &tmp);
+  setup_status +=extract_json_double_array(test_data_json, "DxTDxA", &dd->DxTDxA_exp, &tmp);
+  setup_status +=extract_json_double_array(test_data_json, "DyTDyA", &dd->DyTDyA_exp, &tmp);
 
-  setup_status +=extract_json_double(test_data_json, "alpha", &ddat->alpha);
-  setup_status +=extract_json_int(test_data_json, "M", &ddat->M);
-  setup_status +=extract_json_int(test_data_json, "N", &ddat->N);
+  setup_status +=extract_json_double(test_data_json, "alpha", &dd->alpha);
+  setup_status +=extract_json_int(test_data_json, "M", &dd->M);
+  setup_status +=extract_json_int(test_data_json, "N", &dd->N);
 
   if (setup_status){
-    fprintf(stderr, "Error loading json into test data from file: \n %s. Aborting.\n",
-            ddat->fpath);
+    fprintf(stderr, "Error loading json test data from file: \n %s. Aborting.\n",
+            fpath);
     ck_abort();
   }
 
-  NM = ddat->NM;
+  NM = dd->NM;
 
-  ddat->DxA_act = l1c_malloc_double(NM);
-  ddat->DyA_act = l1c_malloc_double(NM);
-  ddat->DxTA_act = l1c_malloc_double(NM);
-  ddat->DyTA_act = l1c_malloc_double(NM);
+  dd->DxA_act = l1c_malloc_double(NM);
+  dd->DyA_act = l1c_malloc_double(NM);
+  dd->DxTA_act = l1c_malloc_double(NM);
+  dd->DyTA_act = l1c_malloc_double(NM);
 
-  ddat->DxTDxA_act = l1c_malloc_double(NM);
-  ddat->DyTDyA_act = l1c_malloc_double(NM);
+  dd->DxTDxA_act = l1c_malloc_double(NM);
+  dd->DyTDyA_act = l1c_malloc_double(NM);
 
-  if (!(ddat->DxA_act) || !(ddat->DyA_act) || !(ddat->DxTA_act)
-      || !(ddat->DyTA_act) || !(ddat->DxTDxA_act) || !(ddat->DyTDyA_act)){
+  if (!(dd->DxA_act) || !(dd->DyA_act) || !(dd->DxTA_act)
+      || !(dd->DyTA_act) || !(dd->DxTDxA_act) || !(dd->DyTDyA_act)){
     fprintf(stderr, "Error allocating memory. Aborting.\n");
     ck_abort();
   }
   cJSON_Delete(test_data_json);
+  free(fpath);
 }
 
 
-static void teardown(ImgDiffData *ddat){
-  l1c_free_double(ddat->A);
-  l1c_free_double(ddat->DxA_exp);
-  l1c_free_double(ddat->DyA_exp);
-  l1c_free_double(ddat->DxTA_exp);
-  l1c_free_double(ddat->DyTA_exp);
-  l1c_free_double(ddat->DxTDxA_exp);
-  l1c_free_double(ddat->DyTDyA_exp);
+static void teardown(void){
+  l1c_free_double(dd->A);
+  l1c_free_double(dd->DxA_exp);
+  l1c_free_double(dd->DyA_exp);
+  l1c_free_double(dd->DxTA_exp);
+  l1c_free_double(dd->DyTA_exp);
+  l1c_free_double(dd->DxTDxA_exp);
+  l1c_free_double(dd->DyTDyA_exp);
 
-  l1c_free_double(ddat->DxA_act);
-  l1c_free_double(ddat->DyA_act);
-  l1c_free_double(ddat->DxTA_act);
-  l1c_free_double(ddat->DyTA_act);
+  l1c_free_double(dd->DxA_act);
+  l1c_free_double(dd->DyA_act);
+  l1c_free_double(dd->DxTA_act);
+  l1c_free_double(dd->DyTA_act);
 
-  l1c_free_double(ddat->DxTDxA_act);
-  l1c_free_double(ddat->DyTDyA_act);
+  l1c_free_double(dd->DxTDxA_act);
+  l1c_free_double(dd->DyTDyA_act);
+
+  free(dd);
 }
 
 
 static void setup_square(void){
-  dd = malloc(sizeof(ImgDiffData));
-
-  dd->fpath = fullfile(test_data_dir, "TV_data_square_small.json");
-
-  // sprintf(dd->fpath, "%s", fpath_dd);
-  setup(dd);
-
-}
-
-
-static void teardown_square(void){
-  teardown(dd);
-  free(dd->fpath);
-  free(dd);
+  setup("TV_data_square_small.json");
 }
 
 
 static void setup_tall(void){
-  dd = malloc(sizeof(ImgDiffData));
-  dd->fpath = fullfile(test_data_dir, "TV_data_tall_skinny.json");
-  setup(dd);
-
-}
-
-
-static void teardown_tall(void){
-  teardown(dd);
-  free(dd->fpath);
-  free(dd);
+  setup("TV_data_tall_skinny.json");
 }
 
 
 static void setup_short(void){
-  dd = malloc(sizeof(ImgDiffData));
-  dd->fpath = fullfile(test_data_dir, "TV_data_short_wide.json");
-  setup(dd);
-}
-
-static void teardown_short(void){
-  teardown(dd);
-  free(dd->fpath);
-  free(dd);
+  setup("TV_data_short_wide.json");
 }
 
 
@@ -268,7 +251,7 @@ Suite *TV_suite(void)
   s = suite_create("TV");
 
   tc_square = tcase_create("TV_square");
-  tcase_add_checked_fixture(tc_square, setup_square, teardown_square);
+  tcase_add_checked_fixture(tc_square, setup_square, teardown);
 
   tcase_add_test(tc_square, test_l1c_Dx);
   tcase_add_test(tc_square, test_l1c_DxT);
@@ -280,7 +263,7 @@ Suite *TV_suite(void)
   suite_add_tcase(s, tc_square);
 
   tc_tall = tcase_create("TV_tall");
-  tcase_add_checked_fixture(tc_tall, setup_tall, teardown_tall);
+  tcase_add_checked_fixture(tc_tall, setup_tall, teardown);
 
   tcase_add_test(tc_tall, test_l1c_Dx);
   tcase_add_test(tc_tall, test_l1c_DxT);
@@ -292,7 +275,7 @@ Suite *TV_suite(void)
   suite_add_tcase(s, tc_tall);
 
   tc_short = tcase_create("TV_short");
-  tcase_add_checked_fixture(tc_short, setup_short, teardown_short);
+  tcase_add_checked_fixture(tc_short, setup_short, teardown);
 
   tcase_add_test(tc_short, test_l1c_Dx);
   tcase_add_test(tc_short, test_l1c_DxT);
