@@ -7,6 +7,7 @@ SUBDIRS = src/vcl             \
 			src               \
 		  	interfaces/python \
 			interfaces/mex    \
+            interfaces/mex/test \
 			examples/c        \
 			test              \
 			include           \

@@ -1,0 +1,22 @@
+addpath .libs
+addpath @abs_top_srcdir@/@MEX_TEST_DIR@
+% Script to test the mex_utils.c
+
+% test 
+% test 
+test_mex_utils.m
+% pf = check_mex_assert_num_inputs();
+
+% fprintf("---------------------------------------------------------\n");
+% fprintf("Checks in file %s failed\n", mfilename);
+
+
+
+
+
+
+
+
+
+
+

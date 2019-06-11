@@ -1,11 +1,16 @@
 #
 #******************************************************************************
 
-AUTOMAKE_OPTIONS = foreign 1.8 no-dependencies
+AUTOMAKE_OPTIONS = foreign 1.8
 clean-local:: clean-convenience-link
 bin_PROGRAMS    =
 
-
+AM_LDFLAGS      = -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
+AM_CPPFLAGS     = -DBUILDING_DLL -I$(top_srcdir)/include -I./ \
+					$(L1CCPPFLAGS) $(MEXCPPFLAGS)
+AM_CFLAGS       =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC
+LIBS            =  $(top_builddir)/src/libl1c.la \
+							$(MEXLDLIBS)
 if comp_with_mex
 # LIBEXT
 # NOTES:
@@ -18,24 +23,21 @@ if comp_with_mex
 
 mexdir = $(MEX_PREFIX)
 mex_LTLIBRARIES = l1qc_dct.la \
-				  breg_anistropic_TV.la
+				  breg_anistropic_TV.la \
+	              test_mex_utils.la
+
+noinst_LTLIBRARIES = l1c_mex_utils.la
+
+l1c_mex_utils_la_SOURCES = l1c_mex_utils.c l1c_mex_utils.h
 
 l1qc_dct_la_SOURCES  = l1qc_dct_mex.c
-l1qc_dct_la_LDFLAGS  = -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
-l1qc_dct_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include  \
-								$(L1CCPPFLAGS) $(MEXCPPFLAGS)
-l1qc_dct_la_CFLAGS   =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC
-l1qc_dct_la_LIBADD   =	$(top_builddir)/src/libl1c.la \
-							$(MEXLDLIBS)
-
+l1qc_dct_la_LIBADD = l1c_mex_utils.la
 
 breg_anistropic_TV_la_SOURCES  = breg_anistropic_TV_mex.c
-breg_anistropic_TV_la_LDFLAGS  = -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
-breg_anistropic_TV_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include  \
-									$(L1CCPPFLAGS) $(MEXCPPFLAGS)
-breg_anistropic_TV_la_CFLAGS   =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC
-breg_anistropic_TV_la_LIBADD   =  $(top_builddir)/src/libl1c.la \
-									$(MEXLDLIBS)
+breg_anistropic_TV_la_LIBADD = l1c_mex_utils.la
+
+test_mex_utils_la_SOURCES  = test_mex_utils.c l1c_mex_utils.h
+test_mex_utils_la_LIBADD = l1c_mex_utils.la
 
 
 mex_DATA = l1qc_dct_opts.m l1qc_dct.m breg_anistropic_TV.m

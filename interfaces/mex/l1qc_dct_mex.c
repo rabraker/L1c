@@ -10,25 +10,7 @@
 
 #include "l1c.h"
 #include "l1qc_newton.h"
-
-
-#define NUMBER_OF_FIELDS(ST) (sizeof(ST)/sizeof(*ST))
-
-int check_input_size(l1c_int N){
-  /* Prevent segfault from bug in l1qc_newton, with splitting up DWORK.
-     We can allow 512*512, but not 511*511.
-
-     Is there a cleaner way to check this?
-  */
-  double divisor = (double) DALIGN / (double)sizeof(double); // e.g., 8
-  double maybe_div = (double)N / divisor;
-
-  if ((int)maybe_div == N/((int)DALIGN/(int)sizeof(double))){
-    return 0;
-  }
-
-  return 1;
-}
+#include "l1c_mex_utils.h"
 
 /*
  *	m e x F u n c t i o n

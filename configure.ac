@@ -494,8 +494,11 @@ AC_CONFIG_FILES([Makefile
                 include/Makefile
                 include/vcl/Makefile
                 interfaces/python/Makefile
-                interfaces/mex/Makefile])
-AC_OUTPUT
+                interfaces/mex/Makefile
+                interfaces/mex/test/Makefile])
+AC_SUBST(MEX_TEST_DIR, interfaces/mex/test)
+
+AC_OUTPUT([interfaces/mex/test/test_mex_utils_runner.m])
 echo "  "
 echo "================================================================================================="
 AC_MSG_NOTICE(Configuration summary:)
