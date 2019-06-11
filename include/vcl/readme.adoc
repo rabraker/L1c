@@ -1,0 +1,4 @@
+
+The code in this directory was written by Agner Fog and is licensed under GPL v3.
+It is a c++ header library which facilitates vectorized math via, e.g., SSE, AVX2 etc.
+The original is availible https://www.agner.org/optimize/#vectorclass[here].
