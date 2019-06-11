@@ -16,4 +16,4 @@ then
     exit 77
 fi
 
-matlab -nojvm -r "try; test_mex_utils_runner; exit(0); catch; exit(1); end;"
+matlab -nojvm -r "try; test_mex_utils_runner; exit(status); catch; exit(1); end;"

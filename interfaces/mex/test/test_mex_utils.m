@@ -12,11 +12,13 @@ end
 
 fprintf("---------------------------------------------------------\n");
 if pf
-    status = 'PASSED';
+    status_str = 'PASSED';
+    status = 0;
 else
-    status = 'FAILED';
+    status = 1;
+    status_str = 'FAILED';
 end
-fprintf("Checks in file %s %s\n", mfilename, status);
+fprintf("Checks in file %s %s\n", mfilename, status_str);
 
 
 function pass_fail = check_assert_2Darray_with_size()

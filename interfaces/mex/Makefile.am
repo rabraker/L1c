@@ -23,8 +23,7 @@ if comp_with_mex
 
 mexdir = $(MEX_PREFIX)
 mex_LTLIBRARIES = l1qc_dct.la \
-				  breg_anistropic_TV.la \
-	              test_mex_utils.la
+				  breg_anistropic_TV.la
 
 noinst_LTLIBRARIES = l1c_mex_utils.la
 
@@ -36,8 +35,6 @@ l1qc_dct_la_LIBADD = l1c_mex_utils.la
 breg_anistropic_TV_la_SOURCES  = breg_anistropic_TV_mex.c
 breg_anistropic_TV_la_LIBADD = l1c_mex_utils.la
 
-test_mex_utils_la_SOURCES  = test_mex_utils.c l1c_mex_utils.h
-test_mex_utils_la_LIBADD = l1c_mex_utils.la
 
 
 mex_DATA = l1qc_dct_opts.m l1qc_dct.m breg_anistropic_TV.m

@@ -12,10 +12,13 @@ AM_CFLAGS   = $(L1CCFLAGS) $(MEXCFLAGS) -fPIC
 AM_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include \
 	           -I$(top_srcdir)/interfaces/mex       \
 				$(L1CCPPFLAGS) $(MEXCPPFLAGS)
-LIBS        = $(top_builddir)/src/libl1c.la $(MEXLDLIBS) ../l1c_mex_utils.la
+LIBS        =  $(MEXLDLIBS) \
+	$(top_builddir)/src/libl1c.la \
+	$(top_builddir)/interfaces/mex/l1c_mex_utils.la
 
 
 if comp_with_mex
+TESTS = test_l1c_mex_utils.sh
 # LIBEXT
 # NOTES:
 # https://www.gnu.org/software/libtool/manual/html_node/Link-mode.html
@@ -40,10 +43,10 @@ TMU_mex_get_int_array_or_fail_la_SOURCES = TMU_mex_get_int_array_or_fail.c ../l1
 TMU_mex_assert_2Darray_with_size_la_SOURCES = TMU_mex_assert_2Darray_with_size.c ../l1c_mex_utils.h
 
 
-EXTRA_DIST = l1qc_assert_raises.m     \
-			 test_mex_utils.m
-
-TESTS = test_l1c_mex_utils.sh
+EXTRA_DIST = l1c_assert_raises.m     \
+             l1c_assert_error_free.m \
+			 test_mex_utils.m        \
+	         test_l1c_mex_utils.sh
 
 test_l1c_mex_utils.log:$(mex_LTLIBRARIES)
 
