@@ -1,7 +1,7 @@
 #
 #******************************************************************************
 
-AUTOMAKE_OPTIONS = foreign 1.8 no-dependencies
+AUTOMAKE_OPTIONS = foreign 1.8
 clean-local:: clean-convenience-link
 
 # -------------------------------------------------------------------#

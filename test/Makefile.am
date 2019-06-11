@@ -5,7 +5,7 @@
 # Otherwise,
 #       DBG = '' and OPT = -O3 -march=native -mtune=native
 
-AUTOMAKE_OPTIONS = foreign 1.8 no-dependencies
+AUTOMAKE_OPTIONS = foreign 1.8
 
 AM_TESTS_FD_REDIRECT = 9>&1
 AM_TESTS_ENVIRONMENT = TOP_BUILDDIR='$(top_builddir)'; export TOP_BUILDDIR; \
