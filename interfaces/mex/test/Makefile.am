@@ -42,9 +42,10 @@ TMU_mex_get_int_array_or_fail_la_SOURCES = TMU_mex_get_int_array_or_fail.c ../l1
 TMU_mex_assert_2Darray_with_size_la_SOURCES = TMU_mex_assert_2Darray_with_size.c ../l1c_mex_utils.h
 
 
-EXTRA_DIST = l1c_assert_raises.m     \
+dist_check_SCRIPTS = l1c_assert_raises.m     \
              l1c_assert_error_free.m \
-			 test_mex_utils.m
+			 test_mex_utils.m        \
+			 clrs.m
 
 
 endif

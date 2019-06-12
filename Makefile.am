@@ -13,8 +13,6 @@ SUBDIRS = src/vcl             \
 			include           \
 			include/vcl
 
-LDFLAGS=-L/usr/local/MATLAB/R2018b/bin/glnxa64 -lmex
-
 
 EXTRA_DIST = examples/python \
 			examples/matlab

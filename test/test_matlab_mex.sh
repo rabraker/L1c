@@ -31,7 +31,7 @@ failures=0
 mex_src_dir="${ABS_TOP_SRCDIR}/interfaces/mex"
 lib_dir="${ABS_TOP_BUILDDIR}/interfaces/mex"
 ml_script_dir="${ABS_TOP_SRCDIR}/examples/matlab"
-data_path="${ABS_TOP_SRCDIR}/test/test_data/example_img_data.json"
+data_path="${TEST_DATA_DIR}/example_img_data.json"
 
 
 # Check the l1qc_dct mex interface

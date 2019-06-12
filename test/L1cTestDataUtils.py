@@ -28,8 +28,8 @@ def save_json(data, file_path):
 def data_dir():
     import os
 
-    data_dir_parent = os.getenv("srcdir")
-    if data_dir_parent is None:
-        data_dir_parent = "."
+    data_dir = os.getenv("TEST_DATA_DIR")
+    if data_dir is None:
+        data_dir = "./test_data"
 
-    return data_dir_parent+"/test_data"
+    return data_dir

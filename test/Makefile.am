@@ -7,15 +7,19 @@
 
 AUTOMAKE_OPTIONS = foreign 1.8
 
+
+test_data_dir = $(abs_builddir)/test_data
+
 AM_TESTS_FD_REDIRECT = 9>&1
 AM_TESTS_ENVIRONMENT = TOP_BUILDDIR='$(top_builddir)'; export TOP_BUILDDIR; \
 						ABS_TOP_BUILDDIR='$(abs_top_builddir)'; export ABS_TOP_BUILDDIR; \
+	                    TEST_DATA_DIR="$(test_data_dir)"; export TEST_DATA_DIR; \
 						ABS_TOP_SRCDIR='$(abs_top_srcdir)'; export ABS_TOP_SRCDIR;  \
 						WITH_MEX='$(WITH_MEX)'; export WITH_MEX;                    \
 						WITH_PYTHON='$(WITH_PYTHON)'; export WITH_PYTHON;
 
 # This directory should be part of the git-repo.
-TEST_DATA_DIR="$(abs_srcdir)/test_data/"
+
 
 # -------------------------------------------------------------------------------#
 # The valgrind checks are not run by default because they take forever. To do so,
@@ -54,13 +58,13 @@ EXTRA_DIST =	build_CS20NG_example_data.py   \
 				build_bregman_data.py 		   \
 				build_matrix_transform_data.py \
 				test_matlab_mex.sh 			   \
+				test_l1c_mex_utils.sh          \
 				test_python_interface.sh 	   \
 				test_l1qc_dct_c.sh 		 	   \
 				valgrind_wrapper.sh			   \
 				test_runner_utils.sh           \
 				L1cTestDataUtils.py            \
-				check_gradient.py              \
-				test_data/.persistent
+				check_gradient.py
 
 
 # Expected failures
@@ -116,9 +120,16 @@ log_deps = 	build_CS20NG_example_data.log \
 			build_matrix_transform_data.log
 
 
+$(info "-----------------------------------------------")
+
+
+$(EXTRA_DIST):$(test_data_dir)
+
+$(test_data_dir):
+	mkdir -p $(test_data_dir)
+
 # Ensure data gets built first
 test_l1c.log:$(log_deps)
-
 
 test_matlab_mex.log:$(log_deps)
 
@@ -127,3 +138,6 @@ test_python_interface.log:$(log_deps)
 test_l1qc_dct_c.log:$(log_deps)
 
 valgrind_wrapper.log:$(log_deps)
+
+distclean-local:
+	rm -f $(test_data_dir)/*.json

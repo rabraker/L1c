@@ -18,6 +18,7 @@ if test $host_os = windows || test x$WITH_MEX = xno;
 then
     exit 77
 fi
+
 mat_cmd=$(cat <<EOF
 try; \
     addpath("${mex_test_build_path}"); \

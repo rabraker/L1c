@@ -14,7 +14,7 @@ if test -z $verbose; then
 fi
 
 
-data_path="${ABS_TOP_SRCDIR}/test/test_data/example_img_data.json"
+data_path="${TEST_DATA_DIR}/example_img_data.json"
 
 
 if test x$WITH_PYTHON = xno;

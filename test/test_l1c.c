@@ -15,6 +15,7 @@
 
 char *test_data_dir;
 static char test_data_dir_name[] = "test_data";
+static char _TEST_DATA_DIR[] = "TEST_DATA_DIR";
 
 char* fullfile(char *base_path, char *name);
 static void setup_tests(void);
@@ -78,13 +79,13 @@ void setup_tests(void){
   /* We cannot free the result of getenv, but if the environmental variable did not exist,
    we should free the default we set.
   */
-  char *srcdir;
-  srcdir = getenv("srcdir");
+  char *data_dir;
+  data_dir = getenv(_TEST_DATA_DIR);
 
-  if (!srcdir){
+  if (!data_dir){
     test_data_dir = fullfile(".", test_data_dir_name);
   }else{
-    test_data_dir = fullfile(srcdir, test_data_dir_name);
+    test_data_dir = fullfile(data_dir, "");
   }
 }
 
