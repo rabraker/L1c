@@ -18,7 +18,6 @@ LIBS        =  $(MEXLDLIBS) \
 
 
 if comp_with_mex
-TESTS = test_l1c_mex_utils.sh
 # LIBEXT
 # NOTES:
 # https://www.gnu.org/software/libtool/manual/html_node/Link-mode.html
@@ -29,7 +28,7 @@ TESTS = test_l1c_mex_utils.sh
 #                    matlabs required extension.
 
 
-mexdir = $(MEX_PREFIX)
+mexdir = $(MEX_PREFIX)/test
 mex_LTLIBRARIES = TMU_mex_assert_num_inputs.la \
 	TMU_mex_get_double_scalar_or_fail.la       \
 	TMU_mex_get_double_array_or_fail.la        \
@@ -45,9 +44,7 @@ TMU_mex_assert_2Darray_with_size_la_SOURCES = TMU_mex_assert_2Darray_with_size.c
 
 EXTRA_DIST = l1c_assert_raises.m     \
              l1c_assert_error_free.m \
-			 test_mex_utils.m        \
-	         test_l1c_mex_utils.sh
+			 test_mex_utils.m
 
-test_l1c_mex_utils.log:$(mex_LTLIBRARIES)
 
 endif

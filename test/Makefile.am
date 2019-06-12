@@ -37,6 +37,7 @@ TESTS = test_l1c.test                  \
 		test_matlab_mex.sh             \
 		test_python_interface.sh       \
 		test_l1qc_dct_c.sh             \
+	    test_l1c_mex_utils.sh          \
 		valgrind_wrapper.sh
 
 
