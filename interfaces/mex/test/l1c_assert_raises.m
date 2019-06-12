@@ -9,10 +9,10 @@ function [stat, err_thrown] = l1c_assert_raises(fun, err_exp)
    stat = strcmp(err_thrown, err_exp);
 
    st = dbstack();
-   fprintf("%s: \n", st(2).name);
+   fprintf('%s: ', st(2).name);
    if ~stat
-    fprintf("\bFailed: expected: %s, Thrown: %s\n", err_exp, err_thrown)
+    fprintf([clrs.fail_str('Failed: '),  'expected: %s, Thrown: %s\n'], err_exp, err_thrown)
   else
-    fprintf("\bPassed\n");
+    fprintf(clrs.pass_str('Passed\n'));
   end
 end

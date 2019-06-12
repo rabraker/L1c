@@ -10,18 +10,22 @@ for check = checks
     pf = pf & check{1}();
 end
 
-fprintf("---------------------------------------------------------\n");
+st1 = '---------------------------------------------------------';
+st2 = sprintf('Check in %s ', mfilename);
 if pf
-    status_str = 'PASSED';
+    status_str = sprintf('%s\n%s PASSED\n', st1, st2);
+    status_str = clrs.pass_str(status_str);
     status = 0;
 else
+    status_str = sprintf('%s\n%s FAILED\n', st1, st2);
+    status_str = clrs.fail_str(status_str);
     status = 1;
-    status_str = 'FAILED';
 end
-fprintf("Checks in file %s %s\n", mfilename, status_str);
+fprintf('%s', status_str);
 
 
 function pass_fail = check_assert_2Darray_with_size()
+%keyboard;
     err_exp = 'l1c:not2DArray';
     f = @()TMU_mex_assert_2Darray_with_size(5);
     pass_fail = l1c_assert_raises(f, err_exp);
