@@ -496,9 +496,11 @@ AC_CONFIG_FILES([Makefile
                 interfaces/python/Makefile
                 interfaces/mex/Makefile
                 interfaces/mex/test/Makefile])
-AC_SUBST(MEX_TEST_DIR, interfaces/mex/test)
 
-AC_OUTPUT([interfaces/mex/test/test_mex_utils_runner.m])
+dnl AC_SUBST(MEX_TEST_DIR, interfaces/mex/test)
+
+AC_OUTPUT([test/init_matlab_paths.m])
+
 echo "  "
 echo "================================================================================================="
 AC_MSG_NOTICE(Configuration summary:)

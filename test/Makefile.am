@@ -11,14 +11,11 @@ AUTOMAKE_OPTIONS = foreign 1.8
 test_data_dir = $(abs_builddir)/test_data
 
 AM_TESTS_FD_REDIRECT = 9>&1
-AM_TESTS_ENVIRONMENT = TOP_BUILDDIR='$(top_builddir)'; export TOP_BUILDDIR; \
+AM_TESTS_ENVIRONMENT = 	ABS_TOP_SRCDIR='$(abs_top_srcdir)'; export ABS_TOP_SRCDIR;  \
 						ABS_TOP_BUILDDIR='$(abs_top_builddir)'; export ABS_TOP_BUILDDIR; \
-	                    TEST_DATA_DIR="$(test_data_dir)"; export TEST_DATA_DIR; \
-						ABS_TOP_SRCDIR='$(abs_top_srcdir)'; export ABS_TOP_SRCDIR;  \
+						TEST_DATA_DIR="$(test_data_dir)"; export TEST_DATA_DIR; \
 						WITH_MEX='$(WITH_MEX)'; export WITH_MEX;                    \
 						WITH_PYTHON='$(WITH_PYTHON)'; export WITH_PYTHON;
-
-# This directory should be part of the git-repo.
 
 
 # -------------------------------------------------------------------------------#
@@ -119,8 +116,6 @@ log_deps = 	build_CS20NG_example_data.log \
 			build_bregman_data.log \
 			build_matrix_transform_data.log
 
-
-$(info "-----------------------------------------------")
 
 
 $(EXTRA_DIST):$(test_data_dir)

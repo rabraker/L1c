@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -u
 source "${srcdir}/test_runner_utils.sh"
 
 cur_dir=$(pwd)
@@ -9,7 +10,7 @@ cleanup(){
 }
 trap cleanup EXIT
 
-if test -z $verbose; then
+if test -z ${verbose+x}; then
     verbose=0
 fi
 

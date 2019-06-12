@@ -1,9 +1,9 @@
 #!/bin/bash
 
-source "${ABS_TOP_SRCDIR}/test/test_runner_utils.sh"
+set -u
 
-mex_test_src_path="${ABS_TOP_SRCDIR}/interfaces/mex/test"
-mex_test_build_path="${ABS_TOP_BUILDDIR}/interfaces/mex/test"
+source "${srcdir}/test_runner_utils.sh"
+
 
 cur_dir=$(pwd)
 
@@ -21,9 +21,8 @@ fi
 
 mat_cmd=$(cat <<EOF
 try; \
-    addpath("${mex_test_build_path}"); \
-    addpath("${mex_test_src_path}"); \
-    test_mex_utils_runner; \
+    init_matlab_paths;    \
+    test_mex_utils; \
     exit(status); \
 catch ME; \
     fprintf('%s\n', ME.message'); \
@@ -31,8 +30,5 @@ catch ME; \
 end
 EOF
 )
-
-echo $mat_cmd
-
 
 matlab -nojvm -r "$mat_cmd"

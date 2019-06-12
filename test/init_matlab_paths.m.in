@@ -1,0 +1,10 @@
+% Initilize paths for testing matlab interface.
+
+addpath @abs_top_srcdir@/interfaces/mex/test
+addpath @abs_top_builddir@/interfaces/mex/test/
+addpath @abs_top_builddir@/interfaces/mex/test/.libs
+
+addpath @abs_top_srcdir@/interfaces/mex
+addpath @abs_top_builddir@/interfaces/mex
+
+addpath @abs_top_srcdir@/examples/matlab
