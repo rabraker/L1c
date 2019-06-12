@@ -86,12 +86,8 @@ def build_dct_rand_test_data(fname, pix_idx, mrow, mcol):
     TDU.save_json(data, fname)
 
 
-srcdir = os.getenv("srcdir")
-if srcdir is None:
-    srcdir = "."
 
-data_dir = srcdir+"/test_data"
-
+data_dir = TDU.data_dir()
 
 # -------------------------------------------------------- #
 fname = data_dir+"/dct2_small.json"

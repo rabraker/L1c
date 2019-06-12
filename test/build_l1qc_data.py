@@ -292,11 +292,7 @@ def build_l1qc_main(l1qc_data_path):
 
 
 if __name__ == "__main__":
-    srcdir = os.getenv("srcdir")
-    if srcdir is None:
-        srcdir = "."
-
-    test_data_path = srcdir+"/test_data"
+    test_data_path = TDU.data_dir()
 
     l1qc_data_path = test_data_path+"/l1qc_data.json"
 

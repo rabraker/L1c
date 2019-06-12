@@ -155,11 +155,7 @@ def build_dct2_TV_vh(fname, pix_idx, mrow, mcol, alp_v, alp_h):
 
 
 if __name__ == "__main__":
-    srcdir = os.getenv("srcdir")
-    if srcdir is None:
-        srcdir = "."
-
-    data_dir = srcdir+"/test_data"
+    data_dir = TDU.data_dir()
 
     # -------------------------------------------------------- #
     fname = data_dir+"/dct2_tv_square.json"

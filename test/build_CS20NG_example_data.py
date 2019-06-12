@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import L1cTestDataUtils
+import L1cTestDataUtils as TDU
 
 
 def make_CS20NG(npix, x_start=10, y_start=10, nholes=10):
@@ -91,21 +91,16 @@ def build_cs20ng_test_data(npix, data_path=None):
             'pix_idx': pix_idx,
             'one_based_index': 0}
 
-    data = L1cTestDataUtils.jsonify(data)
+    data = TDU.jsonify(data)
 
     if data_path is not None:
-        L1cTestDataUtils.save_json(data, data_path)
+        TDU.save_json(data, data_path)
 
     return data
 
 
 if __name__ == "__main__":
-    import os
-    srcdir = os.getenv("srcdir")
-    if srcdir is None:
-        srcdir = "."
-
-    test_data_path = srcdir+"/test_data"
+    test_data_path = TDU.data_dir()
 
     image_data_path = test_data_path+"/example_img_data.json"
 

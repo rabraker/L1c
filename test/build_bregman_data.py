@@ -144,13 +144,8 @@ def build_breg_img_data(fname):
 
 
 if __name__ == '__main__':
-    import os
 
-    srcdir = os.getenv("srcdir")
-    if srcdir is None:
-        srcdir = "."
-
-    data_dir = srcdir+"/test_data"
+    data_dir = TDU.data_dir()
 
     fname = data_dir+"/bregman.json"
 

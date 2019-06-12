@@ -80,11 +80,7 @@ def nesta_f_eval(W, Wt, xk, mu):
 
 if __name__ == "__main__":
 
-    srcdir = os.getenv("srcdir")
-    if srcdir is None:
-        srcdir = "."
-
-    data_dir = srcdir+"/test_data"
+    data_dir = TDU.data_dir()
 
     pix_idx = np.array([0, 3, 4, 7, 8])
     M = 10

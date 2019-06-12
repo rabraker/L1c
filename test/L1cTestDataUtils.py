@@ -23,3 +23,13 @@ def save_json(data, file_path):
 
     # json.dump(data, codecs.open(file_path, 'w'),
     #           separators=(',', ':'), sort_keys=True, indent=4)
+
+
+def data_dir():
+    import os
+
+    data_dir_parent = os.getenv("srcdir")
+    if data_dir_parent is None:
+        data_dir_parent = "."
+
+    return data_dir_parent+"/test_data"

@@ -88,11 +88,7 @@ def cs20ng_example(npix):
     return eta,  pix_idx, m
 
 
-srcdir = os.getenv("srcdir")
-if srcdir is None:
-    srcdir = "."
-
-data_dir = srcdir+"/test_data"
+data_dir = TDU.data_dir()
 
 # ------------- A small example, with sub-sampling ------------
 fname = data_dir+"/dct_small.json"

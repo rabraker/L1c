@@ -276,13 +276,7 @@ def build_TV_data(N, M):
 
 
 if __name__ == '__main__':
-    import os
-
-    srcdir = os.getenv("srcdir")
-    if srcdir is None:
-        srcdir = "."
-
-    data_dir = srcdir+"/test_data"
+    data_dir = TDU.data_dir()
 
     N = 16
     M = 16
