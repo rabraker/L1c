@@ -330,17 +330,11 @@ START_TEST (test_l1qc_newton)
     goto exit1;
   }
 
-  params.verbose = 2;
+  params.verbose = 0;
   params.warm_start_cg = 0;
   params.l1_tol = 1e-4; //wont be used.
-  struct timeval tv_start, tv_end;
-  tv_start = l1c_get_time();
 
   lb_res = l1c_l1qc_newton(n, x0, m, b, params, ax_funs);
-
-  tv_end = l1c_get_time();
-  double time_total = l1c_get_time_diff(tv_start, tv_end);
-  printf("total c time: %f\n", time_total);
 
   /*
     From Stable Signal Recovery from Incomplete and Inaccurate Measurements,

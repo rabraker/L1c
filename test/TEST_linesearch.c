@@ -144,8 +144,7 @@ START_TEST(test_linesearch_xu)
   quad_funxu_dxu((void*)(&qd), xu, gradf, dxu);
 
   g_dot_dx = gradf[0] * dxu[0] + gradf[1] * dxu[1];
-  printf("fx0 = %f, gradf[0] = %f, gradf[1] = %f\n", fx0, gradf[0], gradf[1]);
-  printf("dx=%f, du=%f, gdotdxu=%f\n", dxu[0], dxu[1], g_dot_dx);
+
   /*
     Because we have a pure quadratic, we can predict how many iterations of the linesearch
     should happen. We should have s <= beta^k, where k = ceil(log(2*(1-alp))/log(beta));

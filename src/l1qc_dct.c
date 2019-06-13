@@ -40,7 +40,6 @@ int l1qc_dct(int mrow, int mcol, double *x_out, int n, double *b, l1c_int *pix_i
   */
   l1c_AxFuns ax_funs;
 
-
   status = l1c_setup_dct_transforms(n, mrow, mcol, pix_idx, &ax_funs);
 
   if (status != 0 || !ax_funs.Ax || !ax_funs.Aty || !ax_funs.AtAx || !ax_funs.Mx){
@@ -77,13 +76,14 @@ int l1qc_dct(int mrow, int mcol, double *x_out, int n, double *b, l1c_int *pix_i
 
   if (opts.verbose > 0){
     tv_end = l1c_get_time();
+
     double time_total = l1c_get_time_diff(tv_start, tv_end);
+
     printf("total c time: %f\n", time_total);
     printf("total-newton-iter: %d\n", lb_res->total_newton_iter);
     printf("total-cg-iter: %d\n", lb_res->total_cg_iter);
     printf("time per cg iter: %g\n", time_total / (double) lb_res->total_cg_iter);
   }
-
  exit2:
   ax_funs.destroy(); // Should not call this if ax_setup() failed.
  exit1:

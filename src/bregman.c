@@ -329,9 +329,6 @@ void breg_anis_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, doub
 int l1c_breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
                        double mu, double tol, int max_iter, int max_jac_iter){
 
-  struct timeval tv_start, tv_end;
-  tv_start = l1c_get_time();
-
   int iter=0, N=n*m, status=0;
   double lambda = 2*mu, dnrm_err = 0;
   double *uk_1=NULL, *d_x=NULL, *d_y = NULL, *b_x=NULL, *b_y=NULL;
@@ -375,7 +372,6 @@ int l1c_breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
       breg_anis_guass_seidel(n, m, uk, rhs, mu, lambda);
       }
     dnrm_err = l1c_dnrm2_rel_err(N, uk, uk_1);
-    // printf("in-iter: %d, lambda: %f, dnrm_err: %f\n", iter, lambda, dnrm_err);
 
     /* Compute Dyu_b = Del_y*u + b. */
     l1c_Dx(n, m, 1.0, uk, Dxu_b);
@@ -411,11 +407,6 @@ int l1c_breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
   l1c_free_double(dwork1);
   l1c_free_double(dwork2);
   l1c_free_double(rhs);
-
-
-  tv_end = l1c_get_time();
-  double time_total = l1c_get_time_diff(tv_start, tv_end);
-  printf("total c time: %f\n", time_total);
 
   return status;
 }

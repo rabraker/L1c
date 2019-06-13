@@ -195,7 +195,7 @@ START_TEST(test_cgsolve_h11p){
 
   double nrm_exp = cblas_dnrm2(m, dx_exp, 1);
   double nrm = cblas_dnrm2(m, dx0, 1);
-  printf("n=%d, norm exp: %.10f, nrm: %.10f\n", (int)n, nrm_exp, nrm);
+
   for (int i=0; i<m ; i++){
     dx_by_nrm_exp[i] = dx_exp[i]/nrm_exp;
     dx_by_nrm[i] = dx0[i]/nrm;

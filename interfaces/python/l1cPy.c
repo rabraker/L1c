@@ -109,7 +109,7 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
                                    &opts.newton_max_iter, &opts.verbose,
                                    &opts.l1_tol, &opts.cg_tol,
                                    &opts.cg_maxiter)){
-    fprintf(stderr, "Parsing input arguments failed.\n");
+    fprintf(stderr, "%s: Parsing input arguments failed.\n", __func__);
     return NULL;
   }
 
@@ -150,7 +150,6 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
   /* Allocate memory for M*xk=f */
   x_ours = l1c_malloc_double(mtot);
   if (!x_ours){
-    fprintf(stderr, "Memory Allocation failure\n");
     PyErr_SetString(PyExc_MemoryError, "Failed to allocation memory");
     goto fail;
   }
@@ -247,7 +246,6 @@ _breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw){
   f_ours = l1c_malloc_double(n*m);
   uk = l1c_malloc_double(n*m);
   if (!f_ours || !uk){
-    fprintf(stderr, "Memory Allocation failure\n");
     PyErr_SetString(PyExc_MemoryError, "Failed to allocation memory");
     goto fail1;
   }
@@ -275,11 +273,9 @@ _breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw){
 
   /* If we failed, clean up more things. Note the fall through. */
  fail2:
-  printf("INSIDE fail2\n");
   l1c_free_double(f_ours);
   l1c_free_double(uk);
  fail1:
-  printf("INSIDE fail1\n");
   Py_XDECREF(f_npA);
 
   return NULL;

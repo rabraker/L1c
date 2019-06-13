@@ -312,7 +312,6 @@ int _l1c_l1qc_newton_init(l1c_int m, double *x, double *u,  l1c_L1qcOpts *params
 int _l1c_l1qc_check_feasible_start(l1c_l1qcProb *Prb, double *x){
 
   /* Compute Ax - b = r */
-  l1c_int n = Prb->n;
   double *b  = Prb->b;
   double epsilon = Prb->epsilon;
   double *DWORK = Prb->DWORK7[0];
@@ -323,9 +322,7 @@ int _l1c_l1qc_check_feasible_start(l1c_l1qcProb *Prb, double *x){
   double tmp = cblas_dnrm2(Prb->n, DWORK, 1)  - epsilon;
   if (tmp > 0){
     /* Using minimum-2 norm  x0 = At*inv(AAt)*y.') as they
-       will require updates to cgsolve.
-    */
-    printf("epsilon = %f,  ||r|| = %.20f\n", epsilon, cblas_dnrm2(n, DWORK, 1));
+       will require updates to cgsolve.    */
     return L1C_INFEASIBLE_START;
   }else
     return 0;
@@ -458,7 +455,7 @@ l1c_LBResult l1c_l1qc_newton(l1c_int m, double *x, l1c_int n, double *b,
 
 
   if (_l1c_l1qc_check_feasible_start(&l1qc_prob, x) ){
-    printf("Starting point is infeasible, exiting\n");
+    fprintf(stderr, "%s: Starting point is infeasible, exiting\n", __func__);
     lb_res.status = L1C_INFEASIBLE_START;
     goto exit;
   }
