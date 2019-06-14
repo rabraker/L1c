@@ -516,14 +516,13 @@ AC_CONFIG_FILES([Makefile
                 include/Makefile
                 include/vcl/Makefile
                 interfaces/python/Makefile
+                interfaces/Makefile
                 interfaces/mex/Makefile
                 interfaces/mex/test/Makefile])
 
 
 
-AC_OUTPUT([interfaces/interfaces.h
-interfaces/mex/nesta_dctTV.m
-test/init_matlab_paths.m])
+AC_OUTPUT([test/init_matlab_paths.m])
 
 echo "  "
 echo "================================================================================================="
