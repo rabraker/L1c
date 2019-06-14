@@ -19,6 +19,13 @@ classdef clrs
                 clr = '';
             end
         end
+        function clr = blue
+            if clrs.in_terminal()
+              clr = '[0;34m';
+            else
+              clr = '';
+            end
+        end
         function clr = std()
             if clrs.in_terminal()
                 clr = '[m'; 
@@ -33,7 +40,10 @@ classdef clrs
           function str = pass_str(str)
             str = [clrs.green, str, clrs.std];
           end
-          
+          function str = skip_str(str)
+            str = [clrs.blue, str, clrs.std];
+          end
+
     end
     
     

@@ -1,0 +1,20 @@
+
+
+function [x, status] = nesta_dctTV(mrow, mcol, b, pix_idx, opts_S)
+  
+
+   dpar(@NESTA_VERBOSE_IDX@+1) = opts_S.verbose;
+   dpar(@NESTA_SIGMA_IDX@+1) = opts_S.sigma;
+   dpar(@NESTA_MU_IDX@+1) = opts_S.mu;
+   dpar(@NESTA_TOL_IDX@+1) = opts_S.tol   ;
+   dpar(@NESTA_ALPV_IDX@+1) = opts_S.alpha_v;
+   dpar(@NESTA_ALPH_IDX@+1) = opts_S.alpha_h;
+   dpar(@NESTA_NCONT_IDX@+1) = opts_S.n_continue;
+   if  strcmpi(opts_S.mode, 'synthesis')
+     dpar(@NESTA_MODE_IDX@+1) = 1;
+   else
+     dpar(@NESTA_MODE_IDX@+1) = 2;
+   end
+   
+   [x, status] = nesta_dctTV_(mrow, mcol, b, pix_idx, dpar);
+end

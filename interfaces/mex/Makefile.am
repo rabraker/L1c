@@ -5,8 +5,8 @@ AUTOMAKE_OPTIONS = foreign 1.8
 clean-local:: clean-convenience-link
 bin_PROGRAMS    =
 
-AM_LDFLAGS      = -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
-AM_CPPFLAGS     = -DBUILDING_DLL -I$(top_srcdir)/include -I./ \
+AM_LDFLAGS      = -disable-static -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
+AM_CPPFLAGS     = -DBUILDING_DLL -I$(top_srcdir)/include -I./ -I../ \
 					$(L1CCPPFLAGS) $(MEXCPPFLAGS)
 AM_CFLAGS       =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC
 LIBS            =  $(top_builddir)/src/libl1c.la \
@@ -23,7 +23,8 @@ if comp_with_mex
 
 mexdir = $(MEX_PREFIX)
 mex_LTLIBRARIES = l1qc_dct.la \
-				  breg_anistropic_TV.la
+				  breg_anistropic_TV.la \
+				  nesta_dctTV_.la
 
 noinst_LTLIBRARIES = l1c_mex_utils.la
 
@@ -35,14 +36,21 @@ l1qc_dct_la_LIBADD = l1c_mex_utils.la
 breg_anistropic_TV_la_SOURCES  = breg_anistropic_TV_mex.c
 breg_anistropic_TV_la_LIBADD = l1c_mex_utils.la
 
+nesta_dctTV__la_SOURCES  = nesta_dctTV_mex.c
+nesta_dctTV__la_LIBADD = l1c_mex_utils.la
 
 
-mex_DATA = l1qc_dct_opts.m l1qc_dct.m breg_anistropic_TV.m
+
+mex_DATA = l1qc_dct_opts.m \
+			l1qc_dct.m     \
+			breg_anistropic_TV.m \
+			nesta_dctTV.m
 endif
 
 EXTRA_DIST = l1qc_dct_opts.m     \
 			 l1qc_dct.m          \
 			breg_anistropic_TV.m \
+			nesta_dctTV.m        \
 			TestL1cMex.m
 
 

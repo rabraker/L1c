@@ -1,6 +1,7 @@
 #ifndef __L1C_NESTA__
 #define __L1C_NESTA__
 
+#include "l1c.h"
 
 #define L1C_NESTA_NMEAN 10
 #define L1C_NESTA_MAX_INNER_ITER 10000
@@ -23,6 +24,8 @@ struct _l1c_NestaOpts {
   double sigma;
   /**Number of continuation iterations. */
   int n_continue;
+  /** Print nothing if 0.*/
+  int verbose;
   /** One of L1C_SYNTHESIS or L1C_ANALYSIS. */
   unsigned flags;
 };

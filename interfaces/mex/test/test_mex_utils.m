@@ -3,6 +3,8 @@ if ~exist('fpath', 'var')
   fpath = fullfile(get_data_dir(), 'example_img_data.json');
 end
 
+MEX_RUN_CASE = getenv('MEX_RUN_CASE');
+
 checks = {@check_mex_assert_num_inputs,...
     @check_mex_get_double_scalar_or_fail,...
     @check_get_double_array_or_fail,...
@@ -10,10 +12,24 @@ checks = {@check_mex_assert_num_inputs,...
     @check_assert_2Darray_with_size,...
     @()check_breg_TV_mex(fpath),...
     @()test_l1qc_dct_mex(fpath),...
+    @()test_nesta_dctTV(fpath),...
          };
 
 pf = true;
 for check = checks
+  if ~isempty(MEX_RUN_CASE)
+    name = func2str(check{1});
+    name = regexprep(name, '@|\([a-zA-Z0-9]*\)', '');
+      
+    if ~strcmp(name, MEX_RUN_CASE)
+      fprintf('%s: ', name);
+      status_str = sprintf('SKIP\n');
+      status_str = clrs.skip_str(status_str);
+      fprintf('%s\n', status_str);
+      continue;
+    end
+  end
+  
     pf = pf & runner(check{1});
 end
 
@@ -40,6 +56,7 @@ function status = runner(f)
     name = func2str(f);
     fprintf('%s: ', name);
     status = true;
+
     try
         f();
         fprintf(clrs.pass_str('Passed\n'));
@@ -61,7 +78,31 @@ function data_dir = get_data_dir()
   data_dir = getenv('TEST_DATA_DIR');
 end
 
-% Helper function for autotools testsuite.
+
+function test_nesta_dctTV(fpath)
+  verbose = 0;
+  fid = fopen(fpath, 'r');
+  dat_json = fscanf(fid, '%s');
+  fclose(fid);
+  
+  dat = jsondecode(dat_json);
+  
+  opts = nesta_opts('alpha_v', 1, 'alpha_h', 1);
+
+  if dat.one_based_index == 1
+    pix_idx = dat.pix_idx;
+  else
+    pix_idx = dat.pix_idx+1;
+  end
+  fprintf('mrow:%f, mcol:%f\n', dat.mrow, dat.mcol);
+  [x_est, status] = nesta_dctTV(dat.mrow, dat.mcol, dat.b, pix_idx, opts);
+
+  l1c_assert_eq(status, 0);
+  
+  % TODO: implement the property check we use in the c-testsuite.
+end
+
+
 function test_l1qc_dct_mex(fpath)
   verbose = 0;
   fid = fopen(fpath, 'r');

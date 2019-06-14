@@ -424,10 +424,13 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
 
     l1c_init_vec(m,  NP->gradf_sum, 0.0);
 
-    printf("Starting nesta continuation iter %d, with muj = %f\n", iter, NP->mu_j);
+    if (opts.verbose > 0) {
+      printf("Starting nesta continuation iter %d, with muj = %f\n", iter,
+             NP->mu_j);
+      printf("Iter |     fmu     |  Rel. Vartn fmu |  Residual  |\n");
+      printf("------------------------------------------------------\n");
+    }
     /* ---------------------------- MAIN ITERATION -------------------------- */
-    printf("Iter |     fmu     |  Rel. Vartn fmu |  Residual  |\n");
-    printf("------------------------------------------------------\n");
     for (int k=0; k < L1C_NESTA_MAX_INNER_ITER; k++){
         l1c_nesta_feval(NP);
 
@@ -457,8 +460,10 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
       fbar = _l1c_mean_fmean_fifo(&fbar_fifo);
       _l1c_push_fmeans_fifo(&fbar_fifo, NP->fx);
       rel_delta_fmu = fabs(NP->fx - fbar) / fbar;
+      if (opts.verbose > 0 && (((k+1) % opts.verbose) == 0)) {
+        printf("%d     %.3e       %.2e        %.2e\n", k+1, NP->fx, rel_delta_fmu, 0.0);
+      }
 
-      printf("%d     %.3e       %.2e        %.2e\n", k+1, NP->fx, rel_delta_fmu, 0.0);
       if (rel_delta_fmu < NP->tol){
         break;
       }

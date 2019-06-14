@@ -486,6 +486,28 @@ AC_SUBST(L1CTESTLIBS, $l1c_test_libs)
 AC_SUBST(WIN32LDFLAGS, $win32_ldflags)
 
 
+dnl AC_SUBST(MEX_TEST_DIR, interfaces/mex/test)
+AC_SUBST([NESTA_VERBOSE_IDX])
+AC_SUBST([NESTA_SIGMA_IDX])
+AC_SUBST([NESTA_MU_IDX])
+AC_SUBST([NESTA_TOL_IDX])
+AC_SUBST([NESTA_ALPV_IDX])
+AC_SUBST([NESTA_ALPH_IDX])
+AC_SUBST([NESTA_NCONT_IDX])
+AC_SUBST([NESTA_MODE_IDX])
+AC_SUBST([NESTA_DCTMODE_IDX])
+
+NESTA_VERBOSE_IDX=0
+NESTA_SIGMA_IDX=1
+NESTA_MU_IDX=2
+NESTA_TOL_IDX=3
+NESTA_ALPV_IDX=4
+NESTA_ALPH_IDX=5
+NESTA_NCONT_IDX=6
+NESTA_MODE_IDX=7
+NESTA_DCTMODE_IDX=8
+
+
 AC_CONFIG_FILES([Makefile
                 test/Makefile
                 src/Makefile
@@ -497,9 +519,11 @@ AC_CONFIG_FILES([Makefile
                 interfaces/mex/Makefile
                 interfaces/mex/test/Makefile])
 
-dnl AC_SUBST(MEX_TEST_DIR, interfaces/mex/test)
 
-AC_OUTPUT([test/init_matlab_paths.m])
+
+AC_OUTPUT([interfaces/interfaces.h
+interfaces/mex/nesta_dctTV.m
+test/init_matlab_paths.m])
 
 echo "  "
 echo "================================================================================================="
