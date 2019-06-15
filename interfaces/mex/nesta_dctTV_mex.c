@@ -13,7 +13,6 @@
 #include "nesta.h"
 #include "l1qc_newton.h"
 #include "l1c_mex_utils.h"
-#include "interfaces.h"
 
 
 /*
@@ -30,9 +29,6 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   double *x_out=NULL,  *b=NULL;
   double *pix_idx_double=NULL, *x_ours=NULL;
   double alp_v = 0, alp_h = 0;
-
-  double *dpar;
-  int size_dpar;
 
   l1c_int n=0, mrow=0, mcol=1, mtot=0, idx=0;
   l1c_int size_pix_idx=0;
@@ -55,16 +51,34 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   _mex_get_double_array_or_fail(prhs, 3, &pix_idx_double, &size_pix_idx);
 
   /* -------- Check dpar -------------*/
-  _mex_get_double_array_or_fail(prhs, 4, &dpar, &size_dpar);
+  _mex_assert_scalar_struct(prhs, 4);
 
-  opts.verbose = dpar[NESTA_VERBOSE_IDX];
-  opts.sigma = dpar[NESTA_SIGMA_IDX];
-  opts.mu = dpar[NESTA_MU_IDX];
-  opts.tol = dpar[NESTA_TOL_IDX];
-  opts.n_continue = (int)dpar[NESTA_NCONT_IDX];
-  opts.flags = (unsigned)dpar[NESTA_MODE_IDX];
-  alp_v = dpar[NESTA_ALPV_IDX];
-  alp_h = dpar[NESTA_ALPH_IDX];
+  opts.sigma      = _mex_get_double_from_struct_or_fail(prhs, 4, "sigma");
+  opts.verbose    = _mex_get_double_from_struct_or_fail(prhs, 4, "verbose");
+  opts.mu         = _mex_get_double_from_struct_or_fail(prhs, 4, "mu");
+  opts.tol        = _mex_get_double_from_struct_or_fail(prhs, 4, "tol");
+  opts.n_continue = (int)_mex_get_double_from_struct_or_fail(prhs, 4, "n_continue");
+  alp_v           = _mex_get_double_from_struct_or_fail(prhs, 4, "alpha_v");
+  alp_h           = _mex_get_double_from_struct_or_fail(prhs, 4, "alpha_h");
+
+  mxArray *mxA_mode = mxGetField(prhs[4], 0, "mode");
+  if (!mxA_mode) {
+    mexErrMsgIdAndTxt("l1c:notAField", "Error loading field '%s'.", "mode");
+  }
+  // [synthesis | analysis]
+  char mode[10];
+  if (mxGetString(mxA_mode, mode, 10)){
+    mexErrMsgIdAndTxt("l1c:badField", "Field 'mode' of opts must be a string, either analysis or synthesis");
+  }
+
+  if (strncmp(mode, "synthesis", 10) == 0){
+    opts.flags = L1C_SYNTHESIS;
+  }else if(strncmp(mode, "analysis", 10) == 0){
+    opts.flags = L1C_ANALYSIS;
+  }else{
+    mexErrMsgIdAndTxt("l1c:badField", "Field 'mode' of opts must be a string, either analysis or synthesis");
+  }
+
 
   /* I think the problem is that we get the norm of U wrong when we try this,
      because in synthesis mode, ||U|| = 1.
@@ -88,8 +102,6 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     printf("   alp_v:             %.5e\n", alp_v);
     printf("   alp_h:             %.5e\n", alp_h);
   }
-
-
 
 
   /* We are going to change x, so we must allocate and make a copy, so we

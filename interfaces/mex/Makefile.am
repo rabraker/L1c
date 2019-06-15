@@ -24,7 +24,7 @@ if comp_with_mex
 mexdir = $(MEX_PREFIX)
 mex_LTLIBRARIES = l1qc_dct.la \
 				  breg_anistropic_TV.la \
-				  nesta_dctTV_.la
+				  nesta_dctTV.la
 
 noinst_LTLIBRARIES = l1c_mex_utils.la
 
@@ -36,30 +36,14 @@ l1qc_dct_la_LIBADD = l1c_mex_utils.la
 breg_anistropic_TV_la_SOURCES  = breg_anistropic_TV_mex.c
 breg_anistropic_TV_la_LIBADD = l1c_mex_utils.la
 
-nesta_dctTV__la_SOURCES  = nesta_dctTV_mex.c ../interfaces.h
-nesta_dctTV__la_LIBADD = l1c_mex_utils.la
-
-BUILT_SOURCES = ../interfaces.h
-
-../interfaces.h:../interfaces.h.in Makefile
-	cd ../ && $(MAKE)
-
+nesta_dctTV_la_SOURCES  = nesta_dctTV_mex.c
+nesta_dctTV_la_LIBADD = l1c_mex_utils.la
 
 dist_mex_DATA = l1qc_dct_opts.m \
 				l1qc_dct.m     \
 				breg_anistropic_TV.m \
-				nesta_dctTV.m \
 				nesta_opts.m
 
-
-# EXTRA_DIST = l1qc_dct_opts.m     \
-# 			 l1qc_dct.m          \
-# 			breg_anistropic_TV.m \
-# 			nesta_dctTV.m        \
-# 			TestL1cMex.m
-
-nesta_dctTV.m:nesta_dctTV.m.in Makefile
-	python $(abs_top_srcdir)/pre-process-defs.py $@ $<
 
 endif
 # Rules to copy the libs .libs into the current directory
