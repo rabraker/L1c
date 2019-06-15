@@ -8,8 +8,8 @@ function pass_fail = test_mex_interface(data_dir)
 
   cases = {...
     @()check_breg_TV_mex(fpath),...
-    @()test_l1qc_dct_mex(fpath),...
     @()test_nesta_dctTV(fpath),...
+    @()test_l1qc_dct_mex(fpath),...
            };
 
   pass_fail = L1cMexTesting.run_suite(cases);
@@ -25,18 +25,18 @@ function test_nesta_dctTV(fpath)
   
   dat = jsondecode(dat_json);
   
-  opts = nesta_opts('alpha_v', 1, 'alpha_h', 1);
+  opts = nesta_opts('alpha_v', 1, 'alpha_h', 1, 'verbose', 0);
 
   if dat.one_based_index == 1
     pix_idx = dat.pix_idx;
   else
     pix_idx = dat.pix_idx+1;
   end
-  fprintf('mrow:%f, mcol:%f\n', dat.mrow, dat.mcol);
+
   [x_est, status] = nesta_dctTV(dat.mrow, dat.mcol, dat.b, pix_idx, opts);
 
   L1cMexTesting.assert_eq(status, 0);
-  
+
   % TODO: implement the property check we use in the c-testsuite.
 end
 

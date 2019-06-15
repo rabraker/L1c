@@ -27,6 +27,7 @@ for suite = suites
       continue;
     end
   end
+  
     status = suite{1}();
     if status
       n_pass = n_pass + 1;
@@ -37,18 +38,41 @@ for suite = suites
     pf = pf & status;
 end
 
-st1 = '---------------------------------------------------------';
-st2 = sprintf('Check in %s ', mfilename);
-if pf
-    status_str = sprintf('\n%s\n%s PASSED\n', st1, st2);
-    status_str = clrs.pass_str(status_str);
-    status = 0;
-else
-    status_str = sprintf('%s\n%s FAILED\n', st1, st2);
-    status_str = clrs.fail_str(status_str);
-    status = 1;
+st1 = '----------------------------------------';
+st2 = sprintf('Summary of %s :', mfilename);
+
+sn_pass = sprintf('# Passed:  %d / %d', n_pass, total);
+sn_fail = sprintf('# Failed:  %d / %d', n_fail, total);
+sn_skip = sprintf('# Skipped: %d / %d', n_skip, total);
+
+
+if n_pass > 0
+  sn_pass = clrs.pass_str(sn_pass);
 end
-fprintf('%s', status_str);
+if n_skip > 0
+  sn_skip = clrs.skip_str(sn_skip);
+end
+if n_fail > 0
+  sn_fail = clrs.fail_str(sn_fail);
+end
+
+if n_fail > 0
+    st1 = clrs.fail_str(st1);
+    st2 = sprintf('%s FAILED', st2);
+    st2 = clrs.fail_str(st2);
+    status = 1;
+else
+    st1 = clrs.pass_str(st1);
+    st2 = sprintf('%s PASSED', st2);
+    st2 = clrs.pass_str(st2);
+    status = 0;
+end
+
+fprintf('%s\n%s\n%s\n', st1, st2, st1);
+fprintf('%s\n', sn_pass);
+fprintf('%s\n', sn_skip);
+fprintf('%s\n', sn_fail);
+fprintf('%s\n\n\n', st1);
 
 
 exit(status);

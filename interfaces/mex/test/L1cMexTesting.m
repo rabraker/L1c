@@ -95,16 +95,16 @@ methods (Static)
       pass_fail = pass_fail & L1cMexTesting.run_case(case_k{1});
     end
 
-    st1 = '---------------------------------------------------------';
-    st2 = sprintf('Check in %s ', mfilename);
-    if pass_fail
-      status_str = sprintf('\n%s\n%s PASSED\n', st1, st2);
-      status_str = clrs.pass_str(status_str);
-    else
-      status_str = sprintf('%s\n%s FAILED\n', st1, st2);
-      status_str = clrs.fail_str(status_str);
-    end
-    fprintf('%s', status_str);    
+    % st1 = '---------------------------------------------------------';
+    % st2 = sprintf('Check in %s ', mfilename);
+    % if pass_fail
+    %   status_str = sprintf('\n%s\n%s PASSED\n', st1, st2);
+    %   status_str = clrs.pass_str(status_str);
+    % else
+    %   status_str = sprintf('%s\n%s FAILED\n', st1, st2);
+    %   status_str = clrs.fail_str(status_str);
+    % end
+    % fprintf('%s', status_str);    
     
     
   end
