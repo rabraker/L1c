@@ -2,7 +2,7 @@ if ~exist('data_dir', 'var')
   data_dir = get_data_dir();
 end
 
-MEX_RUN_CASE = getenv('MEX_RUN_SUITE');
+MEX_RUN_SUITE = getenv('MEX_RUN_SUITE');
 
 suites = {@()test_mex_interface(data_dir),...
           @test_mex_utils
@@ -14,7 +14,7 @@ n_skip = 0;
 n_fail = 0;
 n_pass = 0;
 for suite = suites
-  if ~isempty(MEX_RUN_CASE)
+  if ~isempty(MEX_RUN_SUITE)
     name = func2str(suites{1});
     name = regexprep(name, '@|\([a-zA-Z0-9]*\)', '');
       
