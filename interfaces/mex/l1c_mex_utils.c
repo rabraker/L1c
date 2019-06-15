@@ -4,7 +4,6 @@
 #include "l1c_mex_utils.h"
 
 
-
 int
 check_input_size(l1c_int N){
   /* Prevent segfault from bug in l1qc_newton, with splitting up DWORK.
@@ -22,8 +21,19 @@ check_input_size(l1c_int N){
   return 1;
 }
 
+void _mex_assert_scalar_struct(const mxArray **mxa, size_t idx) {
+  if (mxGetM(mxa[idx]) != 1 || mxGetN(mxa[idx]) != 1){
+    mexErrMsgIdAndTxt("l1c:notScalar", "Argument %d must be a 1 by 1 struct.",
+                      idx + 1);
+  }
+  if (!mxIsStruct(mxa[idx])) {
+    mexErrMsgIdAndTxt("l1c:notStruct", "Argument %d must be a struct.",
+                      idx + 1);
+  }
+}
+
 void
-_mex_assert_input_double(const mxArray ** mxa, size_t idx){
+_mex_assert_double(const mxArray ** mxa, size_t idx){
   if( !mxIsDouble(mxa[idx]) ) {
     mexErrMsgIdAndTxt("l1c:notDouble",
                       "Argument %d must be a double.", idx+1);
@@ -32,10 +42,10 @@ _mex_assert_input_double(const mxArray ** mxa, size_t idx){
 
 
 void
-_mex_assert_input_double_scalar(const mxArray ** mxa, size_t idx){
+_mex_assert_double_scalar(const mxArray ** mxa, size_t idx){
   if( !mxIsDouble(mxa[idx]) || !mxIsScalar(mxa[idx]) ) {
-    mexErrMsgIdAndTxt("l1c:notDoubleScaler",
-                      "Argument %d must be a scaler double.", idx+1);
+    mexErrMsgIdAndTxt("l1c:notDoubleScalar",
+                      "Argument %d must be a scalar double.", idx+1);
   }
 }
 
@@ -54,25 +64,37 @@ _mex_assert_num_inputs(int N, int N_required){
     }
 }
 
-
 double
-_mex_get_double_scaler_or_fail(const mxArray **mxa, size_t idx){
-  _mex_assert_input_double_scalar(mxa, idx);
-
-  return (double) mxGetScalar(mxa[idx]);
-}
-
-l1c_int
-_mex_get_int32_scaler_or_fail(const mxArray **mxa, size_t idx){
-  if( !mxIsInt32(mxa[idx]) || !mxIsScalar(mxa[idx]) ) {
-    mexErrMsgIdAndTxt("l1c:notInt32Scaler",
-                      "Argument %d must be a scaler double.", idx+1);
+_mex_get_double_from_struct_or_fail(const mxArray **mxa, size_t idx, char *fld_name) {
+  mxArray *tmp = mxGetField(mxa[idx], 0, fld_name);
+  if (!tmp) {
+    mexErrMsgIdAndTxt("l1c:notAField", "Error loading field '%s'.", fld_name);
   }
-  return (l1c_int) mxGetScalar(mxa[idx]);
+  /*There must be a better way this these shenanigans...*/
+  const mxArray *tmp_const = tmp;
+  const mxArray **tmp_ptr = (const mxArray**)&tmp_const;
+
+  _mex_assert_double_scalar(tmp_ptr, 0);
+
+  return mxGetScalar(tmp);
 }
 
-void
-_mex_assert_1darray(const mxArray **mxa, size_t idx){
+
+double _mex_get_double_scalar_or_fail(const mxArray **mxa, size_t idx) {
+    _mex_assert_double_scalar(mxa, idx);
+
+    return (double)mxGetScalar(mxa[idx]);
+}
+
+l1c_int _mex_get_int32_scalar_or_fail(const mxArray **mxa, size_t idx) {
+    if (!mxIsInt32(mxa[idx]) || !mxIsScalar(mxa[idx])) {
+      mexErrMsgIdAndTxt("l1c:notInt32Scalar",
+                        "Argument %d must be a scalar double.", idx + 1);
+    }
+    return (l1c_int)mxGetScalar(mxa[idx]);
+}
+
+void _mex_assert_1darray(const mxArray **mxa, size_t idx) {
     size_t n = mxGetN(mxa[idx]);
     size_t m = mxGetM(mxa[idx]);
     size_t d = mxGetNumberOfDimensions(mxa[idx]);
@@ -160,4 +182,3 @@ _mex_get_int_array_or_fail(const mxArray **mxa, size_t idx, int *x[], l1c_int *N
   *x = mxGetInt32s(mxa[idx]);
 
 }
-

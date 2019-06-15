@@ -13,8 +13,12 @@ AM_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include \
 	           -I$(top_srcdir)/interfaces/mex       \
 				$(L1CCPPFLAGS) $(MEXCPPFLAGS)
 LIBS        =  $(MEXLDLIBS) \
-	$(top_builddir)/src/libl1c.la \
-	$(top_builddir)/interfaces/mex/l1c_mex_utils.la
+	$(top_builddir)/src/libl1c.la
+
+# If we put l1c_mex_utils.la into LIBS above, we dont get dependency tracking. Ie,
+# if we change l1c_mex_utils.c, it will get rebuilt, but our little test functions here
+# wont get re-linked to it. Using LIBADD solves this, but is unfortunately more verbose.
+mex_util_lalib = $(top_builddir)/interfaces/mex/l1c_mex_utils.la
 
 
 if comp_with_mex
@@ -33,18 +37,39 @@ mex_LTLIBRARIES = TMU_mex_assert_num_inputs.la \
 	TMU_mex_get_double_scalar_or_fail.la       \
 	TMU_mex_get_double_array_or_fail.la        \
 	TMU_mex_get_int_array_or_fail.la           \
-	TMU_mex_assert_2Darray_with_size.la
+	TMU_mex_assert_2Darray_with_size.la        \
+	TMU_mex_assert_scalar_struct.la            \
+	TMU_mex_get_double_from_struct_or_fail.la
+
+
 
 TMU_mex_assert_num_inputs_la_SOURCES  = TMU_mex_assert_num_inputs.c ../l1c_mex_utils.h
+TMU_mex_assert_num_inputs_la_LIBADD = $(mex_util_lalib)
+
 TMU_mex_get_double_scalar_or_fail_la_SOURCES  = TMU_mex_get_double_scalar_or_fail.c ../l1c_mex_utils.h
+TMU_mex_get_double_scalar_or_fail_la_LIBADD = $(mex_util_lalib)
+
 TMU_mex_get_double_array_or_fail_la_SOURCES = TMU_mex_get_double_array_or_fail.c ../l1c_mex_utils.h
+TMU_mex_get_double_array_or_fail_la_LIBADD =  $(mex_util_lalib)
+
 TMU_mex_get_int_array_or_fail_la_SOURCES = TMU_mex_get_int_array_or_fail.c ../l1c_mex_utils.h
+TMU_mex_get_int_array_or_fail_la_LIBADD = $(mex_util_lalib)
+
 TMU_mex_assert_2Darray_with_size_la_SOURCES = TMU_mex_assert_2Darray_with_size.c ../l1c_mex_utils.h
+TMU_mex_assert_2Darray_with_size_la_LIBADD = $(mex_util_lalib)
+
+TMU_mex_assert_scalar_struct_la_SOURCES = TMU_mex_assert_scalar_struct.c ../l1c_mex_utils.h
+TMU_mex_assert_scalar_struct_la_LIBADD = $(mex_util_lalib)
+
+TMU_mex_get_double_from_struct_or_fail_la_SOURCES = TMU_mex_get_double_from_struct_or_fail.c ../l1c_mex_utils.h
+TMU_mex_get_double_from_struct_or_fail_la_LIBADD = $(mex_util_lalib)
 
 
 dist_check_SCRIPTS = l1c_assert_raises.m     \
              l1c_assert_error_free.m \
+			 test_mex_interface.m    \
 			 test_mex_utils.m        \
+			 TMI_runner.m            \
 			 clrs.m
 
 

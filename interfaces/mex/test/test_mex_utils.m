@@ -6,15 +6,18 @@ end
 MEX_RUN_CASE = getenv('MEX_RUN_CASE');
 
 checks = {@check_mex_assert_num_inputs,...
-    @check_mex_get_double_scalar_or_fail,...
-    @check_get_double_array_or_fail,...
-    @check_get_int_array_or_fail,...
-    @check_assert_2Darray_with_size,...
-    @()check_breg_TV_mex(fpath),...
-    @()test_l1qc_dct_mex(fpath),...
-    @()test_nesta_dctTV(fpath),...
+          @check_mex_get_double_scalar_or_fail,...
+          @check_get_double_array_or_fail,...
+          @check_get_int_array_or_fail,...
+          @check_assert_2Darray_with_size,...
+          @check_assert_scalar_struct,...
+          @check_get_double_from_struct_or_fail,...
+          @()test_l1qc_dct_mex(fpath),...
          };
 
+    % @()check_breg_TV_mex(fpath),...
+    % 
+    % @()test_nesta_dctTV(fpath),...
 pf = true;
 for check = checks
   if ~isempty(MEX_RUN_CASE)
@@ -30,7 +33,7 @@ for check = checks
     end
   end
   
-    pf = pf & runner(check{1});
+    pf = pf & TMI_runner(check{1});
 end
 
 st1 = '---------------------------------------------------------';
@@ -49,29 +52,6 @@ fprintf('%s', status_str);
 
 exit(status);
 
-
-
-
-function status = runner(f)
-    name = func2str(f);
-    fprintf('%s: ', name);
-    status = true;
-
-    try
-        f();
-        fprintf(clrs.pass_str('Passed\n'));
-    catch ME
-        status = false;
-        fprintf([clrs.pass_str('FAILED: '), '%s\n'], ME.message);
-        if ~strcmp(ME.identifier, 'l1c:AssertionFail')
-          for k=1:length(ME.stack)
-            fprintf('    In function %s, line %d of file %s\n', ME.stack(k).name, ...
-                    ME.stack(k).line, ME.stack(k).file);
-          end
-        end
-        status = false;
-    end
-end
 
 
 function data_dir = get_data_dir()
@@ -226,6 +206,41 @@ function  check_get_int_array_or_fail()
     
 end
 
+function  check_assert_scalar_struct()
+    err_exp = 'l1c:notScalar';
+    ST = struct('field1', 55, 'field2', pi);
+    ST_array = [ST; ST];
+    f = @()TMU_mex_assert_scalar_struct(ST_array);
+    l1c_assert_raises(f, err_exp);
+
+    f = @()TMU_mex_assert_scalar_struct(ST);
+     l1c_assert_error_free(f);
+    
+    err_exp = 'l1c:notStruct';
+    f = @()TMU_mex_assert_scalar_struct(5);
+    l1c_assert_raises(f, err_exp);
+    
+end
+
+function  check_get_double_from_struct_or_fail()
+    err_exp = 'l1c:notAField';
+    ST = struct('field0', [55, 25], 'field2', pi);
+    
+    f = @()TMU_mex_get_double_from_struct_or_fail(ST);
+    l1c_assert_raises(f, err_exp);
+
+    err_exp = 'l1c:notDoubleScalar';
+    ST = struct('field1', [55, 25], 'field2', pi);
+    f = @()TMU_mex_get_double_from_struct_or_fail(ST);
+    l1c_assert_raises(f, err_exp);
+    
+    
+    ST = struct('field1', [55], 'field2', pi);
+    f = @()TMU_mex_get_double_from_struct_or_fail(ST);
+    l1c_assert_error_free(f);
+    
+end
+
 function check_get_double_array_or_fail()
 
     err_exp = 'l1c:not1DArray';
@@ -244,7 +259,7 @@ function check_mex_get_double_scalar_or_fail()
     
     f = @()TMU_mex_get_double_scalar_or_fail(5, [1, 2]);
     
-    err_exp = 'l1c:notDoubleScaler';
+    err_exp = 'l1c:notDoubleScalar';
     l1c_assert_raises(f, err_exp);
     
     f = @()TMU_mex_get_double_scalar_or_fail(5, 1);

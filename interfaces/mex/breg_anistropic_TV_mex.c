@@ -36,7 +36,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   _mex_assert_num_inputs(nrhs, 4);
 
   /* -------- Check f -------------*/
-  _mex_assert_input_double(prhs, 0);
+  _mex_assert_double(prhs, 0);
   /* check that f is a matrix, at least 3 by 3. */
   _mex_assert_2Darray_with_size(prhs, 0, 3, 3);
 
@@ -46,9 +46,9 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   f = mxGetPr(prhs[0]);
 
   /* -------- Check mu, tol, max_iter -------------*/
-  mu = _mex_get_double_scaler_or_fail(prhs, 1);
-  tol = _mex_get_double_scaler_or_fail(prhs, 2);
-  max_iter = (int)_mex_get_double_scaler_or_fail(prhs, 3);
+  mu = _mex_get_double_scalar_or_fail(prhs, 1);
+  tol = _mex_get_double_scalar_or_fail(prhs, 2);
+  max_iter = (int)_mex_get_double_scalar_or_fail(prhs, 3);
 
   /* We require that f is aligned on a DALIGN byte boundary. Matlab does not guarantee this.
   */

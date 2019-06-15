@@ -44,8 +44,8 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   _mex_assert_num_outputs(nlhs, 2);
   _mex_assert_num_inputs(nrhs, 5);
 
-  mrow = (l1c_int)_mex_get_double_scaler_or_fail(prhs, 0);
-  mcol = (l1c_int)_mex_get_double_scaler_or_fail(prhs, 1);
+  mrow = (l1c_int)_mex_get_double_scalar_or_fail(prhs, 0);
+  mcol = (l1c_int)_mex_get_double_scalar_or_fail(prhs, 1);
   mtot = mcol * mrow;
 
   /* -------- Check b -------------*/

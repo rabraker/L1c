@@ -5,7 +5,7 @@ AUTOMAKE_OPTIONS = foreign 1.8
 clean-local:: clean-convenience-link
 bin_PROGRAMS    =
 
-AM_LDFLAGS      = -disable-static -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
+AM_LDFLAGS      = -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
 AM_CPPFLAGS     = -DBUILDING_DLL -I$(top_srcdir)/include -I./ -I../ \
 					$(L1CCPPFLAGS) $(MEXCPPFLAGS)
 AM_CFLAGS       =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC
