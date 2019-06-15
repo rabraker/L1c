@@ -49,10 +49,10 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   _mex_assert_num_inputs(nrhs, 5);
 
   /* -------- Check mrow -------------*/
-  mrow = (l1c_int)_mex_get_double_scaler_or_fail(prhs, 0);
+  mrow = (l1c_int)_mex_get_double_scalar_or_fail(prhs, 0);
 
   /* -------- Check mcol -------------*/
-  mcol = (l1c_int)_mex_get_double_scaler_or_fail(prhs, 1);
+  mcol = (l1c_int)_mex_get_double_scalar_or_fail(prhs, 1);
   mtot = mcol * mrow;
 
   /* -------- Check b -------------*/
@@ -68,61 +68,35 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
                       "Must have length(x0) > length(b), and length(b) = length(pix_idx).");
   }
 
-
   /* -------- Check params struct -------------*/
-  if ( !mxIsStruct(prhs[4])){
-    mexErrMsgIdAndTxt("l1c:l1qc_dct:notStruct",
-                      "params must be a struct.");
-  }
+  _mex_assert_scalar_struct(prhs, 4);
 
-  int nfld = mxGetNumberOfFields(prhs[4]);
-  // char *flds[]={ "verbose", "tau", "mu"};
-  const char *name;
+  l1qc_opts.epsilon =
+    _mex_get_double_from_struct_or_fail(prhs, 4, "epsilon");
+  l1qc_opts.mu =
+    _mex_get_double_from_struct_or_fail(prhs, 4, "mu");
+  l1qc_opts.tau =
+    _mex_get_double_from_struct_or_fail(prhs, 4, "tau");
+  l1qc_opts.newton_tol =
+      _mex_get_double_from_struct_or_fail(prhs, 4, "newton_tol");
+  l1qc_opts.lbtol =
+    _mex_get_double_from_struct_or_fail(prhs, 4, "lbtol");
+  l1qc_opts.l1_tol =
+    _mex_get_double_from_struct_or_fail(prhs, 4, "l1_tol");
+  l1qc_opts.cg_tol =
+    _mex_get_double_from_struct_or_fail(prhs, 4, "cgtol");
+  l1qc_opts.warm_start_cg =
+      _mex_get_double_from_struct_or_fail(prhs, 4, "warm_start_cg");
+  l1qc_opts.verbose =
+    _mex_get_double_from_struct_or_fail(prhs, 4, "verbose");
+  l1qc_opts.newton_max_iter =
+      (int)_mex_get_double_from_struct_or_fail(prhs, 4, "newton_max_iter");
+  l1qc_opts.cg_maxiter =
+      (int)_mex_get_double_from_struct_or_fail(prhs, 4, "cgmaxiter");
+  l1qc_opts.lbiter =
+      (int)_mex_get_double_from_struct_or_fail(prhs, 4, "lbiter");
 
-  mxArray *tmp;
-  for (i=0; i<nfld; i++){
-    tmp = mxGetFieldByNumber(prhs[4], 0, i);
-    name =mxGetFieldNameByNumber(prhs[4], i);
-    if (!tmp){
-      mexErrMsgIdAndTxt("l1c:l1qc_dct:norverbose",
-                        "Error loading field '%s'.", name);
-    }else if( !mxIsScalar(tmp) | !mxIsNumeric(tmp) ){
-      mexErrMsgIdAndTxt("l1c:l1qc_dct:norverbose",
-                        "Bad data in field '%s'. Fields in params struct must be numeric scalars.", name);
-    }
-
-    if ( strcmp(name, "epsilon") == 0){
-      l1qc_opts.epsilon = mxGetScalar(tmp);
-    }else if ( strcmp(name, "mu") == 0){
-      l1qc_opts.mu = mxGetScalar(tmp);
-    }else if ( strcmp(name, "tau") == 0){
-      l1qc_opts.tau = mxGetScalar(tmp);
-    }else if ( strcmp(name, "newton_tol") == 0){
-      l1qc_opts.newton_tol = mxGetScalar(tmp);
-    }else if ( strcmp(name, "newton_max_iter") == 0){
-      l1qc_opts.newton_max_iter = (int) mxGetScalar(tmp);
-    }else if ( strcmp(name, "lbiter") == 0){
-      l1qc_opts.lbiter = (int)mxGetScalar(tmp);
-    }else if ( strcmp(name, "lbtol") == 0){
-      l1qc_opts.lbtol = mxGetScalar(tmp);
-    }else if ( strcmp(name, "l1_tol") == 0){
-      l1qc_opts.l1_tol = mxGetScalar(tmp);
-    }else if ( strcmp(name, "cgtol") == 0){
-      l1qc_opts.cg_tol = mxGetScalar(tmp);
-    }else if ( strcmp(name, "cgmaxiter") == 0){
-      l1qc_opts.cg_maxiter = mxGetScalar(tmp);
-    }else if ( strcmp(name, "warm_start_cg") == 0){
-      l1qc_opts.warm_start_cg = (int) mxGetScalar(tmp);
-    }else if ( strcmp(name, "verbose") == 0){
-      l1qc_opts.verbose= (int) mxGetScalar(tmp);
-    }else{
-      mexErrMsgIdAndTxt("l1c:l1qc_dct:norverbose",
-                        "Unrecognized field '%s' in params struct.", name);
-    }
-
-  }
-
-  if (l1qc_opts.verbose > 1){
+  if (l1qc_opts.verbose > 0){
     printf("Input Parameters\n---------------\n");
     printf("   verbose:         %d\n", l1qc_opts.verbose);
     printf("   epsilon:         %.5e\n", l1qc_opts.epsilon);
@@ -138,10 +112,6 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
     printf("NB: lbiter and tau usually generated automatically.\n");
   }
-
-
-
-
 
   /* We are going to change x, so we must allocate and make a copy, so we
      dont change data in Matlabs workspace.
@@ -225,4 +195,4 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     break;
   }
 
-} /* ------- mexFunction ends here ----- */
+ } /* ------- mexFunction ends here ----- */
