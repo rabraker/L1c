@@ -21,7 +21,7 @@ fi
 mat_cmd=$(cat <<EOF
 try; \
     init_matlab_paths;    \
-    test_mex_utils; \
+    test_mex_runner; \
     exit(status); \
 catch ME; \
     fprintf('%s\n', ME.message'); \
