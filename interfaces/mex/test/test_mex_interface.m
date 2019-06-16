@@ -1,21 +1,28 @@
-function pass_fail = test_mex_interface(data_dir)
+function [npass, nfail, nskip] = test_mex_interface(skip_all, data_dir)
 % Test cases for the mex bindings. data_dir should hold the test data and in
 % particular 'example_img_data.json'
 % 
-  fpath = fullfile(data_dir, 'example_img_data.json');
+  
+  fpath = fullfile(data_dir, 'example_img_data.json');  
   
   cases = {...
     @()check_breg_TV_mex(fpath),...
-    @()test_nesta_dctTV_notv(fpath),...
-    @()test_nesta_dctTV(fpath),...
-    @()test_l1qc_dct_mex(fpath),...
+    @()check_nesta_dctTV_notv(fpath),...
+    @()check_nesta_dctTV(fpath),...
+    @()check_l1qc_dct_mex(fpath),...
            };
 
-  pass_fail = L1cMexTesting.run_suite(cases);
+  if ~skip_all
+    [npass, nfail, nskip] = L1cMexTesting.run_suite(cases);
+  else
+    npass = 0;
+    nfail = 0;
+    nskip = length(cases);
+  end
 
 end
 
-function test_nesta_dctTV(fpath)
+function check_nesta_dctTV(fpath)
   verbose = 0;
   fid = fopen(fpath, 'r');
   dat_json = fscanf(fid, '%s');
@@ -46,7 +53,7 @@ function test_nesta_dctTV(fpath)
 end
 
 
-function test_nesta_dctTV_notv(fpath)
+function check_nesta_dctTV_notv(fpath)
   verbose = 0;
   fid = fopen(fpath, 'r');
   dat_json = fscanf(fid, '%s');
@@ -75,7 +82,7 @@ function test_nesta_dctTV_notv(fpath)
 end
 
 
-function test_l1qc_dct_mex(fpath)
+function check_l1qc_dct_mex(fpath)
   verbose = 0;
   fid = fopen(fpath, 'r');
   dat_json = fscanf(fid, '%s');

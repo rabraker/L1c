@@ -4,40 +4,39 @@ end
 
 MEX_RUN_SUITE = getenv('MEX_RUN_SUITE');
 
-suites = {@()test_mex_interface(data_dir),...
-          @test_mex_utils
+suites = {@(skip_all)test_mex_interface(skip_all, data_dir),...
+          @(skip_all)test_mex_utils(skip_all)
          };
 
 pf = true;
-total = length(suites);
 n_skip = 0;
 n_fail = 0;
 n_pass = 0;
 for suite = suites
   if ~isempty(MEX_RUN_SUITE)
-    name = func2str(suites{1});
-    name = regexprep(name, '@|\([a-zA-Z0-9]*\)', '');
-      
-    if ~strcmp(name, MEX_RUN_CASE)
+    name = func2str(suite{1});
+    name = regexprep(name, '@\([a-zA-Z0-9_,]*\)|\([a-zA-Z0-9_,]*\)', '');
+
+    if ~strcmp(name, MEX_RUN_SUITE)
       fprintf('%s: ', name);
       status_str = sprintf('SKIP\n');
       status_str = clrs.skip_str(status_str);
       fprintf('%s\n', status_str);
-      n_skip = n_skip + 1;
+      [~,~,nskip_k] = suite{1}(true);
+      n_skip = n_skip + nskip_k;
       continue;
     end
   end
-  
-    status = suite{1}();
-    if status
-      n_pass = n_pass + 1;
-    else
-      n_fail = n_fail + 1;
-    end
+
+  [npass_k, nfail_k, nskip_k] = suite{1}(false);
+  n_pass = n_pass + npass_k;
+  n_fail = n_fail + nfail_k;
+  n_skip = n_skip + nskip_k;  
     
-    pf = pf & status;
+    pf = pf & (nfail_k ==0);
 end
 
+total = n_pass + n_fail + n_skip;
 st1 = '----------------------------------------';
 st2 = sprintf('Summary of %s :', mfilename);
 

@@ -75,24 +75,33 @@ methods (Static)
     
   end
   
-  function pass_fail = run_suite(case_funcs)
+  function [npass, nfail, nskip] = run_suite(case_funcs)
     MEX_RUN_CASE = getenv('MEX_RUN_CASE');
     pass_fail = true;
+    npass = 0;
+    nfail = 0;
+    nskip = 0;
     for case_k = case_funcs
       if ~isempty(MEX_RUN_CASE)
         name = func2str(case_k{1});
-        name = regexprep(name, '@|\([a-zA-Z0-9]*\)', '');
-        
+        name = regexprep(name, '@\([a-zA-Z0-9_,]*\)|\([a-zA-Z0-9_,]*\)', '');
+        % keyboard
         if ~strcmp(name, MEX_RUN_CASE)
           fprintf('%s: ', name);
-          status_str = sprintf('SKIP\n');
+          status_str = sprintf('SKIP');
           status_str = clrs.skip_str(status_str);
           fprintf('%s\n', status_str);
+          nskip = nskip+1;
           continue;
         end
       end
       
-      pass_fail = pass_fail & L1cMexTesting.run_case(case_k{1});
+      pass =  L1cMexTesting.run_case(case_k{1});
+      if pass
+        npass = npass + 1;
+      else
+        nfail = nfail + 1;
+      end
     end
 
     % st1 = '---------------------------------------------------------';

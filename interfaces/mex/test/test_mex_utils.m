@@ -1,4 +1,7 @@
-function pass_fail = test_mex_utils()
+function [npass, nfail, nskip] = test_mex_utils(skip_all)
+  if nargin < 1
+    skip_all = false;
+  end
   
   cases = {@check_mex_assert_num_inputs,...
             @check_mex_get_double_scalar_or_fail,...
@@ -9,7 +12,13 @@ function pass_fail = test_mex_utils()
             @check_get_double_from_struct_or_fail,...
            };
 
-  pass_fail = L1cMexTesting.run_suite(cases);
+  if ~skip_all
+    [npass, nfail, nskip] = L1cMexTesting.run_suite(cases);
+  else
+    npass = 0;
+    nfail = 0;
+    nskip = length(cases);
+  end
 
 end
 
