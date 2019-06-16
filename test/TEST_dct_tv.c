@@ -362,6 +362,41 @@ START_TEST(test_Aty_analysis)
 }
 END_TEST
 
+START_TEST(test_normW)
+{
+  BpMode bp_mode = analysis;
+  DctMode dct_mode = dct1;
+  l1c_int status=0, n=5, mrow=10, mcol=10;
+  double alp_v = 4.0;
+  double alp_h = 5.0;
+  double normW_exp=0;
+  l1c_int pix_idx[5] = {0, 3, 4, 6, 7};
+
+  normW_exp = 1 + 4*alp_v*alp_v + 4*alp_h*alp_h;
+  status = l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h,
+                                      dct_mode, bp_mode, pix_idx, &ax_funs);
+  ck_assert_int_eq(status, L1C_SUCCESS);
+  ck_assert_double_eq_tol(ax_funs.norm_W, normW_exp, TOL_DOUBLE_SUPER);
+  ax_funs.destroy();
+
+  alp_h = 0;
+  alp_v =  0;
+  status = l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h,
+                                      dct_mode, bp_mode, pix_idx, &ax_funs);
+  ck_assert_int_eq(status, L1C_SUCCESS);
+  normW_exp = 1 + 4*alp_v*alp_v + 4*alp_h*alp_h;
+  ck_assert_double_eq_tol(ax_funs.norm_W, normW_exp, TOL_DOUBLE_SUPER);
+  ax_funs.destroy();
+
+  /*We should always get 1.0 in synthesis mode.*/
+  bp_mode = synthesis;
+  status = l1c_setup_dctTV_transforms(n, mrow, mcol, 4.0, 5.0,
+                                      dct_mode, bp_mode, pix_idx, &ax_funs);
+  ck_assert_int_eq(status, L1C_SUCCESS);
+  ck_assert_double_eq_tol(ax_funs.norm_W, 1.0, TOL_DOUBLE_SUPER);
+  ax_funs.destroy();
+
+}END_TEST
 
 /* Check that the setup function returns an error code when we expect it to. */
 START_TEST(test_input_errors)
@@ -432,7 +467,7 @@ Suite *dctTV_suite(void)
 
   tc_errors = tcase_create("dct_tv_errors");
   tcase_add_test(tc_errors, test_input_errors);
-
+  tcase_add_test(tc_errors, test_normW);
   suite_add_tcase(s, tc_errors);
 
 

@@ -54,7 +54,11 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
   _inc_TVV = 0;
   _inc_TVH = 0;
 
-  ax_funs->norm_W += 1;
+  if (bp_mode == analysis){
+    ax_funs->norm_W = 1 + 4*alp_v*alp_v + 4*alp_h*alp_h;
+  }else{
+    ax_funs->norm_W = 1;
+  }
 
   /* Check which jobs we are do to do. We partion local variable u as
      u = [u, u_TVV, u_TVH], for vertical, horizontal parts.
@@ -86,16 +90,10 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
 
   if (alp_v > 0) {
     _p += _m;
-    ax_funs->norm_W += 4;
-  }
-  if (alp_h > 0) {
-    ax_funs->norm_W += 4;
-    _p += _m;
   }
 
-  /* If we are in synthesis mode, W == Identity, so normW =1.*/
-  if (bp_mode == synthesis){
-    ax_funs->norm_W = 1;
+  if (alp_h > 0) {
+    _p += _m;
   }
 
   ax_funs->n = n;
