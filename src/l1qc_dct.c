@@ -40,7 +40,7 @@ int l1qc_dct(int mrow, int mcol, double *x_out, int n, double *b, l1c_int *pix_i
   */
   l1c_AxFuns ax_funs;
 
-  status = l1c_setup_dct_transforms(n, mrow, mcol, pix_idx, &ax_funs);
+  status = l1c_setup_dct_transforms(n, mrow, mcol, opts.dct_mode, pix_idx, &ax_funs);
 
   if (status != 0 || !ax_funs.Ax || !ax_funs.Aty || !ax_funs.AtAx || !ax_funs.Mx){
     fprintf(stderr, "Error setup up dct. Exiting.\n");
@@ -71,8 +71,8 @@ int l1qc_dct(int mrow, int mcol, double *x_out, int n, double *b, l1c_int *pix_i
 
   /* We solved for eta in the DCT domain. Transform back to
      standard coordinates. */
-  ax_funs.Mx(eta_0, x_out);
   cblas_dcopy(mtot, eta_0, 1, x_out, 1);
+  ax_funs.Mx(eta_0, x_out);
 
   if (opts.verbose > 0){
     tv_end = l1c_get_time();
@@ -92,4 +92,3 @@ int l1qc_dct(int mrow, int mcol, double *x_out, int n, double *b, l1c_int *pix_i
   l1c_free_double(eta_0);
   return status;
 }
-

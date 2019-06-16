@@ -32,39 +32,17 @@
   connotation is more general.
  */
 
-static inline void _l1c_nesta_Wv(l1c_NestaProb *NP, double *v, double *x){
-  if (NP->flags & L1C_ANALYSIS){
-    NP->ax_funs.Mx(v, x);
-  }else{
-    /* Identity operator on R^m, p==m */
-    cblas_dcopy(NP->m, v, 1, x, 1);
-  }
-}
 
-static inline void _l1c_nesta_Wtx(l1c_NestaProb *NP, double *x, double *v){
-  if (NP->flags & L1C_ANALYSIS){
-    NP->ax_funs.Mty(x, v);
-  }else{
-    /* Identity operator on R^m, p==m */
-    cblas_dcopy(NP->m, x, 1, v, 1);
-  }
-}
 
 static inline void _l1c_nesta_Rx(l1c_NestaProb *NP, double *x, double *y){
-  if (NP->flags & L1C_ANALYSIS){
-    NP->ax_funs.Ex(x, y);
-  }else{
-    NP->ax_funs.Ax(x, y);
-  }
+  NP->ax_funs.Ax(x, y);
 }
 
 static inline void _l1c_nesta_Rty(l1c_NestaProb *NP, double *y, double *x){
-  if (NP->flags & L1C_ANALYSIS){
-    NP->ax_funs.Ety(y, x);
-  }else{
-    NP->ax_funs.Aty(y, x);
-  }
+  NP->ax_funs.Aty(y, x);
 }
+
+
 
 
 /* The next three functions basically implement a circular buffer for storing the vector
@@ -141,7 +119,7 @@ l1c_NestaProb* _l1c_NestaProb_new(l1c_int n, l1c_int m, l1c_int p){
   *NP = (l1c_NestaProb){.n=n, .m=m, .p=p, .fx=0.0, .xo=NULL, .xk=NULL, .yk=NULL, .zk=NULL,
                         .Atb=NULL, .gradf=NULL, .gradf_sum=NULL,
                         .dwork1=NULL, .dwork2=NULL, .b=NULL, .ax_funs={0},
-                        .sigma=0, .mu=0, .tol=0, .L=0, .flags=0};
+                        .sigma=0, .mu=0, .tol=0, .L=0};
 
 
   NP->xo = l1c_calloc_double(m);
@@ -265,7 +243,7 @@ void l1c_nesta_feval(l1c_NestaProb *NP){
 
   /* If E and Et are void, we are doing synthesis, otherwise, analysis.
    */
-  _l1c_nesta_Wtx(NP, NP->xk, Wtxk);
+  NP->ax_funs.Wtx(NP->xk, Wtxk);
 
   for (int i=0; i<p; i++){
     u[i] = Wtxk[i] / max(NP->mu_j, fabs(Wtxk[i]));
@@ -276,8 +254,7 @@ void l1c_nesta_feval(l1c_NestaProb *NP){
 
   NP->fx = cblas_ddot(p, u, 1, Wtxk, 1) - 0.5 * NP->mu_j * nrm_u2;
 
-  _l1c_nesta_Wv(NP, u, NP->gradf);
-
+  NP->ax_funs.Wz(u, NP->gradf);
 }
 
 
@@ -296,13 +273,13 @@ void l1c_nesta_feval(l1c_NestaProb *NP){
 int l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
                     double *b, l1c_AxFuns ax_funs, l1c_NestaOpts *opts){
 
-double L=0;
+  double L=0;
+  if (!ax_funs.Wz || !ax_funs.Wtx || !ax_funs.Rx || !ax_funs.Rty) {
+    return L1C_INCONSISTENT_ARGUMENTS;
+  }
   /* Check that flags is consistent with functionality provided by ax_funs. */
-  if (opts->flags & L1C_ANALYSIS) {
-    if (!ax_funs.Mx || !ax_funs.Mty || !ax_funs.Ex || !ax_funs.Ety){
-      return L1C_INCONSISTENT_ARGUMENTS;
-    }
-    L = ax_funs.norm_M;
+  if (opts->bp_mode == analysis) {
+    L = ax_funs.norm_W;
   }else{
     /* When we are in synthesis mode, ||Wx||_1 = ||Ix||_1, ie, W=I, so
      norm is 1.
@@ -316,7 +293,6 @@ double L=0;
   NP->mu = opts->mu;
   NP->L = L;
   NP->tol = opts->tol;
-  NP->flags = opts->flags;
 
   double mu_final = opts->mu;
   double tol_final = opts->tol;
@@ -328,7 +304,7 @@ double L=0;
   _l1c_nesta_Rty(NP, NP->b, NP->Atb);
   cblas_dcopy(NP->m, NP->Atb, 1, NP->xo, 1);
 
-  _l1c_nesta_Wtx(NP, NP->xo, Wtx_ref);
+  NP->ax_funs.Wtx(NP->xo, Wtx_ref);
   l1c_abs_vec(NP->m, Wtx_ref, Wtx_ref);
   double mu0 = 0.9 * l1c_max_vec(NP->p, Wtx_ref);
 

@@ -59,10 +59,29 @@ void l1c_free_double_2D(int nrow, double **ddptr);
 /**@}*/
 
 
+/** @ingroup nesta
+ * Instructs optimization to operate in synthesis mode, e.g.,
+ * \f$\min_x ||x|| \text{ s.t. } ||RWx-b||<\sigma\f$
+
+ * Instructs optimization to operate in analysis mode, e.g.,
+ *  \f$\min_x ||W^Tx|| \text{ s.t. } ||Rx-b||<\sigma\f$
+ */
+typedef enum BpMode {
+  analysis = (1U << 0),
+  synthesis=(1U<<1)
+} BpMode;
+
+
 /**
  * @defgroup transforms Functions for linear transformations.
  * @{
  */
+
+typedef enum DctMode {
+  dct1 = 1,
+  dct2 = 2
+}DctMode;
+
 typedef struct _l1c_AxFuns l1c_AxFuns;
 
 /** A struct of function pointers for linear transforms.
@@ -70,28 +89,38 @@ typedef struct _l1c_AxFuns l1c_AxFuns;
  * Any new set of transforms must implement the base transforms, `.Ax`,
  * the adjoint, `.Aty`, and the normal transform `.AtAx`.
  *
- * Upon entry, the output vector should be initialized to any finite value.
- * This allows more efficient code in the matrix_transforms class, which is
- * based on cblas_dgemv, which does overwrite the output but rather updates
- * it in place. For example,
+ * These transforms can be set up for either basis pursuit synthesis or
+ * analsysis problems. In either case, the problem can be described as
  *
- * @code
- * y = Ax + beta*y
- * @endcode
+ * \f$
+ *    \min_{z} ||W^T x||_1 \text{s.t.} ~ ||Ax - b|| < \sigma
+ * \f$
  *
- * The remaining function pointers are, at this point, optional, and not required
- * by the low level optimizations. However, often in CS, the transform `A` can be
- * decomposed as `A=EM`, where `M` is an othogonal, `m` by `p` matrix (say, a
- * DCT transform) and `E` is an `n` by `m` matrix, e.g., an identity with rows removed.
- * The remaining fields are there to provide access to those individual components.
+ * --In synthesis mode, \f$ W = I\f$ and \f$ A = RM\f$.
  *
- * Currently, the `.data` field is unused, but at some point, it may be good to make the
- * optimizations re-entrant. This field is there as a placeholder so a transform class
- * can store its state in `.data`, rather than file-global variables (as is currently done).
+ * --In analysis mode, \f$ W\f$ is some dictionary (possibly overcomplete,
+ *   or possibly the same as M), and \f$ A = R\f$.
+ *
+ *
+ * For any specific set of transforms, if a one of these operators is not
+ * needed, then the class should implement it as the identity operation.
+ * The documentation for the class implementing l1cAxfuns should describe
+ * which mode it is intended for.
+ *
+ * In general, we assume that
+ * \f{aligned}{
+ *   R & \in\mathbb{R}^{n\times m}\\
+ *   M & \in\mathbb{R}^{m \times p}\\
+ *   n \le & m \leq p
+ * \f}
+ *
+ * @warning Upon entry, the output vector should be initialized.
+ *
  * @see l1c_dct1_setup()
  *      l1c_dct2_setup()
  *      l1c_setup_dct_transforms()
  *      l1c_setup_matrix_transforms()
+ *      l1c_setup_dctTV_transforms()
  *
  */
 struct _l1c_AxFuns {
@@ -106,7 +135,7 @@ struct _l1c_AxFuns {
 
   /** The spectral norm of the operator M (or at least an upper bound.
    Currently, only nesta requires this.*/
-  double norm_M;
+  double norm_W;
 
   /** Compute y=Ax */
   void(*Ax)(double *x, double *y);
@@ -120,21 +149,29 @@ struct _l1c_AxFuns {
   /** Compute x=Mx */
   void(*Mx)(double *x, double *y);
 
-  /** Compute y=Mty */
-  void(*Mty)(double *y, double *x);
+  /** Compute z=M^Tx */
+  void(*Mty)(double *x, double *z);
 
-  /** Computes y = E * x */
-  void(*Ex)(double *x, double *y);
+  /** Compute x=Mx */
+  void (*Wz)(double *z, double *x);
 
-  /** Computes x = E^T * x. x should already be
+  /** Compute z=M^Tx */
+  void (*Wtx)(double *x, double *z);
+
+  /** Computes y = R * x */
+  void(*Rx)(double *x, double *y);
+
+  /** Computes x = R^T * x. x should already be
       initialized. */
-  void(*Ety)(double *y, double *x);
+  void(*Rty)(double *y, double *x);
 
   /**Release data allocated by the associated setup function.
      All implementations must define .`destroy`. */
   void(*destroy)(void);
 
-  /** Reserved for future use.*/
+  /** Reserved for future use. Hopefully, will be used
+   * to make the optimizations re-entrant, rather than
+   * file-global variables (as is currently done).*/
   void *data;
 };
 
@@ -234,7 +271,9 @@ struct _l1c_L1qcOpts{
   int cg_verbose;
   /** Should the conjugate-gradient solver be warm-started?
    */
- int warm_start_cg;
+  int warm_start_cg;
+
+  DctMode dct_mode;
 };
 
 /** @}*/
@@ -264,11 +303,12 @@ int l1c_dct2_setup(l1c_int n, l1c_int mrow, l1c_int mcol, l1c_int *pix_mask_idx,
 int l1c_dct1_setup(l1c_int n, l1c_int m, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs);
 
 
-int l1c_setup_dct_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
+int l1c_setup_dct_transforms(l1c_int n, l1c_int mrow, l1c_int mcol, DctMode dct_mode,
                              l1c_int *pix_idx, l1c_AxFuns *ax_funs);
 
 int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
-                               double alp_v, double alp_h, l1c_int *pix_idx,
+                               double alp_v, double alp_h, DctMode dct_mode,
+                               BpMode bp_mode, l1c_int *pix_idx,
                                l1c_AxFuns *ax_funs);
 
 int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_funs);

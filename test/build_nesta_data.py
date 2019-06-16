@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-
 import os
 import numpy as np
 import numpy.testing as npt
-import L1cTestDataUtils as TDU
 from scipy.fftpack import dct
+import L1cTestDataUtils as TDU
 
+# ==============================================
+# This test data is generated for analysis mode.
 
 def Adct_factory(pix_idx):
     def Adct(x):

@@ -19,7 +19,7 @@ static void dct_Mx(double *x, double *y);
 static void dct_Mty(double *y, double *x);
 static void dct_Ex(double *x, double *y);
 static void dct_Ety(double *y, double *x);
-
+static void Identity(double *x, double *z);
 
 static fftw_plan dct_plan_MtEty;
 static fftw_plan dct_plan_EMx;
@@ -142,14 +142,19 @@ int l1c_dct1_setup(l1c_int n, l1c_int m, l1c_int *pix_mask_idx, l1c_AxFuns *ax_f
   ax_funs->n = n;
   ax_funs->m = m;
   ax_funs->p = m;
-  ax_funs->norm_M = 1.0;
+  ax_funs->norm_W = 1.0;
+
   ax_funs->Ax = dct_EMx;
   ax_funs->Aty = dct_MtEty;
   ax_funs->AtAx = dct_MtEt_EMx;
+
   ax_funs->Mx = dct_Mx;
   ax_funs->Mty = dct_Mty;
-  ax_funs->Ex = dct_Ex;
-  ax_funs->Ety = dct_Ety;
+  ax_funs->Rx = dct_Ex;
+  ax_funs->Rty = dct_Ety;
+
+  ax_funs->Wtx = Identity;
+  ax_funs->Wz = Identity;
 
   ax_funs->destroy = dct_destroy;
   ax_funs->data = NULL;
@@ -170,6 +175,10 @@ static void dct_destroy(){
 #if defined(HAVE_FFTW3_THREADS)
   fftw_cleanup_threads();
 #endif
+}
+
+static void Identity(double *x, double *z){
+  cblas_dcopy(dct_m, x, 1, z, 1);
 }
 
 

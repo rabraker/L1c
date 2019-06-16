@@ -35,7 +35,8 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
                             .cg_tol = 0,
                             .cg_maxiter = 0,
                             .cg_verbose = 0,
-                            .warm_start_cg=0};
+                            .warm_start_cg=0,
+                            .dct_mode=dct1};
 
   l1c_LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
 

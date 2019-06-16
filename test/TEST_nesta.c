@@ -105,14 +105,16 @@ static void init_generic_data(NestaTestData *dat){
 
   dat->n = n;
   dat->m = m;
-
-  if(l1c_dct1_setup(dat->n, dat->m, dat->pix_idx, &ax_funs) ){
+  BpMode bp_mode = analysis;
+  DctMode dct_mode = dct1;
+  if(l1c_setup_dctTV_transforms(dat->n, dat->m, 1, 0.0, 0.0, dct_mode,
+                                bp_mode, dat->pix_idx, &ax_funs) ){
     fprintf(stderr, "Failed to initialize DCT in %s\n", __func__);
     status += 1;
     goto exit;
   }
-  ax_funs.Ax = ax_funs.Ex;
-  ax_funs.Aty = ax_funs.Ety;
+  ax_funs.Ax = ax_funs.Rx;
+  ax_funs.Aty = ax_funs.Rty;
 
   dat->NP = _l1c_NestaProb_new(n, m, ax_funs.p);
 
@@ -122,11 +124,15 @@ static void init_generic_data(NestaTestData *dat){
     goto exit;
   }
 
-  l1c_NestaOpts opts = {.n_continue=dat->n_continue, .sigma=dat->sigma,
-                        .mu=dat->mu, .tol=dat->tol, .flags=L1C_ANALYSIS};
-  if(l1c_nesta_setup(dat->NP, &dat->beta_mu, &dat->beta_tol,
-                     dat->b, ax_funs, &opts)){
-     status++;
+  l1c_NestaOpts opts = {.n_continue = dat->n_continue,
+                        .sigma = dat->sigma,
+                        .mu = dat->mu,
+                        .tol = dat->tol,
+                        .bp_mode = analysis};
+
+  if (l1c_nesta_setup(dat->NP, &dat->beta_mu, &dat->beta_tol, dat->b, ax_funs,
+                        &opts)) {
+    status++;
     goto exit;
   }
 
@@ -220,7 +226,7 @@ START_TEST (test_l1c_nesta)
                         .sigma=epsilon,
                         .tol=1e-3,
                         .n_continue=5,
-                        .flags=L1C_SYNTHESIS};
+                        .bp_mode=synthesis};
   /* ------------------------------------------------------- */
   int nesta_status = l1c_nesta(m, x0, n, b, ax_funs, opts);
 
@@ -264,7 +270,7 @@ START_TEST (test_l1c_nesta)
 
   /* c. ------------------
      Check property (c) */
-  l1c_daxpy_z(m, 1, x0, x_exp, tmp1); //h = x0 - x
+  l1c_daxpy_z(m, -1, x0, x_exp, tmp1); //h = x0 - x
   double h_T_nrm1=0, h_TC_nrm1=0;
   for(int i=0; i<T; i++){
     h_T_nrm1 += fabs(tmp1[T_idx[i]]);
@@ -435,6 +441,7 @@ START_TEST (test_l1c_nesta_setup)
   int n_continue = 5;
   double *b = l1c_calloc_double(n);
   double *A = l1c_calloc_double(n*m);
+  DctMode dct_mode = dct1;
 
   for (int i=0; i<n; i++){
     b[i] = ((double)rand())/(double)RAND_MAX;
@@ -444,7 +451,9 @@ START_TEST (test_l1c_nesta_setup)
   }
   l1c_AxFuns ax_funs;
   l1c_setup_matrix_transforms(n, m, A, &ax_funs);
-  l1c_NestaOpts opts = {.n_continue=5, .sigma=sigma, .mu=mu, .tol=tol, .flags=L1C_ANALYSIS};
+  l1c_NestaOpts opts = {.n_continue=5, .sigma=sigma, .mu=mu, .tol=tol, .bp_mode=analysis};
+  // We are checking that setup will fail for ax_funs without analysis opertator.
+  ax_funs.Wz = NULL;
   int status = l1c_nesta_setup(NP, &beta_mu, &beta_tol, b, ax_funs, &opts);
 
   ck_assert_int_eq(status, L1C_INCONSISTENT_ARGUMENTS);
@@ -452,7 +461,7 @@ START_TEST (test_l1c_nesta_setup)
   ax_funs.destroy();
 
   int pix_idx[5] = {1, 3, 4, 6, 8};
-  if (l1c_setup_dct_transforms(n, m, 1, pix_idx, &ax_funs)){
+  if (l1c_setup_dct_transforms(n, m, 1, dct_mode, pix_idx, &ax_funs)){
     fprintf(stderr, "Memory allocation failed in %s\n", __func__);
     ck_abort();
   }

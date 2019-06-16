@@ -56,6 +56,7 @@ function opts = l1qc_dct_opts(varargin)
   p.addParameter('cgtol', 1e-8);
   p.addParameter('cgmaxiter', 200);
   p.addParameter('warm_start_cg', 0);
+  p.addParameter('dct_mode', 1);
   p.parse(varargin{:});
   opts = p.Results();
   

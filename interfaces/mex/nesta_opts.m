@@ -25,7 +25,8 @@ function opts = nesta_opts(varargin)
 
    p.addParameter('verbose', 5);
    p.addParameter('n_continue',5);
-   p.addParameter('mode','analysis');
+   p.addParameter('bp_mode', 'analysis');
+   p.addParameter('dct_mode', 1);
    
    
    p.parse(varargin{:});

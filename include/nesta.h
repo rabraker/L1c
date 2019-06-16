@@ -26,8 +26,7 @@ struct _l1c_NestaOpts {
   int n_continue;
   /** Print nothing if 0.*/
   int verbose;
-  /** One of L1C_SYNTHESIS or L1C_ANALYSIS. */
-  unsigned flags;
+  BpMode bp_mode;
 };
 
 /** @} */
@@ -118,16 +117,6 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
               l1c_AxFuns ax_funs, l1c_NestaOpts opts);
 
 
-/** @ingroup nesta
- * Instructs optimization to operate in synthesis mode, e.g.,
- * \f$\min_x ||x|| \text{ s.t. } ||RWx-b||<\sigma\f$ */
-#define L1C_SYNTHESIS (1U << 0)
-
-/** @ingroup nesta
- * Instructs optimization to operate in analysis mode, e.g.,
- *  \f$\min_x ||W^Tx|| \text{ s.t. } ||Rx-b||<\sigma\f$
- */
-#define L1C_ANALYSIS (1U << 1)
 
 
 #endif

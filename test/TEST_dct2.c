@@ -230,7 +230,7 @@ END_TEST
 
 START_TEST(test_dct2_Ex)
 {
-  ax_funs.Ex(dctd->x_in, dctd->Ex_act);
+  ax_funs.Rx(dctd->x_in, dctd->Ex_act);
 
   ck_assert_double_array_eq_tol(dctd->n, dctd->Ex_exp,
                                 dctd->Ex_act, TOL_DOUBLE_SUPER);
@@ -240,7 +240,7 @@ END_TEST
 
 START_TEST(test_dct2_Ety)
 {
-  ax_funs.Ety(dctd->y_in, dctd->Ety_act);
+  ax_funs.Rty(dctd->y_in, dctd->Ety_act);
 
   ck_assert_double_array_eq_tol(dctd->mtot, dctd->Ety_exp,
                                 dctd->Ety_act, TOL_DOUBLE_SUPER);

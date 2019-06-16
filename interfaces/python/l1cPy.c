@@ -91,24 +91,24 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
                        .newton_max_iter = 50, .verbose = 0,
                        .l1_tol = 1e-5, .lbiter = 0,
                        .cg_tol = 1e-8, .cg_maxiter = 200,
-                       .cg_verbose=0, .warm_start_cg=0};
+                       .cg_verbose=0, .warm_start_cg=0, .dct_mode=dct1};
 
   char *keywords[] = {"", "", "", "",
                       "epsilon", "mu",
                       "lbtol", "newton_tol",
                       "newton_max_iter", "verbose",
                       "l1_tol", "cgtol",
-                      "cgmaxiter",
+                      "cgmaxiter", "dct_mode",
                       NULL};
 
   /* Parse the input tuple O=object, d=double, i=int*/
-  if (!PyArg_ParseTupleAndKeywords(args, kw, "iiOO|ddddiiddi", keywords,
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "iiOO|ddddiiddii", keywords,
                                    &mrow, &mcol, &b_obj, &pix_idx_obj,
                                    &opts.epsilon, &opts.mu,
                                    &opts.lbtol, &opts.newton_tol,
                                    &opts.newton_max_iter, &opts.verbose,
                                    &opts.l1_tol, &opts.cg_tol,
-                                   &opts.cg_maxiter)){
+                                   &opts.cg_maxiter, &opts.dct_mode)){
     fprintf(stderr, "%s: Parsing input arguments failed.\n", __func__);
     return NULL;
   }

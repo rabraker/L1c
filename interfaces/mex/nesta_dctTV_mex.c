@@ -20,19 +20,20 @@
  */
 void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 {
-  l1c_NestaOpts opts = {.mu=1e-5,
-                        .sigma=1e-3,
-                        .tol=1e-3,
-                        .n_continue=5,
-                        .flags=L1C_SYNTHESIS};
+  l1c_NestaOpts opts = {.mu = 1e-5,
+                        .sigma = 1e-3,
+                        .tol = 1e-3,
+                        .n_continue = 5,
+                        .bp_mode = analysis};
 
-  double *x_out=NULL,  *b=NULL;
+  double *x_out = NULL,
+                *b = NULL;
   double *pix_idx_double=NULL, *x_ours=NULL;
   double alp_v = 0, alp_h = 0;
 
   l1c_int n=0, mrow=0, mcol=1, mtot=0, idx=0;
   l1c_int size_pix_idx=0;
-
+  DctMode dct_mode;
   l1c_int *pix_idx;
   int status=0;
 
@@ -60,8 +61,8 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   opts.n_continue = (int)_mex_get_double_from_struct_or_fail(prhs, 4, "n_continue");
   alp_v           = _mex_get_double_from_struct_or_fail(prhs, 4, "alpha_v");
   alp_h           = _mex_get_double_from_struct_or_fail(prhs, 4, "alpha_h");
-
-  mxArray *mxA_mode = mxGetField(prhs[4], 0, "mode");
+  dct_mode        = (DctMode)_mex_get_double_from_struct_or_fail(prhs, 4, "dct_mode");
+  mxArray *mxA_mode = mxGetField(prhs[4], 0, "bp_mode");
   if (!mxA_mode) {
     mexErrMsgIdAndTxt("l1c:notAField", "Error loading field '%s'.", "mode");
   }
@@ -72,9 +73,9 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   }
 
   if (strncmp(mode, "synthesis", 10) == 0){
-    opts.flags = L1C_SYNTHESIS;
+    opts.bp_mode = synthesis;
   }else if(strncmp(mode, "analysis", 10) == 0){
-    opts.flags = L1C_ANALYSIS;
+    opts.bp_mode = analysis;
   }else{
     mexErrMsgIdAndTxt("l1c:badField", "Field 'mode' of opts must be a string, either analysis or synthesis");
   }
@@ -85,7 +86,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
      Probably can be fixed by passing flags to ax_funs, and adjusting how we
      set everything up. Then nesta can be dumb to which mode it is in as well.
    */
-  if ( (alp_v >0 || alp_h > 0) && (opts.flags & L1C_SYNTHESIS)){
+  if ( (alp_v >0 || alp_h > 0) && (opts.bp_mode == synthesis)){
     mexErrMsgIdAndTxt("l1c:InvalidInput",
                       "Can only do TV with analysis mode.");
   }
@@ -126,7 +127,8 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     pix_idx[i] = idx;
   }
   l1c_AxFuns ax_funs;
-  status |= l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h, pix_idx, &ax_funs);
+  status |= l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h, dct_mode,
+                                       opts.bp_mode, pix_idx, &ax_funs);
   if (status){
     goto exit1;
   }

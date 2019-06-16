@@ -219,9 +219,9 @@ START_TEST(test_dct_Mty)
 END_TEST
 
 
-START_TEST(test_dct_Ex)
+START_TEST(test_dct_Rx)
 {
-  ax_funs.Ex(dctd->x_in, dctd->Ex_act);
+  ax_funs.Rx(dctd->x_in, dctd->Ex_act);
 
   ck_assert_double_array_eq_tol(dctd->n, dctd->Ex_exp,
                                 dctd->Ex_act, TOL_DCT);
@@ -229,9 +229,9 @@ START_TEST(test_dct_Ex)
 }
 END_TEST
 
-START_TEST(test_dct_Ety)
+START_TEST(test_dct_Rty)
 {
-  ax_funs.Ety(dctd->y_in, dctd->Ety_act);
+  ax_funs.Rty(dctd->y_in, dctd->Ety_act);
 
   ck_assert_double_array_eq_tol(dctd->m, dctd->Ety_exp,
                                 dctd->Ety_act, TOL_DCT);
@@ -256,8 +256,8 @@ Suite *dct_suite(void)
   tcase_add_test(tc_dct_small, test_dct_EMx);
   tcase_add_test(tc_dct_small, test_dct_Mx);
   tcase_add_test(tc_dct_small, test_dct_Mty);
-  tcase_add_test(tc_dct_small, test_dct_Ex);
-  tcase_add_test(tc_dct_small, test_dct_Ety);
+  tcase_add_test(tc_dct_small, test_dct_Rx);
+  tcase_add_test(tc_dct_small, test_dct_Rty);
   suite_add_tcase(s, tc_dct_small);
 
   tc_dct_large = tcase_create("dct_large");
@@ -267,8 +267,8 @@ Suite *dct_suite(void)
   tcase_add_test(tc_dct_large, test_dct_EMx);
   tcase_add_test(tc_dct_large, test_dct_Mx);
   tcase_add_test(tc_dct_large, test_dct_Mty);
-  tcase_add_test(tc_dct_large, test_dct_Ex);
-  tcase_add_test(tc_dct_large, test_dct_Ety);
+  tcase_add_test(tc_dct_large, test_dct_Rx);
+  tcase_add_test(tc_dct_large, test_dct_Rty);
   suite_add_tcase(s, tc_dct_large);
 
   tc_dct_pure = tcase_create("dct_pure");
@@ -278,8 +278,8 @@ Suite *dct_suite(void)
   tcase_add_test(tc_dct_pure, test_dct_EMx);
   tcase_add_test(tc_dct_pure, test_dct_Mx);
   tcase_add_test(tc_dct_pure, test_dct_Mty);
-  tcase_add_test(tc_dct_pure, test_dct_Ex);
-  tcase_add_test(tc_dct_pure, test_dct_Ety);
+  tcase_add_test(tc_dct_pure, test_dct_Rx);
+  tcase_add_test(tc_dct_pure, test_dct_Rty);
   suite_add_tcase(s, tc_dct_pure);
 
   return s;
