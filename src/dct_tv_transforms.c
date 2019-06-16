@@ -93,6 +93,11 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
     _p += _m;
   }
 
+  /* If we are in synthesis mode, W == Identity, so normW =1.*/
+  if (bp_mode == synthesis){
+    ax_funs->norm_W = 1;
+  }
+
   ax_funs->n = n;
   ax_funs->m = _m;
   ax_funs->p = _p;
@@ -138,7 +143,7 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
 }
 
 static void destroy() {
-  // ax_funs_local.destroy();
+  ax_funs_local.destroy();
   l1c_free_double(u);
 }
 
