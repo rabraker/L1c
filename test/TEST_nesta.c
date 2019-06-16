@@ -221,7 +221,8 @@ START_TEST (test_l1c_nesta)
     goto exit0;
   }
 
-
+  // matrix_transforms doesnt set normW yet. Would be better to compute in python.
+  ax_funs.norm_W = 1;
   l1c_NestaOpts opts = {.mu=1e-5,
                         .sigma=epsilon,
                         .tol=1e-3,

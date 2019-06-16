@@ -277,15 +277,8 @@ int l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
   if (!ax_funs.Wz || !ax_funs.Wtx || !ax_funs.Rx || !ax_funs.Rty) {
     return L1C_INCONSISTENT_ARGUMENTS;
   }
-  /* Check that flags is consistent with functionality provided by ax_funs. */
-  if (opts->bp_mode == analysis) {
-    L = ax_funs.norm_W;
-  }else{
-    /* When we are in synthesis mode, ||Wx||_1 = ||Ix||_1, ie, W=I, so
-     norm is 1.
-    */
-    L = 1.0;
-  }
+  L = ax_funs.norm_W;
+
   NP->b = b;
   NP->n_continue = opts->n_continue;
   NP->ax_funs = ax_funs;
