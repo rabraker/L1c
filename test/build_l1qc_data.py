@@ -13,6 +13,11 @@ def build_lb_test_data(lb_data_path, m, T, K):
     What we check that (1) the optimization finishes without error
     and (2) that the optimal vector has an l1-norm comparable to
     the true x, to within the noise level.
+
+    Typical values
+    m = 512  # Total vector size
+    T = 20   # sparsity
+    K = 120  # Number of measurements.
     """
     x = np.zeros((m, 1))
     q = np.random.permutation(m)
