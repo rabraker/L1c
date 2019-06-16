@@ -75,7 +75,7 @@ static l1c_AxFuns ax_funs;
    to use a different file path for each.
  */
 // static void setup(DctData *dct_dat, char *fname){
-static void setup(char *fname){
+static void setup(char *fname, BpMode bp_mode, DctMode dct_mode){
   cJSON *test_data_json;
   int setup_status=0;
 
@@ -133,9 +133,7 @@ static void setup(char *fname){
   dctd->Rx_act = l1c_calloc_double(dctd->n);
   dctd->Rty_act = l1c_malloc_double(dctd->mtot);
 
-  BpMode bp_mode = synthesis;
-  DctMode dct_mode = dct2;
-      int status_setup = l1c_setup_dctTV_transforms(
+  int status_setup = l1c_setup_dctTV_transforms(
           dctd->n, dctd->mrow, dctd->mcol, dctd->alp_v, dctd->alp_h, dct_mode,
           bp_mode, dctd->pix_idx, &ax_funs);
   ck_assert_int_eq(status_setup, L1C_SUCCESS);
@@ -179,22 +177,35 @@ static void teardown(void){
 
 
 static void setup_dct2_tv_square(void){
-  setup("dct2_tv_square.json");
+  BpMode bp_mode = synthesis;
+  DctMode dct_mode = dct2;
+  setup("dct2_tv_square.json", bp_mode, dct_mode);
 }
 
 
 static void setup_dct2_tv_vh_square(void){
-  setup("dct2_tv_vh_square.json");
+  BpMode bp_mode = synthesis;
+  DctMode dct_mode = dct2;
+  setup("dct2_tv_vh_square.json", bp_mode, dct_mode);
 }
 
 static void setup_dct2_tv_v_square(void){
-  setup("dct2_tv_v_square.json");
+  BpMode bp_mode = synthesis;
+  DctMode dct_mode = dct2;
+  setup("dct2_tv_v_square.json", bp_mode, dct_mode);
 }
 
 static void setup_dct2_tv_h_square(void){
-  setup("dct2_tv_h_square.json");
+  BpMode bp_mode = synthesis;
+  DctMode dct_mode = dct2;
+  setup("dct2_tv_h_square.json", bp_mode, dct_mode);
 }
 
+static void setup_analysis(void){
+  BpMode bp_mode = analysis;
+  DctMode dct_mode = dct2;
+  setup("dct2_tv_vh_square.json", bp_mode, dct_mode);
+}
 
 
 static void check_ax_fun_properties() {
@@ -242,7 +253,7 @@ START_TEST(test_Mtx)
   /* --------- Wt ---------------------*/
   ax_funs.Mty(dctd->x_in, dctd->Mty_act);
 
-  ck_assert_double_array_eq_tol(dctd->mtot, dctd->Mty_exp,
+  ck_assert_double_array_eq_tol(dctd->p, dctd->Mty_exp,
                                 dctd->Mty_act, TOL_DOUBLE_SUPER);
 
 }
@@ -279,6 +290,70 @@ END_TEST
 
 START_TEST(test_Rty)
 {
+  ax_funs.Rty(dctd->y_in, dctd->Rty_act);
+  ck_assert_double_array_eq_tol(dctd->mtot, dctd->Rty_exp,
+                                dctd->Rty_act, TOL_DOUBLE_SUPER);
+
+}
+END_TEST
+
+/* --------------------------- ANALYSIS MODE CHECKS -------------- */
+START_TEST(test_Wz_analysis)
+{
+  /* In Analysis mode, this should be the identity.*/
+  ax_funs.Wz(dctd->z_in, dctd->Mx_act);
+  ck_assert_double_array_eq_tol(dctd->mtot, dctd->Mx_exp,
+                                dctd->Mx_act, TOL_DOUBLE_SUPER);
+
+}
+END_TEST
+
+START_TEST(test_Wtx_analysis)
+{
+  /* In Analysis mode, this should be the identity.*/
+  ax_funs.Wtx(dctd->x_in, dctd->Mty_act);
+  ck_assert_double_array_eq_tol(dctd->p, dctd->Mty_exp,
+                                dctd->Mty_act, TOL_DOUBLE_SUPER);
+
+}
+END_TEST
+
+START_TEST(test_Mx_analysis)
+{
+  /* In Analysis mode, this should be the identity.*/
+  ax_funs.Mx(dctd->x_in, dctd->Mx_act);
+
+  ck_assert_double_array_eq_tol(dctd->mtot, dctd->x_in,
+                                dctd->Mx_act, TOL_DOUBLE_SUPER);
+
+}
+END_TEST
+
+START_TEST(test_Mty_analysis)
+{
+  /* In Analysis mode, this should be the identity.*/
+  ax_funs.Mty(dctd->x_in, dctd->Mty_act);
+
+  ck_assert_double_array_eq_tol(dctd->mtot, dctd->x_in,
+                                dctd->Mty_act, TOL_DOUBLE_SUPER);
+
+}
+END_TEST
+
+START_TEST(test_Ax_analysis)
+{
+  /* In Analysis mode, this should be the same as Rx.*/
+  ax_funs.Rx(dctd->x_in, dctd->Rx_act);
+
+  ck_assert_double_array_eq_tol(dctd->n, dctd->Rx_exp,
+                                dctd->Rx_act, TOL_DOUBLE_SUPER);
+
+}
+END_TEST
+
+START_TEST(test_Aty_analysis)
+{
+  /* In Analysis mode, this should be the same as Rty.*/
   ax_funs.Rty(dctd->y_in, dctd->Rty_act);
 
   ck_assert_double_array_eq_tol(dctd->mtot, dctd->Rty_exp,
@@ -351,6 +426,8 @@ Suite *dctTV_suite(void)
 {
   Suite *s;
   TCase *tc_errors, *tc_dct2_only, *tc_dct2_vh, *tc_dct2_v, *tc_dct2_h;
+  TCase *tc_analysis;
+
   s = suite_create("dctTV");
 
   tc_errors = tcase_create("dct_tv_errors");
@@ -410,6 +487,20 @@ Suite *dctTV_suite(void)
 
   suite_add_tcase(s, tc_dct2_h);
 
+  /* ------------- ANALYSIS -------------------*/
+  tc_analysis = tcase_create("dctTV_dct2_analysis");
+  tcase_add_checked_fixture(tc_analysis, setup_analysis, teardown);
+  tcase_add_test(tc_analysis, test_Wz_analysis);
+  tcase_add_test(tc_analysis, test_Wtx_analysis);
+  tcase_add_test(tc_analysis, test_Mx_analysis);
+  tcase_add_test(tc_analysis, test_Mty_analysis);
+  tcase_add_test(tc_analysis, test_Ax_analysis);
+  tcase_add_test(tc_analysis, test_Aty_analysis);
+  tcase_add_test(tc_analysis, test_Rty);
+  tcase_add_test(tc_analysis, test_Rx);
+
+
+  suite_add_tcase(s, tc_analysis);
   /* The test check what happens when pix_idx is all ones, ie,
      the identitiy. That is, these are equivalent to just taking the dct/idct
      with not sampling.
