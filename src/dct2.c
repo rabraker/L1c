@@ -18,7 +18,7 @@ static void dct2_MtEty(double *y, double *x);
 static void dct2_MtEt_EMx(double *x_fftw, double *z);
 static void dct2_Ex(double *x, double *y);
 static void dct2_Ety(double *y, double *x);
-
+static void Identity(double *y, double *x);
 
 /*-------- Globals for dct2. ------------- */
 static fftw_plan dct2_plan_MtEty;
@@ -174,6 +174,9 @@ int l1c_dct2_setup( l1c_int n, l1c_int mrow, l1c_int mcol, l1c_int *pix_mask_idx
   ax_funs->Rx = dct2_Ex;
   ax_funs->Rty = dct2_Ety;
 
+  ax_funs->Wtx = Identity;
+  ax_funs->Wz = Identity;
+
   ax_funs->destroy = dct2_destroy;
   ax_funs->data = NULL;
 
@@ -197,7 +200,9 @@ static void dct2_destroy(){
 #endif
 }
 
-
+static void Identity(double *y, double *x){
+  cblas_dcopy(dct2_mcol*dct2_mrow, y, 1, x, 1);
+}
 /*
   Computes x = M^T * x
  */

@@ -207,6 +207,22 @@ START_TEST(test_dct_Mx)
 }
 END_TEST
 
+START_TEST(test_dct_Wtx_synth) {
+  /* Should be the identity.*/
+  ax_funs.Wtx(dctd->x_in, dctd->Mx_act);
+
+  ck_assert_double_array_eq_tol(dctd->m, dctd->x_in, dctd->Mx_act, TOL_DCT);
+}
+END_TEST
+
+START_TEST(test_dct_Wz_synth) {
+  /* Should be the identity.*/
+  ax_funs.Wz(dctd->x_in, dctd->Mx_act);
+
+  ck_assert_double_array_eq_tol(dctd->m, dctd->x_in, dctd->Mx_act, TOL_DCT);
+}
+END_TEST
+
 
 START_TEST(test_dct_Mty)
 {
@@ -258,6 +274,8 @@ Suite *dct_suite(void)
   tcase_add_test(tc_dct_small, test_dct_Mty);
   tcase_add_test(tc_dct_small, test_dct_Rx);
   tcase_add_test(tc_dct_small, test_dct_Rty);
+  tcase_add_test(tc_dct_small, test_dct_Wz_synth);
+  tcase_add_test(tc_dct_small, test_dct_Wtx_synth);
   suite_add_tcase(s, tc_dct_small);
 
   tc_dct_large = tcase_create("dct_large");
@@ -269,6 +287,8 @@ Suite *dct_suite(void)
   tcase_add_test(tc_dct_large, test_dct_Mty);
   tcase_add_test(tc_dct_large, test_dct_Rx);
   tcase_add_test(tc_dct_large, test_dct_Rty);
+  tcase_add_test(tc_dct_large, test_dct_Wz_synth);
+  tcase_add_test(tc_dct_large, test_dct_Wtx_synth);
   suite_add_tcase(s, tc_dct_large);
 
   tc_dct_pure = tcase_create("dct_pure");
@@ -280,8 +300,9 @@ Suite *dct_suite(void)
   tcase_add_test(tc_dct_pure, test_dct_Mty);
   tcase_add_test(tc_dct_pure, test_dct_Rx);
   tcase_add_test(tc_dct_pure, test_dct_Rty);
+  tcase_add_test(tc_dct_pure, test_dct_Wz_synth);
+  tcase_add_test(tc_dct_pure, test_dct_Wtx_synth);
   suite_add_tcase(s, tc_dct_pure);
 
   return s;
-
 }

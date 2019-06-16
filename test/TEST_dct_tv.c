@@ -248,6 +248,25 @@ START_TEST(test_Mtx)
 }
 END_TEST
 
+START_TEST(test_Wz_synth) {
+  /* Identity in synthesis mode.*/
+  ax_funs.Wz(dctd->z_in, dctd->Mx_act);
+
+  ck_assert_double_array_eq_tol(dctd->mtot, dctd->z_in, dctd->Mx_act,
+                                TOL_DOUBLE_SUPER);
+}
+END_TEST
+
+START_TEST(test_Wtx_synth) {
+  /* Identity in synthesis mode.*/
+  ax_funs.Wtx(dctd->z_in, dctd->Mx_act);
+
+  ck_assert_double_array_eq_tol(dctd->mtot, dctd->z_in, dctd->Mx_act,
+                                TOL_DOUBLE_SUPER);
+}
+END_TEST
+
+
 START_TEST(test_Rx)
 {
   ax_funs.Rx(dctd->x_in, dctd->Rx_act);
@@ -348,7 +367,8 @@ Suite *dctTV_suite(void)
   tcase_add_test(tc_dct2_only, test_Rty);
   tcase_add_test(tc_dct2_only, test_Rx);
   tcase_add_test(tc_dct2_only, test_RMx);
-
+  tcase_add_test(tc_dct2_only, test_Wtx_synth);
+  tcase_add_test(tc_dct2_only, test_Wz_synth);
   suite_add_tcase(s, tc_dct2_only);
 
   tc_dct2_vh = tcase_create("dctTV_dct2_tv_vh");
@@ -359,6 +379,8 @@ Suite *dctTV_suite(void)
   tcase_add_test(tc_dct2_vh, test_Rty);
   tcase_add_test(tc_dct2_vh, test_Rx);
   tcase_add_test(tc_dct2_vh, test_RMx);
+  tcase_add_test(tc_dct2_vh, test_Wtx_synth);
+  tcase_add_test(tc_dct2_vh, test_Wz_synth);
 
   suite_add_tcase(s, tc_dct2_vh);
 
@@ -370,6 +392,8 @@ Suite *dctTV_suite(void)
   tcase_add_test(tc_dct2_v, test_Rty);
   tcase_add_test(tc_dct2_v, test_Rx);
   tcase_add_test(tc_dct2_v, test_RMx);
+  tcase_add_test(tc_dct2_v, test_Wtx_synth);
+  tcase_add_test(tc_dct2_v, test_Wz_synth);
 
   suite_add_tcase(s, tc_dct2_v);
 
@@ -381,6 +405,8 @@ Suite *dctTV_suite(void)
   tcase_add_test(tc_dct2_h, test_Rty);
   tcase_add_test(tc_dct2_h, test_Rx);
   tcase_add_test(tc_dct2_h, test_RMx);
+  tcase_add_test(tc_dct2_h, test_Wtx_synth);
+  tcase_add_test(tc_dct2_h, test_Wz_synth);
 
   suite_add_tcase(s, tc_dct2_h);
 
@@ -392,5 +418,4 @@ Suite *dctTV_suite(void)
 
 
   return s;
-
 }

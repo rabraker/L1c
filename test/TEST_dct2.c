@@ -218,6 +218,24 @@ START_TEST(test_dct2_Mx)
 }
 END_TEST
 
+
+START_TEST(test_dct2_Wz_synth){
+  /* Should be the identity, for synthesis.*/
+  ax_funs.Wz(dctd->x_in, dctd->Mx_act);
+
+  ck_assert_double_array_eq_tol(dctd->mtot, dctd->x_in, dctd->Mx_act,
+                                TOL_DOUBLE_SUPER);
+}END_TEST
+
+START_TEST(test_dct2_Wtx_synth) {
+  /* Should be the identity, for synthesis.*/
+  ax_funs.Wtx(dctd->x_in, dctd->Mx_act);
+
+  ck_assert_double_array_eq_tol(dctd->mtot, dctd->x_in, dctd->Mx_act,
+                                TOL_DOUBLE_SUPER);
+}
+END_TEST
+
 START_TEST(test_dct2_Mty)
 {
   ax_funs.Mty(dctd->z_in, dctd->Mty_act);
@@ -268,6 +286,8 @@ Suite *dct2_suite(void)
   tcase_add_test(tc_dct2_square, test_dct2_Mty);
   tcase_add_test(tc_dct2_square, test_dct2_Ex);
   tcase_add_test(tc_dct2_square, test_dct2_Ety);
+  tcase_add_test(tc_dct2_square, test_dct2_Wz_synth);
+  tcase_add_test(tc_dct2_square, test_dct2_Wtx_synth);
 
   suite_add_tcase(s, tc_dct2_square);
 
@@ -285,6 +305,8 @@ Suite *dct2_suite(void)
   tcase_add_test(tc_dct2_pure, test_dct2_Mty);
   tcase_add_test(tc_dct2_pure, test_dct2_Ex);
   tcase_add_test(tc_dct2_pure, test_dct2_Ety);
+  tcase_add_test(tc_dct2_pure, test_dct2_Wz_synth);
+  tcase_add_test(tc_dct2_pure, test_dct2_Wtx_synth);
 
   suite_add_tcase(s, tc_dct2_pure);
 
@@ -300,6 +322,8 @@ Suite *dct2_suite(void)
   tcase_add_test(tc_dct2_tall, test_dct2_Mty);
   tcase_add_test(tc_dct2_tall, test_dct2_Ex);
   tcase_add_test(tc_dct2_tall, test_dct2_Ety);
+  tcase_add_test(tc_dct2_tall, test_dct2_Wz_synth);
+  tcase_add_test(tc_dct2_tall, test_dct2_Wtx_synth);
 
   suite_add_tcase(s, tc_dct2_tall);
 
@@ -314,6 +338,8 @@ Suite *dct2_suite(void)
   tcase_add_test(tc_dct2_wide, test_dct2_Mty);
   tcase_add_test(tc_dct2_wide, test_dct2_Ex);
   tcase_add_test(tc_dct2_wide, test_dct2_Ety);
+  tcase_add_test(tc_dct2_wide, test_dct2_Wz_synth);
+  tcase_add_test(tc_dct2_wide, test_dct2_Wtx_synth);
 
   suite_add_tcase(s, tc_dct2_wide);
 
