@@ -34,7 +34,7 @@ AC_PROG_INSTALL
 LT_INIT([win32-dll, dlopen])
 # callint LT_INIT means we dont need: AC_PROG_RANLIB, AM_PROG_LIBTOOL
 AC_CANONICAL_HOST
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([-Wall])
 
 AM_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -134,13 +134,17 @@ fi
 AX_APPEND_ALL_COMPILE_FLAGS([-fopenmp -m64 -std=c11], [l1c_cflags],
                             [AC_MSG_ERROR("Compiler does not support required flag")],
                             [],[])
-# Check if c compiler accepts a bunch of warning flags
+
+# Check if c compiler accepts a bunch of warning flags.
+# Force it to fail on a warning.
+AX_CHECK_COMPILE_FLAG(-Werror, [tmp_cflags="-Werror"], [], [], [])
 AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused   \
                             -Wcast-qual -Wcast-align -Winit-self     \
                             -Wfloat-equal -Wundef -Wshadow -Wstringop-truncation \
-                            -Wswitch-enum -Wvla], [l1c_cflags], [] [])
+                            -Wswitch-enum -Wvla], [l1c_cflags], [$tmp_cflags] [])
 
 AC_LANG([C++])
+AX_CHECK_COMPILE_FLAG(-Werror, [tmp_cflags="-Werror"], [], [], [])
 AX_APPEND_ALL_COMPILE_FLAGS([-m64 -std=c++11], [l1c_cxxflags],
                             [AC_MSG_ERROR("Compiler does not support required flag")],
                             [],[])
@@ -148,7 +152,7 @@ AX_APPEND_ALL_COMPILE_FLAGS([-m64 -std=c++11], [l1c_cxxflags],
 AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused   \
                             -Wcast-qual -Wcast-align -Winit-self     \
                             -Wfloat-equal -Wundef -Wshadow -Wstringop-truncation \
-                            -Wswitch-enum -Wvla], [l1c_cxxflags], [] [])
+                            -Wswitch-enum -Wvla], [l1c_cxxflags], [$tmp_cflags] [])
 AC_LANG([C])
 
 
@@ -400,6 +404,7 @@ fi  # checks for mex
 # ---------------------- Check for headers -------------------------------
 
 AC_CHECK_HEADERS([stddef.h stdint.h stdlib.h string.h])
+AC_CHECK_HEADER([omp.h], [], [AC_MSG_ERROR("Cannot find omp.h")], [])
 AC_CHECK_HEADER([check.h], [], [AC_MSG_ERROR("Cannot find check.h")], [])
 # We need to make sure the installed libcheck we found has the floating point macros,
 # which were introduced in check ver 0.11.0
@@ -424,7 +429,7 @@ AC_CHECK_HEADER([math.h], [], [AC_MSG_ERROR("Cannot find math.h")])
 
 # ----------------------- Checks for libraries.---------------------------------
 AC_CHECK_LIB([m], [sqrt],[],[
-             AC_MSG_ERROR(library is required for this program)])
+             AC_MSG_ERROR(Math library is required for this program)])
 
 
 # If libcheck is installed from source, dont need to link with all these extra libs, so we shouldnt require it. Easiest to just use pkg-config.
@@ -438,8 +443,12 @@ AC_SUBST(check_LIBS, $check_LIBS)
 AC_CHECK_LIB([cjson], [cJSON_GetArraySize],[],[
              AC_MSG_ERROR(cJSON library is required for this program)])
 
-AC_CHECK_LIB([gomp], [omp_set_num_threads],[],[
-             AC_MSG_ERROR(omp library is required for this program)])
+# Try both libgomp and libomp. When compiling with clang, this will artificially pass
+# w/o -fopenmp. When we compile L1c, -fopenmp will cause clang to add -lomp to the ld
+# call, which will fail, even if we found gomp here.
+AC_CHECK_LIB([gomp], [omp_set_num_threads],[],
+                     [AC_CHECK_LIB([omp], [omp_set_num_threads],[],
+                     [AC_MSG_ERROR(omp library is required for this program)], [-fopenmp])], [-fopenmp])
 
 
 AM_CONDITIONAL([comp_with_mex], [test x$enable_mex = xyes])
