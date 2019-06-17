@@ -3,6 +3,7 @@
 
 AUTOMAKE_OPTIONS = foreign 1.8
 clean-local:: clean-convenience-link
+
 bin_PROGRAMS    =
 
 AM_LDFLAGS      = -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
@@ -54,7 +55,7 @@ endif
 all_libs = $(mex_LTLIBRARIES)
 
 
-.PHONY: convenience-link clean-convenience-link
+.PHONY: convenience-link clean-convenience-link copy-examples
 
 # We need to ensure that we dont grep when lib_LTLTLIBRARIES is empty.
 # This seems way overcomplicated...
@@ -81,4 +82,9 @@ clean-convenience-link:
 	rm -f *.so* *.mexa64 *.o *.lo *.la *.dll *.mexw64 *.pyc
 
 
-all-local:: convenience-link
+all-local:: convenience-link copy-examples
+
+copy-examples:examples
+	mkdir -p $(abs_builddir)/examples
+	cp $(abs_srcdir)/examples/*.m $(abs_builddir)/examples/.
+

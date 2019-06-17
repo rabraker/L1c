@@ -7,18 +7,17 @@
 
 clear
 
-addpath ../../interfaces/mex
 % This needs to point to the current build directory, ie whereever the mex files
 % ended up.
-addpath ../../build/interfaces/mex
+addpath ../
+
 
 sampling_ratio = 0.1; % take 10% of the pixels
 mu_path_len = 25;     % mu-path length in pixels.
 N = 256;              % (pixels) Size of square image
 
 % Create the test image.
-x_start = 13; % x-offset for the grating holes.
-y_stary = 13; 
+
 rng(1);       % Always get the same mask.
 X_img_orig = cs20ng_grating(13,13,N);
 
@@ -28,16 +27,12 @@ X_img_orig = cs20ng_grating(13,13,N);
 
 [pix_idx, pix_mask_mat] = mu_path_mask(mu_path_len, N, N, sampling_ratio);
 
-% Put the image matrix into a vector.
-img_vec = reshape(X_img_orig', N*N,1);
+% sub samble the original image.
+b = X_img_orig(pix_idx);
 
-b = img_vec(pix_idx);      % sub samble the original image.
-b = b/max(abs(b)); % normalize to 1
-
-n = length(img_vec)
 opts = l1qc_dct_opts('verbose', 2, 'l1_tol', 1e-5);
 
-[x_est, LBRes]= l1qc_dct(n, 1, b, pix_idx, opts);
+[x_est, LBRes]= l1qc_dct(N*N, 1, b, pix_idx, opts);
 
 X_bp = reshape(x_est, N, N)';
 
@@ -45,14 +40,17 @@ figure(1)
 subplot(2, 2, 1)
 imagesc(X_img_orig)
 colormap('gray')
+title('original')
 
 subplot(2, 2, 2)
 imagesc(pix_mask_mat)
 colormap('gray')
+title('Sampling mask')
 
 subplot(2, 2, 3)
 imagesc(X_bp)
 colormap('gray')
+title('BP reconstruction')
 
 % We can help with noise in the BP reconstruction with TV denoising.
 mu = 5;
@@ -63,6 +61,6 @@ X_tv = breg_anistropic_TV(X_bp, mu, tol, max_iter);
 subplot(2, 2, 4)
 imagesc(X_tv)
 colormap('gray')
-
+title('BP reconstruction + TV denoising')
 
 
