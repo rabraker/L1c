@@ -8,7 +8,8 @@ bin_PROGRAMS    =
 AM_LDFLAGS      = -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
 AM_CPPFLAGS     = -DBUILDING_DLL -I$(top_srcdir)/include -I./ -I../ \
 					$(L1CCPPFLAGS) $(MEXCPPFLAGS)
-AM_CFLAGS       =  $(L1CCFLAGS) $(MEXCFLAGS) -fPIC
+#  -fPIC
+AM_CFLAGS       =  $(L1CCFLAGS) $(MEXCFLAGS)
 LIBS            =  $(top_builddir)/src/libl1c.la \
 							$(MEXLDLIBS)
 if comp_with_mex

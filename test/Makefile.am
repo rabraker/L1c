@@ -99,7 +99,8 @@ test_l1c_test_SOURCES = TEST_cgsolve.c       \
 
 test_l1c_test_LDADD = ../src/libl1c.la ../src/vcl/libvcl_math.la $(check_LIBS)
 test_l1c_test_CPPFLAGS = -D_EXCLUDE_PUBLIC_ -I$(top_srcdir)/include  \
-						-I$(top_srcdir)/src
+						-I$(top_srcdir)/src $(L1CCPPFLAGS)
+
 test_l1c_test_CFLAGS = $(L1CCFLAGS) $(check_CFLAGS)
 test_l1c_test_LDFLAGS = $(LDFLAGS)
 

@@ -17,9 +17,10 @@ _l1cPy_module_la_SOURCES  = l1cPy.c
 _l1cPy_module_la_LDFLAGS  = -module -avoid-version $(LDFLAGS) $(PYTHON_LIBS)
 
 _l1cPy_module_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include  \
-					 $(L1CCPPFLAGS) $(PYTHON_CPPFLAGS) $(NPY_CPPFLAGS)
-
-_l1cPy_module_la_CFLAGS   =  $(L1CCFLAGS) -fPIC
+							$(L1CCPPFLAGS) $(PYTHON_CPPFLAGS) \
+							$(NPY_CPPFLAGS)
+# -fPIC
+_l1cPy_module_la_CFLAGS   =  $(L1CCFLAGS)
 _l1cPy_module_la_LIBADD   = $(top_builddir)/src/libl1c.la
 
 endif
