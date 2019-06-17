@@ -383,7 +383,7 @@ START_TEST(test_normW)
   double normW_exp=0;
   l1c_int pix_idx[5] = {0, 3, 4, 6, 7};
 
-  normW_exp = 1 + 4*alp_v*alp_v + 4*alp_h*alp_h;
+  normW_exp = sqrt(1 + 4*alp_v*alp_v + 4*alp_h*alp_h);
   status = l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h,
                                       dct_mode, bp_mode, pix_idx, &ax_funs);
   ck_assert_int_eq(status, L1C_SUCCESS);

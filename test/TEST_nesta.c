@@ -225,7 +225,7 @@ START_TEST (test_l1c_nesta)
   ax_funs.norm_W = 1;
   l1c_NestaOpts opts = {.mu=1e-5,
                         .sigma=epsilon,
-                        .tol=1e-3,
+                        .tol=1e-5,
                         .n_continue=5,
                         .bp_mode=synthesis};
   /* ------------------------------------------------------- */

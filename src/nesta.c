@@ -272,7 +272,7 @@ int l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
   if (!ax_funs.Wz || !ax_funs.Wtx || !ax_funs.Rx || !ax_funs.Rty) {
     return L1C_INCONSISTENT_ARGUMENTS;
   }
-  L = ax_funs.norm_W;
+  L = ax_funs.norm_W * ax_funs.norm_W;
 
   NP->b = b;
   NP->n_continue = opts->n_continue;
@@ -380,6 +380,8 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
   cblas_dcopy(NP->m, NP->xo, 1, NP->xk, 1);
 
   for (int iter=1; iter<= opts.n_continue; iter++){
+    NP->mu_j = NP->mu_j * beta_mu;
+    NP->tol_j = NP->tol_j * beta_tol;
 
     /* Reset everthing.*/
     l1c_init_vec(L1C_NESTA_NMEAN, fbar_fifo.f_vals, 0);
@@ -391,7 +393,7 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
     if (opts.verbose > 0) {
       printf("Starting nesta continuation iter %d, with muj = %f\n", iter,
              NP->mu_j);
-      printf("Iter |     fmu     |  Rel. Vartn fmu |  Residual  |\n");
+      printf("Iter |     fmu     |  Rel. Vartn fmu |\n");
       printf("------------------------------------------------------\n");
     }
     /* ---------------------------- MAIN ITERATION -------------------------- */
@@ -425,16 +427,17 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
       _l1c_push_fmeans_fifo(&fbar_fifo, NP->fx);
       rel_delta_fmu = fabs(NP->fx - fbar) / fbar;
       if (opts.verbose > 0 && (((k+1) % opts.verbose) == 0)) {
-        printf("%d     %.3e       %.2e        %.2e\n", k+1, NP->fx, rel_delta_fmu, 0.0);
+        printf("%d     %.3e       %.2e   \n", k+1, NP->fx, rel_delta_fmu);
       }
 
-      if (rel_delta_fmu < NP->tol){
+      if (rel_delta_fmu < NP->tol_j){
+        if (opts.verbose > 0){
+          printf("   stopping: delta_fmu < tol (%g < tol %g )\n\n", rel_delta_fmu, NP->tol_j);
+        }
         break;
       }
     } /* Inner iter*/
 
-    NP->mu_j = NP->mu_j * beta_mu;
-    NP->tol_j = NP->tol_j * beta_tol;
     cblas_dcopy(NP->m, NP->xk, 1, NP->xo, 1);
   }
 
