@@ -2,7 +2,7 @@
 #include <cblas.h>
 #include <stddef.h>
 #include <stdio.h>
-
+#include <math.h>
 #include "l1c.h"
 #include "TV.h"
 
@@ -38,6 +38,26 @@ static unsigned jobs;
   @TODO This will currently force dct2 if the user wants also TV
   (alp_v>0 or alp_h>0). Fix that, probably have to supply a flag.
   And maybe fix the l1c_setup_dct_transforms as well, for consistency.
+
+  We maintain that always: x\inR^m, y(or b) \in R^n.
+
+                              SYNTHESIS                ANALYSIS
+  --------------------------------------------------------------------
+  W  : m rows, p cols           -->I:m by m, p=m          m by p
+  W^T: p rows, m cols
+  R  : n rows, q cols                n by m,              n by m
+  M  : q rows, m cols                m by q,        -->I: m by m, q=m
+  A  : = R*M, n rows, m cols         n by m,              n by m
+
+  ||W^T x||           ||Ax - b||,    x\in R^m
+
+  Synthesis:
+  ||I x||           ||RMx - b|| x\in R^m, z = M*x, x\in R^q
+
+  Analysis:
+  ||W^T x||           ||Rx - b||, x=z \in R^q=R^m
+                                  h=W^Tx \in R^p
+
 */
 
 int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
@@ -54,30 +74,9 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
   _inc_TVV = 0;
   _inc_TVH = 0;
 
-  if (bp_mode == analysis){
-    ax_funs->norm_W = 1 + 4*alp_v*alp_v + 4*alp_h*alp_h;
-  }else{
-    ax_funs->norm_W = 1;
-  }
 
-  /* Check which jobs we are do to do. We partion local variable u as
-     u = [u, u_TVV, u_TVH], for vertical, horizontal parts.
-     Also, set inc_TVH, and inc_TVV, to proper increment for aguements below.
-
-  */
-
-  if (alp_v < 0) {
+  if (alp_v < 0 || alp_h < 0) {
     return L1C_INVALID_ARGUMENT;
-  } else if (alp_v > 0) {
-    jobs |= _JOB_TV_V;
-    _inc_TVV = _m;
-  }
-
-  if (alp_h < 0) {
-    return L1C_INVALID_ARGUMENT;
-  } else if (alp_h > 0) {
-    jobs |= _JOB_TV_H;
-    _inc_TVH = _inc_TVV + _m;
   }
 
   if (alp_v > 0 && (mrow <= 2 || mcol <= 2)) {
@@ -88,17 +87,45 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
     return L1C_INVALID_ARGUMENT;
   }
 
+  /* For a matrix A=[M1; M2], ||A|| = ||A^TA||^1/2 = ||M_1^TM_1  +  M_2^TM_2||^1/2
+    Thus,
+    ||A|| <= \sqrt{ ||M_1||^2 + ||M_2||^2 }
+    Here, ||M=dct||=1, and  evidently, ||alp_h*D_h||~=alp_h*2 and ||alp_v*D_v||~=alp_h*2
+   */
+  if (bp_mode == analysis){
+    ax_funs->norm_W = sqrt(1 + 4*alp_v*alp_v + 4*alp_h*alp_h);
+  }else{
+    ax_funs->norm_W = 1;
+  }
+
+  /* Check which jobs we are do to do. We partion local variable u as
+     u = [u, u_TVV, u_TVH], for vertical, horizontal parts.
+     Also, set inc_TVH, and inc_TVV, to proper increment for aguements below.
+  */
+
   if (alp_v > 0) {
+    jobs |= _JOB_TV_V;
+    _inc_TVV = _m;
     _p += _m;
   }
 
   if (alp_h > 0) {
+    jobs |= _JOB_TV_H;
+    _inc_TVH = _inc_TVV + _m;
     _p += _m;
   }
 
+
   ax_funs->n = n;
-  ax_funs->m = _m;
-  ax_funs->p = _p;
+  ax_funs->q = _m;
+
+  if (bp_mode == synthesis){
+    ax_funs->p = _m;
+    ax_funs->m = _p;
+  }else{ //analysis
+    ax_funs->p = _p;
+    ax_funs->m = _m;
+  }
 
   u = l1c_malloc_double(_p);
 

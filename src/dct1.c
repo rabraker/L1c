@@ -142,6 +142,7 @@ int l1c_dct1_setup(l1c_int n, l1c_int m, l1c_int *pix_mask_idx, l1c_AxFuns *ax_f
   ax_funs->n = n;
   ax_funs->m = m;
   ax_funs->p = m;
+  ax_funs->q = m;
   ax_funs->norm_W = 1.0;
 
   ax_funs->Ax = dct_EMx;

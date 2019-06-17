@@ -126,11 +126,11 @@ typedef struct _l1c_AxFuns l1c_AxFuns;
 struct _l1c_AxFuns {
   /** Length of observation vector. n < m <=p*/
   l1c_int n;
-
-  /** Length of true signal*/
+  /** Length of true signal, number of columns in R. */
+  l1c_int q;
+  /** Number of columns in M and A. In analysis, q=m since M=I*/
   l1c_int m;
-
-  /** Size of vector in dictionary basis. p >=m. If M is square, m=p.*/
+  /** Number of columns in W. p >=m. In synthesis, p=m, W=I*/
   l1c_int p;
 
   /** The spectral norm of the operator M (or at least an upper bound.

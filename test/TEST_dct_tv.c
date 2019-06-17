@@ -58,7 +58,8 @@ typedef struct DctData{
   l1c_int mtot;
   l1c_int p;
   l1c_int n;
-
+  BpMode bp_mode;
+  DctMode dct_mode;
   int setup_status;
   char *fpath;
 
@@ -95,6 +96,9 @@ static void setup(char *fname, BpMode bp_mode, DctMode dct_mode){
     fprintf(stderr, "Error loading data in test_dct\n");
     ck_abort();
   }
+
+  dctd->bp_mode = bp_mode;
+  dctd->dct_mode = dct_mode;
 
   setup_status +=extract_json_double_array(test_data_json, "x_in", &dctd->x_in, &dctd->mtot);
   setup_status +=extract_json_double_array(test_data_json, "y_in", &dctd->y_in, &dctd->n);
@@ -210,8 +214,15 @@ static void setup_analysis(void){
 
 static void check_ax_fun_properties() {
     ck_assert_int_eq(ax_funs.n, dctd->n);
-    ck_assert_int_eq(ax_funs.p, dctd->p);
-    ck_assert_int_eq(ax_funs.m, dctd->mrow * dctd->mcol);
+
+    ck_assert_int_eq(ax_funs.q, dctd->mtot);
+    if(dctd->bp_mode == synthesis){
+      ck_assert_int_eq(ax_funs.m, dctd->p);
+      ck_assert_int_eq(ax_funs.p, dctd->mtot);
+    }else{
+      ck_assert_int_eq(ax_funs.m, dctd->mtot);
+      ck_assert_int_eq(ax_funs.p, dctd->p);
+    }
 
     ck_assert_ptr_eq(ax_funs.data, NULL);
 }
@@ -384,13 +395,13 @@ START_TEST(test_normW)
   status = l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h,
                                       dct_mode, bp_mode, pix_idx, &ax_funs);
   ck_assert_int_eq(status, L1C_SUCCESS);
-  normW_exp = 1 + 4*alp_v*alp_v + 4*alp_h*alp_h;
+  normW_exp = sqrt(1 + 4*alp_v*alp_v + 4*alp_h*alp_h);
   ck_assert_double_eq_tol(ax_funs.norm_W, normW_exp, TOL_DOUBLE_SUPER);
   ax_funs.destroy();
 
   /*We should always get 1.0 in synthesis mode.*/
   bp_mode = synthesis;
-  status = l1c_setup_dctTV_transforms(n, mrow, mcol, 4.0, 5.0,
+  status = l1c_setup_dctTV_transforms(n, mrow, mcol, 0.0, 0.0,
                                       dct_mode, bp_mode, pix_idx, &ax_funs);
   ck_assert_int_eq(status, L1C_SUCCESS);
   ck_assert_double_eq_tol(ax_funs.norm_W, 1.0, TOL_DOUBLE_SUPER);

@@ -34,15 +34,6 @@
 
 
 
-static inline void _l1c_nesta_Rx(l1c_NestaProb *NP, double *x, double *y){
-  NP->ax_funs.Ax(x, y);
-}
-
-static inline void _l1c_nesta_Rty(l1c_NestaProb *NP, double *y, double *x){
-  NP->ax_funs.Aty(y, x);
-}
-
-
 
 
 /* The next three functions basically implement a circular buffer for storing the vector
@@ -109,12 +100,16 @@ double _l1c_mean_fmean_fifo(struct l1c_fmean_fifo *fifo) {
    Initialize a l1c_NestaProblem struct. Memory will be allocated for all
    arrays.
  */
-l1c_NestaProb* _l1c_NestaProb_new(l1c_int n, l1c_int m, l1c_int p){
+l1c_NestaProb* _l1c_NestaProb_new(l1c_AxFuns ax_funs){
 
   l1c_NestaProb *NP = malloc(sizeof(l1c_NestaProb));
   if (!NP){
     return NULL;
   }
+
+  l1c_int n = ax_funs.n;
+  l1c_int m = ax_funs.m;
+  l1c_int p = ax_funs.p;
 
   *NP = (l1c_NestaProb){.n=n, .m=m, .p=p, .fx=0.0, .xo=NULL, .xk=NULL, .yk=NULL, .zk=NULL,
                         .Atb=NULL, .gradf=NULL, .gradf_sum=NULL,
@@ -199,8 +194,8 @@ void l1c_nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk){
   /* Store q in vk.*/
   l1c_daxpy_z(m, (-1.0/Lmu), g, xx, vk);
 
-  _l1c_nesta_Rx(NP, vk, Aq);
-  _l1c_nesta_Rty(NP, Aq, AtAq);
+  NP->ax_funs.Ax(vk, Aq);
+  NP->ax_funs.Aty(Aq, AtAq);
 
   // a0 = Lmu * [ ||Aq - b||/sigma  - 1]
   a0 = l1c_dnrm2_err(n, NP->b, Aq);
@@ -294,7 +289,7 @@ int l1c_nesta_setup(l1c_NestaProb *NP, double *beta_mu, double *beta_tol,
   /*Section 3.6, paragraph preceeding (3.14) suggests that
    \mu_0 = 0.9||A^Tb||_{\infty}, and we have A^T = W^T * R^T *b
   */
-  _l1c_nesta_Rty(NP, NP->b, NP->Atb);
+  NP->ax_funs.Aty(NP->b, NP->Atb);
   cblas_dcopy(NP->m, NP->Atb, 1, NP->xo, 1);
 
   NP->ax_funs.Wtx(NP->xo, Wtx_ref);
@@ -368,7 +363,7 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
   double beta_mu, beta_tol;
 
 
-  l1c_NestaProb *NP = _l1c_NestaProb_new(n, m, ax_funs.p);
+  l1c_NestaProb *NP = _l1c_NestaProb_new(ax_funs);
 
   if (!NP ){
     return L1C_OUT_OF_MEMORY;

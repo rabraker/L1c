@@ -100,7 +100,7 @@ struct l1c_fmean_fifo {
 
 void l1c_free_nesta_problem(l1c_NestaProb *NP);
 
-l1c_NestaProb* _l1c_NestaProb_new(l1c_int n, l1c_int m, l1c_int p);
+l1c_NestaProb* _l1c_NestaProb_new(l1c_AxFuns ax_funs);
 
 void l1c_nesta_project(l1c_NestaProb *NP, double *xx, double *g, double *vk);
 

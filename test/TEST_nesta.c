@@ -116,7 +116,7 @@ static void init_generic_data(NestaTestData *dat){
   ax_funs.Ax = ax_funs.Rx;
   ax_funs.Aty = ax_funs.Rty;
 
-  dat->NP = _l1c_NestaProb_new(n, m, ax_funs.p);
+  dat->NP = _l1c_NestaProb_new(ax_funs);
 
   if (!dat->NP){
     fprintf(stderr, "Failed to initialize Nesta Problem (in %s)\n", __func__);
@@ -433,7 +433,6 @@ START_TEST (test_l1c_nesta_setup)
 {
   l1c_int n = 5;
   l1c_int m = 10;
-  l1c_NestaProb *NP = _l1c_NestaProb_new(n, m, m);
 
   double beta_mu=0, beta_tol=0;
   double sigma = 1e-3, mu = 1e-5;
@@ -452,6 +451,9 @@ START_TEST (test_l1c_nesta_setup)
   }
   l1c_AxFuns ax_funs;
   l1c_setup_matrix_transforms(n, m, A, &ax_funs);
+
+  l1c_NestaProb *NP = _l1c_NestaProb_new(ax_funs);
+
   l1c_NestaOpts opts = {.n_continue=5, .sigma=sigma, .mu=mu, .tol=tol, .bp_mode=analysis};
   // We are checking that setup will fail for ax_funs without analysis opertator.
   ax_funs.Wz = NULL;

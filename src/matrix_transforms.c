@@ -54,6 +54,7 @@ int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A,
   ax_funs->n = n;
   ax_funs->m = m;
   ax_funs->p = m;
+  ax_funs->q = m;
 
   /** We dont populate M, so norm is "zero". If wed rather replace Mx
       with the identity, then it would make sense to change this to 1.!*/
