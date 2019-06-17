@@ -26,9 +26,9 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
                         .n_continue = 5,
                         .bp_mode = analysis};
 
-  double *x_out = NULL,
+  double *z_out = NULL,
                 *b = NULL;
-  double *pix_idx_double=NULL, *x_ours=NULL;
+  double *pix_idx_double=NULL, *x0=NULL;
   double alp_v = 0, alp_h = 0;
 
   l1c_int n=0, mrow=0, mcol=1, mtot=0, idx=0;
@@ -81,15 +81,6 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   }
 
 
-  /* I think the problem is that we get the norm of U wrong when we try this,
-     because in synthesis mode, ||U|| = 1.
-     Probably can be fixed by passing flags to ax_funs, and adjusting how we
-     set everything up. Then nesta can be dumb to which mode it is in as well.
-   */
-  if ( (alp_v >0 || alp_h > 0) && (opts.bp_mode == synthesis)){
-    mexErrMsgIdAndTxt("l1c:InvalidInput",
-                      "Can only do TV with analysis mode.");
-  }
   /* Ensure the sizes are consistent. */
   if ( !(mrow*mcol > n) || (n != size_pix_idx) || mrow <=0 || mcol <=0){
     mexErrMsgIdAndTxt("l1c:incompatible_dimensions",
@@ -108,9 +99,8 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   /* We are going to change x, so we must allocate and make a copy, so we
      dont change data in Matlabs workspace.
   */
-  x_ours = l1c_malloc_double(mrow*mcol);
   pix_idx = calloc(n, sizeof(l1c_int));
-  if (!x_ours || !pix_idx){
+  if (!pix_idx){
     status = L1C_OUT_OF_MEMORY;
     goto exit1;
   }
@@ -132,8 +122,9 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   if (status){
     goto exit1;
   }
+  x0 = l1c_malloc_double(ax_funs.m);
 
-  status |= l1c_nesta(mtot, x_ours, n, b, ax_funs, opts);
+  status |= l1c_nesta(mtot, x0, n, b, ax_funs, opts);
 
 
   /* Prepare output data.
@@ -141,16 +132,16 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   plhs[0] = mxCreateDoubleMatrix((mwSize)mrow, (mwSize)mcol, mxREAL);
   plhs[1] = mxCreateDoubleScalar((double)status);
 
-  x_out = mxGetPr(plhs[0]);
-  cblas_dcopy(mrow * mcol, x_ours, 1, x_out, 1);
-  // double *stat_out = mxGetPr(plhs[1]);
-  // *stat_out = (double)status;
+  z_out = mxGetPr(plhs[0]);
+
+  ax_funs.Mx(x0, z_out); // A straigt copy in analysis mode
+
 
   ax_funs.destroy();
 
  exit1:
   free(pix_idx);
-  l1c_free_double(x_ours);
+  l1c_free_double(x0);
 
   switch (status){
   case L1C_OUT_OF_MEMORY:

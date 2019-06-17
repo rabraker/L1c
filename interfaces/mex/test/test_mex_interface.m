@@ -30,7 +30,7 @@ function check_nesta_dctTV(fpath)
   
   dat = jsondecode(dat_json);
   
-  opts = nesta_opts('alpha_v', 1, 'alpha_h', 1, 'verbose', 0, 'dct_mode', 1, ...
+  opts = nesta_opts('alpha_v', 0.5, 'alpha_h', .2, 'verbose', 0, 'dct_mode', 1, ...
                     'bp_mode', 'analysis');
   T = .20; %sparsity percent.
   if dat.one_based_index == 1
@@ -40,10 +40,8 @@ function check_nesta_dctTV(fpath)
   end
   % For the test below, we must sparsify the signal.
   x_orig = dat.x_orig;
-  [z_orig, T_idx, TC_idx] = sparsify(x_orig, T);
-  x_og_sparse = idct(z_orig);
   
-  [x_est, status] = nesta_dctTV(dat.mrow, dat.mcol, x_og_sparse(pix_idx), pix_idx, opts);
+  [x_est, status] = nesta_dctTV(dat.mrow, dat.mcol, x_orig(pix_idx), pix_idx, opts);
 
   L1cMexTesting.assert_eq(status, 0);
 
