@@ -1,5 +1,5 @@
-#ifndef __L1C__
-#define __L1C__
+#ifndef _L1C_
+#define _L1C_
 /*
  * @file l1c.h
  *

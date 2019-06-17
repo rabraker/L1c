@@ -1,5 +1,5 @@
-#ifndef __L1C_TV___
-#define __L1C_TV__
+#ifndef _L1C_TV_
+#define _L1C_TV_
 #include "config.h"
 #include "l1c.h"
 

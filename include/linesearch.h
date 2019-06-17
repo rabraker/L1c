@@ -1,6 +1,7 @@
-#ifndef __L1C_LINESEARCH__
-#define __L1C_LINESEARCH__
+#ifndef _L1C_LINESEARCH_
+#define _L1C_LINESEARCH_
 
+#include "l1c.h"
 #define MAX_LINESEARCH_ITER 32
 
 LSStat l1c_linesearch_xu(l1c_int m, double *x, double *u, double *dx, double *du,

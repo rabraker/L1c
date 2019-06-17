@@ -1,5 +1,5 @@
-#ifndef __L1C_NESTA__
-#define __L1C_NESTA__
+#ifndef _L1C_NESTA_
+#define _L1C_NESTA_
 
 #include "l1c.h"
 

@@ -1,5 +1,5 @@
-#ifndef __BREGMAN___
-#define __BREGMAN__
+#ifndef _BREGMAN_
+#define _BREGMAN_
 #include "l1c.h"
 
 

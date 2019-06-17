@@ -1,4 +1,4 @@
-#ifndef  _L1C_TIMING_
+#ifndef _L1C_TIMING_
 #define _L1C_TIMING_
 #include "config.h"
 

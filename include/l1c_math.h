@@ -1,5 +1,5 @@
-#ifndef __L1C_MATH__
-#define __L1C_MATH__
+#ifndef _L1C_MATH_
+#define _L1C_MATH_
 #include "config.h"
 #include "l1c.h"
 
