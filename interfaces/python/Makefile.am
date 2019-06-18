@@ -65,7 +65,7 @@ copy-lib:
 
 $(example_data):$(abs_top_srcdir)/test/build_CS20NG_example_data.py
 	echo "==************** $(example_data)"
-	python $< $@
+	python3 $< $@
 
 endif
 

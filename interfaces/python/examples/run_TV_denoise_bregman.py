@@ -2,7 +2,6 @@ import json
 import L1c
 import numpy as np
 import matplotlib.pyplot as plt
-import ipdb
 
 
 def TV_denoise(verbose=2, fpath='example_img_data.json', plot=False, lib_dir="."):
