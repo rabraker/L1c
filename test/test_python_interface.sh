@@ -31,6 +31,6 @@ fi
 export L1C_INTERFACE_DIR="${ABS_TOP_BUILDDIR}/interfaces/python"
 export L1C_SRC_LIB_DIR="${ABS_TOP_BUILDDIR}/src/.libs"
 
-python3 "${ABS_TOP_SRCDIR}/examples/python/dct_example.py" "${data_path}"
+python3 "${ABS_TOP_SRCDIR}/interfaces/python/examples/dct_example.py" "${data_path}"
 
 exit $?

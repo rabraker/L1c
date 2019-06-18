@@ -49,7 +49,7 @@ all-local:: $(abs_builddir)/examples \
 
 
 $(pyexec_LTLIBRARIES:.la=$(SHRLIB_EXT)):.libs/$(pyexec_LTLIBRARIES)
-	$(LN_S) -f $< $@
+	$(LN_S) -f $(<:.la=$(SHRLIB_EXT)) $@
 
 
 $(abs_builddir)/examples:
