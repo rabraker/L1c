@@ -399,7 +399,21 @@ dnl -lmex to $LIBS, which will make the rest of the checks fail.
     AC_SUBST(MEXEXT, [.$MEXEXT])
 fi  # checks for mex
 
-
+case $host_os in
+     *linux*) SHRLIB_EXT="so"
+     ;;
+     *darwin*) SHRLIB_EXT="dylib"
+     ;;
+     *mingw*) SHRLIB_EXT="dll"
+     ;;
+     *) SHRLIB_EXT="so"
+     ;;
+esac
+echo "====================================="
+echo $host_os
+echo $host
+echo $SHRLIB_EXT
+AC_SUBST(SHRLIB_EXT, $SHRLIB_EXT)
 
 # ---------------------- Check for headers -------------------------------
 

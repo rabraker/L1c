@@ -100,15 +100,19 @@ def build_cs20ng_test_data(npix, data_path=None):
 
 
 if __name__ == "__main__":
-    test_data_path = TDU.data_dir()
+    import sys
+    if len(sys.argv) == 1:
+        test_data_path = TDU.data_dir()
+        image_data_path_256 = test_data_path+"/example_img_data.json"
+        build_cs20ng_test_data(256, data_path=image_data_path_256)
 
-    image_data_path = test_data_path+"/example_img_data.json"
+        # Regression Test: This size caused segfaults, due to alignment.
+        image_data_path_127 = test_data_path+"/example_img_data127.json"
+        build_cs20ng_test_data(127, data_path=image_data_path_127)
+    else:
+        image_data_path = sys.argv[1]
+        build_cs20ng_test_data(256, data_path=image_data_path)
 
-    build_cs20ng_test_data(256, data_path=image_data_path)
-
-    #Regression Test: This size caused segfaults, due to alignment.
-    image_data_path_127 = test_data_path+"/example_img_data127.json"
-    build_cs20ng_test_data(127, data_path=image_data_path_127)
 
 
 # plt.figure(1)
