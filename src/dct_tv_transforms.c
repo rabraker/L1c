@@ -10,7 +10,9 @@
 #define _JOB_TV_V (1u << 1)
 #define _JOB_TV_H (1u << 3)
 
+
 /* Local functions */
+static int check_pix_idx(l1c_int n, l1c_int *pix_idx, l1c_int max_idx);
 static void destroy();
 static void Wv (double *v, double *y);
 static void Wtx (double *x, double *v);
@@ -84,6 +86,9 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
   }
 
   if (alp_h > 0 && (mrow <= 2 || mcol <= 2)) {
+    return L1C_INVALID_ARGUMENT;
+  }
+  if (check_pix_idx(n, pix_idx, mrow*mcol-1)){
     return L1C_INVALID_ARGUMENT;
   }
 
@@ -235,4 +240,15 @@ static void Aty(double *y, double *v) {
 
   ax_funs_local.Rty(y, u);
   Wtx(u, v);
+}
+
+static int check_pix_idx(l1c_int n, l1c_int *pix_idx, l1c_int max_idx) {
+  l1c_int idx = 0;
+  for (int i = 0; i < n; i++) {
+    idx = pix_idx[i];
+    if (idx > max_idx || idx < 0) {
+      return L1C_INVALID_ARGUMENT;
+    }
+  }
+  return L1C_SUCCESS;
 }

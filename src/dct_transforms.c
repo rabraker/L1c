@@ -1,6 +1,9 @@
 #include "config.h"
 #include "l1c.h"
 
+/* Helper Routines*/
+static int check_pix_idx(l1c_int n, l1c_int *pix_idx, l1c_int max_idx);
+
 /** @file
    The high level interface to the DCT based transforms, suitible
    for passing to, e.g., l1qc_newton().
@@ -39,6 +42,10 @@
 int l1c_setup_dct_transforms( l1c_int n, l1c_int mrow, l1c_int mcol, DctMode dct_mode,
                              l1c_int *pix_idx, l1c_AxFuns *ax_funs){
 
+  if (check_pix_idx(n, pix_idx, mrow*mcol - 1)){
+    return L1C_INVALID_ARGUMENT;
+  }
+
   if ((mcol == 1) || (mrow == 1) || dct_mode == dct1){
     //call setup_dct1
     return l1c_dct1_setup(n, mrow*mcol, pix_idx, ax_funs);
@@ -52,4 +59,15 @@ int l1c_setup_dct_transforms( l1c_int n, l1c_int mrow, l1c_int mcol, DctMode dct
     return L1C_INCONSISTENT_ARGUMENTS;
   }
 
+}
+
+static int check_pix_idx(l1c_int n, l1c_int *pix_idx, l1c_int max_idx) {
+  l1c_int idx = 0;
+  for (int i = 0; i < n; i++) {
+    idx = pix_idx[i];
+    if (idx > max_idx || idx < 0) {
+      return L1C_INVALID_ARGUMENT;
+    }
+  }
+  return L1C_SUCCESS;
 }
