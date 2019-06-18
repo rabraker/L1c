@@ -1,6 +1,5 @@
 #include "config.h"
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "l1c.h"
 
@@ -22,14 +21,15 @@ PyMODINIT_FUNC PyInit__l1cPy_module(void);
 static char module_docstring[] =
   "This module provides an interface for solving a l1 optimization problems in c.";
 static char l1qc_dct_docstring[] =  "Minimize ||x||_1 s.t. ||Ax-b|| < epsilon";
-static char
-breg_anistropic_TV_docstring[] = "Given an n by m image f, solves the anistropic TV denoising problem \n"
+
+static char breg_anistropic_TV_docstring[] =
+  "Given an n by m image f, solves the anistropic TV denoising problem \n"
   "f_denoised = breg_anistropic_TV(f, mu=10, tol=0.001, max_iter=1000, max_jac_iter=1)\n"
   " \n"
   "min ||\\nabla_x u||_1 + ||\\nabla_y||_1 + 0.5\\mu ||u - f||_2 \n"
    "u \n"
   " \n"
-  "using the Bregman Splitting. This algorithm is developed in the paper \n"
+  "using Bregman Splitting. This algorithm is developed in the paper \n"
   "\"The Split Bregman Method for L1-Regularized Problems,\" by Tom Goldstein and Stanley Osher. ";
 
 
@@ -109,7 +109,7 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
                                    &opts.newton_max_iter, &opts.verbose,
                                    &opts.l1_tol, &opts.cg_tol,
                                    &opts.cg_maxiter, &opts.dct_mode)){
-    fprintf(stderr, "%s: Parsing input arguments failed.\n", __func__);
+    PyErr_SetString(PyExc_TypeError, "Parsing input arguments failed.");
     return NULL;
   }
 
@@ -211,7 +211,7 @@ _breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw){
   if (!PyArg_ParseTupleAndKeywords(args, kw, "O|ddii", keywords,
                                    &f_obj,
                                    &mu, &tol, &max_iter,&max_jac_iter)){
-    fprintf(stderr, "Parsing input arguments failed.\n");
+    PyErr_SetString(PyExc_TypeError, "Parsing input arguments failed.");
     return NULL;
   }
   /* Interpret the input objects as numpy arrays.
