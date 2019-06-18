@@ -6,7 +6,7 @@ clean-local:: clean-convenience-link
 
 bin_PROGRAMS    =
 
-AM_LDFLAGS      = -module -avoid-version -no-undefined -shrext .$(MEXEXT) $(LDFLAGS)
+AM_LDFLAGS      = -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
 AM_CPPFLAGS     = -DBUILDING_DLL -I$(top_srcdir)/include -I./ -I../ \
 					$(L1CCPPFLAGS) $(MEXCPPFLAGS)
 #  -fPIC
@@ -54,7 +54,7 @@ dist_mex_DATA = l1qc_dct_opts.m \
 # but modified because his regexp doesnt work.
 all_libs = $(mex_LTLIBRARIES)
 
-SUFFIXES=.$(MEXEXT)
+SUFFIXES=$(MEXEXT)
 
 .PHONY: convenience-link clean-convenience-link copy-examples
 
@@ -85,7 +85,7 @@ mex_example_sources = cs20ng_grating.m  \
 
 mex_example_dest := $(addprefix $(abs_builddir)/examples/, $(mex_example_sources))
 
-mex_libs = $(mex_LTLIBRARIES:.la=.$(MEXEXT))
+mex_libs = $(mex_LTLIBRARIES:.la=$(MEXEXT))
 
 mex_lib_example_dest :=$(addprefix $(abs_builddir)/examples/, $(mex_libs))
 mex_lib_dest := $(addprefix $(abs_builddir)/, $(mex_libs))
@@ -100,11 +100,11 @@ all-local:: $(abs_builddir)/examples \
 
 
 
-$(abs_builddir)/%.$(MEXEXT):%.la
-	$(LN_S) -f $(abs_builddir)/.libs/$(<:.la=.mexa64) $@
+$(abs_builddir)/%$(MEXEXT):%.la
+	$(LN_S) -f $(abs_builddir)/.libs/$(<:.la=$(MEXEXT)) $@
 
-$(abs_builddir)/examples/%.$(MEXEXT):%.la
-	$(LN_S) -f $(abs_builddir)/.libs/$(<:.la=.mexa64) $@
+$(abs_builddir)/examples/%$(MEXEXT):%.la
+	$(LN_S) -f $(abs_builddir)/.libs/$(<:.la=$(MEXEXT)) $@
 
 
 # Link (or copy) the example scripts to the examples folder in the build dir.

@@ -398,7 +398,7 @@ dnl -lmex to $LIBS, which will make the rest of the checks fail.
                     the proper mex file extension as the envrionmental variable MEXEXT.])
        fi
     fi
-    AC_SUBST(MEXEXT, [$MEXEXT])
+    AC_SUBST(MEXEXT, [.$MEXEXT])
 fi  # checks for mex
 
 

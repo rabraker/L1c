@@ -7,7 +7,7 @@ bin_PROGRAMS    =
 AM_TESTS_ENVIRONMENT = 	ABS_TOP_SRCDIR='$(abs_top_srcdir)'; export ABS_TOP_SRCDIR;  \
 						WITH_MEX='$(WITH_MEX)'; export WITH_MEX;
 
-AM_LDFLAGS  = -module -avoid-version -no-undefined -shrext .$(MEXEXT) $(LDFLAGS)
+AM_LDFLAGS  = -module -avoid-version -no-undefined -shrext $(MEXEXT) $(LDFLAGS)
 AM_CFLAGS   = $(L1CCFLAGS) $(MEXCFLAGS) -fPIC
 AM_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include \
 	           -I$(top_srcdir)/interfaces/mex       \
