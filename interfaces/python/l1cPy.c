@@ -2,7 +2,8 @@
 #include <stdlib.h>
 
 #include "l1c.h"
-
+#include "nesta.h"
+#include "stdio.h"
 #include "Python.h"
 // Without the following, the numpy header generates #warnings
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -13,14 +14,17 @@
 /* Function declartion */
 static PyObject *_l1qc_dct(PyObject *self, PyObject *args, PyObject *kw);
 static PyObject *_breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw);
+static PyObject *_nesta_dctTV(PyObject *self, PyObject *args, PyObject *kw);
 
 PyMODINIT_FUNC PyInit__l1cPy_module(void);
-
 
 /* Doc-strings */
 static char module_docstring[] =
   "This module provides an interface for solving a l1 optimization problems in c.";
 static char l1qc_dct_docstring[] =  "Minimize ||x||_1 s.t. ||Ax-b|| < epsilon";
+
+static char nesta_dctTV_docstring[] =
+  "Minimize ||U^TF||_1 + alp_h||\\nabla_xF|| + alp_v||\\nabla_v F||s.t. ||Ax-b|| < sigma";
 
 static char breg_anistropic_TV_docstring[] =
   "Given an n by m image f, solves the anistropic TV denoising problem \n"
@@ -44,6 +48,10 @@ static PyMethodDef _l1cPy_module_methods[] = {
    (PyCFunction)_breg_anistropic_TV,
    METH_KEYWORDS|METH_VARARGS,
    breg_anistropic_TV_docstring},
+   {"nesta_dctTV",
+   (PyCFunction)_nesta_dctTV,
+   METH_KEYWORDS|METH_VARARGS,
+    nesta_dctTV_docstring},
 
   {NULL, NULL, 0, NULL}
 };
@@ -281,3 +289,124 @@ _breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw){
   return NULL;
 
 }
+
+
+
+static PyObject *
+_nesta_dctTV(PyObject *self, PyObject *args, PyObject *kw){
+  (void)self;
+  double *x_ours=NULL, *b=NULL;
+
+  PyObject *b_obj=NULL, *pix_idx_obj=NULL, *x_out_npA=NULL;
+
+  PyArrayObject *b_npA=NULL;
+  PyArrayObject *pix_idx_npA=NULL;
+
+  int status=0, mrow=0, mcol=0, mtot=0, n=0, n_=0;
+  int *pix_idx=NULL;
+  double alpha_v=0, alpha_h=0;
+  l1c_NestaOpts opts = {.sigma = 0.01, .mu = 10,
+                        .verbose = 5, .tol = 1e-5,
+                        .n_continue=5, .bp_mode=analysis};
+
+  DctMode dct_mode = dct1;
+  BpMode bp_mode = analysis;
+  // int _dct_mode, _bp_mode;
+  char *keywords[] = {"", "", "", "",
+                      "alpha_v", "alpha_h",
+                      "sigma", "mu", "tol", "n_continue", "verbose",
+                      "dct_mode", "bp_mode",
+                      NULL};
+
+  /* Parse the input tuple O=object, d=double, i=int*/
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "iiOO|dddddiiii", keywords,
+                                   &mrow, &mcol, &b_obj, &pix_idx_obj,
+                                   &alpha_v, &alpha_h,
+                                   &opts.sigma, &opts.mu,
+                                   &opts.tol, &opts.n_continue, &opts.verbose,
+                                   &dct_mode, &bp_mode)){
+
+    PyErr_SetString(PyExc_TypeError, "Parsing input arguments failed.");
+    return NULL;
+  }
+  if (bp_mode != analysis && bp_mode != synthesis) {
+    PyErr_SetString(PyExc_ValueError, "Must have bp_mode = 1 or 2");
+    return NULL;
+  }
+
+  if (dct_mode != dct1 && dct_mode != dct2) {
+    PyErr_SetString(PyExc_ValueError, "Must have dct_mode = 1 or 2");
+    return NULL;
+  }
+
+  /* Interpret the input objects as numpy arrays.
+     N.B: NPY_ARRAY_IN_ARRAY = PY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_ALIGNED */
+
+  b_npA =(PyArrayObject*)PyArray_FROM_OTF(b_obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+  pix_idx_npA =(PyArrayObject*)PyArray_FROM_OTF(pix_idx_obj, NPY_INT, NPY_ARRAY_IN_ARRAY);
+
+  /* If that didn't work, throw an exception. */
+  if ( b_npA == NULL || pix_idx_npA == NULL ){
+    PyErr_SetString(PyExc_RuntimeError,
+        "Failed to initialize arrays. Is pix_idx an integer array?");
+    goto fail;
+  }
+
+
+  /*--------------- Check number of Dimensions ----------------- */
+  if ( (PyArray_NDIM(b_npA) != 1) || (PyArray_NDIM(pix_idx_npA) != 1)){
+    PyErr_SetString(PyExc_IndexError,
+                    "b and pix_idx must have exactly 1 dimensions.");
+    goto fail;
+  }
+
+
+  /*--------------- Check Sizes ----------------- */
+  mtot = mrow*mcol;
+  n = PyArray_DIM(b_npA, 0);
+  n_ = PyArray_DIM(pix_idx_npA, 0);
+
+  if ( mtot < n || n != n_ ){
+    PyErr_SetString(PyExc_ValueError, "Must have len(x) > len(b) and len(b) == len(pix_idx).");
+    goto fail;
+  }
+
+  /* Get pointers to the data as C-types. */
+  b  = (double*)PyArray_DATA(b_npA);
+  pix_idx = (int*)PyArray_DATA(pix_idx_npA);
+
+  /* Allocate memory for M*xk=f */
+  x_ours = l1c_calloc_double(mtot);
+  if (!x_ours){
+    PyErr_SetString(PyExc_MemoryError, "Failed to allocation memory");
+    goto fail;
+  }
+
+
+  l1c_AxFuns ax_funs;
+  if (l1c_setup_dctTV_transforms(n, mrow, mcol, alpha_v, alpha_h, dct_mode,
+                                 bp_mode, pix_idx, &ax_funs)) {
+    PyErr_SetString(PyExc_RuntimeError, "Failed to initialize DCT.");
+    goto fail;
+  }
+
+  status = l1c_nesta(mtot, x_ours, n, b, ax_funs, opts);
+
+  /* Build the output tuple */
+  npy_intp dims[] = {mrow, mcol};
+  x_out_npA = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, x_ours);
+
+  /* Clean up. */
+  Py_DECREF(b_npA);
+  Py_DECREF(pix_idx_npA);
+
+  return Py_BuildValue("Oi", x_out_npA, status);
+
+  /* If we failed, clean up more things */
+ fail:
+  Py_XDECREF(b_npA);
+  Py_XDECREF(pix_idx_npA);
+
+  return NULL;
+}
+
