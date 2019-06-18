@@ -23,7 +23,7 @@ then
     exit 77
 fi
 
-
+failures=0
 
 #N.B. Somehow, by almost pure magic, when we read these environmental
 # variables in python in mingw, the path will be converted to a windows
@@ -31,6 +31,17 @@ fi
 export L1C_INTERFACE_DIR="${ABS_TOP_BUILDDIR}/interfaces/python"
 export L1C_SRC_LIB_DIR="${ABS_TOP_BUILDDIR}/src/.libs"
 
-python3 "${ABS_TOP_SRCDIR}/interfaces/python/examples/dct_example.py" "${data_path}"
+python3 "${ABS_TOP_BUILDDIR}/interfaces/python/examples/dct_example.py" "${data_path}"
 
-exit $?
+failures+=$?
+
+
+python3 "${ABS_TOP_BUILDDIR}/interfaces/python/test_L1cPy.py" -v
+failures+=$?
+
+# If failures >255, automake believes its zero, evidently.
+if test $failures -gt 0; then
+    exit 1
+else
+    exit $failures
+fi

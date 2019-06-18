@@ -6,6 +6,7 @@ AUTOMAKE_OPTIONS = foreign 1.8
 # -------------------------------------------------------------------#
 # -------------------------------  ----------------------------------#
 example_data = $(abs_builddir)/examples/example_img_data.json
+test_data = $(abs_builddir)/example_img_data.json
 
 if ENABLE_PYTHON
 # if $(pyexecdir) is empty, this will fail with
@@ -40,36 +41,55 @@ py_example_sources = dct_example.py \
 
 py_example_dest = $(addprefix $(abs_builddir)/examples/, $(py_example_sources))
 
+py_lib = $(pyexec_LTLIBRARIES:.la=$(SHRLIB_EXT))
+
 
 all-local:: $(abs_builddir)/examples \
 			copy-lib                 \
-			$(pyexec_LTLIBRARIES:.la=$(SHRLIB_EXT)) \
 			$(example_data)          \
-			$(py_example_dest)
+			$(test_data)          \
+			$(py_example_dest)       \
+			$(abs_builddir)/test_L1cPy.py \
+			$(abs_builddir)/examples/$(py_lib) \
+			$(abs_builddir)/$(py_lib)
+
+# Ensure the .la library exists .libs
+.libs/$(pyexec_LTLIBRARIES):$(pyexec_LTLIBRARIES)
 
 
-$(pyexec_LTLIBRARIES:.la=$(SHRLIB_EXT)):.libs/$(pyexec_LTLIBRARIES)
-	$(LN_S) -f $(<:.la=$(SHRLIB_EXT)) $@
+# copy lib to this folder, for tests.
+$(abs_builddir)/$(py_lib):.libs/$(pyexec_LTLIBRARIES)
+	$(LN_S) -f $(abs_builddir)/$(<:.la=$(SHRLIB_EXT)) $@
 
 
+# copy lib to examples folder
+$(abs_builddir)/examples/$(py_lib):.libs/$(pyexec_LTLIBRARIES)
+	$(LN_S) -f $(abs_builddir)/$(<:.la=$(SHRLIB_EXT)) $@
+
+# Copy the test script. Python path gets screwed up when using a symlink,
+# so just copy it.
+$(abs_builddir)/test_L1cPy.py:$(abs_srcdir)/test_L1cPy.py
+	cp -f $< $@
+
+# Create examples folder
 $(abs_builddir)/examples:
 	mkdir -p $@
 
-$(abs_builddir)/examples/%.py:$(abs_srcdir)/examples/%.py $(abs_builddir)/examples
+# copy the python examples scripts
+$(abs_builddir)/examples/%.py:$(abs_srcdir)/_examples/%.py $(abs_builddir)/examples
 	$(LN_S) -f $< $@
 
-copy-lib:
-	$(LN_S) -f $(abs_builddir)/.libs/$(pyexec_LTLIBRARIES:.la=$(SHRLIB_EXT))   $(abs_builddir)/examples/.
-	$(LN_S) -f $(abs_builddir)/.libs/$(pyexec_LTLIBRARIES:.la=$(SHRLIB_EXT))   $(abs_builddir)/.
-
-
+# Create the example data.
 $(example_data):$(abs_top_srcdir)/test/build_CS20NG_example_data.py
-	echo "==************** $(example_data)"
 	python3 $< $@
+
+$(test_data):$(abs_top_srcdir)/test/build_CS20NG_example_data.py
+	python3 $< $@
+
 
 endif
 
 clean-local:: clean-convenience-link
 
 clean-convenience-link:
-	rm -f *.so*  *.o *.lo *.la *.dll *.pyc examples/*
+	rm -rf *.so*  *.o *.lo *.la *.dll *.pyc examples/

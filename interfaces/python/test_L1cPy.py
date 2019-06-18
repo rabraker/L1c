@@ -2,22 +2,28 @@
 Unittests for L1cPy. To run this, execute
 >>> python3 test_L1cPy.py -v
 """
-
+import os
+import sys
 import unittest
 import json
 import numpy as np
 from numpy.testing import assert_almost_equal
 from numpy.linalg import norm
-
 import _l1cPy_module as l1cPy
+
+
+def get_script_path():
+    return os.path.dirname(os.path.realpath(__file__))
+
+def get_test_data_path():
+    return get_script_path()+'/example_img_data.json'
 
 class TestNesta(unittest.TestCase):
     """These are tests for the .
     """
 
     def setUp(self):
-        self.fpath = 'example_img_data.json'
-
+        self.fpath = get_test_data_path()
         with open(self.fpath) as json_data:
             d = json.load(json_data)
 
@@ -86,7 +92,7 @@ class TestBregman(unittest.TestCase):
     """
 
     def setUp(self):
-        self.fpath = 'example_img_data.json'
+        self.fpath = get_test_data_path()
 
         with open(self.fpath) as json_data:
             d = json.load(json_data)
@@ -157,3 +163,4 @@ class TestBregman(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    print(l1cPy.__file__)

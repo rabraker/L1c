@@ -108,7 +108,7 @@ $(abs_builddir)/examples/%$(MEXEXT):%.la
 
 
 # Link (or copy) the example scripts to the examples folder in the build dir.
-$(abs_builddir)/examples/%.m:$(abs_srcdir)/examples/%.m $(abs_builddir)/examples
+$(abs_builddir)/examples/%.m:$(abs_srcdir)/_examples/%.m $(abs_builddir)/examples
 	$(LN_S) -f $< $@
 
 $(abs_builddir)/examples:
