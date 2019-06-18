@@ -32,6 +32,8 @@ AM_PROG_AR
 
 AC_PROG_INSTALL
 LT_INIT([win32-dll, dlopen])
+AC_SUBST(SHRLIB_EXT, $shrext_cmds)
+
 # callint LT_INIT means we dont need: AC_PROG_RANLIB, AM_PROG_LIBTOOL
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([-Wall])
@@ -396,24 +398,9 @@ dnl -lmex to $LIBS, which will make the rest of the checks fail.
                     the proper mex file extension as the envrionmental variable MEXEXT.])
        fi
     fi
-    AC_SUBST(MEXEXT, [.$MEXEXT])
+    AC_SUBST(MEXEXT, [$MEXEXT])
 fi  # checks for mex
 
-case $host_os in
-     *linux*) SHRLIB_EXT="so"
-     ;;
-     *darwin*) SHRLIB_EXT="dylib"
-     ;;
-     *mingw*) SHRLIB_EXT="dll"
-     ;;
-     *) SHRLIB_EXT="so"
-     ;;
-esac
-echo "====================================="
-echo $host_os
-echo $host
-echo $SHRLIB_EXT
-AC_SUBST(SHRLIB_EXT, $SHRLIB_EXT)
 
 # ---------------------- Check for headers -------------------------------
 
