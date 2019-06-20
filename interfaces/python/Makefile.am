@@ -34,6 +34,10 @@ _l1cPy_module_la_LIBADD   = $(top_builddir)/src/libl1c.la
 # # Also, need to replace things like .so.0 with .so, so matlab can read it.
 # # lib_LTLLIBRARIES contains the .la files, which are just text descrip
 
+install-data-local:
+	mkdir -p $(pkgpythondir)/examples
+	cp $(srcdir)/_examples/*.py $(pkgpythondir)/examples/.
+	cp $(srcdir)/test_L1cPy.py $(pkgpythondir)/test_L1cPy.py
 
 # No wildcard in automake, because, portability.
 py_example_sources = dct_example.py \

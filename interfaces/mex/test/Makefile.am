@@ -65,11 +65,11 @@ TMU_mex_get_double_from_struct_or_fail_la_SOURCES = TMU_mex_get_double_from_stru
 TMU_mex_get_double_from_struct_or_fail_la_LIBADD = $(mex_util_lalib)
 
 
-dist_check_SCRIPTS = L1cMexTesting.m      \
-					 test_mex_interface.m \
-					 test_mex_runner.m    \
-				 	 test_mex_utils.m     \
-				 	 clrs.m
+dist_mex_DATA = L1cMexTesting.m      \
+				 test_mex_interface.m \
+				 test_mex_runner.m    \
+			 	 test_mex_utils.m     \
+			 	 clrs.m
 
 
 endif

@@ -14,8 +14,6 @@ SUBDIRS = src/vcl             \
 			include/vcl
 
 
-EXTRA_DIST = examples/python \
-			examples/matlab
 
 # libtool requires some M4 scripts to be added to the source tree.  Make sure that
 # Autoconf knows where to find them.
