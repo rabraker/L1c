@@ -26,7 +26,6 @@ struct _l1c_NestaOpts {
   int n_continue;
   /** Print nothing if 0.*/
   int verbose;
-  BpMode bp_mode;
 };
 
 /** @} */

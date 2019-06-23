@@ -23,8 +23,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   l1c_NestaOpts opts = {.mu = 1e-5,
                         .sigma = 1e-3,
                         .tol = 1e-3,
-                        .n_continue = 5,
-                        .bp_mode = analysis};
+                        .n_continue = 5};
 
   double *z_out = NULL,
                 *b = NULL;
@@ -34,6 +33,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   l1c_int n=0, mrow=0, mcol=1, mtot=0, idx=0;
   l1c_int size_pix_idx=0;
   DctMode dct_mode;
+  BpMode  bp_mode;
   l1c_int *pix_idx;
   int status=0;
 
@@ -73,9 +73,9 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   }
 
   if (strncmp(mode, "synthesis", 10) == 0){
-    opts.bp_mode = synthesis;
+    bp_mode = synthesis;
   }else if(strncmp(mode, "analysis", 10) == 0){
-    opts.bp_mode = analysis;
+    bp_mode = analysis;
   }else{
     mexErrMsgIdAndTxt("l1c:badField", "Field 'mode' of opts must be a string, either analysis or synthesis");
   }
@@ -118,7 +118,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   }
   l1c_AxFuns ax_funs;
   status |= l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h, dct_mode,
-                                       opts.bp_mode, pix_idx, &ax_funs);
+                                       bp_mode, pix_idx, &ax_funs);
   if (status){
     goto exit1;
   }

@@ -127,8 +127,7 @@ static void init_generic_data(NestaTestData *dat){
   l1c_NestaOpts opts = {.n_continue = dat->n_continue,
                         .sigma = dat->sigma,
                         .mu = dat->mu,
-                        .tol = dat->tol,
-                        .bp_mode = analysis};
+                        .tol = dat->tol};
 
   if (l1c_nesta_setup(dat->NP, &dat->beta_mu, &dat->beta_tol, dat->b, ax_funs,
                         &opts)) {
@@ -226,8 +225,7 @@ START_TEST (test_l1c_nesta)
   l1c_NestaOpts opts = {.mu=1e-5,
                         .sigma=epsilon,
                         .tol=1e-5,
-                        .n_continue=5,
-                        .bp_mode=synthesis};
+                        .n_continue=5};
   /* ------------------------------------------------------- */
   int nesta_status = l1c_nesta(m, x0, n, b, ax_funs, opts);
 
@@ -454,7 +452,7 @@ START_TEST (test_l1c_nesta_setup)
 
   l1c_NestaProb *NP = _l1c_NestaProb_new(ax_funs);
 
-  l1c_NestaOpts opts = {.n_continue=5, .sigma=sigma, .mu=mu, .tol=tol, .bp_mode=analysis};
+  l1c_NestaOpts opts = {.n_continue=5, .sigma=sigma, .mu=mu, .tol=tol};
   // We are checking that setup will fail for ax_funs without analysis opertator.
   ax_funs.Wz = NULL;
   int status = l1c_nesta_setup(NP, &beta_mu, &beta_tol, b, ax_funs, &opts);

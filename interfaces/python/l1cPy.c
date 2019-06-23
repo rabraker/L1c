@@ -307,7 +307,7 @@ _nesta_dctTV(PyObject *self, PyObject *args, PyObject *kw){
   double alpha_v=0, alpha_h=0;
   l1c_NestaOpts opts = {.sigma = 0.01, .mu = 10,
                         .verbose = 5, .tol = 1e-5,
-                        .n_continue=5, .bp_mode=analysis};
+                        .n_continue=5};
 
   DctMode dct_mode = dct1;
   BpMode bp_mode = analysis;
