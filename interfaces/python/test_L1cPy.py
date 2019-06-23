@@ -15,8 +15,10 @@ import _l1cPy_module as l1cPy
 def get_script_path():
     return os.path.dirname(os.path.realpath(__file__))
 
+
 def get_test_data_path():
     return get_script_path()+'/example_img_data.json'
+
 
 class TestNesta(unittest.TestCase):
     """These are tests for the .
@@ -46,9 +48,10 @@ class TestNesta(unittest.TestCase):
         n, m = self.Img_orig.shape
 
         Img_clean, status = l1cPy.nesta_dctTV(self.n, self.m, self.b,
-                                              self.pix_idx, alpha_v=.5, alpha_h=.5,
-                                              mu=1e-5, tol=1e-5, verbose=0, dct_mode=2,
-                                              bp_mode=1)
+                                              self.pix_idx, alpha_v=0.5,
+                                              alpha_h=0.5, mu=1e-5,
+                                              tol=1e-5, verbose=0,
+                                              dct_mode=2, bp_mode=1)
 
         self.assertEqual(status, 0)
         self.assertEqual(n, Img_clean.shape[0])
