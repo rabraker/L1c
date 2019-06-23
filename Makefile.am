@@ -5,8 +5,10 @@ AUTOMAKE_OPTIONS = foreign
 # before we run src/Makefile
 SUBDIRS = src/vcl             \
 			src               \
+			interfaces/python/_examples \
 		  	interfaces/python \
 			interfaces/mex    \
+			interfaces/mex/_examples    \
             interfaces/mex/test \
 			examples/c        \
 			test              \

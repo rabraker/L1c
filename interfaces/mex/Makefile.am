@@ -33,6 +33,7 @@ noinst_LTLIBRARIES = l1c_mex_utils.la
 l1c_mex_utils_la_SOURCES = l1c_mex_utils.c l1c_mex_utils.h
 
 l1qc_dct_la_SOURCES  = l1qc_dct_mex.c
+
 l1qc_dct_la_LIBADD = l1c_mex_utils.la
 
 breg_anistropic_TV_la_SOURCES  = breg_anistropic_TV_mex.c
@@ -53,13 +54,6 @@ SUFFIXES=$(MEXEXT)
 .PHONY: convenience-link clean-convenience-link copy-examples
 
 
-mex_example_sources = cs20ng_grating.m   \
-						mu_path_mask.m   \
-						nesta_example.m  \
-						play_l1qc_lb_and_TV_example.m
-
-mex_example_dest := $(addprefix $(abs_builddir)/examples/, $(mex_example_sources))
-
 mex_libs = $(mex_LTLIBRARIES:.la=$(MEXEXT))
 
 mex_lib_example_dest :=$(addprefix $(abs_builddir)/examples/, $(mex_libs))
@@ -69,7 +63,6 @@ $(info "----------mex dest: $(mex_lib_dest)")
 
 
 all-local:: $(abs_builddir)/examples \
-			$(mex_example_dest)      \
 			$(mex_lib_dest)          \
 			$(mex_lib_example_dest)
 
@@ -78,9 +71,11 @@ install-data-local:
 	cp $(srcdir)/_examples/*.m $(mexdir)/examples/.
 
 
+#Copy mex files to here. Do we need this still?
 $(abs_builddir)/%$(MEXEXT):%.la
 	$(LN_S) -f $(abs_builddir)/.libs/$(<:.la=$(MEXEXT)) $@
 
+# Copy mex files to example folder.
 $(abs_builddir)/examples/%$(MEXEXT):%.la
 	$(LN_S) -f $(abs_builddir)/.libs/$(<:.la=$(MEXEXT)) $@
 

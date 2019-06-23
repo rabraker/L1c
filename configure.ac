@@ -504,8 +504,10 @@ AC_CONFIG_FILES([Makefile
                 include/Makefile
                 include/vcl/Makefile
                 interfaces/python/Makefile
+                interfaces/python/_examples/Makefile
                 interfaces/mex/Makefile
-                interfaces/mex/test/Makefile])
+                interfaces/mex/test/Makefile
+                interfaces/mex/_examples/Makefile])
 
 
 
