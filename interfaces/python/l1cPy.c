@@ -121,10 +121,14 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
     return NULL;
   }
 
+  if (opts.dct_mode != dct1 && opts.dct_mode != dct2) {
+    PyErr_SetString(PyExc_ValueError, "Must have dct_mode = 1 or 2");
+    return NULL;
+  }
+
   /* Interpret the input objects as numpy arrays.
      N.B: NPY_ARRAY_IN_ARRAY = PY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_ALIGNED
    */
-
   b_npA =(PyArrayObject*)PyArray_FROM_OTF(b_obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
   pix_idx_npA =(PyArrayObject*)PyArray_FROM_OTF(pix_idx_obj, NPY_INT, NPY_ARRAY_IN_ARRAY);
 
@@ -167,10 +171,14 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
   }
 
   status = l1qc_dct(mrow, mcol, x_ours, n, b, pix_idx, opts, &lb_res);
-
+  if (status != L1C_SUCCESS){
+    PyErr_SetString(PyExc_RuntimeError, "l1qc_dct failed.");
+    l1c_free_double(x_ours);
+    goto fail;
+  }
   /* Build the output tuple */
-  npy_intp dims[] = {mtot};
-  x_out_npA = PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, x_ours);
+  npy_intp dims[] = {mrow, mcol};
+  x_out_npA = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, x_ours);
   lb_res_obj = Py_BuildValue("{s:d,s:i,s:i,s:i}",
                                        "l1", lb_res.l1,
                                        "total_newton_iter", lb_res.total_newton_iter,
