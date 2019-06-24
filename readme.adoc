@@ -19,6 +19,11 @@ The goal of this project is to provide a c library that is useful for the applic
 
 === Features ===
 Present capabilites and features include
+* Solving the basis pursuit denoising problem
++
+latexmath:[\min_{x} ||W^Tx||_{1}  \quad \text{s.t.} \quad ||Ax -b||_{2} < \epsilon,]
++
+using Nesterov's algorithm, which is based on the paper https://statweb.stanford.edu/~candes/nesta/NESTA.pdf[NESTA: A Fast and Accurate First-order Method for Sparse Recovery ], by Stephen Becker, Jerome Bobin and Emmanuel J. Candes. The NESTA algorithm can problems in both synthesis mode (latexmath:[W^T=I]) or analysis mode, where latexmath:[W] may be an overcomplete dictionary. This allows the inclusion of several regularizers. NESTA is much faster than the log-barrier algorithm.
 
 * Solving the basis pursuit denoising problem
 +
@@ -35,6 +40,8 @@ latexmath:[\min_{u} ||\nabla_{x}u||_{1} + ||\nabla_{y}u||_{1} + \mu ||u-f||_{2}.
 * Python and Matlab bindings for the high-level optimization routines.
 
 == Building ==
+See doc/building.rst[building]
+
 This project uses the GNU Autotools build system. Considering that we are still at "version 0.0", there is not a release tarball yet, so you will need Autotools installed. I typically test on Debian Linux. I have also succesfully built the project on Windows 7 with MinGW64.
 
 The four steps are 
@@ -261,7 +268,7 @@ In the original code, the functional latexmath:[f(z)] is only evaluated explicit
 . Other optimization routines. On the list are
 ** The isotropic TV-denoising problem using Bregman iteration. 
 ** https://web.stanford.edu/~boyd/l1_ls/[l1-ls] from Stephen Boyd's research group.
-** NESTA. This seems quite fast.
+
 
 . Generalize the backtracking line search. There is really no reason that it needs to be specific to the l1qc algorithm. All it needs is a way to evaluate the functional and gradient at different step sizes.
 
