@@ -20,10 +20,11 @@ def get_test_data_path():
     return get_script_path()+'/example_img_data.json'
 
 
-class TestNesta(unittest.TestCase):
-    """These are tests for the .
+class L1cPyTest(unittest.TestCase):
     """
-
+    Super class for all the test cases below,
+    so we dont repeat the same setup function.
+    """
     def setUp(self):
         self.fpath = get_test_data_path()
         with open(self.fpath) as json_data:
@@ -41,6 +42,31 @@ class TestNesta(unittest.TestCase):
         self.m = m
         self.pix_idx = np.int32(np.array(d['pix_idx']))
         self.b = img_vec[self.pix_idx]
+
+
+class TestL1qcLB(L1cPyTest):
+    """These are tests for the .
+    """
+
+    def test_nesta(self):
+        """nesta_dctTV: check that it runs and we get reasonable output.
+        """
+        n, m = self.Img_orig.shape
+
+        Img_clean, lb_stat = l1cPy.l1qc_dct(self.n, self.m, self.b,
+                                            self.pix_idx, mu=10,
+                                            newton_tol=1e-5, verbose=1,
+                                            dct_mode=2)
+
+        self.assertEqual(lb_stat['status'], 0)
+        self.assertEqual(n, Img_clean.shape[0])
+        self.assertEqual(m, Img_clean.shape[1])
+
+
+class TestNesta(L1cPyTest):
+    """These are tests for the .
+    """
+
 
     def test_nesta(self):
         """nesta_dctTV: check that it runs and we get reasonable output.
@@ -90,27 +116,9 @@ class TestNesta(unittest.TestCase):
                               pix_idx)
 
 
-class TestBregman(unittest.TestCase):
+class TestBregman(L1cPyTest):
     """These are tests for the .
     """
-
-    def setUp(self):
-        self.fpath = get_test_data_path()
-
-        with open(self.fpath) as json_data:
-            d = json.load(json_data)
-
-        img_vec = np.array(d['x_orig'], ndmin=1)
-        n = int(np.sqrt(len(img_vec)))
-        m = n
-
-        np.random.seed(0)
-        img_vec_noisy = img_vec + np.random.rand(n*m)*0.25
-        self.Img_noisy = np.reshape(img_vec_noisy, (n, m))
-        self.Img_orig = np.reshape(img_vec, (n, m))
-        self.n = n
-        self.m = m
-
 
     def test_breg_dims(self):
         """Check that we get the right dimensions back out.
@@ -125,22 +133,19 @@ class TestBregman(unittest.TestCase):
         self.assertEqual(n, Img_clean.shape[0])
         self.assertEqual(m, Img_clean.shape[1])
 
-
     def test_breg_errors(self):
         """Check that we get errors when we should."""
 
-        wrong_data=np.random.rand(3,3)
+        wrong_data = np.random.rand(3, 3)
         with self.assertRaises(IndexError):
             l1cPy.breg_anistropic_TV(5)
             # , max_iter=100, max_jac_iter=1,
-                                                 # tol=0.001, mu=5)
+            # tol=0.001, mu=5)
         with self.assertRaises(TypeError):
             l1cPy.breg_anistropic_TV(self.Img_noisy, max_iter=wrong_data)
 
         with self.assertRaises(TypeError):
             l1cPy.breg_anistropic_TV(self.Img_noisy, wrong_data)
-
-
 
     def test_bregman_anisTV(self):
         """
