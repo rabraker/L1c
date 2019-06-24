@@ -5,7 +5,7 @@ Optimizations
 
 Nesta
 ------
-  This is an implementation of the l1-specialized version of Nesterov's algorithm described in :cite:`becker_nesta_2011`. This method is to be prefered for large scale problems.
+This is an implementation of the l1-specialized version of Nesterov's algorithm described in :cite:`becker_nesta_2011`. This method is to be prefered for large scale problems.
 
 .. doxygengroup:: nesta
    :content-only:
