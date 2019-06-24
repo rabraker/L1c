@@ -48,25 +48,54 @@ class TestL1qcLB(L1cPyTest):
     """These are tests for the .
     """
 
-    def test_nesta(self):
-        """nesta_dctTV: check that it runs and we get reasonable output.
+    def test_l1qc_dct(self):
+        """l1qc_dct: check that it runs and we get reasonable output.
         """
         n, m = self.Img_orig.shape
 
         Img_clean, lb_stat = l1cPy.l1qc_dct(self.n, self.m, self.b,
                                             self.pix_idx, mu=10,
-                                            newton_tol=1e-5, verbose=1,
+                                            newton_tol=1e-5, verbose=0,
+                                            l1_tol=1e-3,
                                             dct_mode=2)
 
         self.assertEqual(lb_stat['status'], 0)
         self.assertEqual(n, Img_clean.shape[0])
         self.assertEqual(m, Img_clean.shape[1])
 
+    def test_l1qc_lb_errors(self):
+        """ l1qc_dct_errors: check that we get errros when we should.
+        """
+
+        with self.assertRaises(ValueError):
+            l1cPy.l1qc_dct(self.n, self.m, self.b,
+                           self.pix_idx, dct_mode=3, verbose=1)
+
+        # We only accept 1d vectors for pix_idx and b.
+        with self.assertRaises(IndexError):
+            l1cPy.l1qc_dct(self.n, self.m, self.Img_orig,
+                           self.pix_idx)
+
+        with self.assertRaises(IndexError):
+            l1cPy.l1qc_dct(self.n, self.m, self.b,
+                           np.int32(self.Img_orig))
+
+        # b and pix_idx must have the same size.
+        with self.assertRaises(ValueError):
+            l1cPy.l1qc_dct(self.n, self.m, self.b,
+                           self.pix_idx[1:])
+
+        # Should check for invalid pix_idx
+        pix_idx = self.pix_idx
+        pix_idx[0] = -1
+        with self.assertRaises(RuntimeError):
+            l1cPy.l1qc_dct(self.n, self.m, self.b,
+                           pix_idx)
+
 
 class TestNesta(L1cPyTest):
-    """These are tests for the .
+    """These are tests for the dct implementation of nesta .
     """
-
 
     def test_nesta(self):
         """nesta_dctTV: check that it runs and we get reasonable output.
@@ -168,7 +197,30 @@ class TestBregman(L1cPyTest):
 
         assert_almost_equal(Img_clean, self.Img_orig, decimal=0.5)
 
+    def suite():
+        suite = unittest.TestSuite()
+        suite.addTest(TestBregman('test_breg_dims'))
+        suite.addTest(TestBregman('test_breg_errors'))
+        suite.addTest(TestBregman('test_bregman_anisTV'))
+        return suite
+
 
 if __name__ == '__main__':
-    unittest.main()
+    test_loader = unittest.TestLoader()
+    maybe_case = os.getenv('PY_RUN_CASE')
+    if maybe_case is not None:
+        T = test_loader.loadTestsFromName('__main__.'+maybe_case)
+        runner = unittest.TextTestRunner(stream=sys.stdout, verbosity=3)
+        result = runner.run(T)
+    else:
+        unittest.main()
+        result = unittest.TestResultult()
+
+    if result.wasSuccessful and len(result.unexpectedSuccesses) == 0:
+        exit(0)
+    else:
+        exit(1)
+
+
+
     print(l1cPy.__file__)
