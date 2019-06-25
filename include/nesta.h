@@ -6,30 +6,9 @@
 #define L1C_NESTA_NMEAN 10
 #define L1C_NESTA_MAX_INNER_ITER 10000
 
-/**
- * @defgroup nesta Optimizations based on Nesterov's algorithm @cite becker_nesta_2011
- * @{*/
 
-typedef struct _l1c_NestaOpts l1c_NestaOpts;
+
 typedef struct _l1c_NestaProb l1c_NestaProb;
-
-/** Options for NESTA optimization.
- */
-struct _l1c_NestaOpts {
-  /** Smaller `mu` leads to better accuracy. Try 1e-5.*/
-  double mu;
-  /** Tolerance for termination criteria.*/
-  double tol;
-  /** Noise level of observations.*/
-  double sigma;
-  /**Number of continuation iterations. */
-  int n_continue;
-  /** Print nothing if 0.*/
-  int verbose;
-};
-
-/** @} */
-
 
 /**
  * Problem instance for Nesta.

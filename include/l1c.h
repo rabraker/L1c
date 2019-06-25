@@ -108,7 +108,7 @@ typedef struct _l1c_AxFuns l1c_AxFuns;
  * which mode it is intended for.
  *
  * In general, we assume that
- * \f{aligned}{
+ * \f{align}{
  *   R & \in\mathbb{R}^{n\times m}\\
  *   M & \in\mathbb{R}^{m \times p}\\
  *   n \le & m \leq p
@@ -278,7 +278,32 @@ struct _l1c_L1qcOpts{
 
 /** @}*/
 
+/**
+ * @defgroup nesta Optimizations based on Nesterov's algorithm @cite
+ * becker_nesta_2011
+ * @{*/
 
+/** Options for NESTA optimization.
+ */
+struct _l1c_NestaOpts {
+  /** Smaller `mu` leads to better accuracy. Try 1e-5.*/
+  double mu;
+  /** Tolerance for termination criteria.*/
+  double tol;
+  /** Noise level of observations.*/
+  double sigma;
+  /**Number of continuation iterations. */
+  int n_continue;
+  /** Print nothing if 0.*/
+  int verbose;
+};
+
+typedef struct _l1c_NestaOpts l1c_NestaOpts;
+
+int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
+              l1c_AxFuns ax_funs, l1c_NestaOpts opts);
+
+/** @} */
 
 int l1c_cgsolve(l1c_int N, double *x, double *b, double **Dwork,
                 void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data),
