@@ -9,7 +9,6 @@ static int check_pix_idx(l1c_int n, l1c_int *pix_idx, l1c_int max_idx);
    for passing to, e.g., l1qc_newton().
  */
 
-
 /**
  * @ingroup transforms
  *
@@ -22,12 +21,13 @@ static int check_pix_idx(l1c_int n, l1c_int *pix_idx, l1c_int max_idx);
  * `L1C_DCT_INIT_FAILURE`.
  *
  * The dimension of the transform `A` is `n` by `(mrow*mcol)`.
- *
+ * @param[in]  n Number of elements in pix_idx.
  * @param[in] mrow Number of rows of the underlying signal.
  * @param[in] mcol Number of columns of the underlying signal.
  *             To treat, e.g., an image as a 1D vectorized signal
  *             set `mcol=1` and `mrow = number_of_rows * number_of_columns`.
- * @param[in]  n Number of elements in pix_idx.
+ * @param[in] dct_mode Whether to setup dct1 (1D) or dct2 (2D)
+ *            transforms.
  * @param[in]  pix_idx indeces of locations of the subsampling. For both
  *             DCT1 and DCT2, this vector should be the same.
  * @param[out] ax_funs A structure of function pointers which will be populated.
