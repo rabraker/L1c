@@ -108,6 +108,7 @@ fi
 l1c_test_libs=
 l1c_cppflags=
 l1c_cflags=
+l1c_test_cflags=
 l1c_cxxflags=
 mex_cppflags=
 mex_cflags=
@@ -142,8 +143,13 @@ AX_APPEND_ALL_COMPILE_FLAGS([-fopenmp -m64 -std=c11], [l1c_cflags],
 AX_CHECK_COMPILE_FLAG(-Werror, [tmp_cflags="-Werror"], [], [], [])
 AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused   \
                             -Wcast-qual -Wcast-align -Winit-self     \
-                            -Wfloat-equal -Wundef -Wshadow -Wstringop-truncation \
+                            -Wundef -Wshadow -Wstringop-truncation \
                             -Wswitch-enum -Wvla], [l1c_cflags], [$tmp_cflags] [])
+
+# I dont want -Wfloat-equal in the testing cflags, because that can be useful there,
+# when we really do expect strict equality (e.g., to check if something got copied).
+l1c_test_cflags=$l1c_cflags
+AX_APPEND_COMPILE_FLAGS([-Wfloat-equal], [l1c_cflags], [$tmp_cflags] [])
 
 AC_LANG([C++])
 AX_CHECK_COMPILE_FLAG(-Werror, [tmp_cflags="-Werror"], [], [], [])
