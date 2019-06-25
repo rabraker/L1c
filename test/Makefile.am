@@ -75,6 +75,7 @@ test_l1c_test_SOURCES = TEST_cgsolve.c       \
 						TEST_bregman.c      \
 						TEST_TV.c           \
 						TEST_linesearch.c        \
+						TEST_l1c_logging.c       \
 						TEST_nesta.c             \
 						TEST_matrix_transforms.c \
 						test_l1c.c               \

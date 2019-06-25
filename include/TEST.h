@@ -1,5 +1,6 @@
 #ifndef _TEST_
 #define _TEST
+#include <check.h>
 
 Suite * l1qc_newton_suite(void);
 
@@ -27,4 +28,5 @@ Suite *matrix_transform_suite(void);
 
 Suite *l1c_nesta_suite(void);
 
+Suite *l1c_logging_suite(void);
 #endif
