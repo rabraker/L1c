@@ -2,7 +2,6 @@
 Building
 ========
 
-
 .. _OpenBlas: https://github.com/xianyi/OpenBLAS
 .. _ATLAS: http://math-atlas.sourceforge.net
 .. _FFTW3: http://fftw.org/
@@ -118,12 +117,6 @@ To run the test suite, execute
 
    make check
 
-By default, this will skip the memory leak test, which is very time consuming. To run this also, execute
-
-.. code-block:: bash
-
-   with_valgrind=yes make check
-
-
+For more information about the tests, see :ref:`testing`.
 
 

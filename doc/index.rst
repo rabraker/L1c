@@ -12,6 +12,7 @@ About L1C
    :hidden:
 
    building
+   testing
    api
    usage
    interfaces
