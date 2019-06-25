@@ -59,8 +59,6 @@ mex_libs = $(mex_LTLIBRARIES:.la=$(MEXEXT))
 mex_lib_example_dest :=$(addprefix $(abs_builddir)/examples/, $(mex_libs))
 mex_lib_dest := $(addprefix $(abs_builddir)/, $(mex_libs))
 
-$(info "----------mex dest: $(mex_lib_dest)")
-
 
 all-local:: $(abs_builddir)/examples \
 			$(mex_lib_dest)          \
