@@ -21,6 +21,7 @@ libl1c_la_SOURCES = l1qc_newton.c \
 					bregman.c    \
 					l1qc_dct.c   \
 					linesearch.c \
+					l1c_logging.c \
 					l1c_memory.c \
 					matrix_transforms.c \
 					dct_transforms.c \

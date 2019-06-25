@@ -13,7 +13,7 @@
 #include "nesta.h"
 #include "l1qc_newton.h"
 #include "l1c_mex_utils.h"
-
+#include "l1c_logging.h"
 
 /*
 
@@ -36,6 +36,8 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   BpMode  bp_mode;
   l1c_int *pix_idx;
   int status=0;
+  /* Replace printf with mexPrintf */
+  l1c_replace_printf(mexPrintf);
 
   /* --------- Parse and verify the Input ------------ */
   _mex_assert_num_outputs(nlhs, 2);

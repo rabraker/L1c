@@ -4,13 +4,13 @@
  * described in @cite becker_nesta_2011.
  *
  */
-#include <stdio.h>
 #include <stdlib.h>
 #include <cblas.h>
 #include <math.h>
 #include "l1c.h"
 #include "l1c_math.h"
 #include "nesta.h"
+#include "l1c_logging.h"
 
 /*
   W is a possibly overcomplete dictionary, ie, W is m by p. Signal v is assumed sparse in
@@ -391,10 +391,10 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
     l1c_init_vec(m,  NP->gradf_sum, 0.0);
 
     if (opts.verbose > 0) {
-      printf("Starting nesta continuation iter %d, with muj = %f\n", iter,
+      l1c_printf("Starting nesta continuation iter %d, with muj = %f\n", iter,
              NP->mu_j);
-      printf("Iter |     fmu     |  Rel. Vartn fmu |\n");
-      printf("------------------------------------------------------\n");
+      l1c_printf("Iter |     fmu     |  Rel. Vartn fmu |\n");
+      l1c_printf("------------------------------------------------------\n");
     }
     /* ---------------------------- MAIN ITERATION -------------------------- */
     for (int k=0; k < L1C_NESTA_MAX_INNER_ITER; k++){
@@ -427,12 +427,12 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
       _l1c_push_fmeans_fifo(&fbar_fifo, NP->fx);
       rel_delta_fmu = fabs(NP->fx - fbar) / fbar;
       if (opts.verbose > 0 && (((k+1) % opts.verbose) == 0)) {
-        printf("%d     %.3e       %.2e   \n", k+1, NP->fx, rel_delta_fmu);
+        l1c_printf("%d     %.3e       %.2e   \n", k+1, NP->fx, rel_delta_fmu);
       }
 
       if (rel_delta_fmu < NP->tol_j){
         if (opts.verbose > 0){
-          printf("   stopping: delta_fmu < tol (%g < tol %g )\n\n", rel_delta_fmu, NP->tol_j);
+          l1c_printf("   stopping: delta_fmu < tol (%g < tol %g )\n\n", rel_delta_fmu, NP->tol_j);
         }
         break;
       }
