@@ -147,6 +147,8 @@ Please check your Python installation. The error was:
 $ac_distutils_result])
 		PYTHON_VERSION=""
 	fi
+    # Check if the compiler accepts -isystem PATH, since this eliminates a lot of warning noise.
+    AX_CHECK_COMPILE_FLAG(-isystem./, [_SYS_INC_PREFIX="isystem"], [_SYS_INC_PREFIX="I"], [], [])
 
 	#
 	# Check for Python include path
@@ -159,9 +161,9 @@ $ac_distutils_result])
 			print (distutils.sysconfig.get_python_inc (plat_specific=1));"`
 		if test -n "${python_path}"; then
 			if test "${plat_python_path}" != "${python_path}"; then
-				python_path="-I$python_path -I$plat_python_path"
+			   python_path="-$_SYS_INC_PREFIX $python_path -$_SYS_INC_PREFIX $plat_python_path"
 			else
-				python_path="-I$python_path"
+                python_path="-$_SYS_INC_PREFIX $python_path"
 			fi
 		fi
 		PYTHON_CPPFLAGS=$python_path

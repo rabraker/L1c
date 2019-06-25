@@ -163,6 +163,8 @@ AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused   \
                             -Wswitch-enum -Wvla], [l1c_cxxflags], [$tmp_cflags] [])
 AC_LANG([C])
 
+# Check if we can add include dirs with _-isystem.
+AX_CHECK_COMPILE_FLAG(-isystem./, [_SYS_INC_PREFIX="isystem"], [_SYS_INC_PREFIX="I"], [], [])
 
 # At least on my linux, this flag is not supported by ld, but is needed to
 # build on mingw
@@ -203,12 +205,13 @@ if test x$enable_python != xno; then
       fi
 
 # look for the numpy include directory. DO NOT INDENT THIS.
+AC_MSG_CHECKING([checking for numpy include directory])
 npy_cppflags=`$PYTHON -c "import numpy.distutils as npd; \
 inc_dirs='';
 for dir in npd.misc_util.get_numpy_include_dirs():
-    inc_dirs = ' -I'+dir;
+    inc_dirs = ' -$_SYS_INC_PREFIX'+dir;
 print(inc_dirs);"`
-
+AC_MSG_RESULT([$npy_cppflags])
       # Other Variables that may prove useful:
       # $pyexecdir, $pythondir, $PYTHON_SITE_PKG, $PYTHON_SITE_PKG_EXEC
       # $npy_cppflags, $enable_python, $PYTHON, $PYTHON_VERSION
@@ -217,7 +220,7 @@ print(inc_dirs);"`
       dnl AC_SUBST(PKGPYTHONDIR, $pkgpythondir)
       dnl AC_SUBST(PYEXECDIR, $pyexecdir)
       dnl AC_SUBST(PKGPYEXECDIR, $pkgpyexecdir)
-      AC_SUBST(NPYCPPFLAGS, $npy_cppflags)
+      AC_SUBST(NPY_CPPFLAGS, $npy_cppflags)
    fi
 fi
 
@@ -483,7 +486,7 @@ AC_CHECK_FUNCS([strerror])
 AC_SUBST(L1CCXXFLAGS, $l1c_cxxflags)
 AC_SUBST(L1CCPPFLAGS, $l1c_cppflags)
 AC_SUBST(L1CCFLAGS, $l1c_cflags)
-AC_SUBST(L1CCFLAGS, $l1c_cflags)
+AC_SUBST(L1C_TEST_CFLAGS, $l1c_test_cflags)
 
 
 AC_SUBST(MEXCPPFLAGS, $mex_cppflags)

@@ -3,12 +3,13 @@
 
 #include "l1c.h"
 #include "nesta.h"
-#include "stdio.h"
-#include "Python.h"
+#include <stdio.h>
+#include <Python.h>
 // Without the following, the numpy header generates #warnings
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 #include <numpy/ndarraytypes.h>
+
 
 
 /* Function declartion */
