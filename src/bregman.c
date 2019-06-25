@@ -22,8 +22,6 @@ static inline void breg_shrink1(l1c_int N, double *x, double *d, double gamma);
 
 static inline void breg_mxpy_z(l1c_int N, double * restrict x, double * restrict y, double *z);
 
-static double l1c_norm2_err(l1c_int N, double * restrict x, double * restrict y);
-
 static void breg_anis_jacobi(int n, int m, double* uk_1, double *uk, double *rhs, double *D,
                              double lambda);
 
@@ -42,7 +40,6 @@ static void hess_inv_diag(l1c_int n, l1c_int m, double mu, double lambda, double
 BregFuncs breg_get_functions(){
   BregFuncs bfun = {.breg_shrink1 = breg_shrink1,
                     .breg_mxpy_z = breg_mxpy_z,
-                    .l1c_norm2_err = l1c_norm2_err,
                     .breg_anis_guass_seidel = breg_anis_guass_seidel,
                     .breg_anis_rhs = breg_anis_rhs,
                     .hess_inv_diag = hess_inv_diag,
@@ -82,33 +79,14 @@ void breg_mxpy_z(l1c_int N, double * restrict x, double * restrict y, double *z)
 
 }
 
-/**
-   Computes the relative 2-norm of error the error between x and y, i.e.,
-      nrm = ||x - y||_2/||y||_2
-   Assumes x and y are aligned to a DALIGN (default: 64) byte boundary.
- */
-double l1c_norm2_err(l1c_int N, double * restrict x, double * restrict y){
-  double *x_ = __builtin_assume_aligned(x, DALIGN);
-  double *y_ = __builtin_assume_aligned(y, DALIGN);
-  int i=0;
-  double ynrm = cblas_ddot(N, y, 1, y, 1);
-  double nrm = 0.0, diff = 0.0;
-
-  for (i=0; i<N; i++){
-    diff = x_[i] - y_[i];
-    nrm += diff * diff;
-  }
-  return sqrt(nrm/ynrm);
-}
-
 
 void breg_hess_eval(l1c_int n, l1c_int m, double *x, double *y, double mu, double lambda,
                     double *dwork1, double *dwork2){
 
-  l1c_DyTDy(n, m, lambda, x, dwork1);
-  l1c_DxTDx(n, m, lambda, x, dwork2);
+  l1c_DyTDy(n, m, 1.0, x, dwork1);
+  l1c_DxTDx(n, m, 1.0, x, dwork2);
   for(int i=0; i<n*m; i++){
-    y[i] = mu*x[i] + dwork1[i] + dwork2[i];
+    y[i] = mu*x[i] + lambda * dwork1[i] + lambda * dwork2[i];
   }
 }
 
@@ -323,6 +301,9 @@ void breg_anis_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, doub
 }
 
 
+/**
+ * @defgroup bregman Optimizations which use Bregman splitting.
+ * @{*/
 
 /**
  * Given an `n` by `m` image `f`, solves the anistropic TV denoising problem
@@ -347,9 +328,6 @@ void breg_anis_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, doub
  */
 int l1c_breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
                        double mu, double tol, int max_iter, int max_jac_iter){
-
-  struct timeval tv_start, tv_end;
-  tv_start = l1c_get_time();
 
   int iter=0, N=n*m, status=0;
   double lambda = 2*mu, dnrm_err = 0;
@@ -393,14 +371,13 @@ int l1c_breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
     for (int k=1; k<=max_jac_iter; k++){
       breg_anis_guass_seidel(n, m, uk, rhs, mu, lambda);
       }
-    dnrm_err = l1c_norm2_err(N, uk, uk_1);
-    // printf("in-iter: %d, lambda: %f, dnrm_err: %f\n", iter, lambda, dnrm_err);
+    dnrm_err = l1c_dnrm2_rel_err(N, uk, uk_1);
 
     /* Compute Dyu_b = Del_y*u + b. */
-    l1c_Dx(n, m, uk, Dxu_b);
+    l1c_Dx(n, m, 1.0, uk, Dxu_b);
     cblas_daxpy(N, 1.0, b_x, 1, Dxu_b, 1);
     /*  Dxu_b = Del_x*u + b. */
-    l1c_Dy(n, m, uk, Dyu_b);
+    l1c_Dy(n, m, 1.0, uk, Dyu_b);
     cblas_daxpy(N, 1.0, b_y, 1, Dyu_b, 1);
 
     /* Apply shrink operators. */
@@ -431,10 +408,7 @@ int l1c_breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
   l1c_free_double(dwork2);
   l1c_free_double(rhs);
 
-
-  tv_end = l1c_get_time();
-  double time_total = l1c_get_time_diff(tv_start, tv_end);
-  printf("total c time: %f\n", time_total);
-
   return status;
 }
+
+/** @}*/

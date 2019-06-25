@@ -1,3 +1,4 @@
+
 /*
 
   Entry point for the L1c test suite.
@@ -14,6 +15,7 @@
 
 char *test_data_dir;
 static char test_data_dir_name[] = "test_data";
+static char _TEST_DATA_DIR[] = "TEST_DATA_DIR";
 
 char* fullfile(char *base_path, char *name);
 static void setup_tests(void);
@@ -43,11 +45,13 @@ int main(void)
 
 
   srunner_add_suite(sr, dct2_suite());
+  srunner_add_suite(sr, dctTV_suite());
   srunner_add_suite(sr, cgsolve_suite());
   srunner_add_suite(sr, l1qc_newton_suite());
   srunner_add_suite(sr, vcl_math_suite());
 
   srunner_add_suite(sr, l1c_math_suite());
+  srunner_add_suite(sr, l1c_nesta_suite());
   srunner_add_suite(sr, TV_suite());
   srunner_add_suite(sr, bregman_suite());
   srunner_add_suite(sr, l1c_linesearch_suite());
@@ -75,13 +79,13 @@ void setup_tests(void){
   /* We cannot free the result of getenv, but if the environmental variable did not exist,
    we should free the default we set.
   */
-  char *srcdir;
-  srcdir = getenv("srcdir");
+  char *data_dir;
+  data_dir = getenv(_TEST_DATA_DIR);
 
-  if (!srcdir){
+  if (!data_dir){
     test_data_dir = fullfile(".", test_data_dir_name);
   }else{
-    test_data_dir = fullfile(srcdir, test_data_dir_name);
+    test_data_dir = fullfile(data_dir, "");
   }
 }
 
@@ -103,7 +107,9 @@ char* fullfile(char *base_path, char *name){
 
   /*Add 2: 1 for \0 and one for '/', path separator. */
   char *full_path = malloc( (len_base + len_name + 2)*sizeof(char));
-
+  if (!full_path){
+    return NULL;
+  }
   /*Includes \0*/
   strcpy(full_path, base_path);
   full_path[len_base] = '/';

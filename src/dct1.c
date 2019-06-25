@@ -13,9 +13,13 @@
 static void dct_destroy();
 static void dct_EMx(double *x_fftw, double *y);
 static void dct_MtEty(double *y, double *x);
-static void dct_idct(double *x_fftw);
 static void dct_MtEt_EMx(double *x_fftw, double *z);
 
+static void dct_Mx(double *x, double *y);
+static void dct_Mty(double *y, double *x);
+static void dct_Ex(double *x, double *y);
+static void dct_Ety(double *y, double *x);
+static void Identity(double *x, double *z);
 
 static fftw_plan dct_plan_MtEty;
 static fftw_plan dct_plan_EMx;
@@ -31,7 +35,7 @@ static double dct_root_1_by_2N;
 
 
 /**
- * @ingroup transforms
+ * @ingroup transforms Sub-sampled 1D DCT transform set.
  *
  * The function will populate an
  * l1c_AxFuns struct such that
@@ -69,9 +73,9 @@ static double dct_root_1_by_2N;
  *    matrix in columm major order.
  *
  *
+ * @param[in] n Number of elements in pix_mask_idx, and number of rows `A`.
  * @param[in] m Number of columns in the transform `A` and the number of
  *            of elements in the underlying signal.
- * @param[in]  n Number of elements in pix_mask_idx, and number of rows `A`.
  * @param[in]  pix_mask_idx indeces of locations of the subsampling.
  * @param[out] ax_funs A structure of function pointers which will be populated.
  *             On successfull exit, The fields Ax, Aty, AtAx, destroy, and M
@@ -84,7 +88,7 @@ static double dct_root_1_by_2N;
  * @warning This function assumes that its inputs have already been sanitized. In
  *          particular, if `max(pix_mask_idx) > m`, then segfaults are likely to occur.
  */
-int l1c_dct1_setup(l1c_int m, l1c_int n, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs){
+int l1c_dct1_setup(l1c_int n, l1c_int m, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs){
 
   int status = 0;
 #if defined(HAVE_FFTW3_THREADS)
@@ -114,10 +118,14 @@ int l1c_dct1_setup(l1c_int m, l1c_int n, l1c_int *pix_mask_idx, l1c_AxFuns *ax_f
   dct_n = n;
   dct_pix_mask_idx = pix_mask_idx;
 
-  dct_root_1_by_2N = sqrt(1.0 / ( (double) dct_m * 2)); // Normalization constant.
+  dct_root_1_by_2N = sqrt(1.0 / ( (double) dct_m * 2));
 
-  // FFTW_PATIENT | FFTW_DESTROY_INPUT| FFTW_PRESERVE_INPUT; | FFTW_PRESERVE_INPUT;
-  // FFTW_PATIENT seems to give us about 2.5 seconds for the 512x512 test image.
+  /* Note: except for c2r and hc2r, the default is FFTW_PRESERVE_INPUT.
+     It could be worth trying FFTW_DESTROY_INPUT, since this can potentially
+     allow more efficient algorithms.
+
+     FFTW_PATIENT seems to give us about 2.5 seconds for the 512x512 test image.
+   */
   unsigned flags = FFTW_PATIENT;
 
   fftw_r2r_kind dct_kind_MtEty = FFTW_REDFT10; // DCT-II, "the" DCT
@@ -131,14 +139,23 @@ int l1c_dct1_setup(l1c_int m, l1c_int n, l1c_int *pix_mask_idx, l1c_AxFuns *ax_f
     goto fail;
   }
 
+  ax_funs->n = n;
+  ax_funs->m = m;
+  ax_funs->p = m;
+  ax_funs->q = m;
+  ax_funs->norm_W = 1.0;
 
   ax_funs->Ax = dct_EMx;
   ax_funs->Aty = dct_MtEty;
   ax_funs->AtAx = dct_MtEt_EMx;
-  ax_funs->M = dct_idct;
-  ax_funs->Mt = NULL;
-  ax_funs->E = NULL;
-  ax_funs->Et = NULL;
+
+  ax_funs->Mx = dct_Mx;
+  ax_funs->Mty = dct_Mty;
+  ax_funs->Rx = dct_Ex;
+  ax_funs->Rty = dct_Ety;
+
+  ax_funs->Wtx = Identity;
+  ax_funs->Wz = Identity;
 
   ax_funs->destroy = dct_destroy;
   ax_funs->data = NULL;
@@ -161,20 +178,48 @@ static void dct_destroy(){
 #endif
 }
 
+static void Identity(double *x, double *z){
+  cblas_dcopy(dct_m, x, 1, z, 1);
+}
 
-static void dct_idct(double *x){
+
+static void dct_Mx(double *x, double *y){
   // double *x_ = __builtin_assume_aligned(x, DALIGN);
 
-  cblas_dcopy(dct_m, x, 1, dct_x, 1);
-  dct_x[0] = dct_x[0] * sqrt(2.0); //proper scaling
+  x[0] = x[0] * sqrt(2.0); //proper scaling
 
-  fftw_execute_r2r(dct_plan_EMx, dct_x, x);
+  fftw_execute_r2r(dct_plan_EMx, x, y);
   // normalize
   for (int i=0; i<dct_m; i++){
-    x[i] =x[i] * dct_root_1_by_2N;
+    y[i] =y[i] * dct_root_1_by_2N;
+  }
+
+  x[0] = x[0] / sqrt(2.0); //undo scaling
+}
+
+static void dct_Mty( double *y, double *x){
+  /*Apply x = M^T * y.
+    The results are normalized to matlabs convention. That is, divided by 1/sqrt(2*N) and
+    x[0] <- x[0] * /sqrt(2).
+
+    -- y should have dimension at least dct_m.
+       Should be aligned to 16 byte boundary for FFTW
+    -- x should have dimension at least dct_m. Should be aligned
+       to DALIGN boundary, for us.
+   */
+  double *x_a = __builtin_assume_aligned(x, DALIGN);
+
+  l1c_int i=0;
+  // Result contained in x_a.
+  fftw_execute_r2r(dct_plan_MtEty, y, x_a); //  M^T * dct_y_sparse
+
+  x_a[0] = x_a[0]/sqrt(2.0);
+  for(i=0; i<dct_m; i++){
+    x_a[i] = x_a[i]  * dct_root_1_by_2N;
   }
 
 }
+
 
 static void dct_EMx(double *x, double * restrict y){
   /* Compute y = E * M *dct_x, where M is the IDCT, and E is the subsampling matrix.
@@ -280,3 +325,29 @@ static void dct_MtEt_EMx(double * restrict x, double * restrict z){
 
 }
 
+
+/* Apply the subsampling y = E * x,
+   i.e., y = x[pix_idx]
+*/
+static void dct_Ex(double *x, double *y){
+  for(int i=0; i<dct_n; i++){
+    y[i] = x[dct_pix_mask_idx[i]];
+  }
+}
+
+
+/*
+  Apply the adjoint of the sub-sampling operation,
+  x = E^T * y
+  I.e., x = zeros(n), x[pix_idx] = y.
+
+  x should already be initialized.
+*/
+static void dct_Ety(double *y, double *x){
+
+  cblas_dscal(dct_m, 0, x, 1);
+
+  for (int i=0; i<dct_n; i++){
+    x[dct_pix_mask_idx[i]] = y[i];
+  }
+}

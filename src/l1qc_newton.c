@@ -10,6 +10,9 @@
 #include "l1c_math.h"
 #include "l1qc_newton.h"
 #include "linesearch.h"
+/**
+ * @file l1qc_newton.c
+ */
 
 /* ---------------- Forward Declarations ---------------------- */
 
@@ -45,7 +48,7 @@ double _l1c_l1qc_f_eval(void *problem_data, double *x, double *u){
   /* fu1 = x - u */
   l1c_daxpy_z(m, -1.0, u, x, Prb->fu1);
   /* fu2 = -x - u */
-  axpby_z(m, -1.0, x, -1.0, u, Prb->fu2);
+  l1c_daxpby_z(m, -1.0, x, -1.0, u, Prb->fu2);
 
   Prb->fe_val = 0.5 * (cblas_ddot(n, Prb->r, 1, Prb->r, 1) - epsilon * epsilon);
 
@@ -309,7 +312,6 @@ int _l1c_l1qc_newton_init(l1c_int m, double *x, double *u,  l1c_L1qcOpts *params
 int _l1c_l1qc_check_feasible_start(l1c_l1qcProb *Prb, double *x){
 
   /* Compute Ax - b = r */
-  l1c_int n = Prb->n;
   double *b  = Prb->b;
   double epsilon = Prb->epsilon;
   double *DWORK = Prb->DWORK7[0];
@@ -320,9 +322,7 @@ int _l1c_l1qc_check_feasible_start(l1c_l1qcProb *Prb, double *x){
   double tmp = cblas_dnrm2(Prb->n, DWORK, 1)  - epsilon;
   if (tmp > 0){
     /* Using minimum-2 norm  x0 = At*inv(AAt)*y.') as they
-       will require updates to cgsolve.
-    */
-    printf("epsilon = %f,  ||r|| = %.20f\n", epsilon, cblas_dnrm2(n, DWORK, 1));
+       will require updates to cgsolve.    */
     return L1C_INFEASIBLE_START;
   }else
     return 0;
@@ -394,7 +394,21 @@ void _l1c_l1qcProb_delete(l1c_l1qcProb *Prb){
 
 
 
-/**
+/** @ingroup l1qc_lb
+ *
+ * Performs the quadratically constrained \f$\ell_1\f$ optimization
+ *
+ * \f{align}{
+ *    \min_{x} ||x||_1 \text{ s.t. } ||Ax-b||_2 < \epsilon
+ * \f}
+ *
+ * using a log-barrier newton method. The algorithm is based on the
+ * description in `l1-magic` the manual
+ * \rsts
+ * :cite:`l1magic`.
+ * \endrsts
+ *
+ * @note This algorthm only operates in synthesis mode.
  *
  * @param[in] m size of x.
  * @param[in,out] x result of optimization.
@@ -441,7 +455,7 @@ l1c_LBResult l1c_l1qc_newton(l1c_int m, double *x, l1c_int n, double *b,
 
 
   if (_l1c_l1qc_check_feasible_start(&l1qc_prob, x) ){
-    printf("Starting point is infeasible, exiting\n");
+    fprintf(stderr, "%s: Starting point is infeasible, exiting\n", __func__);
     lb_res.status = L1C_INFEASIBLE_START;
     goto exit;
   }

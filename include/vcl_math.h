@@ -1,5 +1,5 @@
-#ifndef __VCL_MATH__
-#define __VCL_MATH__
+#ifndef _VCL_MATH_
+#define _VCL_MATH_
 #include "l1c.h"
 
 #ifdef __cplusplus

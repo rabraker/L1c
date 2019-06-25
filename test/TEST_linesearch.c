@@ -116,7 +116,7 @@ START_TEST(test_linesearch_xu)
   LSStat ls_stat;
   LSParams ls_params;
 
-  double *xu=NULL, *dx=NULL, *du=NULL, *dxu=NULL, *gradf=NULL, **dwork2=NULL;
+  double *xu=NULL, *dxu=NULL, *gradf=NULL, **dwork2=NULL;
   double  fx0=0;
   double xp_exp=0, up_exp=0;
   double fp_exp;
@@ -127,11 +127,9 @@ START_TEST(test_linesearch_xu)
 
   /* Even though our test function is scalar, we need this to ensure alignment.*/
   xu = l1c_calloc_double(2);
-  // u = l1c_calloc_double(1);
   gradf = l1c_calloc_double(2);
   dxu = l1c_calloc_double(2);
 
-  du = l1c_calloc_double(1);
   dwork2 = l1c_calloc_double_2D(2, 1);
 
   ls_params = (LSParams){.alpha = 0.6,
@@ -146,8 +144,7 @@ START_TEST(test_linesearch_xu)
   quad_funxu_dxu((void*)(&qd), xu, gradf, dxu);
 
   g_dot_dx = gradf[0] * dxu[0] + gradf[1] * dxu[1];
-  printf("fx0 = %f, gradf[0] = %f, gradf[1] = %f\n", fx0, gradf[0], gradf[1]);
-  printf("dx=%f, du=%f, gdotdxu=%f\n", dxu[0], dxu[1], g_dot_dx);
+
   /*
     Because we have a pure quadratic, we can predict how many iterations of the linesearch
     should happen. We should have s <= beta^k, where k = ceil(log(2*(1-alp))/log(beta));
@@ -178,8 +175,8 @@ START_TEST(test_linesearch_xu)
 
   /* ----------------- Cleanup --------------- */
   l1c_free_double(xu);
-  l1c_free_double(dx);
-  l1c_free_double(du);
+  l1c_free_double(gradf);
+  l1c_free_double(dxu);
   l1c_free_double_2D(2, dwork2);
 
 }

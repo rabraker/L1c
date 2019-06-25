@@ -1,4 +1,4 @@
-#ifndef  _L1C_TIMING_
+#ifndef _L1C_TIMING_
 #define _L1C_TIMING_
 #include "config.h"
 
@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 struct timeval timecheck;
+
 static inline struct timeval
 l1c_get_time(){
   struct timeval tv;

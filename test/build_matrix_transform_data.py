@@ -39,11 +39,7 @@ def build_matrix_xfms_test_data(test_data_path, N, M):
 
 
 if __name__ == "__main__":
-    srcdir = os.getenv("srcdir")
-    if srcdir is None:
-        srcdir = "."
-
-    data_dir = srcdir+"/test_data"
+    data_dir = TDU.data_dir()
 
     N = 50
     M = 20

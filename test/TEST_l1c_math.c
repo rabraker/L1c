@@ -83,6 +83,25 @@ START_TEST(test_l1c_daxpy_z)
 }
 END_TEST
 
+START_TEST(test_l1c_daxpby_z)
+{
+  l1c_int N = 6;
+  double a = 3;
+  double b = 2;
+
+  double x[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+  double y[] = {2.0, 2.0, 2.0, 2.0, 2.0, 2.0};
+  double z[] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+  double z_exp[] = {7.0, 10.0, 13.0, 16.0, 19.0, 22.0};
+
+
+  l1c_daxpby_z(N, a, x, b, y, z);
+
+  ck_assert_double_array_eq_tol(N, z_exp, z, TOL_DOUBLE);
+}
+END_TEST
+
 
 START_TEST(test_l1c_dxmuly_z)
 {
@@ -138,7 +157,158 @@ START_TEST(test_l1c_dlogsum)
 }
 END_TEST
 
+START_TEST(test_l1c_dnrm2_err)
+{
+  l1c_int N = 6;
+  double x_[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+  double y_[] = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0};
 
+  double *x = l1c_malloc_double(N);
+  double *y = l1c_malloc_double(N);
+  if (!x || !y){
+    ck_abort_msg("Out of memory\n");
+  }
+  for (int i=0; i<N; i++){
+    x[i] = x_[i];
+    y[i] = y_[i];
+  }
+
+  double nrm_x_y = l1c_dnrm2_err(N, x, y);
+
+  ck_assert_double_eq_tol(nrm_x_y, sqrt(N), TOL_DOUBLE_SUPER);
+
+  // setup_vectors_SC();
+}
+END_TEST
+
+START_TEST(test_l1c_dnrm2_rel_err)
+{
+  l1c_int N = 6;
+  double x_[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+  double y_[] = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0};
+
+  double *x = l1c_malloc_double(N);
+  double *y = l1c_malloc_double(N);
+  if (!x || !y){
+    ck_abort_msg("Out of memory\n");
+  }
+  for (int i=0; i<N; i++){
+    x[i] = x_[i];
+    y[i] = y_[i];
+  }
+
+  double nrm_x_y = l1c_dnrm2_rel_err(N, x, y);
+
+  ck_assert_double_eq_tol(nrm_x_y, sqrt(N)/sqrt(55.0), TOL_DOUBLE_SUPER);
+
+  // setup_vectors_SC();
+}
+END_TEST
+
+START_TEST(test_l1c_max_vec)
+{
+  l1c_int N = 6;
+  double xmax;
+  double x_[] = {1.0, -2.0, -3.0, 4.0, 5.0, 6.0};
+
+  double *x=l1c_malloc_double(N);
+  if (!x){
+    ck_abort_msg("Out of memory\n");
+  }
+  for (int i=0; i<N; i++){
+    x[i] = x_[i];
+  }
+
+  xmax = l1c_max_vec(0, x);
+  //ck_assert_double_nan(xmax);
+  ck_assert_msg(isnan(xmax),  "Assertion is NaN failed: xmax == %f\n", xmax);
+
+
+  xmax = l1c_max_vec(1, x);
+  ck_assert_double_eq(1.0, xmax);
+
+  xmax = l1c_max_vec(N, x);
+  ck_assert_double_eq(6.0, xmax);
+
+  l1c_free_double(x);
+}
+END_TEST
+
+
+START_TEST(test_l1c_abs_vec)
+{
+  l1c_int N = 6;
+  double x_[]    = {1.0, -2.0, -3.0, 4.0, 5.0, 6.0};
+  double x_exp[] = {1.0,  2.0,  3.0, 4.0, 5.0, 6.0};
+
+  double *x = l1c_malloc_double(N);
+  double *xabs = l1c_malloc_double(N);
+  if (!x || !xabs){
+    ck_abort_msg("Out of memory\n");
+  }
+  for (int i=0; i<N; i++){
+    x[i] = x_[i];
+    xabs[i] = 10;
+  }
+
+  l1c_abs_vec(N, x, xabs);
+
+  ck_assert_double_array_eq_tol(N, xabs, x_exp, TOL_DOUBLE_SUPER);
+
+  l1c_free_double(x);
+  l1c_free_double(xabs);
+}
+END_TEST
+
+START_TEST(l1c_math_max)
+{
+  double a=5, b=6, mx = 0;
+
+  mx = max(a, b);
+  ck_assert_double_eq(mx, b);
+
+  mx = max(a, -b);
+  ck_assert_double_eq(mx, a);
+}
+END_TEST
+
+START_TEST(l1c_math_min)
+{
+  double a=5, b=6, mx = 0;
+
+  mx = min(a, b);
+  ck_assert_double_eq(mx, a);
+
+  mx = min(a, -b);
+  ck_assert_double_eq(mx, -b);
+
+}
+END_TEST
+
+START_TEST(l1c_math_imax)
+{
+  l1c_int a=5, b=6, mx = 0;
+
+  mx = imax(a, b);
+  ck_assert_int_eq(mx, b);
+
+  mx = imax(a, -b);
+  ck_assert_int_eq(mx, a);
+}
+END_TEST
+
+START_TEST (l1c_math_imin)
+{
+  l1c_int a=5, b=6, mx = 0;
+
+  mx = imin(a, b);
+  ck_assert_double_eq(mx, a);
+
+  mx = imin(a, -b);
+  ck_assert_double_eq(mx, -b);
+
+}
+END_TEST
 
 
 Suite *l1c_math_suite(void)
@@ -156,10 +326,18 @@ Suite *l1c_math_suite(void)
   tcase_add_test(tc_l1c_math, test_l1c_daxpy_z2);
   tcase_add_test(tc_l1c_math, test_l1c_dxmuly_z);
   tcase_add_test(tc_l1c_math, test_l1c_daxpy_z);
+  tcase_add_test(tc_l1c_math, test_l1c_daxpby_z);
   tcase_add_test(tc_l1c_math, test_l1c_dsum);
   tcase_add_test(tc_l1c_math, test_l1c_dnorm1);
   tcase_add_test(tc_l1c_math, test_l1c_dlogsum);
-
+  tcase_add_test(tc_l1c_math, test_l1c_dnrm2_err);
+  tcase_add_test(tc_l1c_math, test_l1c_dnrm2_rel_err);
+  tcase_add_test(tc_l1c_math, test_l1c_max_vec);
+  tcase_add_test(tc_l1c_math, test_l1c_abs_vec);
+  tcase_add_test(tc_l1c_math, l1c_math_max);
+  tcase_add_test(tc_l1c_math, l1c_math_min);
+  tcase_add_test(tc_l1c_math, l1c_math_imax);
+  tcase_add_test(tc_l1c_math, l1c_math_imin);
   /*Add test cases to the suite */
   suite_add_tcase(s, tc_l1c_math);
 

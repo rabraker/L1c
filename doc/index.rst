@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 =====================
-Documentation for L1C
+About L1C 
 =====================
 
 .. toctree::
@@ -12,6 +12,7 @@ Documentation for L1C
    :hidden:
 
    building
+   testing
    api
    usage
    interfaces

@@ -1,4 +1,4 @@
-classdef TestL1qcMex < matlab.unittest.TestCase
+classdef TestL1cMex < matlab.unittest.TestCase
   
   properties
     b_small;
@@ -15,7 +15,7 @@ classdef TestL1qcMex < matlab.unittest.TestCase
   end
   
   methods
-    function self = TestL1qcMex()
+    function self = TestL1cMex()
       rng(1);
       Nsmall = 1024;
       alpha = 0.1;

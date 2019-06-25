@@ -5,18 +5,14 @@
 # Otherwise,
 #       DBG = '' and OPT = -O3 -march=native -mtune=native
 
-AM_CFLAGS =	 $(MAT_DEF)
+# AM_CFLAGS =
 
-# libl1cinclude_HEADERS =../include/l1qc_newton.h
-# Using noinst_LTLLIBRARIES instead of noinst_LIBRARIES prevents the warning
-# about linking against a static library when we compile and link the interfaces
 
 lib_LTLIBRARIES = libl1c.la
 
-# noinst_LTLIBRARIES = libl1c.la
-
 libl1c_la_CPPFLAGS = -DBUILDING_DLL -I$(top_srcdir)/include $(L1CCPPFLAGS)
-libl1c_la_CFLAGS = $(L1CCFLAGS)  -fPIC
+
+libl1c_la_CFLAGS = $(L1CCFLAGS)
 libl1c_la_SOURCES = l1qc_newton.c \
 					l1c_math.c \
 					cgsolve.c  \
@@ -30,6 +26,8 @@ libl1c_la_SOURCES = l1qc_newton.c \
 					dct_transforms.c \
                     dct1.c \
 					dct2.c \
+                    dct_tv_transforms.c \
+					nesta.c \
 					$(top_srcdir)/include/bregman.h \
 					$(top_srcdir)/include/json_utils.h \
 					$(top_srcdir)/include/l1c_math.h \
@@ -37,9 +35,6 @@ libl1c_la_SOURCES = l1qc_newton.c \
 					$(top_srcdir)/include/l1qc_newton.h \
 					$(top_srcdir)/include/TV.h \
 					$(top_srcdir)/include/l1c_timing.h
-
-
-
 
 libl1c_la_LIBADD	= ../src/vcl/libvcl_math.la
 

@@ -11,11 +11,14 @@
 
 /* ----- Forward Declarations -----*/
 static void dct2_destroy();
-static void dct2_idct(double *x_fftw);
-static void dct2_dct(double *x);
+static void dct2_Mx(double *x, double *y);
+static void dct2_Mty(double *y, double *x);
 static void dct2_EMx(double *x_fftw, double *y);
 static void dct2_MtEty(double *y, double *x);
 static void dct2_MtEt_EMx(double *x_fftw, double *z);
+static void dct2_Ex(double *x, double *y);
+static void dct2_Ety(double *y, double *x);
+static void Identity(double *y, double *x);
 
 /*-------- Globals for dct2. ------------- */
 static fftw_plan dct2_plan_MtEty;
@@ -107,7 +110,7 @@ static double dct2_root_1_by_4NM;
  * @warning This function assumes that its inputs have already been sanitized. In
  *          particular, if `max(pix_mask_idx) > mrow*mcol`, then segfaults are likely to occur.
  */
-int l1c_dct2_setup(l1c_int mrow, l1c_int mcol, l1c_int n, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs){
+int l1c_dct2_setup( l1c_int n, l1c_int mrow, l1c_int mcol, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs){
   int status = 0;
 #if defined(HAVE_FFTW3_THREADS)
   fftw_init_threads();
@@ -159,13 +162,21 @@ int l1c_dct2_setup(l1c_int mrow, l1c_int mcol, l1c_int n, l1c_int *pix_mask_idx,
     goto fail;
   }
 
+  ax_funs->n = n;
+  ax_funs->m = mrow * mcol;
+  ax_funs->p = mrow * mcol;
+  ax_funs->q = mrow * mcol;
+  ax_funs->norm_W = 1.0;
   ax_funs->Ax = dct2_EMx;
   ax_funs->Aty = dct2_MtEty;
   ax_funs->AtAx = dct2_MtEt_EMx;
-  ax_funs->M = dct2_idct;
-  ax_funs->Mt = dct2_dct;
-  ax_funs->E = NULL;
-  ax_funs->Et = NULL;
+  ax_funs->Mx = dct2_Mx;
+  ax_funs->Mty = dct2_Mty;
+  ax_funs->Rx = dct2_Ex;
+  ax_funs->Rty = dct2_Ety;
+
+  ax_funs->Wtx = Identity;
+  ax_funs->Wz = Identity;
 
   ax_funs->destroy = dct2_destroy;
   ax_funs->data = NULL;
@@ -190,20 +201,20 @@ static void dct2_destroy(){
 #endif
 }
 
-
-static void dct2_dct(double *x){
+static void Identity(double *y, double *x){
+  cblas_dcopy(dct2_mcol*dct2_mrow, y, 1, x, 1);
+}
+/*
+  Computes x = M^T * x
+ */
+static void dct2_Mty(double *y, double *x){
 
   double one_by_root2 = 1.0/sqrt(2);
-  int i;
-  cblas_dcopy(dct2_mrow * dct2_mcol, x, 1, dct2_Ety_sparse, 1);
 
-
-  fftw_execute(dct2_plan_MtEty); //-->dct2_x
+  fftw_execute_r2r(dct2_plan_MtEty, y, x); //-->dct2_x
 
   // normalize by 1/sqrt(2*N) * 1/sqrt(2*M)
-  for (i=0; i<dct2_mrow * dct2_mcol; i++){
-    x[i] = dct2_x[i] * dct2_root_1_by_4NM;
-  }
+  cblas_dscal(dct2_mrow * dct2_mcol, dct2_root_1_by_4NM, x, 1);
 
   x[0] = x[0]*0.5;
   // Across the columns of the first row.
@@ -211,11 +222,12 @@ static void dct2_dct(double *x){
 
   // Down the rows of the first column.
   cblas_dscal(dct2_mrow-1, one_by_root2, x+dct2_mcol, dct2_mcol);
-
 }
 
-
-static void dct2_idct(double *x){
+/*
+  Computes y = M * x
+ */
+static void dct2_Mx(double *x, double *y){
 
   double root2 = sqrt(2);
   cblas_dcopy(dct2_mrow * dct2_mcol, x, 1, dct2_x, 1);
@@ -224,15 +236,15 @@ static void dct2_idct(double *x){
   dct2_x[0] = dct2_x[0]*2.0;
 
   // Across the columns of the first row.
-  cblas_dscal(dct2_mrow-1, root2, dct2_x+1, 1);
+  cblas_dscal(dct2_mcol-1, root2, dct2_x+1, 1);
 
   // Down the rows of the first column.
   cblas_dscal(dct2_mrow-1, root2, dct2_x+dct2_mcol, dct2_mcol);
 
-  fftw_execute_r2r(dct2_plan_EMx, dct2_x, x);
+  fftw_execute_r2r(dct2_plan_EMx, dct2_x, y);
 
   // normalize by 1/sqrt(2*N) * 1/sqrt(2*M)
-  cblas_dscal(dct2_mrow*dct2_mcol, dct2_root_1_by_4NM, x, 1);
+  cblas_dscal(dct2_mrow*dct2_mcol, dct2_root_1_by_4NM, y, 1);
 
 }
 
@@ -332,4 +344,32 @@ static void dct2_MtEt_EMx(double * restrict x, double * restrict z){
 
   // Down the rows of the first column.
   cblas_dscal(dct2_mrow-1, one_by_root2, z+dct2_mcol, dct2_mcol);
+}
+
+
+/* Apply the subsampling y = E * x,
+   i.e., y = x[pix_idx]
+ */
+static void dct2_Ex(double *x, double *y){
+  for(int i=0; i<dct2_n; i++){
+    y[i] = x[dct2_pix_mask_idx[i]];
+  }
+
+}
+
+
+/*
+  Apply the adjoint of the sub-sampling operation,
+  x = E^T * y
+  I.e., x = zeros(n), x[pix_idx] = y.
+
+  x should already be initialized.
+ */
+static void dct2_Ety(double *y, double *x){
+
+  cblas_dscal(dct2_mcol * dct2_mrow, 0, x, 1);
+
+  for (int i=0; i<dct2_n; i++){
+    x[dct2_pix_mask_idx[i]] = y[i];
+  }
 }

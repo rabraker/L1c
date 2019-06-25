@@ -1,7 +1,7 @@
 #
 #******************************************************************************
 
-AUTOMAKE_OPTIONS = foreign 1.8 no-dependencies
+AUTOMAKE_OPTIONS = foreign 1.8
 
 bin_PROGRAMS =l1qc_dct_c
 l1qc_dct_c_SOURCES = l1qc_dct_c.c

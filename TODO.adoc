@@ -6,7 +6,11 @@
 .. _l1c_l1qcProb_delete Dont know what to test here. I guess I can pass a null pointer, and otherwise leave it up to valgrind to check the whole thing got freed.
 .. test_l1c_malloc_double_2D need to check it returns NULL if an inner malloc fails.
 .. l1c_free_double_2D, should check it works when ddptr==NULL
-
++
 +
 . The dct/dct2 should not store their state as local-globals. This limits the user to seting up a single optimization. Rather, the state should be stored, possibly, as an opaqe  field in the struct of function pointers.
-
++
++
+. Need tests for dctTV that dct1 and dct2 get selected properly. Possibly, this should just get tested in l1c_setup_dct().
+.Need integration tests for mex nesta interface, in other modes besides synthesis.
+.Need to develop better tests for python mode.

@@ -57,7 +57,8 @@ int main(int argc, char **argv){
                             .cg_tol = 1e-8,
                             .cg_maxiter = 200,
                             .cg_verbose = 0,
-                            .warm_start_cg=0};
+                            .warm_start_cg=0,
+                            .dct_mode=dct1};
 
 
   if (load_file_to_json(fpath, &test_data_json)){

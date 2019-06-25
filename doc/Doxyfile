@@ -42,8 +42,13 @@ OPTIMIZE_OUTPUT_FOR_C  = YES
 
 
 
-EXTENSION_MAPPING      = md=md
-MARKDOWN_SUPPORT       = YES
+# EXTENSION_MAPPING      = md=md
+# MARKDOWN_SUPPORT       = YES
+
+ALIASES = "rst=\verbatim embed:rst"
+ALIASES += "endrst=\endverbatim"
+ALIASES += "rsts=\verbatim embed:rst:leading-asterisk"
+ALIASES += "endrsts=\endverbatim"
 
 # When the TOC_INCLUDE_HEADINGS tag is set to a non-zero value, all headings up
 # to that level are automatically included in the table of contents, even if
@@ -66,6 +71,15 @@ TOC_INCLUDE_HEADINGS   = 1
 
 INLINE_SIMPLE_STRUCTS  = YES
 
+# If the EXTRACT_ALL tag is set to YES doxygen will assume all entities in 
+# documentation are documented, even if no documentation was available. 
+# Private class members and static file members will be hidden unless 
+# the EXTRACT_PRIVATE and EXTRACT_STATIC tags are set to YES
+
+EXTRACT_ALL            = NO
+HIDE_UNDOC_MEMBERS = YES
+HIDE_UNDOC_CLASSES = YES
+EXTRACT_PRIVATE = NO
 
 #---------------------------------------------------------------------------
 # Build related configuration options
@@ -107,7 +121,8 @@ INPUT                 = ../src/dct1.c              \
                         ../src/cgsolve.c           \
                         ../src/l1c_memory.c        \
                         ../include/l1c.h           \
-
+                        ../include/nesta.h         \
+                        ../src/nesta.c
 
 # If the value of the INPUT tag contains directories, you can use the
 # FILE_PATTERNS tag to specify one or more wildcard patterns (like *.cpp and
@@ -164,13 +179,13 @@ USE_MDFILE_AS_MAINPAGE =
 #---------------------------------------------------------------------------
 # Configuration options related to the XML output
 #---------------------------------------------------------------------------
-GENERATE_HTML          = NO
+GENERATE_HTML          = YES
 GENERATE_LATEX         = NO
 
 GENERATE_XML           = YES
 
 XML_OUTPUT             = xml
-# EXTRA_PACKAGES         = amsmath amssymb
+EXTRA_PACKAGES         = amsmath amssymb mathtools url
 #---------------------------------------------------------------------------
 # Configuration options related to the DOCBOOK output
 #---------------------------------------------------------------------------

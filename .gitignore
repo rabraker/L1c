@@ -82,3 +82,5 @@ py-compile
 doc/auto
 doc/html
 doc/latex
+compile_flags.txt
+.cquery*

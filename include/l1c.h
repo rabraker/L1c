@@ -1,9 +1,9 @@
-#ifndef __L1C__
-#define __L1C__
+#ifndef _L1C_
+#define _L1C_
 /*
  * @file l1c.h
  *
- * The main API for l1c.
+ * The public API for l1c.
  */
 
 
@@ -15,7 +15,7 @@ typedef int l1c_int;
 
 
 /**
- * \defgroup memory
+ * \defgroup memory Functions for dealing with memory allocation that are general to all of l1c.
  * Functions for managing memory, and in particular, aligned allocation
  * needed for vectorized math.
  * @{
@@ -25,7 +25,9 @@ typedef int l1c_int;
     The default is 64. This should be sufficient for up to AVX512. For SSE2
     and AVX2, you could redifine this 32.
  */
+#ifndef DALIGN
 #define DALIGN  64
+#endif
 
 /**
  * Allocate an array of doubles aligned to a DALGIN byte boundary.
@@ -57,82 +59,131 @@ void l1c_free_double_2D(int nrow, double **ddptr);
 /**@}*/
 
 
+/** @ingroup nesta
+ * Instructs optimization to operate in synthesis mode, e.g.,
+ * \f$\min_x ||x|| \text{ s.t. } ||RWx-b||<\sigma\f$
+
+ * Instructs optimization to operate in analysis mode, e.g.,
+ *  \f$\min_x ||W^Tx|| \text{ s.t. } ||Rx-b||<\sigma\f$
+ */
+typedef enum BpMode {
+  analysis = (1U << 0),
+  synthesis=(1U<<1)
+} BpMode;
+
 
 /**
- * @defgroup transforms
- * Functions for linear transformations.
+ * @defgroup transforms Functions for linear transformations.
  * @{
  */
+
+typedef enum DctMode {
+  dct1 = 1,
+  dct2 = 2
+}DctMode;
+
+typedef struct _l1c_AxFuns l1c_AxFuns;
 
 /** A struct of function pointers for linear transforms.
  *
  * Any new set of transforms must implement the base transforms, `.Ax`,
  * the adjoint, `.Aty`, and the normal transform `.AtAx`.
  *
- * Upon entry, the output vector should be initialized to any finite value.
- * This allows more efficient code in the matrix_transforms class, which is
- * based on cblas_dgemv, which does overwrite the output but rather updates
- * it in place. For example,
+ * These transforms can be set up for either basis pursuit synthesis or
+ * analsysis problems. In either case, the problem can be described as
  *
- * @code
- * y = Ax + beta*y
- * @endcode
+ * \f$
+ *    \min_{z} ||W^T x||_1 \text{s.t.} ~ ||Ax - b|| < \sigma
+ * \f$
  *
- * The remaining function pointers are, at this point, optional, and not required
- * by the low level optimizations. However, often in CS, the transform `A` can be
- * decomposed as `A=EM`, where `M` is an othogonal, `m` by `m` matrix (say, a
- * DCT transform) and `E` is an `n` by `m` matrix, e.g., an identity with rows removed.
- * The remaining fields are there to provide access to those individual components.
+ * --In synthesis mode, \f$ W = I\f$ and \f$ A = RM\f$.
  *
- * Currently, the `.data` field is unused, but at some point, it may be good to make the
- * optimizations re-entrant. This field is there as a placeholder so a transform class
- * can store its state in `.data`, rather than file-global variables (as is currently done).
+ * --In analysis mode, \f$ W\f$ is some dictionary (possibly overcomplete,
+ *   or possibly the same as M), and \f$ A = R\f$.
+ *
+ *
+ * For any specific set of transforms, if a one of these operators is not
+ * needed, then the class should implement it as the identity operation.
+ * The documentation for the class implementing l1cAxfuns should describe
+ * which mode it is intended for.
+ *
+ * In general, we assume that
+ * \f{align}{
+ *   R & \in\mathbb{R}^{n\times m}\\
+ *   M & \in\mathbb{R}^{m \times p}\\
+ *   n \le & m \leq p
+ * \f}
+ *
+ * @warning Upon entry, the output vector should be initialized.
+ *
  * @see l1c_dct1_setup()
  *      l1c_dct2_setup()
  *      l1c_setup_dct_transforms()
  *      l1c_setup_matrix_transforms()
+ *      l1c_setup_dctTV_transforms()
  *
  */
-typedef struct l1c_AxFuns {
-  /*Everybody must implement these.*/
+struct _l1c_AxFuns {
+  /** Length of observation vector. n < m <=p*/
+  l1c_int n;
+  /** Length of true signal, number of columns in R. */
+  l1c_int q;
+  /** Number of columns in M and A. In analysis, q=m since M=I*/
+  l1c_int m;
+  /** Number of columns in W. p >=m. In synthesis, p=m, W=I*/
+  l1c_int p;
+
+  /** The spectral norm of the operator M (or at least an upper bound.
+   Currently, only nesta requires this.*/
+  double norm_W;
 
   /** Compute y=Ax */
   void(*Ax)(double *x, double *y);
+
   /** Compute x=Aty */
   void(*Aty)(double *y, double *x);
+
   /** Compute z=AtAx */
   void(*AtAx)(double *x, double *z);
 
-  /* Optional. Used by dct and dct2.*/
-  /** Compute x=Mx*/
-  void(*M)(double *x);
-  /** Compute y=Mty*/
-  void(*Mt)(double *y);
+  /** Compute x=Mx */
+  void(*Mx)(double *x, double *y);
 
-  /** Currently unused.*/
-  void(*E)(double *x);
-  /** Currently unused.*/
-  void(*Et)(double *y);
+  /** Compute z=M^Tx */
+  void(*Mty)(double *x, double *z);
+
+  /** Compute x=Mx */
+  void (*Wz)(double *z, double *x);
+
+  /** Compute z=M^Tx */
+  void (*Wtx)(double *x, double *z);
+
+  /** Computes y = R * x */
+  void(*Rx)(double *x, double *y);
+
+  /** Computes x = R^T * x. x should already be
+      initialized. */
+  void(*Rty)(double *y, double *x);
 
   /**Release data allocated by the associated setup function.
-     All implementations must define .`destroy`.
-  */
+     All implementations must define .`destroy`. */
   void(*destroy)(void);
 
-  /** Reserved for future use.*/
+  /** Reserved for future use. Hopefully, will be used
+   * to make the optimizations re-entrant, rather than
+   * file-global variables (as is currently done).*/
   void *data;
-}l1c_AxFuns;
-
-
-
+};
 
 /** @}*/
 
+
+
 /**
- * @defgroup lin_solve
+ * @defgroup lin_solve Routines for solving systems of linear equations.
  * @{*/
 /** Struct containing artifacts of the cgsolve routine. */
-typedef struct l1c_CgResults{
+typedef struct _l1c_CgResults{
   /** Residual */
   double cgres;
   /** Number of completed conjugate gradient iterations. */
@@ -144,7 +195,7 @@ typedef struct l1c_CgResults{
 /**
  * Parameters for the conjugate gradient solver.
  */
-typedef struct l1c_CgParams{
+typedef struct _l1c_CgParams{
   /** If 0, print nothing, if >0, print status every verbose-th iteration. */
   l1c_int verbose;
   /** Maximum number of solver iterations.*/
@@ -158,9 +209,15 @@ typedef struct l1c_CgParams{
 
 
 /**
- *  Contains the results of an l1qc_newton() optimizations.
+ * @defgroup l1qc_lb l1-minimization with quadratic constraint.
+ * @{*/
+
+
+typedef struct _l1c_LBResult l1c_LBResult;
+/**
+ * Contains the results of an l1qc_newton() optimizations.
  */
-typedef struct l1c_LBResult{
+struct _l1c_LBResult{
   /** Value of the objective function.*/
   double l1;
   /** Total number of newton interations, across all log-barrier iterations.*/
@@ -172,13 +229,14 @@ typedef struct l1c_LBResult{
       see \ref l1c_errors */
   int    status;
 
-}l1c_LBResult;
+};
 
 
+typedef struct _l1c_L1qcOpts l1c_L1qcOpts;
 /**
  * Options which control the l1qc_dct() optimization.
  */
-typedef struct l1c_L1qcOpts{
+struct _l1c_L1qcOpts{
   /** The epsilon in \f$||Ax-b||_2 < \epsilon\f$  */
   double epsilon;
   /** log-barier parameter. */
@@ -192,8 +250,8 @@ typedef struct l1c_L1qcOpts{
   /** This should be removed. */
   int lbiter;
   /** The newton iterations stop if
-   * \f$ 0.5\nabla f)^T \begin{bmatrix}d_x \\d_u\end{bmatrix} < newton_tol \f$
-   * The optimization continues into the next log-barrier iteration.
+   * \f$ 0.5(\nabla f)^T \begin{bmatrix}d_x \\d_u\end{bmatrix} < \texttt{newton}\_\texttt{tol} \f$
+   * and the optimization continues into the next log-barrier iteration.
   */
   double newton_tol;
   /** Maximum number of Newton iterations.*/
@@ -213,10 +271,39 @@ typedef struct l1c_L1qcOpts{
   int cg_verbose;
   /** Should the conjugate-gradient solver be warm-started?
    */
- int warm_start_cg;
-}l1c_L1qcOpts;
+  int warm_start_cg;
 
+  DctMode dct_mode;
+};
 
+/** @}*/
+
+/**
+ * @defgroup nesta Optimizations based on Nesterov's algorithm @cite
+ * becker_nesta_2011
+ * @{*/
+
+/** Options for NESTA optimization.
+ */
+struct _l1c_NestaOpts {
+  /** Smaller `mu` leads to better accuracy. Try 1e-5.*/
+  double mu;
+  /** Tolerance for termination criteria.*/
+  double tol;
+  /** Noise level of observations.*/
+  double sigma;
+  /**Number of continuation iterations. */
+  int n_continue;
+  /** Print nothing if 0.*/
+  int verbose;
+};
+
+typedef struct _l1c_NestaOpts l1c_NestaOpts;
+
+int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
+              l1c_AxFuns ax_funs, l1c_NestaOpts opts);
+
+/** @} */
 
 int l1c_cgsolve(l1c_int N, double *x, double *b, double **Dwork,
                 void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data),
@@ -236,13 +323,18 @@ int l1c_breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
                        double mu, double tol, int max_iter, int max_jac_iter);
 
 
-int l1c_dct2_setup(l1c_int mrow, l1c_int mcol, l1c_int n, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs);
+int l1c_dct2_setup(l1c_int n, l1c_int mrow, l1c_int mcol, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs);
 
-int l1c_dct1_setup(l1c_int m, l1c_int n, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs);
+int l1c_dct1_setup(l1c_int n, l1c_int m, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs);
 
 
-int l1c_setup_dct_transforms(l1c_int mrow, l1c_int mcol, l1c_int n,
+int l1c_setup_dct_transforms(l1c_int n, l1c_int mrow, l1c_int mcol, DctMode dct_mode,
                              l1c_int *pix_idx, l1c_AxFuns *ax_funs);
+
+int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
+                               double alp_v, double alp_h, DctMode dct_mode,
+                               BpMode bp_mode, l1c_int *pix_idx,
+                               l1c_AxFuns *ax_funs);
 
 int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_funs);
 
@@ -250,6 +342,9 @@ int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_
 /**
  * @defgroup l1c_errors Error codes returned.
  * @{*/
+/** Successfull return status*/
+#define L1C_SUCCESS 0
+
 /** Initial guess was infeasible. */
 #define L1C_INFEASIBLE_START  (1U << 1)
 
@@ -267,6 +362,9 @@ int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_
 
 /** E.g., N<0.*/
 #define L1C_INVALID_ARGUMENT  (1U << 11)
+
+/** E.g., asking for analysis, but ax_funs.U==NULL*/
+#define L1C_INCONSISTENT_ARGUMENTS (1U<< 13)
 
 /** @}*/
 

@@ -10,29 +10,9 @@
 
 #include "l1c.h"
 #include "l1qc_newton.h"
-
-
-#define NUMBER_OF_FIELDS(ST) (sizeof(ST)/sizeof(*ST))
-
-int check_input_size(l1c_int N){
-  /* Prevent segfault from bug in l1qc_newton, with splitting up DWORK.
-     We can allow 512*512, but not 511*511.
-
-     Is there a cleaner way to check this?
-  */
-  double divisor = (double) DALIGN / (double)sizeof(double); // e.g., 8
-  double maybe_div = (double)N / divisor;
-
-  if ((int)maybe_div == N/((int)DALIGN/(int)sizeof(double))){
-    return 0;
-  }
-
-  return 1;
-}
+#include "l1c_mex_utils.h"
 
 /*
- *	m e x F u n c t i o n
-
  The matlab protype is
  [x, LBRes] = l1qc_dct(N, M, b, pix_idx, opts),
  where
@@ -42,12 +22,8 @@ int check_input_size(l1c_int N){
  */
 void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 {
-  // l1qc(x0, b, pix_idx, params);
-  /* inputs */
-
-
   double *x_out=NULL,  *b=NULL;
-
+  double *pix_idx_double=NULL, *x_ours=NULL;
   l1c_L1qcOpts l1qc_opts = {.epsilon=0,
                             .mu = 0,
                             .lbtol = 0,
@@ -59,146 +35,69 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
                             .cg_tol = 0,
                             .cg_maxiter = 0,
                             .cg_verbose = 0,
-                            .warm_start_cg=0};
-
+                            .warm_start_cg=0,
+                            .dct_mode=dct1};
 
   l1c_LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
 
-  l1c_int i=0, n=0, mrow=0, mcol=1, npix=0, mtot=0, idx=0;
-  double *pix_idx_double=NULL, *x_ours=NULL;
+  l1c_int i=0, n=0, mrow=0, mcol=1, mtot=0, idx=0;
+  l1c_int size_pix_idx=0;
+
   l1c_int *pix_idx;
   int status=0;
-  // mwSize *dims;
-  if( !(nlhs > 0)) {
-    mexErrMsgIdAndTxt("l1c:l1qc_dct:nlhs",
-                      "One output required.");
-  }
 
-  if( (nrhs != 5) ){
-    mexErrMsgIdAndTxt("l1c:l1qc_dct:nrhs",
-                      "five inputs required.");
-  }
-
+  _mex_assert_num_outputs(nlhs, 1);
+  _mex_assert_num_inputs(nrhs, 5);
 
   /* -------- Check mrow -------------*/
-  if( !mxIsDouble(prhs[0]) || !mxIsScalar(prhs[0]) ) {
-    mexErrMsgIdAndTxt("l1c:l1qc_dct:notDouble",
-                      "First Input vector must be type double.");
-  }
-  mrow = (l1c_int) mxGetScalar(prhs[0]);
-
+  mrow = (l1c_int)_mex_get_double_scalar_or_fail(prhs, 0);
 
   /* -------- Check mcol -------------*/
-  if( !mxIsDouble(prhs[1]) || !mxIsScalar(prhs[1]) ) {
-    mexErrMsgIdAndTxt("l1c:l1qc_dct:notDouble",
-                      "First Input vector must be type double.");
-  }
-  mcol = (l1c_int) mxGetScalar(prhs[1]);
+  mcol = (l1c_int)_mex_get_double_scalar_or_fail(prhs, 1);
   mtot = mcol * mrow;
 
-  /* Until I fix the DWORK/DALIGN issue, check that mtot is divisible by DALIGN/sizeof(double)*/
-
-  if (check_input_size(mtot)){
-    mexErrMsgIdAndTxt("l1c:l1qc_dct:not_align-able",
-                      "l1qc_dct currently requires N*M be divisible by %d.", DALIGN/sizeof(double));
-  }
-
   /* -------- Check b -------------*/
-  if( !mxIsDouble(prhs[2]) ) {
-    mexErrMsgIdAndTxt("l1c:l1qc_dct:notDouble",
-                      "Second Input vector must be type double.");
-  }
-
-  /* check that b is vector */
-  if( (mxGetN(prhs[2]) > 1)  & (mxGetM(prhs[2]) >1) ){
-    printf("num dim = %d\n", mxGetNumberOfDimensions(prhs[1]));
-    mexErrMsgIdAndTxt("l1c:l1qc_dct:notVector",
-                      "Second Input must be a vector.");
-  }else{
-    n = (l1c_int) ( mxGetM(prhs[2]) *  mxGetN(prhs[2]) );
-  }
-
-  b = mxGetPr(prhs[2]);
-
+  _mex_get_double_array_or_fail(prhs, 2, &b, &n);
 
   /* -------- Check pix_idx -------------*/
-  if( !mxIsDouble(prhs[3]) ) {
-    mexErrMsgIdAndTxt("l1c:l1qc_dct:notDouble",
-                      "pix_idx vector must be type double.");
-  }
+  _mex_get_double_array_or_fail(prhs, 3, &pix_idx_double, &size_pix_idx);
 
-  /* check that pix_idx input argument is vector */
-  if( (mxGetN(prhs[3]) > 1)  & (mxGetM(prhs[3]) >1) ){
-    printf("num dim = %d\n", mxGetNumberOfDimensions(prhs[1]));
-    mexErrMsgIdAndTxt("l1c:l1qc_dct:notVector",
-                      "Third Input must be a vector.");
-  }else{
-    npix = (l1c_int) ( mxGetM(prhs[3]) *  mxGetN(prhs[3]) );
-  }
-
-  pix_idx_double = mxGetPr(prhs[3]);
-
-  if ( !(mrow*mcol > n) || (n != npix) || mrow <=0 || mcol <=0){
-    printf("mrow = %d, mcol=%d, n=%d, npix = %d\n", mrow, mcol, n, npix);
+  /* Ensure the sizes are consistent. */
+  if ( !(mrow*mcol > n) || (n != size_pix_idx) || mrow <=0 || mcol <=0){
+    printf("mrow = %d, mcol=%d, n=%d, npix = %d\n", mrow, mcol, n, size_pix_idx);
     mexErrMsgIdAndTxt("l1c:l1qc_dct:incompatible_dimensions",
                       "Must have length(x0) > length(b), and length(b) = length(pix_idx).");
   }
 
-
   /* -------- Check params struct -------------*/
-  if ( !mxIsStruct(prhs[4])){
-    mexErrMsgIdAndTxt("l1c:l1qc_dct:notStruct",
-                      "params must be a struct.");
-  }
+  _mex_assert_scalar_struct(prhs, 4);
 
-  int nfld = mxGetNumberOfFields(prhs[4]);
-  // char *flds[]={ "verbose", "tau", "mu"};
-  const char *name;
+  l1qc_opts.epsilon =
+    _mex_get_double_from_struct_or_fail(prhs, 4, "epsilon");
+  l1qc_opts.mu =
+    _mex_get_double_from_struct_or_fail(prhs, 4, "mu");
+  l1qc_opts.tau =
+    _mex_get_double_from_struct_or_fail(prhs, 4, "tau");
+  l1qc_opts.newton_tol =
+      _mex_get_double_from_struct_or_fail(prhs, 4, "newton_tol");
+  l1qc_opts.lbtol =
+    _mex_get_double_from_struct_or_fail(prhs, 4, "lbtol");
+  l1qc_opts.l1_tol =
+    _mex_get_double_from_struct_or_fail(prhs, 4, "l1_tol");
+  l1qc_opts.cg_tol =
+    _mex_get_double_from_struct_or_fail(prhs, 4, "cgtol");
+  l1qc_opts.warm_start_cg =
+      _mex_get_double_from_struct_or_fail(prhs, 4, "warm_start_cg");
+  l1qc_opts.verbose =
+    _mex_get_double_from_struct_or_fail(prhs, 4, "verbose");
+  l1qc_opts.newton_max_iter =
+      (int)_mex_get_double_from_struct_or_fail(prhs, 4, "newton_max_iter");
+  l1qc_opts.cg_maxiter =
+      (int)_mex_get_double_from_struct_or_fail(prhs, 4, "cgmaxiter");
+  l1qc_opts.lbiter =
+      (int)_mex_get_double_from_struct_or_fail(prhs, 4, "lbiter");
 
-  mxArray *tmp;
-  for (i=0; i<nfld; i++){
-    tmp = mxGetFieldByNumber(prhs[4], 0, i);
-    name =mxGetFieldNameByNumber(prhs[4], i);
-    if (!tmp){
-      mexErrMsgIdAndTxt("l1c:l1qc_dct:norverbose",
-                        "Error loading field '%s'.", name);
-    }else if( !mxIsScalar(tmp) | !mxIsNumeric(tmp) ){
-      mexErrMsgIdAndTxt("l1c:l1qc_dct:norverbose",
-                        "Bad data in field '%s'. Fields in params struct must be numeric scalars.", name);
-    }
-
-    if ( strcmp(name, "epsilon") == 0){
-      l1qc_opts.epsilon = mxGetScalar(tmp);
-    }else if ( strcmp(name, "mu") == 0){
-      l1qc_opts.mu = mxGetScalar(tmp);
-    }else if ( strcmp(name, "tau") == 0){
-      l1qc_opts.tau = mxGetScalar(tmp);
-    }else if ( strcmp(name, "newton_tol") == 0){
-      l1qc_opts.newton_tol = mxGetScalar(tmp);
-    }else if ( strcmp(name, "newton_max_iter") == 0){
-      l1qc_opts.newton_max_iter = (int) mxGetScalar(tmp);
-    }else if ( strcmp(name, "lbiter") == 0){
-      l1qc_opts.lbiter = (int)mxGetScalar(tmp);
-    }else if ( strcmp(name, "lbtol") == 0){
-      l1qc_opts.lbtol = mxGetScalar(tmp);
-    }else if ( strcmp(name, "l1_tol") == 0){
-      l1qc_opts.l1_tol = mxGetScalar(tmp);
-    }else if ( strcmp(name, "cgtol") == 0){
-      l1qc_opts.cg_tol = mxGetScalar(tmp);
-    }else if ( strcmp(name, "cgmaxiter") == 0){
-      l1qc_opts.cg_maxiter = mxGetScalar(tmp);
-    }else if ( strcmp(name, "warm_start_cg") == 0){
-      l1qc_opts.warm_start_cg = (int) mxGetScalar(tmp);
-    }else if ( strcmp(name, "verbose") == 0){
-      l1qc_opts.verbose= (int) mxGetScalar(tmp);
-    }else{
-      mexErrMsgIdAndTxt("l1c:l1qc_dct:norverbose",
-                        "Unrecognized field '%s' in params struct.", name);
-    }
-
-  }
-
-  if (l1qc_opts.verbose > 1){
+  if (l1qc_opts.verbose > 0){
     printf("Input Parameters\n---------------\n");
     printf("   verbose:         %d\n", l1qc_opts.verbose);
     printf("   epsilon:         %.5e\n", l1qc_opts.epsilon);
@@ -215,25 +114,19 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     printf("NB: lbiter and tau usually generated automatically.\n");
   }
 
-
-
-
-
   /* We are going to change x, so we must allocate and make a copy, so we
      dont change data in Matlabs workspace.
   */
   x_ours = l1c_malloc_double(mrow*mcol);
-  /*
-    pix_idx will naturally be a double we supplied from matlab
-    and will have 1-based indexing. Convert to integers and
-    shift to 0-based indexing.
-  */
   pix_idx = calloc(n, sizeof(l1c_int));
   if (!x_ours || !pix_idx){
     status = L1C_OUT_OF_MEMORY;
     goto exit;
   }
-  /* We need to validate pix_idx.*/
+  /*
+    pix_idx will naturally be a double we supplied from matlab
+    and will have 1-based indexing. Convert to integers and
+    shift to 0-based indexing and validate the indeces.  */
   for (i=0; i<n; i++){
     idx = ((l1c_int) pix_idx_double[i]) - 1;
     if (idx <0 || idx > mtot-1){
@@ -303,4 +196,4 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     break;
   }
 
-} /* ------- mexFunction ends here ----- */
+ } /* ------- mexFunction ends here ----- */

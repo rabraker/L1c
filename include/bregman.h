@@ -1,5 +1,5 @@
-#ifndef __BREGMAN___
-#define __BREGMAN__
+#ifndef _BREGMAN_
+#define _BREGMAN_
 #include "l1c.h"
 
 
@@ -15,8 +15,6 @@ typedef struct BregFuncs{
   void(*breg_shrink1)(l1c_int N, double *x, double *d, double gamma);
 
   void(* breg_mxpy_z)(l1c_int N, double * restrict x, double * restrict y, double *z);
-
-  double(* l1c_norm2_err)(l1c_int N, double * restrict x, double * restrict y);
 
   void (* breg_anis_jacobi)(int n, int m, double* uk_1, double *uk, double *rhs, double *D,
                         double lambda);

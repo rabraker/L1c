@@ -144,7 +144,7 @@ START_TEST(test_cgsolve_h11p){
   l1c_CgResults cgr;
   l1c_CgParams cgp = {.verbose=0, .max_iter=0, .tol=0};
 
-  l1c_int N, M, cg_maxiter, status=0;
+  l1c_int m, n, cg_maxiter, status=0;
   l1c_int *pix_idx;
   l1c_AxFuns ax_funs;
 
@@ -153,13 +153,13 @@ START_TEST(test_cgsolve_h11p){
   }
 
   // Inputs to get_gradient
-  status +=extract_json_double_array(test_data_json, "atr", &atr, &N);
-  status +=extract_json_double_array(test_data_json, "sigx", &sigx, &N);
-  status +=extract_json_double_array(test_data_json, "w1p", &w1p, &N);
-  status +=extract_json_double_array(test_data_json, "dx", &dx_exp, &N);
-  // status +=extract_json_double_array(test_data_json, "dx0", &dx0, &N);
+  status +=extract_json_double_array(test_data_json, "atr", &atr, &m);
+  status +=extract_json_double_array(test_data_json, "sigx", &sigx, &m);
+  status +=extract_json_double_array(test_data_json, "w1p", &w1p, &m);
+  status +=extract_json_double_array(test_data_json, "dx", &dx_exp, &m);
+  // status +=extract_json_double_array(test_data_json, "dx0", &dx0, &m);
 
-  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &M);
+  status +=extract_json_int_array(test_data_json, "pix_idx", &pix_idx, &n);
 
   status +=extract_json_double(test_data_json, "fe", &fe);
   status +=extract_json_double(test_data_json, "cgtol", &cgtol);
@@ -167,20 +167,20 @@ START_TEST(test_cgsolve_h11p){
   status +=extract_json_int(test_data_json, "cgmaxiter", &cg_maxiter);
 
 
-  l1c_dct1_setup(N, M, pix_idx, &ax_funs);
+  l1c_dct1_setup(n, m, pix_idx, &ax_funs);
 
   h11p_data.one_by_fe = 1.0/fe;
   h11p_data.one_by_fe_sqrd = 1.0 / (fe * fe);
   h11p_data.atr = atr;
   h11p_data.sigx = sigx;
-  h11p_data.Dwork_1m = l1c_malloc_double(N);
+  h11p_data.Dwork_1m = l1c_malloc_double(m);
   h11p_data.AtAx = ax_funs.AtAx;
 
-  DWORK4 = l1c_malloc_double_2D(4, N);
-  dx0 = l1c_malloc_double(N);
-  l1c_init_vec(N, dx0, 0);
-  double *dx_by_nrm = l1c_malloc_double(4*N);
-  double *dx_by_nrm_exp = l1c_malloc_double(4*N);
+  DWORK4 = l1c_malloc_double_2D(4, m);
+  dx0 = l1c_malloc_double(m);
+  l1c_init_vec(m, dx0, 0);
+  double *dx_by_nrm = l1c_malloc_double(4*m);
+  double *dx_by_nrm_exp = l1c_malloc_double(4*m);
   if ( status || !DWORK4 || !dx_by_nrm || !dx_by_nrm_exp){
     fprintf(stderr, "error allocating memory or reading JSON data in test_cgsolve_h11p\n");
     status +=1;
@@ -191,16 +191,16 @@ START_TEST(test_cgsolve_h11p){
   cgp.tol = cgtol;
   cgp.verbose = 0;
 
-  l1c_cgsolve(N, dx0, w1p, DWORK4, _l1c_l1qc_H11pfun, &h11p_data, &cgr, cgp);
+  l1c_cgsolve(m, dx0, w1p, DWORK4, _l1c_l1qc_H11pfun, &h11p_data, &cgr, cgp);
 
-  double nrm_exp = cblas_dnrm2(N, dx_exp, 1);
-  double nrm = cblas_dnrm2(N, dx0, 1);
-  printf("M=%d, norm exp: %.10f, nrm: %.10f\n", (int)M, nrm_exp, nrm);
-  for (int i=0; i<N ; i++){
+  double nrm_exp = cblas_dnrm2(m, dx_exp, 1);
+  double nrm = cblas_dnrm2(m, dx0, 1);
+
+  for (int i=0; i<m ; i++){
     dx_by_nrm_exp[i] = dx_exp[i]/nrm_exp;
     dx_by_nrm[i] = dx0[i]/nrm;
   }
-  ck_assert_double_array_eq_tol(N, dx_by_nrm_exp, dx_by_nrm, TOL_DOUBLE*10);
+  ck_assert_double_array_eq_tol(m, dx_by_nrm_exp, dx_by_nrm, TOL_DOUBLE*10);
 
  exit:
   l1c_free_double(dx_by_nrm_exp);

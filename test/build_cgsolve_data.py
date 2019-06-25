@@ -86,11 +86,7 @@ def ax_sym_data(test_data_root):
     TDU.save_json(data, ax_sym_path)
 
 
-srcdir = os.getenv("srcdir")
-if srcdir is None:
-    srcdir = "."
-
-data_dir = srcdir+"/test_data"
+data_dir = TDU.data_dir()
 
 build_cgsolve_test_data(data_dir)
 

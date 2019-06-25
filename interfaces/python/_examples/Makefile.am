@@ -1,0 +1,52 @@
+#
+#******************************************************************************
+AUTOMAKE_OPTIONS = foreign 1.8
+
+
+if ENABLE_PYTHON
+# if $(pyexecdir) is empty, this will fail with
+# libtool:   error: only absolute run-paths are allowed
+
+
+example_data = $(abs_top_builddir)/interfaces/python/examples/example_img_data.json
+example_build_dir = $(abs_top_builddir)/interfaces/python/examples
+py_example_dest = $(addprefix $(example_build_dir)/, $(py_example_sources))
+
+# No wildcard in automake, because, portability.
+py_example_sources = dct_example.py           \
+					run_TV_denoise_bregman.py
+
+EXTRA_DIST = $(py_example_sources)
+
+.PHONY: clean-convenience-link copy-examples
+
+
+install-data-local:
+	mkdir -p $(pkgpythondir)/examples
+	cp $(srcdir)/*.py $(pkgpythondir)/examples/.
+
+
+all-local:: $(example_build_dir) \
+			$(example_data)      \
+			$(py_example_dest)
+
+
+# Create examples folder
+$(example_build_dir):
+	mkdir -p $@
+
+# copy the python examples scripts
+$(example_build_dir)/%.py : $(srcdir)/%.py $(example_build_dir)
+	$(LN_S) -f $< $@
+
+# Create the example data.
+$(example_data):$(abs_top_srcdir)/test/build_CS20NG_example_data.py
+	python3 $< $@
+
+
+endif
+
+clean-local:: clean-convenience-link
+
+clean-convenience-link:
+	rm -f $(example_build_dir)/*.py
