@@ -4,9 +4,9 @@
  * described in @cite becker_nesta_2011.
  *
  */
-
+#include <stdio.h>
 #include <stdlib.h>
-#include<cblas.h>
+#include <cblas.h>
 #include <math.h>
 #include "l1c.h"
 #include "l1c_math.h"
