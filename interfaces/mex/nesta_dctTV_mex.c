@@ -78,6 +78,8 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
     bp_mode = analysis;
   }else{
     mexErrMsgIdAndTxt("l1c:badField", "Field 'mode' of opts must be a string, either analysis or synthesis");
+    /*We never reach this return, but it prevents warnings about unitialized bp_mode.*/
+    return;
   }
 
 
