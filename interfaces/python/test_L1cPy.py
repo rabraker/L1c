@@ -7,7 +7,7 @@ import sys
 import unittest
 import json
 import numpy as np
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_almost_equal, assert_allclose
 from numpy.linalg import norm
 import _l1cPy_module as l1cPy
 
@@ -195,7 +195,8 @@ class TestBregman(L1cPyTest):
         self.assertLess(Tvy_clean, Tvy_dirty)
         self.assertLess(Tvx_clean, Tvx_dirty)
 
-        assert_almost_equal(Img_clean, self.Img_orig, decimal=0.5)
+        assert_allclose(Img_clean, self.Img_orig, atol=0.5)
+        # assert_almost_equal(Img_clean, self.Img_orig, decimal=0.5)
 
     def suite():
         suite = unittest.TestSuite()
