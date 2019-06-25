@@ -37,6 +37,10 @@ double *xfm_dwork = NULL;
 int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A,
                                 l1c_AxFuns *ax_funs) {
 
+  if (n <=0 || m <=0){
+    return L1C_INVALID_ARGUMENT;
+  }
+
   int L = n > m ? n : m;
 
   xfm_dwork = l1c_malloc_double(L);

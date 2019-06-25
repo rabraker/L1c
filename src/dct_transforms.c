@@ -42,6 +42,10 @@ static int check_pix_idx(l1c_int n, l1c_int *pix_idx, l1c_int max_idx);
 int l1c_setup_dct_transforms( l1c_int n, l1c_int mrow, l1c_int mcol, DctMode dct_mode,
                              l1c_int *pix_idx, l1c_AxFuns *ax_funs){
 
+  if (n <=0 || mrow <=0 || mcol <=0){
+    return L1C_INVALID_ARGUMENT;
+  }
+
   if (check_pix_idx(n, pix_idx, mrow*mcol - 1)){
     return L1C_INVALID_ARGUMENT;
   }
