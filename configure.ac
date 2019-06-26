@@ -143,7 +143,7 @@ AX_APPEND_ALL_COMPILE_FLAGS([-fopenmp -m64 -std=c11], [l1c_cflags],
 # Check if c compiler accepts a bunch of warning flags.
 # Force it to fail on a warning.
 AX_CHECK_COMPILE_FLAG(-Werror, [tmp_cflags="-Werror"], [], [], [])
-AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused   \
+AX_APPEND_COMPILE_FLAGS([-fno-common -pedantic -Wall -Wextra -Wunused   \
                             -Wcast-qual -Wcast-align -Winit-self     \
                             -Wundef -Wshadow -Wstringop-truncation \
                             -Wswitch-enum -Wvla], [l1c_cflags], [$tmp_cflags] [])
@@ -159,7 +159,7 @@ AX_APPEND_ALL_COMPILE_FLAGS([-m64 -std=c++11], [l1c_cxxflags],
                             [AC_MSG_ERROR("Compiler does not support required flag")],
                             [],[])
 # Check if c compiler accepts a bunch of warning flags
-AX_APPEND_COMPILE_FLAGS([-pedantic -Wall -Wextra -Wunused   \
+AX_APPEND_COMPILE_FLAGS([-fno-common -pedantic -Wall -Wextra -Wunused   \
                             -Wcast-qual -Wcast-align -Winit-self     \
                             -Wfloat-equal -Wundef -Wshadow -Wstringop-truncation \
                             -Wswitch-enum -Wvla], [l1c_cxxflags], [$tmp_cflags] [])

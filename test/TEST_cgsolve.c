@@ -22,7 +22,7 @@
 #include "check_utils.h"
 #include "l1c_math.h"
 
-cJSON *test_data_json;
+static cJSON *test_data_json;
 
 /* Defined in test_l1c.c*/
 extern char* fullfile(char *base_path, char *name);
@@ -34,7 +34,7 @@ extern char *test_data_dir;
    Computes the matrix-vector product y = A * b, for a symmetric matrix A.
    This is a wrapper for cblas_dspmv.
 */
-void Ax_sym(l1c_int n, double *x, double *b, void *AX_data){
+static void Ax_sym(l1c_int n, double *x, double *b, void *AX_data){
 
   double *A = (double *) AX_data;
 
@@ -43,7 +43,7 @@ void Ax_sym(l1c_int n, double *x, double *b, void *AX_data){
 }
 
 
-int load_small_data(double **A, double **x, double **b, l1c_int *N, l1c_int *na,
+static int load_small_data(double **A, double **x, double **b, l1c_int *N, l1c_int *na,
                     l1c_int *max_iter, double *tol){
   l1c_int Nx=0, Nb= 0, status=0;
   char *fpath = fullfile(test_data_dir, "cgsolve_small01.json");

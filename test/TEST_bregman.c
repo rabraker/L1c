@@ -22,9 +22,6 @@
 extern char* fullfile(char *base_path, char *name);
 extern char *test_data_dir;
 
-cJSON *test_data_json;
-
-
 typedef struct BregData {
   l1c_int NM;
   l1c_int n;
@@ -49,7 +46,7 @@ typedef struct BregData {
   char *fpath;
 }BregData;
 
-BregData *BD;
+static BregData *BD;
 
 
 static void setup(void){

@@ -27,8 +27,6 @@ This is a test suite for the l1qc_newton library.
 
 
 
-// static cJSON *test_data_json;
-
 /* Defined in test_l1c.c*/
 extern char* fullfile(char *base_path, char *name);
 extern char *test_data_dir;
@@ -82,7 +80,7 @@ static double quad_funxu(void *data, double *x_, double *u_){
   return q + g + b;
 }
 
-void quad_funxu_dxu(void *data, double *xu, double *gradf, double *dxu){
+static void quad_funxu_dxu(void *data, double *xu, double *gradf, double *dxu){
   /* Compute the gradient and descent direction for a toy quadratic function.*/
   struct quad_funxu_data *qd = (struct quad_funxu_data*)data;
 

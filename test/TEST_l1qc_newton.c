@@ -24,8 +24,8 @@ This is a test suite for the l1qc_newton library.
 #include "test_constants.h"
 #include  "l1c_math.h"
 
-int _l1c_l1qcProb_new( l1c_l1qcProb *Prb, l1c_int m, l1c_int n, double *b,
-                       l1c_L1qcOpts params, l1c_AxFuns ax_funs);
+int _l1c_l1qcProb_new(l1c_l1qcProb *Prb, l1c_int m, l1c_int n, double *b,
+                      l1c_L1qcOpts params, l1c_AxFuns ax_funs);
 void _l1c_l1qcProb_delete(l1c_l1qcProb *Prb);
 
 static cJSON *test_data_json;
@@ -38,7 +38,7 @@ extern char *test_data_dir;
    we dont need all of them set, we should set them to clean up the ouput
    of valgrind when tracking down other problems.
 */
-void init_l1qc_opts(l1c_L1qcOpts *params){
+static void init_l1qc_opts(l1c_L1qcOpts *params){
   params->epsilon=1e-3;
   params->tau=10;
   params->mu=10;

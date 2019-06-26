@@ -57,9 +57,9 @@ typedef struct DctData{
 }DctData;
 
 /* Global variable for each all test cases.  */
-DctData *dctd;
+static DctData *dctd;
 
-l1c_AxFuns ax_funs;
+static l1c_AxFuns ax_funs;
 
 
 /* We the tcase_add_checked_fixture method. setup() and teardown are called by

@@ -6,7 +6,7 @@
 #include "l1c_logging.h"
 #include "json_utils.h"
 
-char fname_tmp[] = "test_scratch.txt";
+static char fname_tmp[] = "test_scratch.txt";
 
 int l1c_printf_new(const char *format, ...) {
   FILE *fid = fopen(fname_tmp, "w+");

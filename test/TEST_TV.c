@@ -52,7 +52,7 @@ typedef struct ImDiffData{
 
 }ImgDiffData;
 
-ImgDiffData *dd;
+static ImgDiffData *dd;
 
 
 static void setup(char *fname){

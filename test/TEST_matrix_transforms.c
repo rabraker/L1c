@@ -45,9 +45,9 @@ typedef struct MXfmData{
 }MXfmData;
 
 /* Global variable for each all test cases.  */
-MXfmData *mxfmd;
+static MXfmData *mxfmd;
 
-l1c_AxFuns ax_funs;
+static l1c_AxFuns ax_funs;
 
 
 /* We the tcase_add_checked_fixture method. setup() and teardown are called by
