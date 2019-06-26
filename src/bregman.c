@@ -7,7 +7,7 @@
 #include "bregman.h"
 #include "TV.h"
 #include "l1c_math.h"
-
+#include "l1c_logging.h"
 
 /*
   This file contains implementations from "The Split Bregman Method

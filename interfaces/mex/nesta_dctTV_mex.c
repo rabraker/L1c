@@ -1,13 +1,11 @@
 #include "config.h"
-/* It is important that mex.h is included before l1c_common.h
- so that, for this function, we get matlabs definition of fprintf
-*/
-#include "cblas.h"
-#include "matrix.h"
-#include "mex.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "cblas.h"
+#include "matrix.h"
+#include "mex.h"
 
 #include "l1c.h"
 #include "nesta.h"
@@ -18,8 +16,10 @@
 /*
 
  */
-void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
-{
+void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] ){
+  /* Replace printf with mexPrintf */
+  l1c_replace_printf(mexPrintf);
+
   l1c_NestaOpts opts = {.mu = 1e-5,
                         .sigma = 1e-3,
                         .tol = 1e-3,
@@ -36,8 +36,6 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
   BpMode  bp_mode;
   l1c_int *pix_idx;
   int status=0;
-  /* Replace printf with mexPrintf */
-  l1c_replace_printf(mexPrintf);
 
   /* --------- Parse and verify the Input ------------ */
   _mex_assert_num_outputs(nlhs, 2);
@@ -91,12 +89,12 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
                       "Must have length(x0) > length(b), and length(b) = length(pix_idx).");
   }
   if (opts.verbose > 0){
-    printf("Input Parameters\n---------------\n");
-    printf("   sigma:         %.5e\n", opts.sigma);
-    printf("   mu:              %.5e\n", opts.mu);
-    printf("   n_continue:      %d\n", opts.n_continue);
-    printf("   alp_v:             %.5e\n", alp_v);
-    printf("   alp_h:             %.5e\n", alp_h);
+    l1c_printf("Input Parameters\n---------------\n");
+    l1c_printf("   sigma:         %.5e\n", opts.sigma);
+    l1c_printf("   mu:              %.5e\n", opts.mu);
+    l1c_printf("   n_continue:      %d\n", opts.n_continue);
+    l1c_printf("   alp_v:             %.5e\n", alp_v);
+    l1c_printf("   alp_h:             %.5e\n", alp_h);
   }
 
 

@@ -11,6 +11,7 @@
 #include "cblas.h"
 #include "l1c.h"
 #include "l1c_mex_utils.h"
+#include "l1c_logging.h"
 
 #define NUMBER_OF_FIELDS(ST) (sizeof(ST)/sizeof(*ST))
 
@@ -21,9 +22,10 @@
  where
  f an n by m matrix, n>2, m>2, mu and tol are scarlar doubles.
  */
-void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
-{
-  // breg_anistropix_TV(f, mu, tol, max_iter);
+void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] ){
+  /* Replace printf with mexPrintf */
+  l1c_replace_printf(mexPrintf);
+
 
   double *f=NULL, *f_ours=NULL, *f_out=NULL, *uk=NULL;
 

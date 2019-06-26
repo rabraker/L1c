@@ -11,6 +11,7 @@ This contains the conjugate gradient solver, cgsolve. The two small routines Ax 
 #include "cblas.h"
 #include "l1c.h"
 #include "l1c_math.h"
+#include "l1c_logging.h"
 
 static void
 cg_report(int iter, double best_rel_res, double rel_res,
@@ -314,9 +315,10 @@ cg_report(int iter, double best_rel_res, double rel_res,
           double alpha, double beta, double delta){
 
   if (iter==1){
-    printf("cg: |Iter| Best resid | Current resid| alpha | beta   |   delta  |\n");
+    l1c_printf("cg: |Iter| Best resid | Current resid| alpha | beta   |   delta  |\n");
   }
-  printf("  %d,   %.16e, %.16e, %.16e, %.16e, %.16e  \n", iter, best_rel_res, rel_res, alpha, beta, delta);
+  l1c_printf("  %d,   %.16e, %.16e, %.16e, %.16e, %.16e  \n",
+             iter, best_rel_res, rel_res, alpha, beta, delta);
 
 }
 

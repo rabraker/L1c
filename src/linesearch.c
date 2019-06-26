@@ -1,11 +1,11 @@
 #include <cblas.h>
-#include <stdio.h>
 #include <math.h>
 
 #include "l1c.h"
 #include "l1qc_newton.h"
 #include "l1c_math.h"
 #include "linesearch.h"
+#include "l1c_logging.h"
 
 /**
    Performs a backtracking linesearch for objective functions with (x, u) variables.
@@ -108,14 +108,14 @@ LSStat l1c_linesearch_xu(l1c_int m, double *x, double *u, double *dx, double *du
   }
 
   char spc[] = "   ";
-  printf("%sBacktracking line search failed, returning previous iterate.\n", spc);
-  printf("%sLast line-search values:\n", spc);
-  printf("%s                        iter = %d\n", spc, iter);
-  printf("%s                        fp   = %.10e\n", spc, f_val);
-  printf("%s                        flin = %.10e\n", spc, flin);
-  printf("%s                        fp-flin = %.10f\n", spc, f_val - flin);
-  printf("%s                        step = %.10f\n", spc, step);
-  printf("%s                        ls_params.s = %.10f\n", spc, ls_params.s);
+  l1c_printf("%sBacktracking line search failed, returning previous iterate.\n", spc);
+  l1c_printf("%sLast line-search values:\n", spc);
+  l1c_printf("%s                        iter = %d\n", spc, iter);
+  l1c_printf("%s                        fp   = %.10e\n", spc, f_val);
+  l1c_printf("%s                        flin = %.10e\n", spc, flin);
+  l1c_printf("%s                        fp-flin = %.10f\n", spc, f_val - flin);
+  l1c_printf("%s                        step = %.10f\n", spc, step);
+  l1c_printf("%s                        ls_params.s = %.10f\n", spc, ls_params.s);
 
   ls_stat.flin = flin;
   ls_stat.step = step;
@@ -211,14 +211,14 @@ l1c_linesearch(l1c_int n, double *x, double *dx, double *fx0, double g_dot_dx, v
   }
 
   char spc[] = "   ";
-  printf("%sBacktracking line search failed, returning previous iterate.\n", spc);
-  printf("%sLast line-search values:\n", spc);
-  printf("%s                        iter = %d\n", spc, iter);
-  printf("%s                        fp   = %.10e\n", spc, fx0_prime);
-  printf("%s                        flin = %.10e\n", spc, flin);
-  printf("%s                        fp-flin = %.10f\n", spc, fx0_prime - flin);
-  printf("%s                        step = %.10f\n", spc, step);
-  printf("%s                        ls_params.s = %.10f\n", spc, ls_params.s);
+  l1c_printf("%sBacktracking line search failed, returning previous iterate.\n", spc);
+  l1c_printf("%sLast line-search values:\n", spc);
+  l1c_printf("%s                        iter = %d\n", spc, iter);
+  l1c_printf("%s                        fp   = %.10e\n", spc, fx0_prime);
+  l1c_printf("%s                        flin = %.10e\n", spc, flin);
+  l1c_printf("%s                        fp-flin = %.10f\n", spc, fx0_prime - flin);
+  l1c_printf("%s                        step = %.10f\n", spc, step);
+  l1c_printf("%s                        ls_params.s = %.10f\n", spc, ls_params.s);
 
   ls_stat.flin = flin;
   ls_stat.step = step;

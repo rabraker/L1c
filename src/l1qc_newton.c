@@ -10,6 +10,8 @@
 #include "l1c_math.h"
 #include "l1qc_newton.h"
 #include "linesearch.h"
+#include "l1c_logging.h"
+
 /**
  * @file l1qc_newton.c
  */
@@ -239,8 +241,8 @@ double _l1c_l1qc_find_max_step(l1c_l1qcProb *Prb){
   /*Towards the end, the root becomes complex. When that happens, cant take
    the real part, because that is just -bqe which is less than zero.*/
   if ( isnan(root) ){
-    printf("Warning: maximum step which satisfies cone constraints has become complex.\n");
-    printf("Trying smax=1.0 for the cone-constraint portion.\n");
+    l1c_printf("Warning: maximum step which satisfies cone constraints has become complex.\n");
+    l1c_printf("Trying smax=1.0 for the cone-constraint portion.\n");
     root = 1.0;
   }
 
@@ -462,8 +464,8 @@ l1c_LBResult l1c_l1qc_newton(l1c_int m, double *x, l1c_int n, double *b,
 
 
   if (params.verbose >0) {
-    printf("Total Log-Barrier iterations:  %d \n", (int)params.lbiter);
-    printf("Original l1-norm: %f, original functional %f\n", l1c_dnorm1(m, x), l1c_dsum(m, u));
+    l1c_printf("Total Log-Barrier iterations:  %d \n", (int)params.lbiter);
+    l1c_printf("Original l1-norm: %f, original functional %f\n", l1c_dnorm1(m, x), l1c_dsum(m, u));
   }
 
   /* ---------------- MAIN **TAU** ITERATION --------------------- */
@@ -493,8 +495,8 @@ l1c_LBResult l1c_l1qc_newton(l1c_int m, double *x, l1c_int n, double *b,
 
 
       if(_l1c_l1qc_descent_dir(&l1qc_prob, cg_params, &cg_results)){
-        printf("Unable to solve system for Newton descent direction.\n");
-        printf("Returning previous iterate\n");
+        l1c_printf("Unable to solve system for Newton descent direction.\n");
+        l1c_printf("Returning previous iterate\n");
       }
 
       lb_res.total_cg_iter +=cg_results.cgiter;
@@ -519,7 +521,7 @@ l1c_LBResult l1c_l1qc_newton(l1c_int m, double *x, l1c_int n, double *b,
          next log-barrier iteration, we evaluate the functional explicetly again.
          */
 
-        printf("Line search failed at newton iteration %d\n", iter);
+        l1c_printf("Line search failed at newton iteration %d\n", iter);
         break;
       }
 
@@ -541,7 +543,7 @@ l1c_LBResult l1c_l1qc_newton(l1c_int m, double *x, l1c_int n, double *b,
       l1_prev = l1;
       if (rate < params.l1_tol){
         if(params.verbose > 0){
-          printf("rate = %.9f < %.9f, stopping newton iteration\n", rate, params.l1_tol);
+          l1c_printf("rate = %.9f < %.9f, stopping newton iteration\n", rate, params.l1_tol);
         }
         break;
       }
@@ -584,12 +586,12 @@ static void
 lb_report(int lb_iter, int m, double *u, double l1,
           l1c_L1qcOpts params, l1c_LBResult lb_res){
 
-  printf("\n*********************************************************************");
-  printf("***********************************\n");
-  printf("* LB iter: %d, l1: %.3f, fctl: %8.3e, tau: %8.3e, total newton-iter: %d, Total CG iter=%d *\n",
-         lb_iter, l1, l1c_dsum(m, u), params.tau, lb_res.total_newton_iter, lb_res.total_cg_iter);
-  printf("***********************************************************************");
-  printf("*********************************\n\n");
+  l1c_printf("\n*********************************************************************");
+  l1c_printf("***********************************\n");
+  l1c_printf("* LB iter: %d, l1: %.3f, fctl: %8.3e, tau: %8.3e, total newton-iter: %d, Total CG iter=%d *\n",
+             lb_iter, l1, l1c_dsum(m, u), params.tau, lb_res.total_newton_iter, lb_res.total_cg_iter);
+  l1c_printf("***********************************************************************");
+  l1c_printf("*********************************\n\n");
 
 }
 
@@ -605,13 +607,13 @@ newton_report(int iter, int m, l1c_l1qcProb *Prb, double lambda2,
   double  stepsize = cblas_ddot(m, Prb->dx, 1, Prb->dx, 1) + cblas_ddot(m, Prb->du, 1, Prb->du, 1);
   stepsize = stepsize * ls_status.step;
   if (iter == 1){
-    printf("Newton-iter | Functional | Newton decrement |  Stepsize  |  cg-res");
-    printf(" | cg-iter | backiter |   s    | \n");
-    printf("-----------------------------------------------------------------------");
-    printf("----------------------------\n");
+    l1c_printf("Newton-iter | Functional | Newton decrement |  Stepsize  |  cg-res");
+    l1c_printf(" | cg-iter | backiter |   s    | \n");
+    l1c_printf("-----------------------------------------------------------------------");
+    l1c_printf("----------------------------\n");
   }
   /*            NI         fcnl         dec         sz     cgr       cgI        BI     s  */
-  printf("     %3d       %8.3e       %08.3e    % 8.3e   %08.3e     %3d       %2d       %.3g \n",
-         (int)iter, Prb->f_val, lambda2/2, stepsize, cg_results.cgres, (int)cg_results.cgiter,
-         (int)ls_status.iter, ls_status.step);
+  l1c_printf("     %3d       %8.3e       %08.3e    % 8.3e   %08.3e     %3d       %2d       %.3g \n",
+             (int)iter, Prb->f_val, lambda2/2, stepsize, cg_results.cgres, (int)cg_results.cgiter,
+             (int)ls_status.iter, ls_status.step);
 }

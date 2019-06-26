@@ -11,6 +11,7 @@
 #include "l1c.h"
 #include "l1qc_newton.h"
 #include "l1c_mex_utils.h"
+#include "l1c_logging.h"
 
 /*
  The matlab protype is
@@ -20,8 +21,10 @@
  pix_idx has length m
  and opts is an options struct. See the l1qc_dct.m doc string for details.
  */
-void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
-{
+void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] ){
+  /* Replace printf with mexPrintf */
+  l1c_replace_printf(mexPrintf);
+
   double *x_out=NULL,  *b=NULL;
   double *pix_idx_double=NULL, *x_ours=NULL;
   l1c_L1qcOpts l1qc_opts = {.epsilon=0,
@@ -64,7 +67,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
 
   /* Ensure the sizes are consistent. */
   if ( !(mrow*mcol > n) || (n != size_pix_idx) || mrow <=0 || mcol <=0){
-    printf("mrow = %d, mcol=%d, n=%d, npix = %d\n", mrow, mcol, n, size_pix_idx);
+    l1c_printf("mrow = %d, mcol=%d, n=%d, npix = %d\n", mrow, mcol, n, size_pix_idx);
     mexErrMsgIdAndTxt("l1c:l1qc_dct:incompatible_dimensions",
                       "Must have length(x0) > length(b), and length(b) = length(pix_idx).");
   }
@@ -98,20 +101,20 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] )
       (int)_mex_get_double_from_struct_or_fail(prhs, 4, "lbiter");
 
   if (l1qc_opts.verbose > 0){
-    printf("Input Parameters\n---------------\n");
-    printf("   verbose:         %d\n", l1qc_opts.verbose);
-    printf("   epsilon:         %.5e\n", l1qc_opts.epsilon);
-    printf("   tau:             %.5e\n", l1qc_opts.tau);
-    printf("   mu:              %.5e\n", l1qc_opts.mu);
-    printf("   newton_tol:      %.5e\n", l1qc_opts.newton_tol);
-    printf("   newton_max_iter: %d\n", l1qc_opts.newton_max_iter);
-    printf("   lbiter:          %d\n", l1qc_opts.lbiter);
-    printf("   lbtol:           %.5e\n", l1qc_opts.lbtol);
-    printf("   l1_tol:           %.5e\n", l1qc_opts.l1_tol);
-    printf("   cgmaxiter:       %d\n", l1qc_opts.cg_maxiter);
-    printf("   cgtol:           %.5e\n", l1qc_opts.cg_tol);
+    l1c_printf("Input Parameters\n---------------\n");
+    l1c_printf("   verbose:         %d\n", l1qc_opts.verbose);
+    l1c_printf("   epsilon:         %.5e\n", l1qc_opts.epsilon);
+    l1c_printf("   tau:             %.5e\n", l1qc_opts.tau);
+    l1c_printf("   mu:              %.5e\n", l1qc_opts.mu);
+    l1c_printf("   newton_tol:      %.5e\n", l1qc_opts.newton_tol);
+    l1c_printf("   newton_max_iter: %d\n", l1qc_opts.newton_max_iter);
+    l1c_printf("   lbiter:          %d\n", l1qc_opts.lbiter);
+    l1c_printf("   lbtol:           %.5e\n", l1qc_opts.lbtol);
+    l1c_printf("   l1_tol:           %.5e\n", l1qc_opts.l1_tol);
+    l1c_printf("   cgmaxiter:       %d\n", l1qc_opts.cg_maxiter);
+    l1c_printf("   cgtol:           %.5e\n", l1qc_opts.cg_tol);
 
-    printf("NB: lbiter and tau usually generated automatically.\n");
+    l1c_printf("NB: lbiter and tau usually generated automatically.\n");
   }
 
   /* We are going to change x, so we must allocate and make a copy, so we
