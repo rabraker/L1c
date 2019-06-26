@@ -112,13 +112,3 @@ if __name__ == "__main__":
     else:
         image_data_path = sys.argv[1]
         build_cs20ng_test_data(256, data_path=image_data_path)
-
-
-
-# plt.figure(1)
-# plt.imshow(img)
-
-# plt.figure(2)
-# plt.imshow(pix_mask_mat)
-
-# plt.show()
