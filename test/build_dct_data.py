@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import numpy as np
-import os
 from numpy.random import seed, rand
 from scipy.fftpack import dct
 import L1cTestDataUtils as TDU
@@ -88,24 +87,27 @@ def cs20ng_example(npix):
     return eta,  pix_idx, m
 
 
-data_dir = TDU.data_dir()
+if __name__ == "__main__":
+    data_dir = TDU.data_dir()
 
-# ------------- A small example, with sub-sampling ------------
-fname = data_dir+"/dct_small.json"
-m = 50
-pix_idx = np.array([2, 10, 15, 20, 25, 30, 35, 40, 45, 49])
-build_dct_test_data(fname, pix_idx, m)
+    # ------------- A power of 2, with sub-sampling----------
+    fname = data_dir+"/dct_small.json"
+    m = 32
+    pix_idx = np.array([2, 5, 10, 11, 22, 15, 20, 25, 30, 31])
+    build_dct_test_data(fname, pix_idx, m)
 
-# ------------- A small example, without sub-sampling ------------
-# This checks that we get the right result for a pure dct, and in
-# particular, that we got the scaling at the first element correct.
-pix_idx = np.arange(50)
-fname = data_dir+"/dct_small_pure_dct.json"
-build_dct_test_data(fname, pix_idx, m)
+    # ------------- A small example, without sub-sampling ------------
+    # This checks that we get the right result for a pure dct, and in
+    # particular, that we got the scaling at the first element correct.
+    pix_idx = np.arange(m)
+    fname = data_dir+"/dct_small_pure_dct.json"
+    build_dct_test_data(fname, pix_idx, m)
 
-
-# -------- A large set of test data -------------
-fname = data_dir+"/dct_large.json"
-npix = 256
-eta, pix_idx, m = cs20ng_example(npix)
-build_dct_test_data(fname, pix_idx, m, eta_vec=eta)
+    # -------- larger data, not a power of 2. -------------
+    np.random.seed(4)
+    fname = data_dir+"/dct_large.json"
+    m = 126
+    idx = np.random.rand(m)
+    pix_idx = np.where(idx < 0.2)[0]
+    eta = x = np.random.randn(m).round(3)
+    build_dct_test_data(fname, pix_idx, m, eta_vec=eta)
