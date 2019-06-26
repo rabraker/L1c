@@ -1,0 +1,3 @@
+function l1c_mex_init_paths()
+  addpath @MEX_ROOT@
+end

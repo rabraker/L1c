@@ -9,8 +9,7 @@ clear
 
 % This needs to point to the current build directory, ie whereever the mex files
 % ended up.
-addpath ../
-
+l1c_mex_init_paths();
 
 sampling_ratio = 0.1; % take 10% of the pixels
 mu_path_len = 25;     % mu-path length in pixels.

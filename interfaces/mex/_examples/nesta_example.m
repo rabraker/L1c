@@ -4,7 +4,7 @@
 % nesta_dctTV() optimization to reconstruct the image with basis pursuit.
 
 clear
-addpath ../
+l1c_mex_init_paths();
 
 sampling_ratio = 0.1; % take 10% of the pixels
 mu_path_len = 25;     % mu-path length in pixels.

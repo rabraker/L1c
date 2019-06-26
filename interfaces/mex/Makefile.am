@@ -2,7 +2,6 @@
 #******************************************************************************
 
 AUTOMAKE_OPTIONS = foreign 1.8
-clean-local:: clean-convenience-link
 
 bin_PROGRAMS    =
 
@@ -69,7 +68,7 @@ install-data-local:
 	cp $(srcdir)/_examples/*.m $(mexdir)/examples/.
 
 
-#Copy mex files to here. Do we need this still?
+#Copy mex files to here. This is where tests look for the mex files.
 $(abs_builddir)/%$(MEXEXT):%.la
 	$(LN_S) -f $(abs_builddir)/.libs/$(<:.la=$(MEXEXT)) $@
 
@@ -85,8 +84,9 @@ $(abs_builddir)/examples/%.m:$(abs_srcdir)/_examples/%.m $(abs_builddir)/example
 $(abs_builddir)/examples:
 	mkdir -p $@
 
+clean-local::
+	rm -f *.so* *$(MEXEXT) *.o *.lo *.la *.dll *.pyc examples/*$(MEXEXT)
+
 endif
 
 
-clean-convenience-link:
-	rm -f *.so* *.mexa64 *.o *.lo *.la *.dll *.mexw64 *.pyc examples/*.$(MEXEXT)
