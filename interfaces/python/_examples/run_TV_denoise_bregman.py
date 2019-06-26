@@ -1,11 +1,13 @@
 import json
-import L1c
+import time
 import numpy as np
-import matplotlib.pyplot as plt
+
+import l1c_pyplot_utils as lpu
+import l1c_py_init_path as lpip
 
 
-def TV_denoise(verbose=2, fpath='example_img_data.json', plot=False, lib_dir="."):
-    import dct_example
+def breg_anisTV_example(fpath='example_img_data.json', plot=False):
+    import _l1cPy_module as l1cPy
 
     with open(fpath) as json_data:
         d = json.load(json_data)
@@ -13,43 +15,38 @@ def TV_denoise(verbose=2, fpath='example_img_data.json', plot=False, lib_dir="."
     x_orig = np.array(d['x_orig'], ndmin=1)
     n = int(np.sqrt(len(x_orig)))
     m = n
-    # ipdb.set_trace()
+
     np.random.seed(0)
     x_noisy = x_orig + np.random.rand(n*m)
-
-    # Call the library wrapper.
-    mu = 5
-    maxiter = 100
-    max_jac_iter = 1
-    x_recon = L1c.BRAnsTV(x_noisy, n, m, mu, maxiter,
-                          max_jac_iter, lib_dir=lib_dir)
-
-    # Turn the vectors back into matrices so we can show them as an image.
-
-    X_orig_mat = np.reshape(x_orig, (n, m))
     X_noisy_mat = np.reshape(x_noisy, (n, m))
-    X_recon_mat = np.reshape(x_recon, (n, m))
+
+    start = time.perf_counter()
+    Xclean_mat = l1cPy.breg_anistropic_TV(X_noisy_mat,
+                                          max_iter=100, max_jac_iter=1,
+                                          tol=0.001, mu=5)
+    end = time.perf_counter()
+    print("(breg_anistropic_TV) Python time = %f" % (end - start))
+
     if plot:
-        plt.figure(num=1, figsize=(12, 4))
+        import matplotlib.pyplot as plt
 
-        ax1 = plt.subplot(131)
-        ax1.set_title("Original Image (CS-20ng grating)")
-        ax1.imshow(X_orig_mat, cmap='gray')
-        dct_example.remove_ticks(ax1)
+        plt.figure(num=1, figsize=(8, 4))
 
-        ax2 = plt.subplot(132)
-        ax2.imshow(X_noisy_mat, cmap='gray')
-        ax2.set_title("Noisy image")
-        dct_example.remove_ticks(ax2)
+        ax1 = plt.subplot(121)
+        lpu.remove_ticks(ax1)
+        ax1.set_title("Original Image")
+        ax1.imshow(X_noisy_mat, cmap='gray')
+        lpu.remove_ticks(ax1)
 
-        ax3 = plt.subplot(133)
-        ax3.set_title("Reconstruction")
-        ax3.imshow(X_recon_mat, cmap='gray')
-        dct_example.remove_ticks(ax3)
+        ax2 = plt.subplot(122)
+        ax2.imshow(Xclean_mat, cmap='gray')
+        ax2.set_title("Anistropic TV denoised")
+        lpu.remove_ticks(ax2)
 
         plt.show()
 
 
-fpath = "../test/test_data/example_img_data.json"
-libdir = "../build-fftw-ob/src/.libs"
-TV_denoise(verbose=0, fpath=fpath, plot=True, lib_dir=libdir)
+if __name__ == "__main__":
+    fpath = "example_img_data.json"
+    lpip.add_lib_path()
+    breg_anisTV_example(fpath=fpath, plot=True)

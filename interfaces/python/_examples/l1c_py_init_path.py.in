@@ -1,0 +1,12 @@
+"""
+Setup python search path for examples. This file is generated from
+l1c_py_init_path.py.in by the makefile. Edit that, not l1c_py_init_path.py.
+"""
+import sys
+
+
+def add_lib_path():
+    lib_path = "@L1C_PY_ROOT@"
+
+    if lib_path not in sys.path:
+        sys.path.insert(1, lib_path)

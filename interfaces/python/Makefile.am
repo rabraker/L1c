@@ -41,8 +41,8 @@ py_lib = $(pyexec_LTLIBRARIES:.la=$(SHRLIB_EXT))
 all-local:: $(abs_builddir)/examples           \
 			$(test_data)                       \
 			$(abs_builddir)/test_L1cPy.py      \
-			$(abs_builddir)/examples/$(py_lib) \
 			$(abs_builddir)/$(py_lib)
+
 
 # Ensure the .la library exists .libs
 .libs/$(pyexec_LTLIBRARIES):$(pyexec_LTLIBRARIES)
@@ -52,14 +52,6 @@ all-local:: $(abs_builddir)/examples           \
 $(abs_builddir)/$(py_lib):.libs/$(pyexec_LTLIBRARIES)
 	$(LN_S) -f $(abs_builddir)/$(<:.la=$(SHRLIB_EXT)) $@
 
-
-# copy lib to examples folder. Do that here so we know it gets built.
-$(abs_builddir)/examples/$(py_lib):.libs/$(pyexec_LTLIBRARIES) $(abs_builddir)/examples
-	$(LN_S) -f $(abs_builddir)/$(<:.la=$(SHRLIB_EXT)) $@
-
-# Create examples folder
-$(abs_builddir)/examples:
-	mkdir -p $@
 
 # Copy the test script. Python path gets screwed up when using a symlink,
 # so just copy it.
@@ -76,4 +68,6 @@ endif
 clean-local:: clean-convenience-link
 
 clean-convenience-link:
-	rm -rf *.so*  *.o *.lo *.la *.dll *.pyc examples/
+	rm -rf *.so*  *.o *.lo *.la *.dll *.pyc
+
+# examples/

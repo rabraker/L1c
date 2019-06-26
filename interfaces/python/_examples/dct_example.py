@@ -7,18 +7,8 @@ import json
 import numpy as np
 import time
 
-
-def remove_ticks(ax):
-    ax.tick_params(
-        axis='both',          # changes apply to the x-axis
-        which='both',       # both major and minor ticks are affected
-        bottom=False,       # ticks along the bottom edge are off
-        top=False,          # ticks along the top edge are off
-        left=False,         # ticks along left edge are off
-        labelbottom=False,  # labels along the bottom edge are off
-        labelleft=False,    # labels along the left edge are off
-        labelright=False)   # labels along the right edge are off
-
+import l1c_pyplot_utils as lpu
+import l1c_py_init_path as lpip
 
 def dct_example(verbose=2, fpath='example_img_data.json', plot=False):
     import _l1cPy_module as l1cPy
@@ -54,59 +44,20 @@ def dct_example(verbose=2, fpath='example_img_data.json', plot=False):
         plt.figure(num=1, figsize=(12, 4))
 
         ax1 = plt.subplot(131)
-        remove_ticks(ax1)
+        lpu.remove_ticks(ax1)
         ax1.set_title("Original Image (CS-20ng grating)")
         ax1.imshow(X_orig_mat, cmap='gray')
-        remove_ticks(ax1)
+        lpu.remove_ticks(ax1)
 
         ax2 = plt.subplot(132)
         ax2.imshow(X_masked_mat, cmap='gray')
         ax2.set_title("Subsampled image")
-        remove_ticks(ax2)
+        lpu.remove_ticks(ax2)
 
         ax3 = plt.subplot(133)
         ax3.set_title("Reconstruction")
         ax3.imshow(X_recon_mat, cmap='gray')
-        remove_ticks(ax3)
-
-        plt.show()
-
-
-def breg_anisTV_example(fpath='example_img_data.json', plot=False):
-    import _l1cPy_module as l1cPy
-    with open(fpath) as json_data:
-        d = json.load(json_data)
-
-    x_orig = np.array(d['x_orig'], ndmin=1)
-    n = int(np.sqrt(len(x_orig)))
-    m = n
-
-    np.random.seed(0)
-    x_noisy = x_orig + np.random.rand(n*m)
-    X_noisy_mat = np.reshape(x_noisy, (n, m))
-
-    start = time.perf_counter()
-    Xclean_mat = l1cPy.breg_anistropic_TV(X_noisy_mat,
-                                          max_iter=100, max_jac_iter=1,
-                                          tol=0.001, mu=5)
-    end = time.perf_counter()
-    print("(breg_anistropic_TV) Python time = %f" % (end - start))
-
-    if plot:
-        import matplotlib.pyplot as plt
-
-        plt.figure(num=1, figsize=(8, 4))
-
-        ax1 = plt.subplot(121)
-        remove_ticks(ax1)
-        ax1.set_title("Original Image")
-        ax1.imshow(X_noisy_mat, cmap='gray')
-        remove_ticks(ax1)
-
-        ax2 = plt.subplot(122)
-        ax2.imshow(Xclean_mat, cmap='gray')
-        ax2.set_title("Anistropic TV denoised")
-        remove_ticks(ax2)
+        lpu.remove_ticks(ax3)
 
         plt.show()
 
@@ -131,15 +82,14 @@ if __name__ == '__main__':
 
     print("plot = %s" % plot)
     print("verbose = %d" % verbose)
-    interface_dir = os.getenv("L1C_INTERFACE_DIR")
-    src_lib_dir = os.getenv("L1C_SRC_LIB_DIR")
+    lpip.add_lib_path()
+    # interface_dir = os.getenv("L1C_INTERFACE_DIR")
+    # src_lib_dir = os.getenv("L1C_SRC_LIB_DIR")
 
-    if interface_dir is not None:
-        sys.path.append(interface_dir)
+    # if interface_dir is not None:
+    #     sys.path.append(interface_dir)
 
-    if src_lib_dir is not None:
-        os.environ['PATH'] = src_lib_dir+";" + os.environ['PATH']
-        lib_dir = src_lib_dir
+    # if src_lib_dir is not None:
+    #     os.environ['PATH'] = src_lib_dir+";" + os.environ['PATH']
 
     dct_example(verbose=verbose, fpath=fpath, plot=plot)
-    breg_anisTV_example(plot=plot, fpath=fpath)
