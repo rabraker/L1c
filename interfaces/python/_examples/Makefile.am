@@ -34,10 +34,10 @@ install-examples:$(example_inst_dir)/l1c_py_init_path.py
 	cp $(srcdir)/*.py $(pkgpythondir)/examples/.
 
 $(example_inst_dir)/l1c_py_init_path.py:l1c_py_init_path.py.in $(example_inst_dir)
-	sed 's,\@L1C_PY_ROOT\@,$(pkgpythondir),g' $< >$@
+	$(SED) 's,\@L1C_PY_ROOT\@,$(pkgpythondir),g' $< >$@
 
 $(example_inst_dir):
-	mkdir -p $@
+	$(MKDIR_P) $@
 
 
 
@@ -50,10 +50,10 @@ $(example_build_dir)/%.py : $(srcdir)/%.py $(example_build_dir) $(example_build_
 	cp -f $< $@
 
 $(example_build_dir)/l1c_py_init_path.py:l1c_py_init_path.py.in $(example_build_dir)
-	sed 's,\@L1C_PY_ROOT\@,$(abs_builddir)/\.\./\.libs,g' $< >$@
+	$(SED) 's,\@L1C_PY_ROOT\@,$(abs_builddir)/\.\./\.libs,g' $< >$@
 
 $(example_build_dir):
-	mkdir -p $@
+	$(MKDIR_P) $@
 
 # Create the example data.
 $(example_data):$(abs_top_srcdir)/test/build_CS20NG_example_data.py $(example_build_dir)

@@ -64,7 +64,7 @@ all-local:: $(abs_builddir)/examples \
 			$(mex_lib_example_dest)
 
 install-data-local:
-	mkdir -p $(mexdir)/examples
+	$(MKDIR_P) $(mexdir)/examples
 	cp $(srcdir)/_examples/*.m $(mexdir)/examples/.
 
 
@@ -82,7 +82,7 @@ $(abs_builddir)/examples/%.m:$(abs_srcdir)/_examples/%.m $(abs_builddir)/example
 	$(LN_S) -f $< $@
 
 $(abs_builddir)/examples:
-	mkdir -p $@
+	$(MKDIR_P) $@
 
 clean-local::
 	rm -f *.so* *$(MEXEXT) *.o *.lo *.la *.dll *.pyc examples/*$(MEXEXT)

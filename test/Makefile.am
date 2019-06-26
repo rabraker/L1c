@@ -121,7 +121,7 @@ log_deps = 	build_CS20NG_example_data.log \
 $(EXTRA_DIST):$(test_data_dir)
 
 $(test_data_dir):
-	mkdir -p $(test_data_dir)
+	$(MKDIR_P) $(test_data_dir)
 
 # Ensure data gets built first
 test_l1c.log:$(log_deps)

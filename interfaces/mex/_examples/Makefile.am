@@ -32,10 +32,10 @@ install-data-local: $(MEX_PREFIX)/examples/l1c_mex_init_paths.m
 
 # Use comma, rather than '/' for separator.
 $(MEX_PREFIX)/examples/l1c_mex_init_paths.m:l1c_mex_init_paths.m.in $(MEX_PREFIX)/examples
-	sed 's,\@MEX_ROOT\@,$(MEX_PREFIX),g' $< >$@
+	$(SED) 's,\@MEX_ROOT\@,$(MEX_PREFIX),g' $< >$@
 
 $(MEX_PREFIX)/examples:
-	mkdir -p $(MEX_PREFIX)/examples
+	$(MKDIR_P) $(MEX_PREFIX)/examples
 
 
 all-local::	$(example_data)      \
@@ -49,12 +49,12 @@ $(example_build_dir)/%.m: $(srcdir)/%.m $(example_build_dir)/l1c_mex_init_paths.
 
 # Use comma, rather than '/' for separator.
 $(example_build_dir)/l1c_mex_init_paths.m::$(srcdir)/l1c_mex_init_paths.m.in
-	mkdir -p $(example_build_dir)
-	sed 's,\@MEX_ROOT\@,$(abs_srcdir)/\.\.,g' $< >$@
+	$(MKDIR_P) $(example_build_dir)
+	$(SED) 's,\@MEX_ROOT\@,$(abs_srcdir)/\.\.,g' $< >$@
 
 # Create the example data.
 $(example_data):$(abs_top_srcdir)/test/build_CS20NG_example_data.py
-	mkdir -p $(example_build_dir)
+	$(MKDIR_P) $(example_build_dir)
 	python3 $< $@
 
 
