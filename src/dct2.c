@@ -35,9 +35,8 @@ static l1c_int dct2_mcol; // Cols of image
 
 static double dct2_root_1_by_4NM;
 
-
 /**
- * @ingroup transforms
+ * @ingroup transforms Sub-sampled 2D DCT transform set in synthesis mode.
  *
  * The function will populate an
  * l1c_AxFuns struct such that
@@ -47,7 +46,8 @@ static double dct2_root_1_by_4NM;
  *    Mt &= \textrm{discrete cosine transform}\\
  *    Ax &= EM(x) \\
  *    Aty &= M^T(E^Ty) \\
- *    AtAx &=  M^T(E^TEM(x))
+ *    AtAx &=  M^T(E^TEM(x)) \\
+ *    W=W^T&= I
  * \f}
  *
  * where \f$M(x)\f$ represents the inverse two dimensional
@@ -100,15 +100,19 @@ static double dct2_root_1_by_4NM;
  * @param[in]  pix_mask_idx Indeces of locations of the subsampling. For both
  *              DCT1 and DCT2, this vector should be the same.
  * @param[out] ax_funs A structure of function pointers which will be populated.
- *                      On successfull exit, The fields Ax, Aty, AtAx, destroy, and M
- *                      will be non-null. The fields MT, E, and ET will be null.
+ *                      On successfull exit, The fields Ax, Aty, AtAx, destroy,
+ * and M will be non-null. The fields MT, E, and ET will be null.
  *
  *
  * @return   0 if succesfull. If unsuccesfull, returns L1C_DCT_INIT_FAILURE
  *           or L1C_OUT_OF_MEMORY.
  *
- * @warning This function assumes that its inputs have already been sanitized. In
- *          particular, if `max(pix_mask_idx) > mrow*mcol`, then segfaults are likely to occur.
+ * @warning This function assumes that its inputs have already been sanitized.
+ * In particular, if `max(pix_mask_idx) > mrow*mcol`, then segfaults are likely
+ * to occur.
+ *
+ * @note It should not be too hard to make this also work with analysis mode.
+ *       However, that remains an outstanding goal.
  */
 int l1c_dct2_setup( l1c_int n, l1c_int mrow, l1c_int mcol, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs){
   int status = 0;

@@ -35,7 +35,7 @@ static double dct_root_1_by_2N;
 
 
 /**
- * @ingroup transforms Sub-sampled 1D DCT transform set.
+ * @ingroup transforms Sub-sampled 1D DCT transform set in synthesis mode.
  *
  * The function will populate an
  * l1c_AxFuns struct such that
@@ -44,7 +44,8 @@ static double dct_root_1_by_2N;
  *    M &= \textrm{inverse discrete cosine transform}\\
  *    Ax &= EMx \\
  *    Aty &= M^TE^Ty \\
- *    AtAx &=  M^TE^TEMx)
+ *    AtAx &=  M^TE^TEMx \\
+ *    W=W^T&= I
  * \f}
  * where \f$M\f$ represents the inverse one dimensional
  * discrete cosine transform matrix and \f$E\f$ represents the subsampling.
@@ -87,6 +88,9 @@ static double dct_root_1_by_2N;
  *
  * @warning This function assumes that its inputs have already been sanitized. In
  *          particular, if `max(pix_mask_idx) > m`, then segfaults are likely to occur.
+ *
+ * @note It should not be too hard to make this also work with analysis mode. However,
+ *       that remains an outstanding goal.
  */
 int l1c_dct1_setup(l1c_int n, l1c_int m, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs){
 
@@ -99,19 +103,13 @@ int l1c_dct1_setup(l1c_int n, l1c_int m, l1c_int *pix_mask_idx, l1c_AxFuns *ax_f
 #endif
 
   l1c_int i=0;
-  dct_Ety_sparse = l1c_malloc_double(m);
-  dct_x = l1c_malloc_double(m);
-  dct_y = l1c_malloc_double(m);
+  dct_Ety_sparse = l1c_calloc_double(m);
+  dct_x = l1c_calloc_double(m);
+  dct_y = l1c_calloc_double(m);
   if (!dct_x || !dct_y || !dct_Ety_sparse){
     fprintf(stderr, "Error allocating memory in dct_setup");
     status = L1C_OUT_OF_MEMORY;
     goto fail;
-  }
-
-  for (i=0; i<m; i++){
-    dct_Ety_sparse[i] = 0;
-    dct_x[i] = 0;
-    dct_y[i] = 0;
   }
 
   dct_m = m;
