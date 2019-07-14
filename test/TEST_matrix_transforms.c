@@ -59,7 +59,8 @@ static void setup(MXfmData *mxfm_dat){
 
   int setup_status=0;
   if (load_file_to_json(mxfm_dat->fpath, &test_data_json)){
-    fprintf(stderr, "Error loading data in test_dct from file %s\n", mxfm_dat->fpath);
+    fprintf(stderr, "Error loading data from file %s (in %s at %s)\n",
+            mxfm_dat->fpath, __FILE__, __func__);
     ck_abort();
   }
   setup_status +=extract_json_double_array(test_data_json, "A", &mxfm_dat->A, &mxfm_dat->NM);
@@ -73,7 +74,8 @@ static void setup(MXfmData *mxfm_dat){
   setup_status +=extract_json_double_array(test_data_json, "Ax", &mxfm_dat->Ax_exp, &mxfm_dat->Nrow);
 
   if (setup_status){
-    fprintf(stderr, "Error Loading json into program data in 'test_MtEty_large()'. Aborting\n");
+    fprintf(stderr, "Error Loading json into program data in %s at %s'. Aborting\n",
+            __FILE__, __func__);
     ck_abort();
   }
   mxfm_dat->AtAx_act = l1c_malloc_double(mxfm_dat->Mcol);
@@ -118,6 +120,7 @@ static void setup_small(void){
   mxfmd = malloc(sizeof(MXfmData));
 
   char *fpath_dct_small = fullfile(test_data_dir, "matrix_xfm_small_data.json");
+  if (!fpath_dct_small) ck_abort();
 
   sprintf(mxfmd->fpath, "%s", fpath_dct_small);
   setup(mxfmd);

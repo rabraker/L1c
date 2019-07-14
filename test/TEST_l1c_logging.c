@@ -41,7 +41,7 @@ START_TEST(test_l1c_replace_printf) {
     (which will erase the old contents) */
   FILE *fid = fopen(fname_tmp, "w+");
   if (!fid) {
-    ck_abort_msg("Failed to open file");
+    ck_abort_msg("Failed to open file in %s.\n", __func__);
   }
   fprintf(fid, "1");
   fclose(fid);

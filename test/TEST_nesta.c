@@ -190,7 +190,7 @@ START_TEST (test_l1c_nesta)
 
 
   if (load_file_to_json(fpath_1iter, &json_data)){
-    fprintf(stderr, "Error loading data in test_l1qc_newton_1iter\n");
+    fprintf(stderr, "Error loading data in %s\n", __func__);
     free(fpath_1iter);
     ck_abort();
   }
@@ -301,7 +301,7 @@ START_TEST (test_l1c_nesta)
 
 
   if (status){
-    fprintf(stderr, "Error Loading json data in 'test_l1qc_newton_1ter()'. Aborting\n");
+    fprintf(stderr, "Error Loading json data in %s. Aborting\n", __func__);
     ck_abort();
   }
 
@@ -311,20 +311,28 @@ END_TEST
 
 START_TEST (test_nesta_project)
 {
-
+  int status = 0;
   double *yk=NULL;
   NestaTestData Tdat;
   init_generic_data(&Tdat);
 
   yk = l1c_calloc_double(Tdat.m);
+  if(!yk){
+    status = L1C_OUT_OF_MEMORY;
+    fprintf(stderr, "Error allocating memory in %s\n", __func__);
+    goto exit;
+  }
 
   Tdat.NP->mu_j = Tdat.mu;
   l1c_nesta_project(Tdat.NP, Tdat.xk, Tdat.g, yk);
 
   ck_assert_double_array_eq_tol(Tdat.m, yk, Tdat.yk_exp, TOL_DOUBLE);
 
+ exit:
   free_generic_data(&Tdat);
   l1c_free_double(yk);
+
+  if (status) ck_abort();
 
 }END_TEST
 
@@ -346,21 +354,35 @@ START_TEST (test_nesta_feval)
 
 START_TEST (test_l1c_new_fmean_fifo)
 {
+  int status=0;
   struct l1c_fmean_fifo fifo = _l1c_new_fmean_fifo();
+  if (!fifo.f_vals){
+    status = L1C_OUT_OF_MEMORY;
+    fprintf(stderr, "Error allocating memory in %s\n", __func__);
+    goto exit;
+  }
 
-  /*Just make sure this doesnt segfault.*/
-  fifo.f_vals[L1C_NESTA_NMEAN-1] = 1;
+    /*Just make sure this doesnt segfault.*/
+    fifo.f_vals[L1C_NESTA_NMEAN - 1] = 1;
 
-  ck_assert_ptr_eq(fifo.f_vals, fifo.next);
+    ck_assert_ptr_eq(fifo.f_vals, fifo.next);
 
-  free(fifo.f_vals);
+ exit:
+    free(fifo.f_vals);
+    if (status) ck_abort();
 }END_TEST
 
 START_TEST (test_l1c_push_fmeans_fifo)
 {
-  int i=0;
+  int i=0, status=0;
   double val;
   struct l1c_fmean_fifo fifo = _l1c_new_fmean_fifo();
+
+  if (!fifo.f_vals) {
+    status = L1C_OUT_OF_MEMORY;
+    fprintf(stderr, "Error allocating memory in %s\n", __func__);
+    goto exit;
+  }
 
   for (i=0; i<L1C_NESTA_NMEAN+1; i++){
     val = (double)i;
@@ -371,16 +393,23 @@ START_TEST (test_l1c_push_fmeans_fifo)
 
   ck_assert_double_eq(fifo.f_vals[0], val);
 
+ exit:
   free(fifo.f_vals);
+  if (status) ck_abort();
 }END_TEST
 
 
 START_TEST (test_l1c_mean_fmean_fifo)
 {
-  int i=0;
+  int i=0, status=0;
   double val;
   double fbar_exp = 0, fbar=0;
   struct l1c_fmean_fifo fifo = _l1c_new_fmean_fifo();
+  if (!fifo.f_vals) {
+    status = L1C_OUT_OF_MEMORY;
+    fprintf(stderr, "Error allocating memory in %s\n", __func__);
+    goto exit;
+  }
 
   /* Ensure this works right for n_total < L1C_NESTA_NMEAN*/
   for (i=0; i<4; i++){
@@ -424,13 +453,15 @@ START_TEST (test_l1c_mean_fmean_fifo)
   fbar_exp = 6.5;
   ck_assert_double_eq_tol(fbar, fbar_exp, TOL_DOUBLE);
 
-
+ exit:
   free(fifo.f_vals);
+  if (status) ck_abort();
 }END_TEST
 
 
 START_TEST (test_l1c_nesta_setup)
 {
+  int test_status=0;
   l1c_int n = 5;
   l1c_int m = 10;
 
@@ -439,9 +470,32 @@ START_TEST (test_l1c_nesta_setup)
   double tol = 1e-3;
 
   int n_continue = 5;
+  DctMode dct_mode = dct1;
+  l1c_AxFuns ax_funs;
+  l1c_NestaProb *NP = NULL;
+  l1c_NestaOpts opts = {.n_continue = 5, .sigma = sigma,
+                        .mu = mu, .tol = tol, .verbose = 0};
+
   double *b = l1c_calloc_double(n);
   double *A = l1c_calloc_double(n*m);
-  DctMode dct_mode = dct1;
+  if (!b||!A){
+    test_status = L1C_OUT_OF_MEMORY;
+    fprintf(stderr, "Memory allocation failed in %s\n", __func__);
+    goto exit;
+  }
+
+  if (l1c_setup_matrix_transforms(n, m, A, &ax_funs)) {
+    test_status = L1C_OUT_OF_MEMORY;
+    fprintf(stderr, "Memory allocation failed in %s\n", __func__);
+    goto exit;
+  }
+
+  NP = _l1c_NestaProb_new(ax_funs);
+  if (!NP) {
+    test_status = L1C_OUT_OF_MEMORY;
+    fprintf(stderr, "Memory allocation failed in %s\n", __func__);
+    goto exit;
+  }
 
   for (int i=0; i<n; i++){
     b[i] = ((double)rand())/(double)RAND_MAX;
@@ -449,12 +503,8 @@ START_TEST (test_l1c_nesta_setup)
   for (int i=0; i<n*m; i++){
       A[i] = ((double)rand())/(double)RAND_MAX;
   }
-  l1c_AxFuns ax_funs;
-  l1c_setup_matrix_transforms(n, m, A, &ax_funs);
 
-  l1c_NestaProb *NP = _l1c_NestaProb_new(ax_funs);
 
-  l1c_NestaOpts opts = {.n_continue=5, .sigma=sigma, .mu=mu, .tol=tol, .verbose=0};
   // We are checking that setup will fail for ax_funs without analysis opertator.
   ax_funs.Wz = NULL;
   int status = l1c_nesta_setup(NP, &beta_mu, &beta_tol, b, ax_funs, &opts);
@@ -465,8 +515,9 @@ START_TEST (test_l1c_nesta_setup)
 
   int pix_idx[5] = {1, 3, 4, 6, 8};
   if (l1c_setup_dct_transforms(n, m, 1, dct_mode, pix_idx, &ax_funs)){
+    test_status = L1C_OUT_OF_MEMORY;
     fprintf(stderr, "Memory allocation failed in %s\n", __func__);
-    ck_abort();
+    goto exit;
   }
 
 
@@ -489,11 +540,14 @@ START_TEST (test_l1c_nesta_setup)
   ck_assert_double_eq_tol(mu_j, mu, TOL_DOUBLE);
   ck_assert_double_eq_tol(tol_j, tol, TOL_DOUBLE);
 
+ exit:
   l1c_free_nesta_problem(NP);
   ax_funs.destroy();
   l1c_free_double(b);
   l1c_free_double(A);
 
+  if (test_status)
+    ck_abort();
 } END_TEST
 
 Suite *l1c_nesta_suite(void)

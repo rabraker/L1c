@@ -111,7 +111,7 @@ static void init_generic_data(L1qcTestData *dat){
   l1c_AxFuns ax_funs;
 
   if (load_file_to_json(fpath_generic, &json_data)){
-    fprintf(stderr, "Error loading data in test_l1qc_newton_1iter\n");
+    fprintf(stderr, "Error loading data in %s (from %s)\n", __func__, __FILE__);
     ck_abort();
   }
   status +=extract_json_int(json_data, "m", &dat->m);
@@ -444,7 +444,7 @@ START_TEST (test_newton_init)
   init_generic_data(&Tdat);
   u = l1c_malloc_double(Tdat.m);
   if ( !u ){
-    fprintf(stderr, "Error Allocating Memory in 'test_newton_init()'. Aborting\n");
+    fprintf(stderr, "Error Allocating Memory in %s. Aborting\n", __func__);
     status = L1C_OUT_OF_MEMORY;
     goto exit1;
   }
@@ -534,7 +534,7 @@ START_TEST(test_H11pfun)
   z_orig = l1c_malloc_double(Tdat.m);
   h11p_data.Dwork_1m = l1c_malloc_double(Tdat.m);
   if (!h11p_z || !z_orig || !h11p_data.Dwork_1m){
-    fprintf(stderr, "Unable to allocate memory\n");
+    fprintf(stderr, "Unable to allocate memory in %s\n", __func__);
     status = L1C_OUT_OF_MEMORY;
     goto exit;
   }
@@ -583,6 +583,7 @@ START_TEST(test_l1qc_hess_grad)
   l1c_l1qcProb l1qc_prob = Tdat.Prb;
   double *sigx = l1c_calloc_double(m);
   if (!sigx){
+    fprintf(stderr, "Unable to allocate memory in %s\n", __func__);
     status = 0;
     goto exit;
   }
@@ -657,7 +658,7 @@ START_TEST(test_f_eval)
   l1c_l1qcProb l1qc_prob = Tdat.Prb;
 
   if (status){
-    fprintf(stderr, "Error allocating memory in test_f_eval\n");
+    fprintf(stderr, "Error allocating memory in %s\n", __func__);
     status = L1C_OUT_OF_MEMORY;
     goto exit;
   }

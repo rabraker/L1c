@@ -15,6 +15,7 @@
 /* Tolerances and things */
 #include "test_constants.h"
 #include "json_utils.h"
+#include "l1c_math.h"
 #include "l1c.h"
 #include "bregman.h"
 #include "check_utils.h"
@@ -52,12 +53,12 @@ static BregData *BD;
 static void setup(void){
   BD = malloc(sizeof(BregData));
   BD->fpath = fullfile(test_data_dir, "bregman.json");
-
+  if (!BD->fpath) ck_abort();
   cJSON *td_json;
   int setup_status=0;
   int tmp=0;
   if (load_file_to_json(BD->fpath, &td_json)){
-    fprintf(stderr, "Error loading data in TV_suite\n");
+    fprintf(stderr, "Error loading data in %s (from %s)\n", __func__, __FILE__);
     ck_abort();
   }
 
@@ -83,8 +84,8 @@ static void setup(void){
   setup_status +=extract_json_int(td_json, "n", &BD->n);
 
   if (setup_status){
-    fprintf(stderr, "Error loading json into test data from file: \n %s. Aborting.\n",
-            BD->fpath);
+    fprintf(stderr, "Error loading json into test data from file: \n %s. In %s, Aborting.\n",
+            BD->fpath, __func__);
     ck_abort();
   }
 
@@ -164,7 +165,7 @@ START_TEST(test_breg_shrink1){
   N = BD->NM;
   x_shrunk = l1c_malloc_double(N);
   if ( (!x_shrunk)){
-    fprintf(stderr, "error allocating memory\n");
+    fprintf(stderr, "Error allocating memory in %s.\n", __func__);
     ck_abort();
   }
   for (int i=0; i<N; i++){
@@ -189,7 +190,7 @@ START_TEST(test_breg_rhs){
   dwork1 = l1c_malloc_double(BD->NM);
   dwork2 = l1c_malloc_double(BD->NM);
   if ( (!rhs || !dwork1 || !dwork2) ){
-    fprintf(stderr, "error allocating memory\n");
+    fprintf(stderr, "Error allocating memory in %s.\n", __func__);
     ck_abort();
   }
   bfuncs.breg_anis_rhs(BD->n, BD->m, BD->f, BD->dx, BD->bx, BD->dy,
@@ -211,7 +212,7 @@ START_TEST(test_breg_hess_inv_diag){
 
   D = l1c_malloc_double(BD->NM);
   if ( (!D) ){
-    fprintf(stderr, "error allocating memory\n");
+    fprintf(stderr, "Error allocating memory in %s.\n", __func__);
     ck_abort();
   }
 
@@ -232,10 +233,9 @@ START_TEST(test_breg_mxpy_z){
   double *z;
   l1c_int N=BD->NM;
 
-
   z = l1c_malloc_double(N);
-  if ( (!z) ){
-    fprintf(stderr, "error allocating memory\n");
+  if (!z){
+    fprintf(stderr, "Error allocating memory in %s.\n", __func__);
     ck_abort();
   }
   for (int i=0; i<N; i++){
@@ -257,40 +257,47 @@ END_TEST
   is here so we can run valgrind on the function.
  */
 START_TEST(test_breg_anis_TV){
-  char *fpath;
-  cJSON *img_json;
-  int setup_status=0;
+  char *fpath=NULL;
+  cJSON *img_json=NULL;
+
   int n=0, m=0, NM=0;
   double *uk=NULL, *img_vec=NULL;
   double mu=5, tol=0.001;
   int max_iter=100, max_jac_iter=1, status=0;
 
   fpath = fullfile(test_data_dir, "bregman_img.json");
+  if (!fpath) ck_abort();
 
   if (load_file_to_json(fpath, &img_json)){
-    fprintf(stderr, "Error loading data in TV_suite:test_breg_anis.\n");
-    ck_abort();
+    fprintf(stderr, "Error loading data in %s.\n", __func__);
+    status = L1C_FILE_READ_FAILURE;
+    goto exit;
   }
+
   status +=extract_json_double_array(img_json, "img_vec", &img_vec, &NM);
   status +=extract_json_int(img_json, "n", &n);
   status +=extract_json_int(img_json, "m", &m);
-
   uk = l1c_malloc_double(n*m);
-  if (setup_status || !uk){
-    fprintf(stderr, "Error allocating memory in test_breg_ans_TV\n");
-    ck_abort();
+
+  if (status || !uk){
+    status = L1C_OUT_OF_MEMORY;
+    fprintf(stderr, "Error allocating memory in %s.\n", __func__);
+    goto exit;
   }
-  for(int i=0; i<n*m; i++){
-    uk[i]=0;
-  }
+
+  l1c_init_vec(n*m, uk, 0);
   int ret = l1c_breg_anistropic_TV(n, m, uk, img_vec, mu, tol, max_iter, max_jac_iter);
 
   ck_assert_int_eq(ret, 0);
 
+ exit:
   l1c_free_double(uk);
   l1c_free_double(img_vec);
   free(fpath);
   cJSON_Delete(img_json);
+
+  if (status)
+    ck_abort();
 }
 END_TEST
 
