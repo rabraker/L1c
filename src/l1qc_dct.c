@@ -35,29 +35,25 @@ int l1qc_dct(int mrow, int mcol, double *x_out, int n, double *b, l1c_int *pix_i
 
   int status = 0;
   int mtot = mrow*mcol;
-  /*
-    Struct of pointers to the transform functions that define A*x and A^T *y
-  */
   l1c_AxFuns ax_funs;
 
   status = l1c_setup_dct_transforms(n, mrow, mcol, opts.dct_mode, pix_idx, &ax_funs);
 
   if (status != 0 || !ax_funs.Ax || !ax_funs.Aty || !ax_funs.AtAx || !ax_funs.Mx){
-    fprintf(stderr, "Error setup up dct. Exiting.\n");
+    fprintf(stderr, "Error setup up dct transforms in %s. Exiting.\n", __func__);
     status = L1C_DCT_INIT_FAILURE;
-    return status;
+    goto exit0;
   }
 
-  /* Allocate memory for x and b, which is aligned to DALIGN.
-     Pointer address from caller probably wont be properly aligned.
-  */
+  /* l1c_l1qc_newton requires eta and b aligned to DALIGN.
+     Pointer address from caller probably wont be properly aligned.  */
   double *eta_0 = l1c_calloc_double(mtot);
   double *b_ours = l1c_malloc_double(n);
 
   if ( !b_ours || !eta_0){
-    fprintf(stderr, "Memory Allocation failure\n");
+    fprintf(stderr, "Memory Allocation failure in %s.\n", __func__);
     status =  L1C_OUT_OF_MEMORY;
-    goto exit1;
+    goto exit;
   }
 
   cblas_dcopy(n, b, 1, b_ours, 1);
@@ -66,7 +62,7 @@ int l1qc_dct(int mrow, int mcol, double *x_out, int n, double *b, l1c_int *pix_i
   *lb_res = l1c_l1qc_newton(mtot, eta_0, n, b_ours, opts, ax_funs);
   if (lb_res->status){
     status = lb_res->status;
-    goto exit2;
+    goto exit;
   }
 
   /* We solved for eta in the DCT domain. Transform back to
@@ -84,11 +80,12 @@ int l1qc_dct(int mrow, int mcol, double *x_out, int n, double *b, l1c_int *pix_i
     printf("total-cg-iter: %d\n", lb_res->total_cg_iter);
     printf("time per cg iter: %g\n", time_total / (double) lb_res->total_cg_iter);
   }
- exit2:
+
+ exit:
   ax_funs.destroy(); // Should not call this if ax_setup() failed.
- exit1:
   /* Cleanup our mess. */
   l1c_free_double(b_ours);
   l1c_free_double(eta_0);
+ exit0:
   return status;
 }
