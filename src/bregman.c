@@ -335,25 +335,18 @@ int l1c_breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
   double *dwork1=NULL, *dwork2=NULL, *rhs=NULL;
   double *Dxu_b=NULL, *Dyu_b=NULL;
 
-  uk_1 = l1c_malloc_double(N);
-  d_x = l1c_malloc_double(N);
-  d_y = l1c_malloc_double(N);
-  b_x = l1c_malloc_double(N);
-  b_y = l1c_malloc_double(N);
-  dwork1 = l1c_malloc_double(N);
-  dwork2 = l1c_malloc_double(N);
+  uk_1 = l1c_calloc_double(N);
+  d_x = l1c_calloc_double(N);
+  d_y = l1c_calloc_double(N);
+  b_x = l1c_calloc_double(N);
+  b_y = l1c_calloc_double(N);
+  dwork1 = l1c_calloc_double(N);
+  dwork2 = l1c_calloc_double(N);
 
   /* Convenience handles. Note below that usage is separated.*/
   Dxu_b = dwork1;
   Dyu_b = dwork2;
-  rhs = l1c_malloc_double(N);
-
-  /* Must initialize these. */
-  l1c_init_vec(N, uk_1, 0);
-  l1c_init_vec(N, d_x, 0);
-  l1c_init_vec(N, d_y, 0);
-  l1c_init_vec(N, b_x, 0);
-  l1c_init_vec(N, b_y, 0);
+  rhs = l1c_calloc_double(N);
 
   if (!uk_1 || !d_x || !d_y || !b_x || !b_y ||!dwork1 || !dwork2||!rhs){
     status = L1C_OUT_OF_MEMORY;
