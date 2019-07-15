@@ -177,7 +177,8 @@ START_TEST(test_l1c_dnrm2_err)
 
   ck_assert_double_eq_tol(nrm_x_y, sqrt(N), TOL_DOUBLE_SUPER);
 
-  // setup_vectors_SC();
+  l1c_free_double(x);
+  l1c_free_double(y);
 }
 END_TEST
 
@@ -201,7 +202,8 @@ START_TEST(test_l1c_dnrm2_rel_err)
 
   ck_assert_double_eq_tol(nrm_x_y, sqrt(N)/sqrt(55.0), TOL_DOUBLE_SUPER);
 
-  // setup_vectors_SC();
+  l1c_free_double(x);
+  l1c_free_double(y);
 }
 END_TEST
 

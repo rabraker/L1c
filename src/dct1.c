@@ -102,7 +102,6 @@ int l1c_dct1_setup(l1c_int n, l1c_int m, l1c_int *pix_mask_idx, l1c_AxFuns *ax_f
   fftw_plan_with_nthreads(n_thread);
 #endif
 
-  l1c_int i=0;
   dct_Ety_sparse = l1c_calloc_double(m);
   dct_x = l1c_calloc_double(m);
   dct_y = l1c_calloc_double(m);
