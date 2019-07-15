@@ -1,5 +1,6 @@
 #include "config.h"
 #include <stdlib.h>
+#include <cblas.h>
 
 #include "l1c.h"
 #include "nesta.h"
@@ -300,11 +301,10 @@ _breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw){
 }
 
 
-
-static PyObject *
-_nesta_dctTV(PyObject *self, PyObject *args, PyObject *kw){
+static PyObject *_nesta_dctTV(PyObject *self, PyObject *args,
+                                                PyObject *kw) {
   (void)self;
-  double *x_ours=NULL, *b=NULL;
+  double *x_ours=NULL, *b=NULL, *b_ours=NULL;
 
   PyObject *b_obj=NULL, *pix_idx_obj=NULL, *x_out_npA=NULL;
 
@@ -386,11 +386,13 @@ _nesta_dctTV(PyObject *self, PyObject *args, PyObject *kw){
 
   /* Allocate memory for M*xk=f */
   x_ours = l1c_calloc_double(mtot);
-  if (!x_ours){
+  b_ours = l1c_malloc_double(n);
+  if (!x_ours || !b_ours){
     PyErr_SetString(PyExc_MemoryError, "Failed to allocation memory");
     goto fail;
   }
 
+  cblas_dcopy(n, b, 1, b_ours, 1);
 
   l1c_AxFuns ax_funs;
   if (l1c_setup_dctTV_transforms(n, mrow, mcol, alpha_v, alpha_h, dct_mode,
@@ -399,20 +401,25 @@ _nesta_dctTV(PyObject *self, PyObject *args, PyObject *kw){
     goto fail;
   }
 
-  status = l1c_nesta(mtot, x_ours, n, b, ax_funs, opts);
+  status = l1c_nesta(mtot, x_ours, n, b_ours, ax_funs, opts);
 
   /* Build the output tuple */
   npy_intp dims[] = {mrow, mcol};
+
   x_out_npA = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, x_ours);
+
 
   /* Clean up. */
   Py_DECREF(b_npA);
   Py_DECREF(pix_idx_npA);
+  l1c_free_double(b_ours);
 
   return Py_BuildValue("Oi", x_out_npA, status);
 
   /* If we failed, clean up more things */
  fail:
+  l1c_free_double(x_ours);
+  l1c_free_double(b_ours);
   Py_XDECREF(b_npA);
   Py_XDECREF(pix_idx_npA);
 
