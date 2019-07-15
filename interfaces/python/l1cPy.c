@@ -11,9 +11,10 @@
 #include <numpy/arrayobject.h>
 #include <numpy/ndarraytypes.h>
 
+/* Helper functions*/
+static PyObject *PyArray_SimpleDoubleCopy(int nd, npy_intp *dims, double *data);
 
-
-/* Function declartion */
+/* Exported Function declartion */
 static PyObject *_l1qc_dct(PyObject *self, PyObject *args, PyObject *kw);
 static PyObject *_breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw);
 static PyObject *_nesta_dctTV(PyObject *self, PyObject *args, PyObject *kw);
@@ -87,11 +88,11 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
   double *x_ours=NULL, *b=NULL;
 
   PyObject *b_obj=NULL, *pix_idx_obj=NULL, *x_out_npA=NULL;
-  PyObject *lb_res_obj=NULL, *ret_val=NULL;
+  PyObject *lb_res_obj=NULL;
   PyArrayObject *b_npA=NULL;
   PyArrayObject *pix_idx_npA=NULL;
 
-  int i=0, status=0, mrow=0, mcol=0, mtot=0, n=0, n_=0;
+  int status=0, mrow=0, mcol=0, mtot=0, n=0, n_=0;
   int *pix_idx=NULL;
 
   l1c_LBResult lb_res = {.status = 0, .total_newton_iter = 0, .l1=INFINITY};
@@ -162,43 +163,47 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
   pix_idx = (int*)PyArray_DATA(pix_idx_npA);
 
   /* Allocate memory for M*xk=f */
-  x_ours = l1c_malloc_double(mtot);
+  x_ours = l1c_calloc_double(mtot);
   if (!x_ours){
     PyErr_SetString(PyExc_MemoryError, "Failed to allocation memory");
     goto fail;
   }
 
-  for(i=0; i<mtot; i++){
-    x_ours[i] = 0;
-  }
 
   status = l1qc_dct(mrow, mcol, x_ours, n, b, pix_idx, opts, &lb_res);
   if (status != L1C_SUCCESS){
     PyErr_SetString(PyExc_RuntimeError, "l1qc_dct failed.");
-    l1c_free_double(x_ours);
     goto fail;
   }
   /* Build the output tuple */
   npy_intp dims[] = {mrow, mcol};
-  x_out_npA = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, x_ours);
+  // x_out_npA = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, x_ours);
+  x_out_npA = PyArray_SimpleDoubleCopy(2, dims, x_ours);
+  if (!x_out_npA)
+    goto fail;
+
   lb_res_obj = Py_BuildValue("{s:d,s:i,s:i,s:i}",
                                        "l1", lb_res.l1,
                                        "total_newton_iter", lb_res.total_newton_iter,
                                        "total_cg_iter", lb_res.total_cg_iter,
                                        "status", lb_res.status|status);
+  if(!lb_res_obj)
+    goto fail2;
 
   /* Clean up. */
   Py_DECREF(b_npA);
   Py_DECREF(pix_idx_npA);
+  l1c_free_double(x_ours);
 
-  ret_val = Py_BuildValue("OO", x_out_npA, lb_res_obj);
-  return ret_val;
-
+  return Py_BuildValue("OO", x_out_npA, lb_res_obj);
 
   /* If we failed, clean up more things */
+ fail2:
+   Py_DECREF(x_out_npA);
  fail:
   Py_XDECREF(b_npA);
   Py_XDECREF(pix_idx_npA);
+  l1c_free_double(x_ours);
 
   return NULL;
 
@@ -211,10 +216,10 @@ _breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw){
   (void)self;
 
   PyObject *f_obj=NULL, *uk_out_npA=NULL;
-  PyObject *ret_val=NULL;
+
   PyArrayObject *f_npA=NULL;
   double *uk=NULL, *f=NULL, *f_ours=NULL;
-  int i=0, status=0, n=0, m=0;
+  int status=0, n=0, m=0;
 
   double tol=0.001, mu=10;
   l1c_int max_iter = 1000;
@@ -263,14 +268,12 @@ _breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw){
   /* Allocate memory for M*xk=f */
   f_ours = l1c_malloc_double(n*m);
   uk = l1c_malloc_double(n*m);
-  if (!f_ours || !uk){
+  if (!f_ours || !uk || !f){
     PyErr_SetString(PyExc_MemoryError, "Failed to allocation memory");
     goto fail1;
   }
 
-  for(i=0; i<n*m; i++){
-    f_ours[i] = f[i];
-  }
+  cblas_dcopy(n*m, f, 1, f_ours, 1);
 
   status = l1c_breg_anistropic_TV(n, m, uk, f_ours, mu, tol, max_iter, max_jac_iter);
   if (status){
@@ -279,15 +282,16 @@ _breg_anistropic_TV(PyObject *self, PyObject *args, PyObject *kw){
   }
   /* Build the output tuple */
   npy_intp dims[] = {n, m};
-  uk_out_npA = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, uk);
+  uk_out_npA = PyArray_SimpleDoubleCopy(2, dims, uk);
+  if(!uk_out_npA)
+    goto fail2;
 
   /* Clean up. */
   Py_DECREF(f_npA);
   l1c_free_double(f_ours);
+  l1c_free_double(uk);
 
-  ret_val = Py_BuildValue("O", uk_out_npA);
-
-  return ret_val;
+  return Py_BuildValue("O", uk_out_npA);
 
   /* If we failed, clean up more things. Note the fall through. */
  fail2:
@@ -320,7 +324,8 @@ static PyObject *_nesta_dctTV(PyObject *self, PyObject *args,
 
   DctMode dct_mode = dct1;
   BpMode bp_mode = analysis;
-  // int _dct_mode, _bp_mode;
+  l1c_AxFuns ax_funs;
+
   char *keywords[] = {"", "", "", "",
                       "alpha_v", "alpha_h",
                       "sigma", "mu", "tol", "n_continue", "verbose",
@@ -394,7 +399,7 @@ static PyObject *_nesta_dctTV(PyObject *self, PyObject *args,
 
   cblas_dcopy(n, b, 1, b_ours, 1);
 
-  l1c_AxFuns ax_funs;
+
   if (l1c_setup_dctTV_transforms(n, mrow, mcol, alpha_v, alpha_h, dct_mode,
                                  bp_mode, pix_idx, &ax_funs)) {
     PyErr_SetString(PyExc_RuntimeError, "Failed to initialize DCT.");
@@ -406,13 +411,14 @@ static PyObject *_nesta_dctTV(PyObject *self, PyObject *args,
   /* Build the output tuple */
   npy_intp dims[] = {mrow, mcol};
 
-  x_out_npA = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, x_ours);
-
+  x_out_npA = PyArray_SimpleDoubleCopy(2, dims, x_ours);
+  if (!x_out_npA) goto fail;
 
   /* Clean up. */
   Py_DECREF(b_npA);
   Py_DECREF(pix_idx_npA);
   l1c_free_double(b_ours);
+  l1c_free_double(x_ours);
 
   return Py_BuildValue("Oi", x_out_npA, status);
 
@@ -426,3 +432,52 @@ static PyObject *_nesta_dctTV(PyObject *self, PyObject *args,
   return NULL;
 }
 
+
+/*
+  When building an output array from data we allocated, we cant free our own
+  memory, because numpy just uses a reference to it, but cant decref properly.
+  This creates a memory leak. So the point of this function is to create an
+  output array, and copy our data into it, so we can free our own memory.
+
+
+  A better idea is:
+  http://blog.enthought.com/python/numpy-arrays-with-pre-allocated-memory/
+
+  which shows how to register a deallocator with numpy.
+
+  See also,
+  https://docs.scipy.org/doc/numpy/reference/c-api.array.html#c.PyArray_New
+ */
+static PyObject *PyArray_SimpleDoubleCopy(int nd, npy_intp *dims, double *data) {
+  int N = 1;
+  PyObject *py_arr_obj = PyArray_SimpleNew(nd, dims, NPY_DOUBLE);
+  if (!py_arr_obj) {
+    return NULL;
+  }
+
+  PyArrayObject *arr_npA = (PyArrayObject *)PyArray_FROM_OTF(
+      py_arr_obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+  if (!arr_npA) {
+    goto fail1;
+  }
+
+  double *their_data = (double *)PyArray_DATA(arr_npA);
+  if (!their_data) {
+    goto fail2;
+  }
+  for (int i = 0; i < nd; i++) {
+    N *= dims[i];
+  }
+
+  cblas_dcopy(N, data, 1, their_data, 1);
+
+  Py_XDECREF(arr_npA);
+
+  return py_arr_obj;
+
+fail2:
+  Py_XDECREF(arr_npA);
+fail1:
+  Py_XDECREF(py_arr_obj);
+  return NULL;
+}

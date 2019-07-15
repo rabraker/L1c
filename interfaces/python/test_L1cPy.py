@@ -102,15 +102,20 @@ class TestNesta(L1cPyTest):
         """
         n, m = self.Img_orig.shape
 
-        Img_clean, status = l1cPy.nesta_dctTV(self.n, self.m, self.b,
+        Img_recon, status = l1cPy.nesta_dctTV(self.n, self.m, self.b,
                                               self.pix_idx, alpha_v=0.5,
-                                              alpha_h=0.5, mu=1e-5,
+                                              alpha_h=0.5, mu=1e-8,
                                               tol=1e-5, verbose=0,
                                               dct_mode=2, bp_mode=1)
+        # This check doesnt actually make sense.
+        # We really need to check [Dct(x); alp_h*Dx(x); alp_v*Dy(x)]
+        # nrm1_act = norm(Img_recon.flatten(), ord=1)
+        # nrm1_exp = norm(self.Img_orig.flatten(), ord=1)
+        # self.assertLess(nrm1_act, nrm1_exp)
 
         self.assertEqual(status, 0)
-        self.assertEqual(n, Img_clean.shape[0])
-        self.assertEqual(m, Img_clean.shape[1])
+        self.assertEqual(n, Img_recon.shape[0])
+        self.assertEqual(m, Img_recon.shape[1])
 
     def test_nesta_errors(self):
         """nesta_dctTV: check that we get errros when we should.
