@@ -1,7 +1,9 @@
 #include "config.h"
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "l1c.h"
 #include "l1c_math.h"
-
 #if defined(_HAVE_POSIX_MEMALIGN_)
 // #define _POSIX_C_SOURCE  200112L
 #include <stdlib.h>
@@ -138,4 +140,35 @@ void l1c_free_double_2D(int nrow, double **ddptr){
     }
   }
   free(ddptr);
+}
+
+/*
+  Check if the double pointer p is aligned to DALIGN boundary.
+  If yes, return true, else return false.
+ */
+bool is_aligned(double *p){
+  uintptr_t ptr_as_int = (uintptr_t)p;
+
+  if (0 == (ptr_as_int & (DALIGN-1)) ){
+    return true;
+  }
+  return false;
+}
+
+
+/*
+  Will return an interger n such that
+  p+n is aligned to a DALIGN byte boundary, ie,
+
+  ((p+n)/DALIGN)*DALIGN == p+n
+
+ */
+int next_daligned_offset(void *p){
+  if (is_aligned(p))
+    return 0;
+
+  uintptr_t ptr_as_int = (uintptr_t)p;
+  uintptr_t offset = DALIGN - (ptr_as_int & (DALIGN - 1));
+
+  return (int)(offset)/sizeof(double);
 }

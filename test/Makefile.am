@@ -88,6 +88,7 @@ test_l1c_test_SOURCES = TEST_cgsolve.c       \
 						$(top_srcdir)/include/l1c.h            \
 						$(top_srcdir)/include/l1c_math.h       \
 						$(top_srcdir)/include/l1c_timing.h     \
+						$(top_srcdir)/include/l1qc_memory.h    \
 						$(top_srcdir)/include/l1qc_newton.h    \
 						$(top_srcdir)/include/linesearch.h     \
 						$(top_srcdir)/include/nesta.h          \

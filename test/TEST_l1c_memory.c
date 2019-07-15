@@ -2,7 +2,10 @@
 
 #include <check.h>
 #include <stdint.h>
-
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include "l1c_memory.h"
 #include "l1c.h"
 #include "check_utils.h"
 
@@ -109,6 +112,49 @@ START_TEST(test_l1c_calloc_double){
 END_TEST
 
 
+START_TEST(test_is_aligned){
+
+  double *x = malloc(10 * sizeof(double));
+  double *y = l1c_malloc_double(10);
+  bool status_x = is_aligned(x);
+  bool status_y = is_aligned(y);
+  ck_assert_int_eq(0, (int)status_x);
+  ck_assert_int_eq(1, (int)status_y);
+
+  free(x);
+  l1c_free_double(y);
+}END_TEST
+
+
+START_TEST(test_daligned_offset) {
+  /*
+    Example: int(0x1a018f0, base=16)=27269360
+    (27269360+16)/64)*64 == 27269360+16
+    and sizeof(double)=8, so we should expect 2.
+   */
+  uintptr_t addr1 = 0x1a018f0;
+  uintptr_t addr2 = 0x1a01980;
+
+  int offset1 = next_daligned_offset((void *)addr1);
+  int offset2 = next_daligned_offset((void *)addr2);
+
+  ck_assert_int_eq(2, offset1);
+  ck_assert_int_eq(0, offset2);
+
+  for(int i=0; i<100; i++){
+    double *x = malloc(i*sizeof(double));
+    int offset = next_daligned_offset(x);
+    bool status = is_aligned(x+offset);
+
+    // printf("offset=%d, status=%d, x=%p\n", offset, status, (void*)x);
+    ck_assert_int_eq(1, (int)status);
+    ck_assert_int_lt(offset, DALIGN/sizeof(double));
+    free(x);
+  }
+
+}
+END_TEST
+
 /* Add all the test cases to our suite
  */
 Suite *l1c_memory_suite(void)
@@ -119,7 +165,9 @@ Suite *l1c_memory_suite(void)
   s = suite_create("l1c_memory");
   tc_common = tcase_create("l1c_memory");
 
-  tcase_add_test(tc_common,test_l1c_malloc_double);
+  tcase_add_test(tc_common, test_is_aligned);
+  tcase_add_test(tc_common, test_daligned_offset);
+  tcase_add_test(tc_common, test_l1c_malloc_double);
   tcase_add_test(tc_common, test_l1c_calloc_double);
   tcase_add_test(tc_common, test_l1c_calloc_double_2D);
   tcase_add_test(tc_common, test_l1c_malloc_double_2D);
