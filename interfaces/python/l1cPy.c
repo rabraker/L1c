@@ -13,6 +13,8 @@
 
 /* Helper functions*/
 static PyObject *PyArray_SimpleDoubleCopy(int nd, npy_intp *dims, double *data);
+static int is_bpmode_valid(BpMode bpmode);
+static int is_dctmode_valid(DctMode dctmode);
 
 /* Exported Function declartion */
 static PyObject *_l1qc_dct(PyObject *self, PyObject *args, PyObject *kw);
@@ -124,10 +126,8 @@ _l1qc_dct(PyObject *self, PyObject *args, PyObject *kw){
     return NULL;
   }
 
-  if (opts.dct_mode != dct1 && opts.dct_mode != dct2) {
-    PyErr_SetString(PyExc_ValueError, "Must have dct_mode = 1 or 2");
+  if (!is_dctmode_valid(opts.dct_mode))
     return NULL;
-  }
 
   /* Interpret the input objects as numpy arrays.
      N.B: NPY_ARRAY_IN_ARRAY = PY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_ALIGNED
@@ -343,15 +343,13 @@ static PyObject *_nesta_dctTV(PyObject *self, PyObject *args,
     PyErr_SetString(PyExc_TypeError, "Parsing input arguments failed.");
     return NULL;
   }
-  if (bp_mode != analysis && bp_mode != synthesis) {
-    PyErr_SetString(PyExc_ValueError, "Must have bp_mode = 1 or 2");
-    return NULL;
-  }
 
-  if (dct_mode != dct1 && dct_mode != dct2) {
-    PyErr_SetString(PyExc_ValueError, "Must have dct_mode = 1 or 2");
+  if (!is_bpmode_valid(bp_mode))
     return NULL;
-  }
+
+  if (!is_dctmode_valid(dct_mode))
+    return NULL;
+
 
   /* Interpret the input objects as numpy arrays.
      N.B: NPY_ARRAY_IN_ARRAY = PY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_ALIGNED */
@@ -432,6 +430,23 @@ static PyObject *_nesta_dctTV(PyObject *self, PyObject *args,
   return NULL;
 }
 
+static int is_bpmode_valid(BpMode bp_mode){
+if (bp_mode != analysis && bp_mode != synthesis) {
+  PyErr_SetString(PyExc_ValueError, "Must have bp_mode = 1 or 2");
+  return 0;
+ }
+
+ return 1;
+}
+
+static int is_dctmode_valid(DctMode dct_mode){
+  if (dct_mode != dct1 && dct_mode != dct2) {
+    PyErr_SetString(PyExc_ValueError, "Must have dct_mode = 1 or 2");
+    return 0;
+  }
+
+  return 1;
+}
 
 /*
   When building an output array from data we allocated, we cant free our own
