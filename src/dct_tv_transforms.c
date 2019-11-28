@@ -76,11 +76,7 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
   _inc_TVV = 0;
   _inc_TVH = 0;
 
-  if (n <=0 || mrow <=0 || mcol <=0){
-    return L1C_INVALID_ARGUMENT;
-  }
-
-  if (alp_v < 0 || alp_h < 0) {
+  if (n <=0 || mrow <=0 || mcol <=0 || alp_v < 0 || alp_h < 0){
     return L1C_INVALID_ARGUMENT;
   }
 
