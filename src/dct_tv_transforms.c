@@ -80,13 +80,10 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
     return L1C_INVALID_ARGUMENT;
   }
 
-  if (alp_v > 0 && (mrow <= 2 || mcol <= 2)) {
+  if ( (alp_h > 0 || alp_v > 0) && (mrow <= 2 || mcol <= 2)) {
     return L1C_INVALID_ARGUMENT;
   }
 
-  if (alp_h > 0 && (mrow <= 2 || mcol <= 2)) {
-    return L1C_INVALID_ARGUMENT;
-  }
   if (check_pix_idx(n, pix_idx, mrow*mcol-1)){
     return L1C_INVALID_ARGUMENT;
   }
