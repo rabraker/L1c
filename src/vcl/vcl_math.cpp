@@ -1,10 +1,12 @@
-#define VCL_NAMESPACE vcl
-#include "vectorclass.h"
-using namespace vcl;
-
-#include "vectormath_exp.h"
 #include <math.h>
 #include <stdio.h>
+
+#define VCL_NAMESPACE vcl
+#include "vcl/vectorclass.h"
+#include "vcl/vectormath_exp.h"
+
+using namespace vcl;
+
 #define VECTORSIZE 4
 
 extern "C" double vcl_logsum(const int N, const double alpha, const double *x){

@@ -36,6 +36,8 @@ double* l1c_malloc_double(int N){
 void l1c_free_double(double *x){
   _mm_free(x);
 }
+#else
+#error You must have either POSIX_MEMALIGN or MM_MALLOC
 #endif //_HAVE_POSIX_MEMALIGN_
 
 

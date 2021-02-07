@@ -1,0 +1,35 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+#pragma once
+
+/* 0 */
+#cmakedefine HAVE_ATLAS_DAXPBY
+
+/* 0 */
+#cmakedefine HAVE_CBLAS_DAXPBY
+
+/* Compile with fftw threading support */
+#cmakedefine HAVE_FFTW3_THREADS
+
+/* Name of package */
+#define PACKAGE "@PROJECT_NAME@"
+
+
+/* Version number of package */
+#define VERSION "@PROJECT_VERSION@"
+
+/* We have _mm_malloc */
+#cmakedefine _HAVE_MM_MALLOC_
+
+/* We have posix_memalign. */
+#cmakedefine _HAVE_POSIX_MEMALIGN_
+
+/* Unlocks posix_memalign in stdlib.h. */
+#cmakedefine _POSIX_C_SOURCE @_POSIX_C_SOURCE@
+
+/* 1 to compile with mex interfaces */
+#cmakedefine __MATLAB__
+
+/* Define to the equivalent of the C99 'restrict' keyword, or to
+   nothing if this is not supported.  Do not define if restrict is
+   supported directly.  */
+#define restrict __restrict
