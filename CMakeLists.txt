@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.15)
 
 project(l1c
   VERSION "0.0.1"
@@ -65,7 +65,7 @@ find_package(FFTW3 REQUIRED)
 find_package(cJSON REQUIRED)
 
 find_package(Python3
-  3.5.2
+  3.5
   REQUIRED
   COMPONENTS Interpreter Development)
 
