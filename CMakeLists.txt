@@ -65,7 +65,6 @@ find_package(FFTW3 REQUIRED)
 find_package(cJSON REQUIRED)
 
 find_package(Python3
-  3.5
   REQUIRED
   COMPONENTS Interpreter Development)
 

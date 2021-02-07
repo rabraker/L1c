@@ -28,6 +28,8 @@ script:
         - echo "******** $(type -p cmake)"
         - echo $PATH
         - echo "***** $(ls $PWD)"
+        - echo "python: $(type -p python3)"
+        - echo "python: $(python3 --version)"
         - mkdir build
         - cd build
         - cmake -DENABLE_PYTHON=1 ../
