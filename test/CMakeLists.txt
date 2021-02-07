@@ -1,6 +1,7 @@
 #
 # Tests
 
+find_package(Check REQUIRED)
 
 list(APPEND TEST_L1C_TEST_SOURCES
   TEST_cgsolve.c
@@ -39,7 +40,7 @@ set(test_l1c_test_INCLUDES
 add_executable(test_l1c.test
   ${TEST_L1C_TEST_SOURCES})
 
-target_link_libraries(test_l1c.test PUBLIC check ${L1C_PUBLIC_LIBS})
+target_link_libraries(test_l1c.test PUBLIC Check::Check ${L1C_PUBLIC_LIBS})
 target_link_libraries(test_l1c.test PRIVATE l1c)
 
 # We have scripts that generate test data, and scripts that run tests.
