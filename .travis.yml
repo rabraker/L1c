@@ -20,10 +20,12 @@ install:
         - sudo ldconfig
 
 script:
-        - chmod +x bootstrap.sh 
-        - ./bootstrap.sh 
-        - CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/lib ./configure --enable-python
+        - echo "******** $(cmake --version)"
+        - echo "***** $(ls $PWD)"
+        - mkdir build
+        - cd build
+        - cmake -DENABLE_PYTHON=1 ../
         - make
-        - OMP_NUM_THREADS=4 make check
+        - OMP_NUM_THREADS=4 make test
 
 
