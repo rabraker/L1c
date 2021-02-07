@@ -42,7 +42,11 @@ add_executable(test_l1c.test
 target_link_libraries(test_l1c.test PUBLIC check ${L1C_PUBLIC_LIBS})
 target_link_libraries(test_l1c.test PRIVATE l1c)
 
+# We have scripts that generate test data, and scripts that run tests.
+# All of them get copied into the build ./test folder.
 
+#========================================================== #
+# Test data generating scripts
 list(APPEND TEST_DATA_SCRIPT_SOURCES
   build_CS20NG_example_data.py
   build_dct2_data.py
@@ -62,35 +66,13 @@ list(APPEND TEST_DATA_PY_SOURCES
   test_runner_utils.sh
   )
 
-list(APPEND TEST_PROG_SOURCES
-  # test_l1c.test
-  test_l1qc_dct_c.sh
-  # valgrind_wrapper.sh
-  )
-
-if(ENABLE_MATLAB)
-  list(APPEND TEST_PROG_SOURCES test_matlab_mex.sh)
-endif()
-
-if(ENABLE_PYTHON)
-  list(APPEND TEST_PROG_SOURCES test_python_interface.sh)
-endif()
-
-foreach(test_file IN ITEMS ${TEST_PROG_SOURCES})
-  configure_file(${test_file} ${CMAKE_CURRENT_BINARY_DIR}/${test_file} COPYONLY)
-  list(APPEND TEST_PROGS ${CMAKE_CURRENT_BINARY_DIR}/${test_file})
-endforeach()
-
-# list(APPEND TEST_PROGS ${CMAKE_CURRENT_BINARY_DIR}/test_l1c.test)
-
-
+# Copy all the data generating scripts into the build tree.
 foreach(test_file IN ITEMS ${TEST_DATA_PY_SOURCES})
   configure_file(${test_file} ${CMAKE_CURRENT_BINARY_DIR}/${test_file} COPYONLY)
   list(APPEND TEST_DATA_SCRIPTS ${CMAKE_CURRENT_BINARY_DIR}/${test_file})
 endforeach()
 
-# add_dependencies(_l1cPy_module example_data)
-
+# Before the scripts can run, create the test/test_data folder.
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/test_data
   COMMENT "Creating test_data dir"
@@ -111,15 +93,39 @@ foreach(test_file IN ITEMS ${TEST_DATA_SCRIPT_SOURCES})
   list(APPEND TEST_DATA_LOGS "${test_file_}.log")
 endforeach()
 
-# message("logs: ${TEST_DATA_LOGS}")
-
+# You can run `make test_data` to run the scripts.
 add_custom_target(
   test_data
   DEPENDS ${TEST_DATA_LOGS}
   )
 
+#========================================================== #
+# Test running scripts
+list(APPEND TEST_PROG_SOURCES
+  test_l1qc_dct_c.sh
+  valgrind_wrapper.sh
+  )
+
+if(ENABLE_MATLAB)
+  list(APPEND TEST_PROG_SOURCES test_matlab_mex.sh)
+endif()
+
+if(ENABLE_PYTHON)
+  list(APPEND TEST_PROG_SOURCES test_python_interface.sh)
+endif()
+
+# Copy all the test scripts into the build tree.
+foreach(test_file IN ITEMS ${TEST_PROG_SOURCES})
+  configure_file(${test_file} ${CMAKE_CURRENT_BINARY_DIR}/${test_file} COPYONLY)
+  list(APPEND TEST_PROGS ${CMAKE_CURRENT_BINARY_DIR}/${test_file})
+endforeach()
+
+list(APPEND TEST_PROGS ${CMAKE_CURRENT_BINARY_DIR}/test_l1c.test)
+
+# add_dependencies(_l1cPy_module example_data)
+
 foreach(test_prog IN ITEMS ${TEST_PROGS})
-  message(${test_prog})
+  # message(${test_prog})
   set(test_log "${test_prog}.log")
   add_custom_command(
     COMMENT "checking ${test_prog}"

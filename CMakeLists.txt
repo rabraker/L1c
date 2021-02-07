@@ -44,7 +44,6 @@ endforeach()
 if(MSVC)
   add_compile_options(/W4 /Wx)
 else()
-  message("adding compile warnings")
   add_compile_options(
     ${L1C_CFLAGS}
     )
@@ -70,6 +69,7 @@ find_package(Python3
   REQUIRED
   COMPONENTS Interpreter Development)
 
+set(ENABLE_PYTHON TRUE)
 
 list(APPEND L1C_PUBLIC_LIBS
   BLAS::BLAS
@@ -84,6 +84,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include/vcl)
 add_subdirectory(src)
 add_subdirectory(examples/c)
 add_subdirectory(test)
+add_subdirectory(interfaces/python)
 
 configure_file(
   "${PROJECT_SOURCE_DIR}/l1c_config.h.in"

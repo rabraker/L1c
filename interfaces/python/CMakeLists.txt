@@ -32,22 +32,7 @@ add_custom_command(
 add_custom_target(example_data ALL DEPENDS ${EXAMPLE_DATA_DEST})
 # add_dependencies(_l1cPy_module example_data)
 
-#
-
-# add_custom_target(
-#   example_data ALL
-#   COMMAND python3 ${CMAKE_SOURCE_DIR}/test/build_CS20NG_example_data.py ${EXAMPLE_DATA_DEST}
-#   # echo "*********** Echo Doing stuff"
-#   DEPENDS ${CMAKE_SOURCE_DIR}/test/build_CS20NG_example_data.py
-#   BYPRODUCTS ${EXAMPLE_DATA_DEST}
-#   # DEPENDS ${EXAMPLE_DATA_DEST}
-#   )
-
 
 foreach(py_file IN ITEMS ${PY_FILES})
-  # file(COPY ${py_file}
-  #   DESTINATION ${CMAKE_BINARY_DIR}/py_file
-  #   )
-  # message("pyfile=${py_file}")
   configure_file(${py_file} ${CMAKE_CURRENT_BINARY_DIR}/${py_file} COPYONLY)
 endforeach()

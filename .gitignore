@@ -60,7 +60,6 @@ compile
 missing
 l1qc_dct_c_fftw
 .gdb_history
-CMakeLists.txt
 errors.log
 build-cmake/
 test/test_l1c
