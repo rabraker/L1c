@@ -4,6 +4,8 @@
  * described in @cite becker_nesta_2011.
  *
  */
+#include "config.h"
+
 #include <stdlib.h>
 #include <cblas.h>
 #include <math.h>
