@@ -130,6 +130,7 @@ foreach(test_prog IN ITEMS ${TEST_PROGS})
   add_custom_command(
     COMMENT "checking ${test_prog}"
     COMMAND ${CMAKE_COMMAND} -E env TEST_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/test_data
+    WITH_PYTHON=${ENABLE_PYTHON} WITH_MEX=${ENABLE_MATLAB}
     ABS_TOP_BUILDDIR=${CMAKE_BINARY_DIR}
     "${CMAKE_SOURCE_DIR}/test-driver"
          --log-file ${test_prog}.log
