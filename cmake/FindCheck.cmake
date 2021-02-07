@@ -40,35 +40,43 @@ find_path(Check_INCLUDE_DIR
   PATHS ${PC_Check_INCLUDE_DIRS}
   )
 
-set(CHECK_FOUND ${PC_Check_FOUND})
+# set(CHECK_FOUND ${PC_Check_FOUND})
 message("**** check found ${PC_Check_FOUND}")
 message("**** check flags ${PC_Check_LDFLAGS}")
 message("**** check flags ${PC_Check_LIBRARY_DIRS}")
 message("**** check flags ${PC_Check_LINK_LIBRARIES}")
+# set(PC_Check_LDFLAGS "-lcheck_pic;-pthread;-lrt;-lm;-lsubunit")
 
-if( (Check_INCLUDE_DIR STREQUAL "check_INCLUDE_DIR-NOTOFUND"))
-  set(CHECK_FOUND FALSE)
-endif()
+foreach(lib IN ITEMS ${PC_Check_LINK_LIBRARIES})
+  message("lib: ${lib}")
+  STRING(FIND ${lib} libcheck _FOUND)
+  message("found: ${_FOUND}")
+  if(NOT ("${_FOUND}" STREQUAL "-1"))
+    set(Check_LOCATION ${lib})
+    break()
+  endif()
+
+endforeach()
 
 
 find_package_handle_standard_args(Check
-  # DEFAULT_MSG
-  REQUIRED_VARS Check_INCLUDE_DIR PC_Check_LDFLAGS
+  REQUIRED_VARS Check_INCLUDE_DIR PC_Check_LDFLAGS Check_LOCATION
   VERSION_VAR PC_Check_VERSION)
 
 mark_as_advanced(check_LIBRARY  check_INCLUDE_DIR)
 
-if(cJSON_FOUND)
+if(Check_FOUND)
   add_library(Check::Check SHARED IMPORTED)
 
   set_target_properties(
     Check::Check
     PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${PC_Check_INCLUDE_DIRS}"
-    IMPORTED_LOCATION "${PC_Check_LINK_LIBRARIES}"
-
+    IMPORTED_LOCATION ${Check_LOCATION}
     )
-  target_link_options(Check::Check INTERFACE
+
+  # INTERFACE
+  target_link_libraries(Check::Check INTERFACE
     ${PC_Check_LDFLAGS}
     )
 
