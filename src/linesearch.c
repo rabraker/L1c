@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <cblas.h>
 #include <math.h>
 

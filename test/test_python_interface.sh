@@ -1,7 +1,8 @@
 #!/bin/bash
 
 set -u
-source "${srcdir}/test_runner_utils.sh"
+SCRIPT_DIR=$(dirname $(readlink -f "$0"))
+source "${SCRIPT_DIR}/test_runner_utils.sh"
 
 cur_dir=$(pwd)
 
