@@ -32,7 +32,7 @@ script:
         - echo "**python $(python3 --version)"
         - mkdir build
         - cd build
-        - cmake -DENABLE_PYTHON=1 --trace ../
+        - cmake -DENABLE_PYTHON=1 -DPython3_ROOT_DIR=$(dirname $(type -p python3)) --trace ../
         - make
         - OMP_NUM_THREADS=4 make test
 
