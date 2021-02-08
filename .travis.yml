@@ -1,10 +1,11 @@
 language: c
-os:
-        - linux
+
+dist: bionic
 before_install:
         - sudo apt-get update
         
 install:
+        - export PATH=${PATH/:\/opt\/pyenv\/shims/}
         - sudo apt-get install -y wget
         - wget https://github.com/Kitware/CMake/releases/download/v3.15.0/cmake-3.15.0-Linux-x86_64.sh
         - sudo bash cmake-3.15.0-Linux-x86_64.sh --prefix=/home/travis/.local --skip-license
@@ -24,15 +25,16 @@ install:
 
 script:
         - echo "******** $(cmake --version)"
-        - echo "******** $(which cmake)"
-        - echo "******** $(type -p cmake)"
         - echo $PATH
         - echo "***** $(ls $PWD)"
-        - echo "**python $(type -p python3)"
+        - /opt/pyenv/shims/python3 --version
+        - ls -al /opt/pyenv/shims/
+        - echo "**python $(which python3)"
+        - echo "*** $(ls /usr/bin/python3)"
         - echo "**python $(python3 --version)"
         - mkdir build
         - cd build
-        - cmake -DENABLE_PYTHON=1 -DPython3_ROOT_DIR=$(dirname $(type -p python3)) --trace ../
+        - cmake -DENABLE_PYTHON=1 -DPython3_ROOT_DIR=/usr/bin/python3 ../
         - make
         - OMP_NUM_THREADS=4 make test
 
