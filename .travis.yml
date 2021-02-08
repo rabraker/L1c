@@ -5,6 +5,7 @@ before_install:
         - sudo apt-get update
         
 install:
+        # There is something proken with the pyenv/shims that screws up cmake.
         - export PATH=${PATH/:\/opt\/pyenv\/shims/}
         - sudo apt-get install -y wget
         - wget https://github.com/Kitware/CMake/releases/download/v3.15.0/cmake-3.15.0-Linux-x86_64.sh
@@ -14,7 +15,6 @@ install:
         - sudo apt-get install -y libfftw3-3 libfftw3-dev check pkg-config
         - pkg-config --libs check
         - sudo apt-get install -y libsubunit0
-        - dpkg -L libsubunit0
         - git clone https://github.com/DaveGamble/cJSON.git && cd cJSON
         - make
         - sudo make install
@@ -24,14 +24,10 @@ install:
         - sudo ldconfig
 
 script:
-        - echo "******** $(cmake --version)"
+        - cmake --version
         - echo $PATH
-        - echo "***** $(ls $PWD)"
-        - /opt/pyenv/shims/python3 --version
-        - ls -al /opt/pyenv/shims/
-        - echo "**python $(which python3)"
-        - echo "*** $(ls /usr/bin/python3)"
-        - echo "**python $(python3 --version)"
+        - type -p python3
+        - python3 --version
         - mkdir build
         - cd build
         - cmake -DENABLE_PYTHON=1 -DPython3_ROOT_DIR=/usr/bin/python3 ../

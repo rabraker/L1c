@@ -40,8 +40,7 @@ set(test_l1c_test_INCLUDES
 add_executable(test_l1c.test
   ${TEST_L1C_TEST_SOURCES})
 
-target_link_libraries(test_l1c.test PUBLIC Check::Check ${L1C_PUBLIC_LIBS})
-target_link_libraries(test_l1c.test PRIVATE l1c)
+target_link_libraries(test_l1c.test PRIVATE l1c m Check::Check ${L1C_PUBLIC_LIBS})
 
 # We have scripts that generate test data, and scripts that run tests.
 # All of them get copied into the build ./test folder.

@@ -40,17 +40,11 @@ find_path(Check_INCLUDE_DIR
   PATHS ${PC_Check_INCLUDE_DIRS}
   )
 
-# set(CHECK_FOUND ${PC_Check_FOUND})
-message("**** check found ${PC_Check_FOUND}")
-message("**** check flags ${PC_Check_LDFLAGS}")
-message("**** check flags ${PC_Check_LIBRARY_DIRS}")
-message("**** check flags ${PC_Check_LINK_LIBRARIES}")
-# set(PC_Check_LDFLAGS "-lcheck_pic;-pthread;-lrt;-lm;-lsubunit")
-
+# PC_Check_LINK_LIBRARIES can contain a comma seperated list of all the other
+# transitive link libraries, like /usr/lib/x86_64-linux-gnu/librt.so. Look for
+# the one item with libcheck in its name to use for the IMPORTED_LOCATION.
 foreach(lib IN ITEMS ${PC_Check_LINK_LIBRARIES})
-  message("lib: ${lib}")
   STRING(FIND ${lib} libcheck _FOUND)
-  message("found: ${_FOUND}")
   if(NOT ("${_FOUND}" STREQUAL "-1"))
     set(Check_LOCATION ${lib})
     break()
@@ -75,7 +69,6 @@ if(Check_FOUND)
     IMPORTED_LOCATION ${Check_LOCATION}
     )
 
-  # INTERFACE
   target_link_libraries(Check::Check INTERFACE
     ${PC_Check_LDFLAGS}
     )

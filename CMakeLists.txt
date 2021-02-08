@@ -73,7 +73,6 @@ set(ENABLE_PYTHON TRUE)
 list(APPEND L1C_PUBLIC_LIBS
   BLAS::BLAS
   cJSON::cJSON
-  m
   )
 
 include_directories(${PROJECT_BINARY_DIR}/include)
