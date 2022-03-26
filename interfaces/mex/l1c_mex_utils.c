@@ -1,6 +1,9 @@
+#include <limits.h>
 #include <stdint.h>
 #include "mex.h"
+#ifdef L1C_MEX_MATLAB
 #include "matrix.h"
+#endif
 #include "l1c_mex_utils.h"
 
 

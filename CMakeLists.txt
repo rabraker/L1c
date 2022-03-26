@@ -73,6 +73,7 @@ add_subdirectory(src)
 add_subdirectory(examples/c)
 add_subdirectory(test)
 add_subdirectory(interfaces/python)
+add_subdirectory(interfaces/mex)
 
 
 configure_file(

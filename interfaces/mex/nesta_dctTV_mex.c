@@ -4,7 +4,9 @@
 #include <string.h>
 
 #include "cblas.h"
+#ifdef L1C_MEX_MATLAB
 #include "matrix.h"
+#endif
 #include "mex.h"
 
 #include "l1c.h"
