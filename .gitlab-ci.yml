@@ -5,10 +5,8 @@ main:
   stage: main
   image: registry.gitlab.com/rabraker/l1c
   script:
-    - chmod +x bootstrap.sh 
-    - ./bootstrap.sh 
-    - CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/lib ./configure --enable-python
-    - make
-    - OMP_NUM_THREADS=4 make check
+    - mkdir build && cd build && cmake ..
+    - make -j4
+    - OMP_NUM_THREADS=4 make test ARGS="-VV"
 
 
