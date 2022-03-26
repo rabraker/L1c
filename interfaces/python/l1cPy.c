@@ -318,7 +318,7 @@ static PyObject *_nesta_dctTV(PyObject *self, PyObject *args,
   int status=0, mrow=0, mcol=0, mtot=0, n=0, n_=0;
   int *pix_idx=NULL;
   double alpha_v=0, alpha_h=0;
-  l1c_NestaOpts opts = {.sigma = 0.01, .mu = 10,
+  l1c_NestaOpts opts = {.sigma = 0.01, .mu = 1e-5,
                         .verbose = 5, .tol = 1e-5,
                         .n_continue=5};
 

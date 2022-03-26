@@ -4,12 +4,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "omp.h"
+
 #include <cjson/cJSON.h>
 
 #include "json_utils.h"
 #include "l1c.h"
-
 
 int main(int argc, char **argv){
 

@@ -4,6 +4,8 @@
  * described in @cite becker_nesta_2011.
  *
  */
+#include "config.h"
+
 #include <stdlib.h>
 #include <cblas.h>
 #include <math.h>
@@ -356,8 +358,10 @@ int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
               l1c_AxFuns ax_funs, l1c_NestaOpts opts){
 
   int status=0; //, idx_fmu=0;
-
-
+  if (n != ax_funs.n || m != ax_funs.m) {
+    return L1C_INVALID_ARGUMENT;
+  }
+  printf(" ALL OK!\n");
   double alpha_k=0, tau_k = 0;
   double fbar=0, rel_delta_fmu;
   double beta_mu, beta_tol;
