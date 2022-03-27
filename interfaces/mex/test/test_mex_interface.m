@@ -23,8 +23,6 @@ function dat = sample_data()
   N = 128;
   mu_path_len = 25;
   sampling_ratio = 0.1;
-  addpath("_examples");
-  ## dat = struct();
 
   dat.x_orig = cs20ng_grating(13,13,N);
   dat.mtot = size(dat.x_orig(:))(1);
@@ -86,7 +84,6 @@ function check_nesta_dctTV_notv()
   L1cMexTesting.assert_eq(status, 0);
 
   assert_bp_properties(x_og_sparse, x_est(:), pix_idx, T_idx, TC_idx, opts.sigma)
-  % TODO: implement the property check we use in the c-testsuite.
 end
 
 
@@ -166,7 +163,7 @@ function check_breg_TV_mex(fpath)
   mu = 5;
   tol = 0.001;
 
-  Xopt = breg_anistropic_TV(img, mu, tol, 1000);
+  Xopt = breg_anistropic_tv(img, mu, tol, 1000);
 
   L1cMexTesting.assert_eq(size(Xopt, 1), n);
   L1cMexTesting.assert_eq(size(Xopt, 2), m);

@@ -72,4 +72,5 @@ add_test(NAME test_mex_utils
 
 add_test(NAME test_mex_interface
          COMMAND octave --path=${CMAKE_CURRENT_BINARY_DIR}/test
+         --path=${CMAKE_CURRENT_BINARY_DIR}/examples
                  ${CMAKE_CURRENT_BINARY_DIR}/test/test_mex_interface.m)
