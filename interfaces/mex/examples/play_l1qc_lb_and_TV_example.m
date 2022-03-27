@@ -17,7 +17,11 @@ N = 256;              % (pixels) Size of square image
 
 % Create the test image.
 
-rng(1);       % Always get the same mask.
+try
+    rng(1);       % Always get the same mask.
+catch
+    printf("CANNOT SET SEED IN OCTAVE.\n");
+end
 X_img_orig = cs20ng_grating(13,13,N);
 
 % Create the sampling mask. pix_idx is a vector of sampled pixel indeces (which

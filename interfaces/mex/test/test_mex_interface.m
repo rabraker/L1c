@@ -1,24 +1,21 @@
-function [npass, nfail, nskip] = test_mex_interface(skip_all, data_dir)
+function [npass, nfail, nskip] = test_mex_interface()
 % Test cases for the mex bindings. data_dir should hold the test data and in
 % particular 'example_img_data.json'
-% 
-  
-  fpath = fullfile(data_dir, 'example_img_data.json');  
+%
+  % Only needed for octave.
+  try
+    pkg('load', 'signal')
+  end
 
   cases = {...
-    #@()check_nesta_dctTV(fpath),...
-    @()check_nesta_dctTV_notv(fpath),...
-    #@()check_breg_TV_mex(fpath),...
-    #@()check_l1qc_dct_mex(fpath),...
+    @()check_nesta_dctTV(),...
+    @()check_nesta_dctTV_notv(),...
+    @()check_breg_TV_mex(),...
+    @()check_l1qc_dct_mex(),...
            };
 
-  ## if ~skip_all
-    [npass, nfail, nskip] = L1cMexTesting.run_suite(cases);
-  ## else
-  ##   npass = 0;
-  ##   nfail = 0;
-  ##   nskip = length(cases);
-  ## end
+  [npass, nfail, nskip] = L1cMexTesting.run_suite(cases);
+  exit(nfail)
 
 end
 
@@ -27,10 +24,10 @@ function dat = sample_data()
   mu_path_len = 25;
   sampling_ratio = 0.1;
   addpath("_examples");
-  dat = struct();
+  ## dat = struct();
 
   dat.x_orig = cs20ng_grating(13,13,N);
-  data.mtot = size(dat.x_orig(:))(1);
+  dat.mtot = size(dat.x_orig(:))(1);
   dat.mrow = size(dat.x_orig)(1);
   dat.mcol = size(dat.x_orig)(2);
 
@@ -42,7 +39,7 @@ function dat = sample_data()
 
 end
 
-function check_nesta_dctTV(fpath)
+function check_nesta_dctTV()
   verbose = 1;
 
   dat = sample_data();
@@ -68,7 +65,7 @@ function check_nesta_dctTV(fpath)
 end
 
 
-function check_nesta_dctTV_notv(fpath)
+function check_nesta_dctTV_notv()
   verbose = 0;
   dat = sample_data();
 
@@ -93,7 +90,7 @@ function check_nesta_dctTV_notv(fpath)
 end
 
 
-function check_l1qc_dct_mex(fpath)
+function check_l1qc_dct_mex()
   verbose = 0;
   dat = sample_data();
   T = .20; %sparsity percent.
