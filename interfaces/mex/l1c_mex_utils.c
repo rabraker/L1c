@@ -1,4 +1,5 @@
 #include <limits.h>
+
 #include <stdint.h>
 #include "mex.h"
 #ifdef L1C_MEX_MATLAB
@@ -182,6 +183,7 @@ _mex_get_int_array_or_fail(const mxArray **mxa, size_t idx, int *x[], l1c_int *N
   }
 
   *N = (l1c_int) nm;
-  *x = mxGetInt32s(mxa[idx]);
+  *x = (int32_t*) mxGetData(mxa[idx]);
+    // mxGetInt32s(mxa[idx]);
 
 }

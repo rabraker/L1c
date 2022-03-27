@@ -75,9 +75,3 @@ fprintf('%s\n\n\n', st1);
 
 
 exit(status);
-
-
-
-function data_dir = get_data_dir()
-  data_dir = getenv('TEST_DATA_DIR');
-end

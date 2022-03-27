@@ -11,7 +11,12 @@ mu_path_len = 25;     % mu-path length in pixels.
 N = 256;              % (pixels) Size of square image
 
 % Create the test image.
-rng(1);       % Always get the same mask.
+try
+    rng(1);       % Always get the same mask.
+catch ME
+    fprintf("CANNOT SET RNG SEED IN OCTAVE\n");
+end
+
 X_img_orig = cs20ng_grating(13,13,N);
 
 % Create the sampling mask. pix_idx is a vector of sampled pixel indeces (which
@@ -35,7 +40,7 @@ opts = nesta_opts('alpha_v', alpv,...    % Weight on vertical variation.
 
 [x_est, status] = nesta_dctTV(N, N, b, pix_idx, opts);
 
-figure(1)
+figure(1, 'Position', [0, 0 1400, 450])
 subplot(1,3,1)
 imagesc(X_img_orig)
 colormap('gray')

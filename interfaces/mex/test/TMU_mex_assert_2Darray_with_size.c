@@ -1,7 +1,8 @@
 #include "config.h"
 #include "mex.h"
+#ifdef L1C_MEX_MATLAB
 #include "matrix.h"
-
+#endif
 #include "l1c.h"
 #include "l1c_mex_utils.h"
 
