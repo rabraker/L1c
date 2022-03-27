@@ -19,9 +19,6 @@ set(_m_files
     nesta_opts.m
     examples/cs20ng_grating.m
     examples/l1c_mex_init_paths.m.in
-    examples/Makefile
-    examples/Makefile.am
-    examples/Makefile.in
     examples/mu_path_mask.m
     examples/nesta_example.m
     examples/play_l1qc_lb_and_TV_example.m)
