@@ -53,7 +53,8 @@ https://github.com/xianyi/OpenBLAS/issues/3187
 
 mex bindings
 ==============
-
+Mex bindings are not supported in the cmake build. See the deprecated Autools
+build :doc:`building_autotools`.
 
 
 Python bindings
