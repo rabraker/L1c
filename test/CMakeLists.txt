@@ -2,7 +2,7 @@
 # Tests
 #
 
-find_package(Check REQUIRED)
+find_package(check REQUIRED)
 
 add_executable(test_l1c.test
   TEST_cgsolve.c

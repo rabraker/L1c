@@ -41,7 +41,7 @@ latexmath:[\min_{u} ||\nabla_{x}u||_{1} + ||\nabla_{y}u||_{1} + \mu ||u-f||_{2}.
 * Python and Matlab bindings for the high-level optimization routines.
 
 == Building ==
-See link:doc/building.rst[building.rst]
+See link:doc/building_cmake.rst[building_cmake.rst]
 
 
 

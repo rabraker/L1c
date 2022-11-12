@@ -1,0 +1,8 @@
+[requires]
+subunit/1.4.0
+libcheck/0.15.2
+cjson/1.7.15
+
+[generators]
+cmake_paths
+cmake_find_package

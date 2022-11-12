@@ -57,6 +57,8 @@ if(_HAVE_POSIX_MEMALIGN_)
   set(_POSIX_C_SOURCE 200112L)
 endif()
 
+include(${CMAKE_BINARY_DIR}/conan_paths.cmake)
+
 
 set(BLAS_VENDOR OpenBLAS)
 find_package(BLAS REQUIRED)
@@ -71,6 +73,7 @@ add_subdirectory(src)
 add_subdirectory(examples/c)
 add_subdirectory(test)
 add_subdirectory(interfaces/python)
+
 
 configure_file(
   "${PROJECT_SOURCE_DIR}/l1c_config.h.in"
