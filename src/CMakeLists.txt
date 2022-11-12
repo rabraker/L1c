@@ -3,6 +3,7 @@ find_package(OpenMP)
 add_library(l1c SHARED
   l1qc_newton.c
   l1c_math.c
+  check_pthreads.c
   cgsolve.c
   json_utils.c
   TV.c
