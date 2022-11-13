@@ -42,6 +42,12 @@ foreach(flag IN ITEMS ${L1C_CFLAGS_})
   endif()
 endforeach()
 
+option(USE_WERROR OFF)
+
+if(USE_WERROR)
+  add_compile_options(-Werror)
+endif()
+
 if(MSVC)
   add_compile_options(/W4 /Wx)
 else()

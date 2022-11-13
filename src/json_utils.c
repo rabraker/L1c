@@ -38,10 +38,15 @@ int load_file_as_text(char* fname, char** file_data) {
     return 1;
   }
 
-  fread(*file_data, file_len, 1, file_ptr); /* Read the entire file into cFile */
-  fclose(file_ptr);                         /* Close it */
-
-  return 0;
+  /* Read the entire file into cFile */
+  const size_t nmemb = 1;
+  const size_t num_read = fread(*file_data, file_len, nmemb, file_ptr);
+  fclose(file_ptr);
+  if (nmemb == num_read) {
+    return 0;
+  } else {
+    return 1;
+  }
 }
 
 int load_file_to_json(char* fname, cJSON** data_json) {

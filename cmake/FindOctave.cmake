@@ -81,7 +81,7 @@ if(Development IN_LIST Octave_FIND_COMPONENTS)
                PATH_SUFFIXES ${_suff})
 
   if(Octave_CONFIG_EXECUTABLE)
-
+    message(${Octave_CONFIG_EXECUTABLE})
     execute_process(COMMAND ${Octave_CONFIG_EXECUTABLE} -p BINDIR
                     OUTPUT_VARIABLE Octave_BINARY_DIR
                     ERROR_QUIET

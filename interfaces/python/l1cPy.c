@@ -44,13 +44,23 @@ static char breg_anistropic_TV_docstring[] =
 
 /* Specify members of the module */
 static PyMethodDef _l1cPy_module_methods[] = {
-    {"l1qc_dct", (PyCFunction)_l1qc_dct, METH_KEYWORDS | METH_VARARGS, l1qc_dct_docstring},
+    // To avoid warnings about incompatible function pointers,
+    // first cast to a function with no prototype, the cast to PyCFunction.
+    // https://bugs.python.org/issue33012
+    {.ml_name = "l1qc_dct",
+     .ml_meth = (PyCFunction)(PyObject * (*)()) _l1qc_dct,
+     .ml_flags = METH_KEYWORDS | METH_VARARGS,
+     .ml_doc = l1qc_dct_docstring},
 
-    {"breg_anistropic_TV",
-     (PyCFunction)_breg_anistropic_TV,
-     METH_KEYWORDS | METH_VARARGS,
-     breg_anistropic_TV_docstring},
-    {"nesta_dctTV", (PyCFunction)_nesta_dctTV, METH_KEYWORDS | METH_VARARGS, nesta_dctTV_docstring},
+    {.ml_name = "breg_anistropic_TV",
+     .ml_meth = (PyCFunction)(PyObject * (*)()) _breg_anistropic_TV,
+     .ml_flags = METH_KEYWORDS | METH_VARARGS,
+     .ml_doc = breg_anistropic_TV_docstring},
+
+    {.ml_name = "nesta_dctTV",
+     .ml_meth = (PyCFunction)(PyObject * (*)()) _nesta_dctTV,
+     .ml_flags = METH_KEYWORDS | METH_VARARGS,
+     .ml_doc = nesta_dctTV_docstring},
 
     {NULL, NULL, 0, NULL}};
 
