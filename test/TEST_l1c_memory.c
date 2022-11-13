@@ -15,8 +15,8 @@ START_TEST(test_l1c_malloc_double) {
   int i;
   uintptr_t ptr_as_int;
 
-  /* Do this a bunch of times, to try and hedge against the possibility that the allocated
-   address just happens to a multiple of 64*/
+  /* Do this a bunch of times, to try and hedge against the possibility that the
+   allocated address just happens to a multiple of 64*/
   for (i = 0; i < N_trial; i++) {
 
     dptr = l1c_malloc_double(N);
@@ -39,8 +39,8 @@ START_TEST(test_l1c_malloc_double_2D) {
   double** dptr_2D = NULL;
   uintptr_t ptr_as_int;
 
-  /* Do this a bunch of times, to try and hedge against the possibility that the allocated
-     address just happens to a multiple of 64*/
+  /* Do this a bunch of times, to try and hedge against the possibility that the
+     allocated address just happens to a multiple of 64*/
   for (int i = 0; i < N_trial; i++) {
     dptr_2D = l1c_malloc_double_2D(nrow, mcol);
 

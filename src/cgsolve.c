@@ -1,6 +1,6 @@
 /**  @file
-This contains the conjugate gradient solver, cgsolve. The two small routines Ax and Ax_sym
-illustrate how the user function AX_func can parse the input void *AX_data.
+This contains the conjugate gradient solver, cgsolve. The two small routines Ax and
+Ax_sym illustrate how the user function AX_func can parse the input void *AX_data.
 
 */
 #include "config.h"
@@ -14,8 +14,12 @@ illustrate how the user function AX_func can parse the input void *AX_data.
 #include "l1c_logging.h"
 #include "l1c_math.h"
 
-static void
-cg_report(int iter, double best_rel_res, double rel_res, double alpha, double beta, double delta);
+static void cg_report(int iter,
+                      double best_rel_res,
+                      double rel_res,
+                      double alpha,
+                      double beta,
+                      double delta);
 
 /**
  * @ingroup lin_solve
@@ -50,8 +54,10 @@ cg_report(int iter, double best_rel_res, double rel_res, double alpha, double be
  * you could do
  * AX_func((int n, double *x, double *b, void *AX_data){
  * double *A = (double *) AX_data;
- * @param[out] cg_result Pointer to a struct containing relevent results from the computation.
- * @param[in] cg_params Struct containing parameters (tolerance and verbosity) for the computation.
+ * @param[out] cg_result Pointer to a struct containing relevent results from the
+ * computation.
+ * @param[in] cg_params Struct containing parameters (tolerance and verbosity) for the
+ * computation.
  *
  */
 int l1c_cgsolve(l1c_int N,
@@ -191,19 +197,22 @@ int l1c_cgsolve(l1c_int N,
  * you could do
  * AX_func((int n, double *x, double *b, void *AX_data){
  * double *A = (double *) AX_data;
- * @param[out] cg_result Pointer to a struct containing relevent results from the computation.
- * @param[in] cg_params Struct containing parameters (tolerance and verbosity) for the computation.
+ * @param[out] cg_result Pointer to a struct containing relevent results from the
+ * computation.
+ * @param[in] cg_params Struct containing parameters (tolerance and verbosity) for the
+ * computation.
  *
  */
-int l1c_cgsolve_diag_precond(l1c_int N,
-                             double* x,
-                             double* b,
-                             double* M_inv_diag,
-                             double** Dwork,
-                             void (*AX_func)(l1c_int n, double* x, double* b, void* AX_data),
-                             void* AX_data,
-                             l1c_CgResults* cg_result,
-                             l1c_CgParams cg_params) {
+int l1c_cgsolve_diag_precond(
+    l1c_int N,
+    double* x,
+    double* b,
+    double* M_inv_diag,
+    double** Dwork,
+    void (*AX_func)(l1c_int n, double* x, double* b, void* AX_data),
+    void* AX_data,
+    l1c_CgResults* cg_result,
+    l1c_CgParams cg_params) {
 
   int iter;
   l1c_int i = 0;
@@ -303,8 +312,12 @@ int l1c_cgsolve_diag_precond(l1c_int N,
 /*
   Report progress of cgsolve.
  */
-static void
-cg_report(int iter, double best_rel_res, double rel_res, double alpha, double beta, double delta) {
+static void cg_report(int iter,
+                      double best_rel_res,
+                      double rel_res,
+                      double alpha,
+                      double beta,
+                      double delta) {
 
   if (iter == 1) {
     l1c_printf("cg: |Iter| Best resid | Current resid| alpha | beta   |   delta  |\n");

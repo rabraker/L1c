@@ -64,18 +64,21 @@ static void setup(MXfmData* mxfm_dat) {
             __func__);
     ck_abort();
   }
-  setup_status += extract_json_double_array(test_data_json, "A", &mxfm_dat->A, &mxfm_dat->NM);
-  setup_status += extract_json_double_array(test_data_json, "x", &mxfm_dat->x_in, &mxfm_dat->Mcol);
-  setup_status += extract_json_double_array(test_data_json, "y", &mxfm_dat->y_in, &mxfm_dat->Nrow);
-
   setup_status +=
-      extract_json_double_array(test_data_json, "AtAx", &mxfm_dat->AtAx_exp, &mxfm_dat->Mcol);
-
+      extract_json_double_array(test_data_json, "A", &mxfm_dat->A, &mxfm_dat->NM);
   setup_status +=
-      extract_json_double_array(test_data_json, "Aty", &mxfm_dat->Aty_exp, &mxfm_dat->Mcol);
-
+      extract_json_double_array(test_data_json, "x", &mxfm_dat->x_in, &mxfm_dat->Mcol);
   setup_status +=
-      extract_json_double_array(test_data_json, "Ax", &mxfm_dat->Ax_exp, &mxfm_dat->Nrow);
+      extract_json_double_array(test_data_json, "y", &mxfm_dat->y_in, &mxfm_dat->Nrow);
+
+  setup_status += extract_json_double_array(
+      test_data_json, "AtAx", &mxfm_dat->AtAx_exp, &mxfm_dat->Mcol);
+
+  setup_status += extract_json_double_array(
+      test_data_json, "Aty", &mxfm_dat->Aty_exp, &mxfm_dat->Mcol);
+
+  setup_status += extract_json_double_array(
+      test_data_json, "Ax", &mxfm_dat->Ax_exp, &mxfm_dat->Nrow);
 
   if (setup_status) {
     fprintf(stderr,
@@ -140,21 +143,24 @@ START_TEST(test_AtAx) {
   /* Provided and freed by setup_small() and teardown_small()*/
   ax_funs.AtAx(mxfmd->x_in, mxfmd->AtAx_act);
 
-  ck_assert_double_array_eq_tol(mxfmd->Mcol, mxfmd->AtAx_exp, mxfmd->AtAx_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      mxfmd->Mcol, mxfmd->AtAx_exp, mxfmd->AtAx_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 
 START_TEST(test_Aty) {
   ax_funs.Aty(mxfmd->y_in, mxfmd->Aty_act);
 
-  ck_assert_double_array_eq_tol(mxfmd->Mcol, mxfmd->Aty_exp, mxfmd->Aty_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      mxfmd->Mcol, mxfmd->Aty_exp, mxfmd->Aty_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 
 START_TEST(test_Ax) {
   ax_funs.Ax(mxfmd->x_in, mxfmd->Ax_act);
 
-  ck_assert_double_array_eq_tol(mxfmd->Nrow, mxfmd->Ax_exp, mxfmd->Ax_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      mxfmd->Nrow, mxfmd->Ax_exp, mxfmd->Ax_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 

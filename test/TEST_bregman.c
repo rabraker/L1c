@@ -65,7 +65,8 @@ static void setup(void) {
   setup_status += extract_json_double_array(td_json, "x", &BD->x, &BD->NM);
   setup_status += extract_json_double_array(td_json, "y", &BD->y, &tmp);
   setup_status += extract_json_double_array(td_json, "z", &BD->z, &tmp);
-  setup_status += extract_json_double_array(td_json, "x_shrunk", &BD->x_shrunk_exp, &tmp);
+  setup_status +=
+      extract_json_double_array(td_json, "x_shrunk", &BD->x_shrunk_exp, &tmp);
   setup_status += extract_json_double_array(td_json, "dx", &BD->dx, &tmp);
   setup_status += extract_json_double_array(td_json, "dy", &BD->dy, &tmp);
   setup_status += extract_json_double_array(td_json, "bx", &BD->bx, &tmp);
@@ -189,8 +190,18 @@ START_TEST(test_breg_rhs) {
     fprintf(stderr, "Error allocating memory in %s.\n", __func__);
     ck_abort();
   }
-  bfuncs.breg_anis_rhs(
-      BD->n, BD->m, BD->f, BD->dx, BD->bx, BD->dy, BD->by, rhs, BD->mu, BD->lam, dwork1, dwork2);
+  bfuncs.breg_anis_rhs(BD->n,
+                       BD->m,
+                       BD->f,
+                       BD->dx,
+                       BD->bx,
+                       BD->dy,
+                       BD->by,
+                       rhs,
+                       BD->mu,
+                       BD->lam,
+                       dwork1,
+                       dwork2);
   ck_assert_double_array_eq_tol(BD->NM, BD->rhs_exp, rhs, TOL_DOUBLE_SUPER * 10);
 
   l1c_free_double(rhs);

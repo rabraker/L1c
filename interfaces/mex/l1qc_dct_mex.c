@@ -70,8 +70,9 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
   /* Ensure the sizes are consistent. */
   if (!(mrow * mcol > n) || (n != size_pix_idx) || mrow <= 0 || mcol <= 0) {
     l1c_printf("mrow = %d, mcol=%d, n=%d, npix = %d\n", mrow, mcol, n, size_pix_idx);
-    mexErrMsgIdAndTxt("l1c:l1qc_dct:incompatible_dimensions",
-                      "Must have length(x0) > length(b), and length(b) = length(pix_idx).");
+    mexErrMsgIdAndTxt(
+        "l1c:l1qc_dct:incompatible_dimensions",
+        "Must have length(x0) > length(b), and length(b) = length(pix_idx).");
   }
 
   /* -------- Check params struct -------------*/
@@ -84,9 +85,11 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
   l1qc_opts.lbtol = _mex_get_double_from_struct_or_fail(prhs, 4, "lbtol");
   l1qc_opts.l1_tol = _mex_get_double_from_struct_or_fail(prhs, 4, "l1_tol");
   l1qc_opts.cg_tol = _mex_get_double_from_struct_or_fail(prhs, 4, "cgtol");
-  l1qc_opts.warm_start_cg = _mex_get_double_from_struct_or_fail(prhs, 4, "warm_start_cg");
+  l1qc_opts.warm_start_cg =
+      _mex_get_double_from_struct_or_fail(prhs, 4, "warm_start_cg");
   l1qc_opts.verbose = _mex_get_double_from_struct_or_fail(prhs, 4, "verbose");
-  l1qc_opts.newton_max_iter = (int)_mex_get_double_from_struct_or_fail(prhs, 4, "newton_max_iter");
+  l1qc_opts.newton_max_iter =
+      (int)_mex_get_double_from_struct_or_fail(prhs, 4, "newton_max_iter");
   l1qc_opts.cg_maxiter = (int)_mex_get_double_from_struct_or_fail(prhs, 4, "cgmaxiter");
   l1qc_opts.lbiter = (int)_mex_get_double_from_struct_or_fail(prhs, 4, "lbiter");
 

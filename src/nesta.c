@@ -15,9 +15,9 @@
 #include <stdlib.h>
 
 /*
-  W is a possibly overcomplete dictionary, ie, W is m by p. Signal v is assumed sparse in
-  domain of W. In general, x = W*v \in \mathbb{R}^m, and v\in\mathbb{R}^p. This gives rise
-  to the synthesis and analysis prblems:
+  W is a possibly overcomplete dictionary, ie, W is m by p. Signal v is assumed sparse
+  in domain of W. In general, x = W*v \in \mathbb{R}^m, and v\in\mathbb{R}^p. This gives
+  rise to the synthesis and analysis prblems:
 
   1) \f$ min_{v}  ||v||_1 s.t. || b - R * W * v||_2 \leq \sigma \f$
 
@@ -136,8 +136,8 @@ l1c_NestaProb* _l1c_NestaProb_new(l1c_AxFuns ax_funs) {
   NP->dwork1 = l1c_calloc_double(imax(m, p));
   NP->dwork2 = l1c_calloc_double(imax(m, p));
 
-  if (!NP->xo || !NP->xk || !NP->yk || !NP->zk || !NP->Atb || !NP->gradf || !NP->gradf_sum ||
-      !NP->dwork1 || !NP->dwork2) {
+  if (!NP->xo || !NP->xk || !NP->yk || !NP->zk || !NP->Atb || !NP->gradf ||
+      !NP->gradf_sum || !NP->dwork1 || !NP->dwork2) {
     l1c_free_nesta_problem(NP);
     return NULL;
   }
@@ -172,8 +172,8 @@ void l1c_free_nesta_problem(l1c_NestaProb* NP) {
  * the common framework of
  *
  * \f{align}{
- *  vk = \textrm{arg } \min_{x\in Q_p} \frac{L_{\mu}}{2} ||x - xx||_2^2 + \langle g, x\rangle
- * \f}
+ *  vk = \textrm{arg } \min_{x\in Q_p} \frac{L_{\mu}}{2} ||x - xx||_2^2 + \langle g,
+ * x\rangle \f}
  *
  * Note that we have droped \f$x_k\f$ from the inner product, because it is a constant,
  * which justifies pushing (in step 3) the sum into the inner product, as is done in
@@ -350,7 +350,8 @@ int l1c_nesta_setup(l1c_NestaProb* NP,
  *   we only need
  *   `ax_funs.Ax =` \f$Ax\f$, `ax_funs.Aty=` \f$A^Ty\f$
  *
- *   In general, `A` (or `R`) is `n` by `m`, `n < m` and `W` is `m` by `p`, with `p >=m`.
+ *   In general, `A` (or `R`) is `n` by `m`, `n < m` and `W` is `m` by `p`, with `p
+ * >=m`.
  *
  *   @param[in] m Length of true signal and xk.
  *   @param[out] xk On exit, contains optimal value.
@@ -359,7 +360,12 @@ int l1c_nesta_setup(l1c_NestaProb* NP,
  *   @param[in] ax_funs See above.
  *   @param[in] opts See l1c_NestaOpts.
  */
-int l1c_nesta(l1c_int m, double* xk, l1c_int n, double* b, l1c_AxFuns ax_funs, l1c_NestaOpts opts) {
+int l1c_nesta(l1c_int m,
+              double* xk,
+              l1c_int n,
+              double* b,
+              l1c_AxFuns ax_funs,
+              l1c_NestaOpts opts) {
 
   int status = 0; //, idx_fmu=0;
   if (n != ax_funs.n || m != ax_funs.m) {
@@ -398,7 +404,8 @@ int l1c_nesta(l1c_int m, double* xk, l1c_int n, double* b, l1c_AxFuns ax_funs, l
     l1c_init_vec(m, NP->gradf_sum, 0.0);
 
     if (opts.verbose > 0) {
-      l1c_printf("Starting nesta continuation iter %d, with muj = %f\n", iter, NP->mu_j);
+      l1c_printf(
+          "Starting nesta continuation iter %d, with muj = %f\n", iter, NP->mu_j);
       l1c_printf("Iter |     fmu     |  Rel. Vartn fmu |\n");
       l1c_printf("------------------------------------------------------\n");
     }
@@ -438,7 +445,9 @@ int l1c_nesta(l1c_int m, double* xk, l1c_int n, double* b, l1c_AxFuns ax_funs, l
 
       if (rel_delta_fmu < NP->tol_j) {
         if (opts.verbose > 0) {
-          l1c_printf("   stopping: delta_fmu < tol (%g < tol %g )\n\n", rel_delta_fmu, NP->tol_j);
+          l1c_printf("   stopping: delta_fmu < tol (%g < tol %g )\n\n",
+                     rel_delta_fmu,
+                     NP->tol_j);
         }
         break;
       }

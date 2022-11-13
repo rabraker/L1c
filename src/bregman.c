@@ -20,12 +20,14 @@
 /* Forward declarations */
 static inline void breg_shrink1(l1c_int N, double* x, double* d, double gamma);
 
-static inline void breg_mxpy_z(l1c_int N, double* restrict x, double* restrict y, double* z);
+static inline void
+breg_mxpy_z(l1c_int N, double* restrict x, double* restrict y, double* z);
+
+static void breg_anis_jacobi(
+    int n, int m, double* uk_1, double* uk, double* rhs, double* D, double lambda);
 
 static void
-breg_anis_jacobi(int n, int m, double* uk_1, double* uk, double* rhs, double* D, double lambda);
-
-static void breg_anis_guass_seidel(int n, int m, double* u, double* rhs, double mu, double lambda);
+breg_anis_guass_seidel(int n, int m, double* u, double* rhs, double mu, double lambda);
 
 static void breg_anis_rhs(l1c_int n,
                           l1c_int m,
@@ -103,11 +105,9 @@ void breg_hess_eval(l1c_int n,
 }
 
 /*
-  Not currently using this, but I think it could be useful, especially if I decide to try
-  Jacobi iteration instead of guass seidel.
-  for n=5, m=4,
-  D = [2. 3. 3. 2. 3. 4. 4. 3. 3. 4. 4. 3. 3. 4. 4. 3. 2. 3. 3. 2.]
-  row
+  Not currently using this, but I think it could be useful, especially if I decide to
+  try Jacobi iteration instead of guass seidel. for n=5, m=4, D =
+  [2. 3. 3. 2. 3. 4. 4. 3. 3. 4. 4. 3. 3. 4. 4. 3. 2. 3. 3. 2.] row
 */
 void hess_inv_diag(l1c_int n, l1c_int m, double mu, double lambda, double* D) {
   l1c_int k = 0, j = 0;
@@ -197,12 +197,12 @@ void breg_anis_jacobi(
   move across the top row, to the top right pixel (i=0, j=m), the do each row, taking
   special account of the first and last column.
 
-  This is similar to the guass-seidel example on page 357 of "Matrix Computations" by Golub
-  and Val Loan. Their example is of the discretized Poisson equation: the difference here is
-  in the boundary condition.
+  This is similar to the guass-seidel example on page 357 of "Matrix Computations" by
+  Golub and Val Loan. Their example is of the discretized Poisson equation: the
+  difference here is in the boundary condition.
 
-  For a 4 by 3 image concatenated in row-major order, the Hessian can be decomposed, for the
-  purposes of guass-seidel as
+  For a 4 by 3 image concatenated in row-major order, the Hessian can be decomposed, for
+  the purposes of guass-seidel as
 
   [ 0., -1.,  0., -1.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.]
   [-1.,  0., -1.,  0., -1.,  0.,  0.,  0.,  0.,  0.,  0.,  0.]
@@ -210,12 +210,11 @@ void breg_anis_jacobi(
   [-1.,  0.,  0.,  0., -1.,  0., -1.,  0.,  0.,  0.,  0.,  0.]
   [ 0., -1.,  0., -1.,  0., -1.,  0., -1.,  0.,  0.,  0.,  0.]
   [ 0.,  0., -1.,  0., -1.,  0.,  0.,  0., -1.,  0.,  0.,  0.]
-  [ 0.,  0.,  0., -1.,  0.,  0.,  0., -1.,  0., -1.,  0.,  0.] * lambda + mu*I + lambd*D,
-  [ 0.,  0.,  0.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0.]
-  [ 0.,  0.,  0.,  0.,  0., -1.,  0., -1.,  0.,  0.,  0., -1.]
-  [ 0.,  0.,  0.,  0.,  0.,  0., -1.,  0.,  0.,  0., -1.,  0.]
-  [ 0.,  0.,  0.,  0.,  0.,  0.,  0., -1.,  0., -1.,  0., -1.]
-  [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0., -1.,  0., -1.,  0.]
+  [ 0.,  0.,  0., -1.,  0.,  0.,  0., -1.,  0., -1.,  0.,  0.] * lambda + mu*I +
+  lambd*D, [ 0.,  0.,  0.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0.] [ 0.,  0.,  0.,
+  0.,  0., -1.,  0., -1.,  0.,  0.,  0., -1.] [ 0.,  0.,  0.,  0.,  0.,  0., -1.,  0.,
+  0.,  0., -1.,  0.] [ 0.,  0.,  0.,  0.,  0.,  0.,  0., -1.,  0., -1.,  0., -1.] [ 0.,
+  0.,  0.,  0.,  0.,  0.,  0.,  0., -1.,  0., -1.,  0.]
 
   where D = diag([2., 3., 2., 3., 4., 3., 3., 4., 3., 2., 3., 2.]).
 
@@ -230,7 +229,8 @@ void breg_anis_jacobi(
           H_(ii)
 
  */
-void breg_anis_guass_seidel(int n, int m, double* u, double* rhs, double mu, double lambda) {
+void breg_anis_guass_seidel(
+    int n, int m, double* u, double* rhs, double mu, double lambda) {
 
   const double one_by_mu_4lam = 1.0 / (mu + 4 * lambda);
   const double one_by_mu_3lam = 1.0 / (mu + 3 * lambda);
@@ -245,7 +245,8 @@ void breg_anis_guass_seidel(int n, int m, double* u, double* rhs, double mu, dou
   /* The top row. */
   i = 0;
   for (j = 1; j < m - 1; j++) {
-    tmp = rhs[i * m + j] + (u[i * m + j + 1] + u[i * m + j - 1] + u[(i + 1) * m + j]) * lambda;
+    tmp = rhs[i * m + j] +
+          (u[i * m + j + 1] + u[i * m + j - 1] + u[(i + 1) * m + j]) * lambda;
     u[i * m + j] = tmp * one_by_mu_3lam;
   }
   /* The top, right corner.*/
@@ -261,18 +262,20 @@ void breg_anis_guass_seidel(int n, int m, double* u, double* rhs, double mu, dou
   for (i = 1; i < n - 1; i++) {
     /* The left pixel in row i.*/
     j = 0;
-    tmp = rhs[i * m + j] + (u[i * m + j + 1] + u[(i + 1) * m + j] + u[(i - 1) * m + j]) * lambda;
+    tmp = rhs[i * m + j] +
+          (u[i * m + j + 1] + u[(i + 1) * m + j] + u[(i - 1) * m + j]) * lambda;
     u[i * m + j] = tmp * one_by_mu_3lam;
     /* Across the i-th row. */
     for (j = 1; j < m - 1; j++) {
-      tmp =
-          rhs[i * m + j] +
-          (u[i * m + j + 1] + u[i * m + j - 1] + u[(i + 1) * m + j] + u[(i - 1) * m + j]) * lambda;
+      tmp = rhs[i * m + j] + (u[i * m + j + 1] + u[i * m + j - 1] + u[(i + 1) * m + j] +
+                              u[(i - 1) * m + j]) *
+                                 lambda;
       u[i * m + j] = tmp * one_by_mu_4lam;
     }
     /* Last column in row i. */
     j = m - 1;
-    tmp = rhs[i * m + j] + (u[i * m + j - 1] + u[(i + 1) * m + j] + u[(i - 1) * m + j]) * lambda;
+    tmp = rhs[i * m + j] +
+          (u[i * m + j - 1] + u[(i + 1) * m + j] + u[(i - 1) * m + j]) * lambda;
     u[i * m + j] = tmp * one_by_mu_3lam;
   }
 
@@ -285,7 +288,8 @@ void breg_anis_guass_seidel(int n, int m, double* u, double* rhs, double mu, dou
   /* The bottom row, excluding corners*/
   i = n - 1;
   for (j = 1; j < m - 1; j++) {
-    tmp = rhs[i * m + j] + (u[i * m + j + 1] + u[i * m + j - 1] + u[(i - 1) * m + j]) * lambda;
+    tmp = rhs[i * m + j] +
+          (u[i * m + j + 1] + u[i * m + j - 1] + u[(i - 1) * m + j]) * lambda;
     u[i * m + j] = tmp * one_by_mu_3lam;
   }
 
@@ -337,10 +341,12 @@ void breg_anis_rhs(l1c_int n,
  * @param[in] m Number of rows of the image.
  * @param[out] uk An `n*m` array allocated by malloc_doubl(), which will
  * contain the result of the optimization.
- * @param[in] f An `n*m` array, allocated by malloc_doubl(), which contains the noisy image.
+ * @param[in] f An `n*m` array, allocated by malloc_doubl(), which contains the noisy
+ * image.
  *
  * @param[in] mu See equation above.
- * @param[in] tol The iterations stop when \f$ \frac{||u_{k-1} - u_k||_2}{||u_k||} < tol\f$
+ * @param[in] tol The iterations stop when \f$ \frac{||u_{k-1} - u_k||_2}{||u_k||} <
+ * tol\f$
  * @param[in] max_iter Maximum number of iterations.
  * @param[in] max_jac_iter Number of iterations to run the linear solver.
  * The original paper sets this to 1.

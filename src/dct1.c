@@ -65,10 +65,10 @@ static double dct_root_1_by_2N;
  * Do not call ax_funs.destroy() if return value of dct1_setup() is non-zero.
  *
  * .. note:: Although this function treats the signal `x` as a 1D vector, it can also be
- *    used a 2D signal, e.g., image. In `c`, we hold a matrix in memory as a concatenated
- *    vector. L1C follows the convention of using row major order. Thus, an N by M
- *    grayscale image becomes an 1D N*M array, where the rows of the original matrix have
- *    been concatenated together. This is in contrast to the more standard (in linear
+ *    used a 2D signal, e.g., image. In `c`, we hold a matrix in memory as a
+ * concatenated vector. L1C follows the convention of using row major order. Thus, an N
+ * by M grayscale image becomes an 1D N*M array, where the rows of the original matrix
+ * have been concatenated together. This is in contrast to the more standard (in linear
  *    algebra) notion of the \f$\textrm{vec}()\f$ operation, which concatenates a
  *    matrix in columm major order.
  *
@@ -192,8 +192,8 @@ static void dct_Mx(double* x, double* y) {
 
 static void dct_Mty(double* y, double* x) {
   /*Apply x = M^T * y.
-    The results are normalized to matlabs convention. That is, divided by 1/sqrt(2*N) and
-    x[0] <- x[0] * /sqrt(2).
+    The results are normalized to matlabs convention. That is, divided by 1/sqrt(2*N)
+    and x[0] <- x[0] * /sqrt(2).
 
     -- y should have dimension at least dct_m.
        Should be aligned to 16 byte boundary for FFTW
@@ -239,8 +239,8 @@ static void dct_EMx(double* x, double* restrict y) {
 
 static void dct_MtEty(double* restrict y, double* restrict x) {
   /*Apply x = M^T * E^T * y.
-    The results are normalized to matlabs convention. That is, divided by 1/sqrt(2*N) and
-    x[0] <- x[0] * /sqrt(2).
+    The results are normalized to matlabs convention. That is, divided by 1/sqrt(2*N)
+    and x[0] <- x[0] * /sqrt(2).
 
     -- y should have dimension at least dct_n
     -- x should have dimension at least dct_m
@@ -252,8 +252,8 @@ static void dct_MtEty(double* restrict y, double* restrict x) {
   double* Ety_a = __builtin_assume_aligned(dct_Ety_sparse, DALIGN);
 
   l1c_int i = 0;
-  // E^T * y --> y_sparse. y_sparse should be set to all zeros, and pix_mask does not change.
-  // Returns a pointer to the array containing the result, which has length N.
+  // E^T * y --> y_sparse. y_sparse should be set to all zeros, and pix_mask does not
+  // change. Returns a pointer to the array containing the result, which has length N.
   for (i = 0; i < dct_n; i++) {
     // dct_Ety_sparse[dct_pix_mask_idx[i]] = y[i] * dct_root_1_by_2N;
     Ety_a[dct_pix_mask_idx[i]] = y_a[i];
@@ -295,9 +295,10 @@ static void dct_MtEt_EMx(double* restrict x, double* restrict z) {
   x[0] = x0_tmp;
 
   /* Apply the subsampling operation. E^T*Ey. We could hold off on normalization:
-  However, this seems to reduce accuracy, and gives us a larger residual (6097.209 vs 6096.907)
-  yet takes 1000 more CG iterations in the end (for the 512 x 512 test image. Presumeably, the
-  second DCT is less accurate and we we dont get as close to, e.g., dct(x) == M * x
+  However, this seems to reduce accuracy, and gives us a larger residual (6097.209 vs
+  6096.907) yet takes 1000 more CG iterations in the end (for the 512 x 512 test image.
+  Presumeably, the second DCT is less accurate and we we dont get as close to, e.g.,
+  dct(x) == M * x
   */
 
   for (i = 0; i < dct_n; i++) {

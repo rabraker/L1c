@@ -14,25 +14,25 @@
 
    Searches for the largest `s` such that
    \f[
-   f_1(x + s*dx) + f_2(u + s*du)< f_1(x) + f_2(u) + alpha * [\nabla_x, \nabla_u]^T [dx\\du]
-   \f]
+   f_1(x + s*dx) + f_2(u + s*du)< f_1(x) + f_2(u) + alpha * [\nabla_x, \nabla_u]^T
+   [dx\\du] \f]
 
    The algorithm starts at `s = ls_params.s` and successively decreases `s` by the
-   factor `ls_params.beta`. The algorithm will terminate once either the line search succeeds,
-   of the number of iterations surpasses `ls_params.max_iter`. If the number of iterations
-   surpasses `ls_params.max_iter`, the line search has failed and the routine returns
-   with `ls_stat.status = 1`.
+   factor `ls_params.beta`. The algorithm will terminate once either the line search
+   succeeds, of the number of iterations surpasses `ls_params.max_iter`. If the number
+   of iterations surpasses `ls_params.max_iter`, the line search has failed and the
+   routine returns with `ls_stat.status = 1`.
 
 
    @param[in] m Length of the vectors `x`.
 
-   @param[in,out] x On entry, contains the current value of the optimization variable. If the
-   linesearch was succesfull, then on exit `x = x + s*dx`, where is `s` is the step size which
-   caused the line search to succeed. Assumed to by aligned to DALIGN.
+   @param[in,out] x On entry, contains the current value of the optimization variable.
+   If the linesearch was succesfull, then on exit `x = x + s*dx`, where is `s` is the
+   step size which caused the line search to succeed. Assumed to by aligned to DALIGN.
 
-   @param[in,out] u. On entry, contains the current value of the optimization variable. If the
-   linesearch was succesfull, then on exit `u = u + s*du`, where is `s` is the step size which
-   caused the line search to succeed. Assumed to by aligned to DALIGN.
+   @param[in,out] u. On entry, contains the current value of the optimization variable.
+   If the linesearch was succesfull, then on exit `u = u + s*du`, where is `s` is the
+   step size which caused the line search to succeed. Assumed to by aligned to DALIGN.
 
    @param[in] dx The x part of decent direction. Assumed to by aligned to DALIGN.
 
@@ -44,13 +44,13 @@
 
    @param[in,out] g_dot_dxu (scalar) value [\nabla_x, \nabla_y] [dx; du]
 
-   @param[in,out] prob_data Any auxilary data needed by `objective_fun`. Some objective functions
-   will leave computed auxilary variables in obj_data. If this is the case, then on exit,
-   obj_data will contain data associated with the last call to objective_fun. This will be
-   the case wheather or not the line search succeeds, because we do not know the structure
-   of the data, and thus dont know how to copy it. It is therefore the responsibilty of the
-   caller to handle this. In particular, if the line search fails, then `obj_data` may well
-   contain garbage (e.g., NAN or INF).
+   @param[in,out] prob_data Any auxilary data needed by `objective_fun`. Some objective
+   functions will leave computed auxilary variables in obj_data. If this is the case,
+   then on exit, obj_data will contain data associated with the last call to
+   objective_fun. This will be the case wheather or not the line search succeeds,
+   because we do not know the structure of the data, and thus dont know how to copy it.
+   It is therefore the responsibilty of the caller to handle this. In particular, if the
+   line search fails, then `obj_data` may well contain garbage (e.g., NAN or INF).
 
    @param[in] feval A pointer to a function which will compute the value
    of the objective function.
@@ -142,10 +142,10 @@ LSStat l1c_linesearch_xu(l1c_int m,
    \f]
 
    The algorithm starts at `s = ls_params.s` and successively decreases `s` by the
-   factor `ls_params.beta`. The algorithm will terminate once either the line search succeeds,
-   of the number of iterations surpasses `ls_params.max_iter`. If the number of iterations
-   surpasses `ls_params.max_iter`, the line search has failed and the routine returns
-   with `ls_stat.status = 1`.
+   factor `ls_params.beta`. The algorithm will terminate once either the line search
+   succeeds, of the number of iterations surpasses `ls_params.max_iter`. If the number
+   of iterations surpasses `ls_params.max_iter`, the line search has failed and the
+   routine returns with `ls_stat.status = 1`.
 
    @param[in,out] fx0 (scalar) holds the current value of the objective function.
    If the line search succeeds, then on exit, will contain the objective function
@@ -153,9 +153,9 @@ LSStat l1c_linesearch_xu(l1c_int m,
 
    @param[in] Length of the vectors `x`.
 
-   @param[in,out]. On entry, contains the current value of the optimization variable. If the
-   linesearch was succesfull, then on exit `x = x + s*dx`, where is `s` is the step size which
-   caused the line search to succeed. Assumed to by aligned to DALIGN.
+   @param[in,out]. On entry, contains the current value of the optimization variable. If
+   the linesearch was succesfull, then on exit `x = x + s*dx`, where is `s` is the step
+   size which caused the line search to succeed. Assumed to by aligned to DALIGN.
 
    @param[in] dx The decent direction. Assumed to by aligned to DALIGN.
 
@@ -166,13 +166,13 @@ LSStat l1c_linesearch_xu(l1c_int m,
    @param[in] objective_fun A pointer to a function which will compute the value
    of the objective function.
 
-   @param[in,out] obj_data Any auxilary data needed by `objective_fun`. Some objective functions
-   will leave computed auxilary variables in obj_data. If this is the case, then on exit,
-   obj_data will contain data associated with the last call to objective_fun. This will be
-   the case wheather or not the line search succeeds, because we do not know the structure
-   of the data, and thus dont know how to copy it. It is therefore the responsibilty of the
-   caller to handle this. In particular, if the line search fails, then `obj_data` may well
-   contain garbage (e.g., NAN or INF).
+   @param[in,out] obj_data Any auxilary data needed by `objective_fun`. Some objective
+   functions will leave computed auxilary variables in obj_data. If this is the case,
+   then on exit, obj_data will contain data associated with the last call to
+   objective_fun. This will be the case wheather or not the line search succeeds,
+   because we do not know the structure of the data, and thus dont know how to copy it.
+   It is therefore the responsibilty of the caller to handle this. In particular, if the
+   line search fails, then `obj_data` may well contain garbage (e.g., NAN or INF).
  */
 LSStat l1c_linesearch(l1c_int n,
                       double* x,

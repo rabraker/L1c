@@ -88,28 +88,39 @@ static void setup(char* fname) {
     ck_abort();
   }
 
-  setup_status += extract_json_double_array(test_data_json, "x_in", &dctd->x_in, &dctd->mtot);
-  setup_status += extract_json_double_array(test_data_json, "y_in", &dctd->y_in, &dctd->n);
-  setup_status += extract_json_double_array(test_data_json, "z_in", &dctd->z_in, &dctd->mtot);
+  setup_status +=
+      extract_json_double_array(test_data_json, "x_in", &dctd->x_in, &dctd->mtot);
+  setup_status +=
+      extract_json_double_array(test_data_json, "y_in", &dctd->y_in, &dctd->n);
+  setup_status +=
+      extract_json_double_array(test_data_json, "z_in", &dctd->z_in, &dctd->mtot);
+
+  setup_status += extract_json_double_array(
+      test_data_json, "MtEt_EMx", &dctd->MtEty_EMx_exp, &dctd->mtot);
 
   setup_status +=
-      extract_json_double_array(test_data_json, "MtEt_EMx", &dctd->MtEty_EMx_exp, &dctd->mtot);
+      extract_json_double_array(test_data_json, "MtEty", &dctd->MtEty_exp, &dctd->mtot);
 
-  setup_status += extract_json_double_array(test_data_json, "MtEty", &dctd->MtEty_exp, &dctd->mtot);
+  setup_status +=
+      extract_json_double_array(test_data_json, "EMx", &dctd->EMx_exp, &dctd->n);
 
-  setup_status += extract_json_double_array(test_data_json, "EMx", &dctd->EMx_exp, &dctd->n);
+  setup_status +=
+      extract_json_double_array(test_data_json, "Mx", &dctd->Mx_exp, &dctd->mtot);
+  setup_status +=
+      extract_json_double_array(test_data_json, "Mty", &dctd->Mty_exp, &dctd->mtot);
+  setup_status +=
+      extract_json_double_array(test_data_json, "Ex", &dctd->Ex_exp, &dctd->n);
+  setup_status +=
+      extract_json_double_array(test_data_json, "Ety", &dctd->Ety_exp, &dctd->mtot);
 
-  setup_status += extract_json_double_array(test_data_json, "Mx", &dctd->Mx_exp, &dctd->mtot);
-  setup_status += extract_json_double_array(test_data_json, "Mty", &dctd->Mty_exp, &dctd->mtot);
-  setup_status += extract_json_double_array(test_data_json, "Ex", &dctd->Ex_exp, &dctd->n);
-  setup_status += extract_json_double_array(test_data_json, "Ety", &dctd->Ety_exp, &dctd->mtot);
-
-  setup_status += extract_json_int_array(test_data_json, "pix_idx", &dctd->pix_idx, &dctd->n);
+  setup_status +=
+      extract_json_int_array(test_data_json, "pix_idx", &dctd->pix_idx, &dctd->n);
   setup_status += extract_json_int(test_data_json, "mrow", &dctd->mrow);
   setup_status += extract_json_int(test_data_json, "mcol", &dctd->mcol);
 
   if (setup_status) {
-    fprintf(stderr, "Error Loading json into program data in 'test_MtEty_large()'. Aborting\n");
+    fprintf(stderr,
+            "Error Loading json into program data in 'test_MtEty_large()'. Aborting\n");
     ck_abort();
   }
   ck_assert_int_eq(dctd->mrow * dctd->mcol, dctd->mtot);
@@ -175,21 +186,24 @@ END_TEST
 START_TEST(test_dct2_MtEty) {
   ax_funs.Aty(dctd->y_in, dctd->MtEty_act);
 
-  ck_assert_double_array_eq_tol(dctd->mtot, dctd->MtEty_exp, dctd->MtEty_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      dctd->mtot, dctd->MtEty_exp, dctd->MtEty_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 
 START_TEST(test_dct2_EMx) {
   ax_funs.Ax(dctd->x_in, dctd->EMx_act);
 
-  ck_assert_double_array_eq_tol(dctd->n, dctd->EMx_exp, dctd->EMx_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      dctd->n, dctd->EMx_exp, dctd->EMx_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 
 START_TEST(test_dct2_Mx) {
   ax_funs.Mx(dctd->x_in, dctd->Mx_act);
 
-  ck_assert_double_array_eq_tol(dctd->mtot, dctd->Mx_exp, dctd->Mx_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      dctd->mtot, dctd->Mx_exp, dctd->Mx_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 
@@ -212,7 +226,8 @@ END_TEST
 START_TEST(test_dct2_Mty) {
   ax_funs.Mty(dctd->z_in, dctd->Mty_act);
 
-  ck_assert_double_array_eq_tol(dctd->mtot, dctd->Mty_exp, dctd->Mty_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      dctd->mtot, dctd->Mty_exp, dctd->Mty_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 
@@ -226,7 +241,8 @@ END_TEST
 START_TEST(test_dct2_Ety) {
   ax_funs.Rty(dctd->y_in, dctd->Ety_act);
 
-  ck_assert_double_array_eq_tol(dctd->mtot, dctd->Ety_exp, dctd->Ety_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      dctd->mtot, dctd->Ety_exp, dctd->Ety_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 

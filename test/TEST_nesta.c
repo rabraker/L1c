@@ -210,7 +210,8 @@ START_TEST(test_l1c_nesta) {
 
   // matrix_transforms doesnt set normW yet. Would be better to compute in python.
   ax_funs.norm_W = 1;
-  l1c_NestaOpts opts = {.mu = 1e-5, .sigma = epsilon, .tol = 1e-5, .n_continue = 5, .verbose = 0};
+  l1c_NestaOpts opts = {
+      .mu = 1e-5, .sigma = epsilon, .tol = 1e-5, .n_continue = 5, .verbose = 0};
   /* ------------------------------------------------------- */
   int nesta_status = l1c_nesta(m, x0, n, b, ax_funs, opts);
 
@@ -449,7 +450,8 @@ START_TEST(test_l1c_nesta_setup) {
   DctMode dct_mode = dct1;
   l1c_AxFuns ax_funs;
   l1c_NestaProb* NP = NULL;
-  l1c_NestaOpts opts = {.n_continue = 5, .sigma = sigma, .mu = mu, .tol = tol, .verbose = 0};
+  l1c_NestaOpts opts = {
+      .n_continue = 5, .sigma = sigma, .mu = mu, .tol = tol, .verbose = 0};
 
   double* b = l1c_calloc_double(n);
   double* A = l1c_calloc_double(n * m);

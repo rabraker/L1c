@@ -94,7 +94,18 @@ static void Ax(double* x, double* y) {
     y := alpha*A*x + beta*y
 
   */
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, xfm_N, xfm_M, alp, xfm_A, xfm_M, x, inc, beta, y, inc);
+  cblas_dgemv(CblasRowMajor,
+              CblasNoTrans,
+              xfm_N,
+              xfm_M,
+              alp,
+              xfm_A,
+              xfm_M,
+              x,
+              inc,
+              beta,
+              y,
+              inc);
 }
 
 /**
@@ -111,7 +122,8 @@ static void Aty(double* y, double* x) {
      x = alpha*A^T*y + beta*x, with CblasTrans
   */
   // For Layout = CblasRowMajor, the value of lda must be at least max(1, m).
-  cblas_dgemv(CblasRowMajor, CblasTrans, xfm_N, xfm_M, alp, xfm_A, xfm_M, y, inc, beta, x, inc);
+  cblas_dgemv(
+      CblasRowMajor, CblasTrans, xfm_N, xfm_M, alp, xfm_A, xfm_M, y, inc, beta, x, inc);
 }
 
 static void AtAx(double* x_in, double* x_out) {

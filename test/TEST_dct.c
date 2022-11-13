@@ -84,26 +84,37 @@ static void setup(char* fname) {
     ck_abort();
   }
 
-  setup_status += extract_json_double_array(test_data_json, "x_in", &dctd->x_in, &dctd->m);
-  setup_status += extract_json_double_array(test_data_json, "y_in", &dctd->y_in, &dctd->n);
-  setup_status += extract_json_double_array(test_data_json, "z_in", &dctd->z_in, &dctd->m);
+  setup_status +=
+      extract_json_double_array(test_data_json, "x_in", &dctd->x_in, &dctd->m);
+  setup_status +=
+      extract_json_double_array(test_data_json, "y_in", &dctd->y_in, &dctd->n);
+  setup_status +=
+      extract_json_double_array(test_data_json, "z_in", &dctd->z_in, &dctd->m);
+
+  setup_status += extract_json_double_array(
+      test_data_json, "MtEt_EMx", &dctd->MtEty_EMx_exp, &dctd->m);
 
   setup_status +=
-      extract_json_double_array(test_data_json, "MtEt_EMx", &dctd->MtEty_EMx_exp, &dctd->m);
+      extract_json_double_array(test_data_json, "MtEty", &dctd->MtEty_exp, &dctd->m);
 
-  setup_status += extract_json_double_array(test_data_json, "MtEty", &dctd->MtEty_exp, &dctd->m);
+  setup_status +=
+      extract_json_double_array(test_data_json, "EMx", &dctd->EMx_exp, &dctd->n);
 
-  setup_status += extract_json_double_array(test_data_json, "EMx", &dctd->EMx_exp, &dctd->n);
+  setup_status +=
+      extract_json_double_array(test_data_json, "Mx", &dctd->Mx_exp, &dctd->m);
+  setup_status +=
+      extract_json_double_array(test_data_json, "Mty", &dctd->Mty_exp, &dctd->m);
+  setup_status +=
+      extract_json_double_array(test_data_json, "Ex", &dctd->Ex_exp, &dctd->n);
+  setup_status +=
+      extract_json_double_array(test_data_json, "Ety", &dctd->Ety_exp, &dctd->m);
 
-  setup_status += extract_json_double_array(test_data_json, "Mx", &dctd->Mx_exp, &dctd->m);
-  setup_status += extract_json_double_array(test_data_json, "Mty", &dctd->Mty_exp, &dctd->m);
-  setup_status += extract_json_double_array(test_data_json, "Ex", &dctd->Ex_exp, &dctd->n);
-  setup_status += extract_json_double_array(test_data_json, "Ety", &dctd->Ety_exp, &dctd->m);
-
-  setup_status += extract_json_int_array(test_data_json, "pix_idx", &dctd->pix_idx, &dctd->n);
+  setup_status +=
+      extract_json_int_array(test_data_json, "pix_idx", &dctd->pix_idx, &dctd->n);
 
   if (setup_status) {
-    fprintf(stderr, "Error Loading json into program data in 'test_MtEty_large()'. Aborting\n");
+    fprintf(stderr,
+            "Error Loading json into program data in 'test_MtEty_large()'. Aborting\n");
     ck_abort();
   }
   dctd->MtEty_EMx_act = l1c_malloc_double(dctd->m);
@@ -156,7 +167,8 @@ static void setup_pure(void) { setup("dct_small_pure_dct.json"); }
 START_TEST(test_dct_MtEt_EMx) {
   ax_funs.AtAx(dctd->x_in, dctd->MtEty_EMx_act);
 
-  ck_assert_double_array_eq_tol(dctd->m, dctd->MtEty_EMx_exp, dctd->MtEty_EMx_act, TOL_DCT);
+  ck_assert_double_array_eq_tol(
+      dctd->m, dctd->MtEty_EMx_exp, dctd->MtEty_EMx_act, TOL_DCT);
 }
 END_TEST
 

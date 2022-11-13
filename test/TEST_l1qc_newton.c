@@ -24,8 +24,12 @@ This is a test suite for the l1qc_newton library.
 #include "l1c_math.h"
 #include "test_constants.h"
 
-int _l1c_l1qcProb_new(
-    l1c_l1qcProb* Prb, l1c_int m, l1c_int n, double* b, l1c_L1qcOpts params, l1c_AxFuns ax_funs);
+int _l1c_l1qcProb_new(l1c_l1qcProb* Prb,
+                      l1c_int m,
+                      l1c_int n,
+                      double* b,
+                      l1c_L1qcOpts params,
+                      l1c_AxFuns ax_funs);
 void _l1c_l1qcProb_delete(l1c_l1qcProb* Prb);
 
 static cJSON* test_data_json;
@@ -434,7 +438,8 @@ START_TEST(test_newton_init) {
     goto exit1;
   }
 
-  params = (l1c_L1qcOpts){.mu = Tdat.mu, .lbtol = Tdat.lbtol, .epsilon = Tdat.epsilon, .lbiter = 0};
+  params = (l1c_L1qcOpts){
+      .mu = Tdat.mu, .lbtol = Tdat.lbtol, .epsilon = Tdat.epsilon, .lbiter = 0};
 
   ret = _l1c_l1qc_newton_init(Tdat.m, Tdat.x, u, &params);
 
@@ -570,12 +575,17 @@ START_TEST(test_l1qc_hess_grad) {
   _l1c_l1qc_hess_grad(&l1qc_prob, sigx, Tdat.atr);
 
   /* ----- Check -------*/
-  ck_assert_double_array_eq_tol(Tdat.m, Tdat.sig11, l1qc_prob.sig11, TOL_DOUBLE_SUPER * 100);
-  ck_assert_double_array_eq_tol(Tdat.m, Tdat.sig12, l1qc_prob.sig12, TOL_DOUBLE_SUPER * 100);
-  ck_assert_double_array_eq_tol(Tdat.m, Tdat.w1p, l1qc_prob.w1p, TOL_DOUBLE_SUPER * 100);
+  ck_assert_double_array_eq_tol(
+      Tdat.m, Tdat.sig11, l1qc_prob.sig11, TOL_DOUBLE_SUPER * 100);
+  ck_assert_double_array_eq_tol(
+      Tdat.m, Tdat.sig12, l1qc_prob.sig12, TOL_DOUBLE_SUPER * 100);
+  ck_assert_double_array_eq_tol(
+      Tdat.m, Tdat.w1p, l1qc_prob.w1p, TOL_DOUBLE_SUPER * 100);
   ck_assert_double_array_eq_tol(Tdat.m, Tdat.sigx, sigx, TOL_DOUBLE_SUPER * 100);
-  ck_assert_double_array_eq_tol(Tdat.m, Tdat.ntgu, l1qc_prob.ntgu, TOL_DOUBLE_SUPER * 100);
-  ck_assert_double_array_eq_tol(Tdat.m * 2, Tdat.gradf, l1qc_prob.gradf, TOL_DOUBLE_SUPER * 100);
+  ck_assert_double_array_eq_tol(
+      Tdat.m, Tdat.ntgu, l1qc_prob.ntgu, TOL_DOUBLE_SUPER * 100);
+  ck_assert_double_array_eq_tol(
+      Tdat.m * 2, Tdat.gradf, l1qc_prob.gradf, TOL_DOUBLE_SUPER * 100);
 
   /* ----------------- Cleanup --------------- */
 

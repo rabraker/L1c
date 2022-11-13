@@ -88,6 +88,11 @@ struct l1c_fmean_fifo _l1c_new_fmean_fifo(void);
 void _l1c_push_fmeans_fifo(struct l1c_fmean_fifo* fifo, double fval);
 double _l1c_mean_fmean_fifo(struct l1c_fmean_fifo* fifo);
 
-int l1c_nesta(l1c_int m, double* xk, l1c_int n, double* b, l1c_AxFuns ax_funs, l1c_NestaOpts opts);
+int l1c_nesta(l1c_int m,
+              double* xk,
+              l1c_int n,
+              double* b,
+              l1c_AxFuns ax_funs,
+              l1c_NestaOpts opts);
 
 #endif

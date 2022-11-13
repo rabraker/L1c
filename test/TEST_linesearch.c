@@ -126,7 +126,8 @@ START_TEST(test_linesearch_xu) {
 
   ls_params = (LSParams){.alpha = 0.6, .beta = 0.9, .s = 1.0};
 
-  struct quad_funxu_data qd = {.h11 = h11, .h12 = h12, .h22 = h22, .g1 = g1, .g2 = g2, .b = b};
+  struct quad_funxu_data qd = {
+      .h11 = h11, .h12 = h12, .h22 = h22, .g1 = g1, .g2 = g2, .b = b};
   xu[0] = -1;
   xu[1] = 2;
 
@@ -136,8 +137,9 @@ START_TEST(test_linesearch_xu) {
   g_dot_dx = gradf[0] * dxu[0] + gradf[1] * dxu[1];
 
   /*
-    Because we have a pure quadratic, we can predict how many iterations of the linesearch
-    should happen. We should have s <= beta^k, where k = ceil(log(2*(1-alp))/log(beta));
+    Because we have a pure quadratic, we can predict how many iterations of the
+    linesearch should happen. We should have s <= beta^k, where k =
+    ceil(log(2*(1-alp))/log(beta));
   */
   tmp = log(2 * (1 - ls_params.alpha)) / log(ls_params.beta);
   /* +1 because k starts from zero. */
@@ -151,8 +153,17 @@ START_TEST(test_linesearch_xu) {
   flin_exp = fx0 + ls_params.alpha * s_exp * g_dot_dx;
 
   /* --------------- Compute ------------------------- */
-  ls_stat = l1c_linesearch_xu(
-      n, xu, xu + 1, dxu, dxu + 1, &fx0, g_dot_dx, (void*)(&qd), quad_funxu, ls_params, dwork2);
+  ls_stat = l1c_linesearch_xu(n,
+                              xu,
+                              xu + 1,
+                              dxu,
+                              dxu + 1,
+                              &fx0,
+                              g_dot_dx,
+                              (void*)(&qd),
+                              quad_funxu,
+                              ls_params,
+                              dwork2);
 
   /* ------------------- Now check --------------------*/
   ck_assert_int_eq(ls_iter_exp, ls_stat.iter);
@@ -203,8 +214,9 @@ START_TEST(test_linesearch) {
   g_dot_dx = gradf * dx[0];
 
   /*
-    Because we have a pure quadratic, we can predict how many iterations of the linesearch
-    should happen. We should have s <= beta^k, where k = ceil(log(2*(1-alp))/log(beta));
+    Because we have a pure quadratic, we can predict how many iterations of the
+    linesearch should happen. We should have s <= beta^k, where k =
+    ceil(log(2*(1-alp))/log(beta));
   */
   tmp = log(2 * (1 - ls_params.alpha)) / log(ls_params.beta);
   /* +1 because k starts from zero. */
@@ -217,7 +229,8 @@ START_TEST(test_linesearch) {
   flin_exp = fx0 + ls_params.alpha * s_exp * g_dot_dx;
 
   /* --------------- Compute ------------------------- */
-  ls_stat = l1c_linesearch(n, x, dx, &fx0, g_dot_dx, (void*)(&qd), quad_funx, ls_params, dwork);
+  ls_stat = l1c_linesearch(
+      n, x, dx, &fx0, g_dot_dx, (void*)(&qd), quad_funx, ls_params, dwork);
 
   /* ------------------- Now check --------------------*/
   ck_assert_int_eq(ls_iter_exp, ls_stat.iter);
@@ -268,16 +281,19 @@ START_TEST(test_linesearch_fail) {
 
   x_orig = x[0];
   /*
-    Because we have a pure quadratic, we can predict how many iterations of the linesearch
-    should happen. We should have s <= beta^k, where k = ceil(log(2*(1-alp))/log(beta));
+    Because we have a pure quadratic, we can predict how many iterations of the
+    linesearch should happen. We should have s <= beta^k, where k =
+    ceil(log(2*(1-alp))/log(beta));
   */
 
   /* --------------- Compute ------------------------- */
-  ls_stat = l1c_linesearch(n, x, dx, &fx0, g_dot_dx, (void*)(&qd), quad_funx, ls_params, dwork);
+  ls_stat = l1c_linesearch(
+      n, x, dx, &fx0, g_dot_dx, (void*)(&qd), quad_funx, ls_params, dwork);
 
   /* ------------------- Now check --------------------*/
   ck_assert_int_eq(ls_stat.iter, MAX_LINESEARCH_ITER);
-  ck_assert_double_eq_tol(pow(ls_params.beta, MAX_LINESEARCH_ITER), ls_stat.step, TOL_DOUBLE);
+  ck_assert_double_eq_tol(
+      pow(ls_params.beta, MAX_LINESEARCH_ITER), ls_stat.step, TOL_DOUBLE);
   /* x should not have changed.*/
   ck_assert_double_eq_tol(x_orig, x[0], TOL_DOUBLE);
 

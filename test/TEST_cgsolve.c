@@ -40,8 +40,13 @@ static void Ax_sym(l1c_int n, double* x, double* b, void* AX_data) {
   cblas_dspmv(CblasRowMajor, CblasUpper, n, 1.0, A, x, 1, 0.0, b, 1);
 }
 
-static int load_small_data(
-    double** A, double** x, double** b, l1c_int* N, l1c_int* na, l1c_int* max_iter, double* tol) {
+static int load_small_data(double** A,
+                           double** x,
+                           double** b,
+                           l1c_int* N,
+                           l1c_int* na,
+                           l1c_int* max_iter,
+                           double* tol) {
   l1c_int Nx = 0, Nb = 0, status = 0;
   char* fpath = fullfile(test_data_dir, "cgsolve_small01.json");
   if (load_file_to_json(fpath, &test_data_json)) {
@@ -172,7 +177,8 @@ START_TEST(test_cgsolve_h11p) {
   double* dx_by_nrm = l1c_malloc_double(4 * m);
   double* dx_by_nrm_exp = l1c_malloc_double(4 * m);
   if (status || !DWORK4 || !dx_by_nrm || !dx_by_nrm_exp) {
-    fprintf(stderr, "error allocating memory or reading JSON data in test_cgsolve_h11p\n");
+    fprintf(stderr,
+            "error allocating memory or reading JSON data in test_cgsolve_h11p\n");
     status += 1;
     goto exit;
   }
@@ -245,8 +251,8 @@ START_TEST(test_cgsolve_Ax_sym) {
 
   ck_assert_double_array_eq_tol(N, y_exp, y, TOL_DOUBLE_SUPER * 10);
 
-  // Now, y should be non-zero. Should get the same answer. Regression against having beta !=0,
-  // because dspmv computes alpha*A*x + b*y
+  // Now, y should be non-zero. Should get the same answer. Regression against having
+  // beta !=0, because dspmv computes alpha*A*x + b*y
   Ax_sym(N, x, y, A);
   ck_assert_double_array_eq_tol(N, y_exp, y, TOL_DOUBLE_SUPER * 10);
 

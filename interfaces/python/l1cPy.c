@@ -28,25 +28,29 @@ static char module_docstring[] =
     "This module provides an interface for solving a l1 optimization problems in c.";
 static char l1qc_dct_docstring[] = "Minimize ||x||_1 s.t. ||Ax-b|| < epsilon";
 
-static char nesta_dctTV_docstring[] =
-    "Minimize ||U^TF||_1 + alp_h||\\nabla_xF|| + alp_v||\\nabla_v F||s.t. ||Ax-b|| < sigma";
+static char nesta_dctTV_docstring[] = "Minimize ||U^TF||_1 + alp_h||\\nabla_xF|| + "
+                                      "alp_v||\\nabla_v F||s.t. ||Ax-b|| < sigma";
 
 static char breg_anistropic_TV_docstring[] =
     "Given an n by m image f, solves the anistropic TV denoising problem \n"
-    "f_denoised = breg_anistropic_TV(f, mu=10, tol=0.001, max_iter=1000, max_jac_iter=1)\n"
+    "f_denoised = breg_anistropic_TV(f, mu=10, tol=0.001, max_iter=1000, "
+    "max_jac_iter=1)\n"
     " \n"
     "min ||\\nabla_x u||_1 + ||\\nabla_y||_1 + 0.5\\mu ||u - f||_2 \n"
     "u \n"
     " \n"
     "using Bregman Splitting. This algorithm is developed in the paper \n"
-    "\"The Split Bregman Method for L1-Regularized Problems,\" by Tom Goldstein and Stanley "
+    "\"The Split Bregman Method for L1-Regularized Problems,\" by Tom Goldstein and "
+    "Stanley "
     "Osher. ";
 
 // To avoid warnings about incompatible function pointers,
 // first cast to a function with no prototype, the cast to PyCFunction.
 // https://bugs.python.org/issue33012
+// clang-format off
 #define CastToPyCFunctionAsKwargs(func) \
   (PyCFunction)(void (*)(void))(PyCFunctionWithKeywords)(func)
+// clang-format on
 
 /* Specify members of the module */
 static PyMethodDef _l1cPy_module_methods[] = {
@@ -161,7 +165,8 @@ static PyObject* _l1qc_dct(PyObject* self, PyObject* args, PyObject* kw) {
      N.B: NPY_ARRAY_IN_ARRAY = PY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_ALIGNED
    */
   b_npA = (PyArrayObject*)PyArray_FROM_OTF(b_obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
-  pix_idx_npA = (PyArrayObject*)PyArray_FROM_OTF(pix_idx_obj, NPY_INT, NPY_ARRAY_IN_ARRAY);
+  pix_idx_npA =
+      (PyArrayObject*)PyArray_FROM_OTF(pix_idx_obj, NPY_INT, NPY_ARRAY_IN_ARRAY);
 
   /* If that didn't work, throw an exception. */
   if (b_npA == NULL || pix_idx_npA == NULL) {
@@ -181,7 +186,8 @@ static PyObject* _l1qc_dct(PyObject* self, PyObject* args, PyObject* kw) {
   n_ = PyArray_DIM(pix_idx_npA, 0);
 
   if (mtot < n || n != n_) {
-    PyErr_SetString(PyExc_ValueError, "Must have len(x) > len(b) and len(b) == len(pix_idx).");
+    PyErr_SetString(PyExc_ValueError,
+                    "Must have len(x) > len(b) and len(b) == len(pix_idx).");
     goto fail;
   }
 
@@ -337,7 +343,8 @@ static PyObject* _nesta_dctTV(PyObject* self, PyObject* args, PyObject* kw) {
   int status = 0, mrow = 0, mcol = 0, mtot = 0, n = 0, n_ = 0;
   int* pix_idx = NULL;
   double alpha_v = 0, alpha_h = 0;
-  l1c_NestaOpts opts = {.sigma = 0.01, .mu = 1e-5, .verbose = 5, .tol = 1e-5, .n_continue = 5};
+  l1c_NestaOpts opts = {
+      .sigma = 0.01, .mu = 1e-5, .verbose = 5, .tol = 1e-5, .n_continue = 5};
 
   DctMode dct_mode = dct1;
   BpMode bp_mode = analysis;
@@ -391,7 +398,8 @@ static PyObject* _nesta_dctTV(PyObject* self, PyObject* args, PyObject* kw) {
      N.B: NPY_ARRAY_IN_ARRAY = PY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_ALIGNED */
 
   b_npA = (PyArrayObject*)PyArray_FROM_OTF(b_obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
-  pix_idx_npA = (PyArrayObject*)PyArray_FROM_OTF(pix_idx_obj, NPY_INT, NPY_ARRAY_IN_ARRAY);
+  pix_idx_npA =
+      (PyArrayObject*)PyArray_FROM_OTF(pix_idx_obj, NPY_INT, NPY_ARRAY_IN_ARRAY);
 
   /* If that didn't work, throw an exception. */
   if (b_npA == NULL || pix_idx_npA == NULL) {
@@ -412,7 +420,8 @@ static PyObject* _nesta_dctTV(PyObject* self, PyObject* args, PyObject* kw) {
   n_ = PyArray_DIM(pix_idx_npA, 0);
 
   if (mtot < n || n != n_) {
-    PyErr_SetString(PyExc_ValueError, "Must have len(x) > len(b) and len(b) == len(pix_idx).");
+    PyErr_SetString(PyExc_ValueError,
+                    "Must have len(x) > len(b) and len(b) == len(pix_idx).");
     goto fail;
   }
 

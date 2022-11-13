@@ -13,9 +13,9 @@
 typedef int l1c_int;
 
 /**
- * \defgroup memory Functions for dealing with memory allocation that are general to all of l1c.
- * Functions for managing memory, and in particular, aligned allocation
- * needed for vectorized math.
+ * \defgroup memory Functions for dealing with memory allocation that are general to all
+ * of l1c. Functions for managing memory, and in particular, aligned allocation needed
+ * for vectorized math.
  * @{
  */
 
@@ -231,8 +231,9 @@ struct _l1c_L1qcOpts {
   /** This should be removed. */
   int lbiter;
   /** The newton iterations stop if
-   * \f$ 0.5(\nabla f)^T \begin{bmatrix}d_x \\d_u\end{bmatrix} < \texttt{newton}\_\texttt{tol} \f$
-   * and the optimization continues into the next log-barrier iteration.
+   * \f$ 0.5(\nabla f)^T \begin{bmatrix}d_x \\d_u\end{bmatrix} <
+   * \texttt{newton}\_\texttt{tol} \f$ and the optimization continues into the next
+   * log-barrier iteration.
    */
   double newton_tol;
   /** Maximum number of Newton iterations.*/
@@ -281,7 +282,12 @@ struct _l1c_NestaOpts {
 
 typedef struct _l1c_NestaOpts l1c_NestaOpts;
 
-int l1c_nesta(l1c_int m, double* xk, l1c_int n, double* b, l1c_AxFuns ax_funs, l1c_NestaOpts opts);
+int l1c_nesta(l1c_int m,
+              double* xk,
+              l1c_int n,
+              double* b,
+              l1c_AxFuns ax_funs,
+              l1c_NestaOpts opts);
 
 /** @} */
 
@@ -294,18 +300,23 @@ int l1c_cgsolve(l1c_int N,
                 l1c_CgResults* cg_result,
                 l1c_CgParams cg_params);
 
-int l1c_cgsolve_diag_precond(l1c_int N,
-                             double* x,
-                             double* b,
-                             double* M_inv_diag,
-                             double** Dwork,
-                             void (*AX_func)(l1c_int n, double* x, double* b, void* AX_data),
-                             void* AX_data,
-                             l1c_CgResults* cg_result,
-                             l1c_CgParams cg_params);
+int l1c_cgsolve_diag_precond(
+    l1c_int N,
+    double* x,
+    double* b,
+    double* M_inv_diag,
+    double** Dwork,
+    void (*AX_func)(l1c_int n, double* x, double* b, void* AX_data),
+    void* AX_data,
+    l1c_CgResults* cg_result,
+    l1c_CgParams cg_params);
 
-l1c_LBResult l1c_l1qc_newton(
-    l1c_int m, double* x, l1c_int n, double* b, l1c_L1qcOpts params, l1c_AxFuns Ax_funs);
+l1c_LBResult l1c_l1qc_newton(l1c_int m,
+                             double* x,
+                             l1c_int n,
+                             double* b,
+                             l1c_L1qcOpts params,
+                             l1c_AxFuns Ax_funs);
 
 int l1qc_dct(int mrow,
              int mcol,
@@ -330,8 +341,12 @@ int l1c_dct2_setup(
 
 int l1c_dct1_setup(l1c_int n, l1c_int m, l1c_int* pix_mask_idx, l1c_AxFuns* ax_funs);
 
-int l1c_setup_dct_transforms(
-    l1c_int n, l1c_int mrow, l1c_int mcol, DctMode dct_mode, l1c_int* pix_idx, l1c_AxFuns* ax_funs);
+int l1c_setup_dct_transforms(l1c_int n,
+                             l1c_int mrow,
+                             l1c_int mcol,
+                             DctMode dct_mode,
+                             l1c_int* pix_idx,
+                             l1c_AxFuns* ax_funs);
 
 int l1c_setup_dctTV_transforms(l1c_int n,
                                l1c_int mrow,

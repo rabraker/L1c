@@ -15,7 +15,8 @@ typedef struct BregFuncs {
   void (*breg_anis_jacobi)(
       int n, int m, double* uk_1, double* uk, double* rhs, double* D, double lambda);
 
-  void (*breg_anis_guass_seidel)(int n, int m, double* u, double* rhs, double mu, double lambda);
+  void (*breg_anis_guass_seidel)(
+      int n, int m, double* u, double* rhs, double mu, double lambda);
 
   void (*breg_anis_rhs)(l1c_int n,
                         l1c_int m,
@@ -35,7 +36,8 @@ typedef struct BregFuncs {
 
 BregFuncs breg_get_functions();
 
-// static void breg_minx_y_z(l1c_int N, double * restrict x, double * restrict y, double *z);
+// static void breg_minx_y_z(l1c_int N, double * restrict x, double * restrict y, double
+// *z);
 
 int breg_anistropic_TV(l1c_int n,
                        l1c_int m,
@@ -46,8 +48,8 @@ int breg_anistropic_TV(l1c_int n,
                        int max_iter,
                        int max_jac_iter);
 
-// void breg_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, double *dy, double *by,
-// double *rhs, double mu, double lambda, double *dwork1, double *dwork2);
+// void breg_rhs(l1c_int n, l1c_int m, double *f, double *dx, double *bx, double *dy,
+// double *by, double *rhs, double mu, double lambda, double *dwork1, double *dwork2);
 
 // void breg_hess_eval(l1c_int N, double *x, double *y, void *hess_data);
 

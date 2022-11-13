@@ -68,8 +68,9 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
   // [synthesis | analysis]
   char mode[10];
   if (mxGetString(mxA_mode, mode, 10)) {
-    mexErrMsgIdAndTxt("l1c:badField",
-                      "Field 'mode' of opts must be a string, either analysis or synthesis");
+    mexErrMsgIdAndTxt(
+        "l1c:badField",
+        "Field 'mode' of opts must be a string, either analysis or synthesis");
   }
 
   if (strncmp(mode, "synthesis", 10) == 0) {
@@ -77,16 +78,18 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
   } else if (strncmp(mode, "analysis", 10) == 0) {
     bp_mode = analysis;
   } else {
-    mexErrMsgIdAndTxt("l1c:badField",
-                      "Field 'mode' of opts must be a string, either analysis or synthesis");
+    mexErrMsgIdAndTxt(
+        "l1c:badField",
+        "Field 'mode' of opts must be a string, either analysis or synthesis");
     /*We never reach this return, but it prevents warnings about unitialized bp_mode.*/
     return;
   }
 
   /* Ensure the sizes are consistent. */
   if (!(mrow * mcol > n) || (n != size_pix_idx) || mrow <= 0 || mcol <= 0) {
-    mexErrMsgIdAndTxt("l1c:incompatible_dimensions",
-                      "Must have length(x0) > length(b), and length(b) = length(pix_idx).");
+    mexErrMsgIdAndTxt(
+        "l1c:incompatible_dimensions",
+        "Must have length(x0) > length(b), and length(b) = length(pix_idx).");
   }
   if (opts.verbose > 0) {
     l1c_printf("Input Parameters\n---------------\n");
@@ -115,8 +118,8 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
     pix_idx[i] = idx;
   }
   l1c_AxFuns ax_funs;
-  status |=
-      l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
+  status |= l1c_setup_dctTV_transforms(
+      n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
   if (status) {
     goto exit1;
   }

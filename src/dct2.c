@@ -157,7 +157,8 @@ int l1c_dct2_setup(
   dct2_plan_MtEty = fftw_plan_r2r_2d(
       mrow, mcol, dct2_Ety_sparse, dct2_x, dct2_kind_MtEty, dct2_kind_MtEty, flags);
 
-  dct2_plan_EMx = fftw_plan_r2r_2d(mrow, mcol, dct2_x, dct2_y, dct2_kind_EMx, dct2_kind_EMx, flags);
+  dct2_plan_EMx =
+      fftw_plan_r2r_2d(mrow, mcol, dct2_x, dct2_y, dct2_kind_EMx, dct2_kind_EMx, flags);
 
   if (!dct2_plan_EMx || !dct2_plan_MtEty) {
     fprintf(stderr, "Failed to initialize FFTW3 dct plans.\n");
@@ -203,7 +204,9 @@ static void dct2_destroy() {
 #endif
 }
 
-static void Identity(double* y, double* x) { cblas_dcopy(dct2_mcol * dct2_mrow, y, 1, x, 1); }
+static void Identity(double* y, double* x) {
+  cblas_dcopy(dct2_mcol * dct2_mrow, y, 1, x, 1);
+}
 /*
   Computes x = M^T * x
  */
@@ -316,7 +319,8 @@ static void dct2_MtEt_EMx(double* restrict x, double* restrict z) {
   // Apply the subsampling operation and
   // normalize by 1/sqrt(2*N) * 1/sqrt(2*M)
   for (i = 0; i < dct2_n; i++) {
-    dct2_Ety_sparse[dct2_pix_mask_idx[i]] = dct2_y[dct2_pix_mask_idx[i]] * dct2_root_1_by_4NM;
+    dct2_Ety_sparse[dct2_pix_mask_idx[i]] =
+        dct2_y[dct2_pix_mask_idx[i]] * dct2_root_1_by_4NM;
     // dct2_Ety_sparse[dct2_pix_mask_idx[i]] = x[i];
   }
 

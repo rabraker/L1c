@@ -40,7 +40,8 @@ void _mex_assert_double(const mxArray** mxa, size_t idx) {
 
 void _mex_assert_double_scalar(const mxArray** mxa, size_t idx) {
   if (!mxIsDouble(mxa[idx]) || !mxIsScalar(mxa[idx])) {
-    mexErrMsgIdAndTxt("l1c:notDoubleScalar", "Argument %d must be a scalar double.", idx + 1);
+    mexErrMsgIdAndTxt(
+        "l1c:notDoubleScalar", "Argument %d must be a scalar double.", idx + 1);
   }
 }
 
@@ -56,7 +57,8 @@ void _mex_assert_num_inputs(int N, int N_required) {
   }
 }
 
-double _mex_get_double_from_struct_or_fail(const mxArray** mxa, size_t idx, char* fld_name) {
+double
+_mex_get_double_from_struct_or_fail(const mxArray** mxa, size_t idx, char* fld_name) {
   mxArray* tmp = mxGetField(mxa[idx], 0, fld_name);
   if (!tmp) {
     mexErrMsgIdAndTxt("l1c:notAField", "Error loading field '%s'.", fld_name);
@@ -78,7 +80,8 @@ double _mex_get_double_scalar_or_fail(const mxArray** mxa, size_t idx) {
 
 l1c_int _mex_get_int32_scalar_or_fail(const mxArray** mxa, size_t idx) {
   if (!mxIsInt32(mxa[idx]) || !mxIsScalar(mxa[idx])) {
-    mexErrMsgIdAndTxt("l1c:notInt32Scalar", "Argument %d must be a scalar double.", idx + 1);
+    mexErrMsgIdAndTxt(
+        "l1c:notInt32Scalar", "Argument %d must be a scalar double.", idx + 1);
   }
   return (l1c_int)mxGetScalar(mxa[idx]);
 }
@@ -96,13 +99,17 @@ void _mex_assert_1darray(const mxArray** mxa, size_t idx) {
   }
   /* In matlab, [1,2,3], or [1;2;3], will both have d==2. */
   if (d > 2 || ((n != 1) && (m != 1))) {
-    mexErrMsgIdAndTxt("l1c:not1DArray", "Input %d must have only 1 dimension.", idx + 1);
+    mexErrMsgIdAndTxt(
+        "l1c:not1DArray", "Input %d must have only 1 dimension.", idx + 1);
   }
 }
 
-void _mex_assert_2Darray_with_size(const mxArray** mxa, size_t idx, l1c_int n, l1c_int m) {
-  /* Matlab stores as column major. But the call M=number of rows and N=number of columns
-   for some bizzar reason. */
+void _mex_assert_2Darray_with_size(const mxArray** mxa,
+                                   size_t idx,
+                                   l1c_int n,
+                                   l1c_int m) {
+  /* Matlab stores as column major. But the call M=number of rows and N=number of
+   columns for some bizzar reason. */
   size_t n_act = mxGetM(mxa[idx]);
   size_t m_act = mxGetN(mxa[idx]);
   size_t n_sizet = (size_t)n;
@@ -117,7 +124,8 @@ void _mex_assert_2Darray_with_size(const mxArray** mxa, size_t idx, l1c_int n, l
   }
 
   if (d > 2) {
-    mexErrMsgIdAndTxt("l1c:not2DArray", "Input %d must have only 1 dimension.", idx + 1);
+    mexErrMsgIdAndTxt(
+        "l1c:not2DArray", "Input %d must have only 1 dimension.", idx + 1);
   }
   if (n_act < n_sizet || m_act < m_sizet) {
     mexErrMsgIdAndTxt("l1c:ArraySize",
@@ -130,7 +138,10 @@ void _mex_assert_2Darray_with_size(const mxArray** mxa, size_t idx, l1c_int n, l
   }
 }
 
-void _mex_get_double_array_or_fail(const mxArray** mxa, size_t idx, double* x[], l1c_int* N) {
+void _mex_get_double_array_or_fail(const mxArray** mxa,
+                                   size_t idx,
+                                   double* x[],
+                                   l1c_int* N) {
   size_t n = mxGetN(mxa[idx]);
   size_t m = mxGetM(mxa[idx]);
   size_t nm = 0;

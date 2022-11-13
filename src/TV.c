@@ -105,7 +105,8 @@ static inline void ddiff2_z(l1c_int n, double alpha, double* x, double* dx) {
   [ 0. -0.  0.  0. -0.  0.  0. -0.  0.  0. -1.  1.]
   [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]]
  */
-void l1c_Dx(l1c_int n, l1c_int m, double alpha, double* restrict X, double* restrict Dx) {
+void l1c_Dx(
+    l1c_int n, l1c_int m, double alpha, double* restrict X, double* restrict Dx) {
   /*
     We go down the rows of the matrix X, and compute the difference
     Dx = X[i,j+1] - X[i,j]
@@ -134,7 +135,8 @@ void l1c_Dx(l1c_int n, l1c_int m, double alpha, double* restrict X, double* rest
   [ 0. -0.  0.  0. -0.  0.  0. -0.  0.  1. -1.  0.]
   [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  1.  0.]]
  */
-void l1c_DxT(l1c_int n, l1c_int m, double alpha, double* restrict X, double* restrict DxT) {
+void l1c_DxT(
+    l1c_int n, l1c_int m, double alpha, double* restrict X, double* restrict DxT) {
   double *X_row = NULL, *Dxt_row = NULL;
 #pragma omp parallel for private(X_row, Dxt_row)
   for (int i_row = 0; i_row < n; i_row++) {
@@ -159,7 +161,8 @@ void l1c_DxT(l1c_int n, l1c_int m, double alpha, double* restrict X, double* res
 [ 0.  0.  0.  0.  0.  0.  0.  0.  0. -1.  2. -1.]
 [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0. -1.  1.]]
  */
-void l1c_DxTDx(l1c_int n, l1c_int m, double alpha, double* restrict X, double* restrict DxTDx) {
+void l1c_DxTDx(
+    l1c_int n, l1c_int m, double alpha, double* restrict X, double* restrict DxTDx) {
 
   double *X_row = NULL, *DxTDx_row = NULL;
 #pragma omp parallel for private(X_row, DxTDx_row)
@@ -195,7 +198,8 @@ void l1c_DxTDx(l1c_int n, l1c_int m, double alpha, double* restrict X, double* r
   [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
   [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]]
  */
-void l1c_Dy(l1c_int n, l1c_int m, double alpha, double* restrict X, double* restrict Dy) {
+void l1c_Dy(
+    l1c_int n, l1c_int m, double alpha, double* restrict X, double* restrict Dy) {
   int row = 0, col = 0;
 
 #pragma omp parallel for private(col)
@@ -231,7 +235,8 @@ void l1c_Dy(l1c_int n, l1c_int m, double alpha, double* restrict X, double* rest
   0     0     0     0     0     0     0     0     1     0     0     0
 
  */
-void l1c_DyT(l1c_int n, l1c_int m, double alpha, double* restrict A, double* restrict dyt) {
+void l1c_DyT(
+    l1c_int n, l1c_int m, double alpha, double* restrict A, double* restrict dyt) {
   double Ai = 0, Ai_min_m = 0;
   int i = 0, Len = n * m;
 
@@ -261,7 +266,8 @@ void l1c_DyT(l1c_int n, l1c_int m, double alpha, double* restrict A, double* res
   0     0     0     0     0     0     0    -1     0     0     1     0
   0     0     0     0     0     0     0     0    -1     0     0     1
  */
-void l1c_DyTDy(l1c_int n, l1c_int m, double alpha, double* restrict A, double* restrict dytdy) {
+void l1c_DyTDy(
+    l1c_int n, l1c_int m, double alpha, double* restrict A, double* restrict dytdy) {
   double alp2 = alpha * alpha;
   double Ai_min_m = 0, D_ii_Ai = 0, Ai_p_m = 0;
   int i = 0, Len = n * m;

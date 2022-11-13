@@ -11,7 +11,8 @@
 
    This is a replacement for cblas_daxpby. If cblas_daxpby is availible, use it.
 */
-void __l1c_daxpby(l1c_int N, double alpha, double* restrict x, double beta, double* restrict y) {
+void __l1c_daxpby(
+    l1c_int N, double alpha, double* restrict x, double beta, double* restrict y) {
   double* x_ = __builtin_assume_aligned(x, DALIGN);
   double* y_ = __builtin_assume_aligned(y, DALIGN);
 #pragma omp parallel for
@@ -35,7 +36,10 @@ void l1c_init_vec(l1c_int N, double* restrict x, double alpha) {
    Compute the vector elementwise product
    z = x.*y
 */
-void l1c_dxmuly_z(l1c_int N, double* restrict x, double* restrict y, double* restrict z) {
+void l1c_dxmuly_z(l1c_int N,
+                  double* restrict x,
+                  double* restrict y,
+                  double* restrict z) {
   double* x_ = __builtin_assume_aligned(x, DALIGN);
   double* y_ = __builtin_assume_aligned(y, DALIGN);
   double* z_ = __builtin_assume_aligned(z, DALIGN);
@@ -49,8 +53,8 @@ void l1c_dxmuly_z(l1c_int N, double* restrict x, double* restrict y, double* res
 /**
    Computes vector addition
 
-   z = alpha*x + beta*y. Similar to cblas_daxpy, but for the situation when the result should not
-   overwrite y.
+   z = alpha*x + beta*y. Similar to cblas_daxpy, but for the situation when the result
+   should not overwrite y.
 
 */
 void l1c_daxpby_z(l1c_int N,
@@ -59,8 +63,8 @@ void l1c_daxpby_z(l1c_int N,
                   double beta,
                   double* restrict y,
                   double* restrict z) {
-  /* Computes z = a * x + y. Similary to cblas_axpy, but for when you don't want to overwrite y.
-     This way, we avoid a call to cblas_dcopy().
+  /* Computes z = a * x + y. Similary to cblas_axpy, but for when you don't want to
+     overwrite y. This way, we avoid a call to cblas_dcopy().
 
      May be worth explicitly vectorizing (e.g., ispc??) this function.
   */
@@ -78,13 +82,17 @@ void l1c_daxpby_z(l1c_int N,
 /**
 Computes vector addition
 
-z = a*x + y. Similar to cblas_daxpy, but for the situation when the result should not overwrite y.
+z = a*x + y. Similar to cblas_daxpy, but for the situation when the result should not
+overwrite y.
 
 */
-void l1c_daxpy_z(
-    l1c_int N, double alpha, double* restrict x, double* restrict y, double* restrict z) {
-  /* Computes z = a * x + y. Similary to cblas_axpy, but for when you don't want to overwrite y.
-   This way, we avoid a call to cblas_dcopy().
+void l1c_daxpy_z(l1c_int N,
+                 double alpha,
+                 double* restrict x,
+                 double* restrict y,
+                 double* restrict z) {
+  /* Computes z = a * x + y. Similary to cblas_axpy, but for when you don't want to
+   overwrite y. This way, we avoid a call to cblas_dcopy().
 
    May be worth explicitly vectorizing (e.g., ispc??) this function.
   */

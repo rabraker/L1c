@@ -98,32 +98,43 @@ static void setup(char* fname, BpMode bp_mode, DctMode dct_mode) {
   dctd->bp_mode = bp_mode;
   dctd->dct_mode = dct_mode;
 
-  setup_status += extract_json_double_array(test_data_json, "x_in", &dctd->x_in, &dctd->mtot);
-  setup_status += extract_json_double_array(test_data_json, "y_in", &dctd->y_in, &dctd->n);
-  setup_status += extract_json_double_array(test_data_json, "z_in", &dctd->z_in, &dctd->p);
+  setup_status +=
+      extract_json_double_array(test_data_json, "x_in", &dctd->x_in, &dctd->mtot);
+  setup_status +=
+      extract_json_double_array(test_data_json, "y_in", &dctd->y_in, &dctd->n);
+  setup_status +=
+      extract_json_double_array(test_data_json, "z_in", &dctd->z_in, &dctd->p);
+
+  setup_status += extract_json_double_array(
+      test_data_json, "MtEt_EMx", &dctd->MtRty_RMx_exp, &dctd->p);
 
   setup_status +=
-      extract_json_double_array(test_data_json, "MtEt_EMx", &dctd->MtRty_RMx_exp, &dctd->p);
+      extract_json_double_array(test_data_json, "MtEty", &dctd->MtRty_exp, &dctd->p);
 
-  setup_status += extract_json_double_array(test_data_json, "MtEty", &dctd->MtRty_exp, &dctd->p);
+  setup_status +=
+      extract_json_double_array(test_data_json, "EMx", &dctd->RMx_exp, &dctd->n);
 
-  setup_status += extract_json_double_array(test_data_json, "EMx", &dctd->RMx_exp, &dctd->n);
-
-  setup_status += extract_json_double_array(test_data_json, "Mx", &dctd->Mx_exp, &dctd->mtot);
-  setup_status += extract_json_double_array(test_data_json, "Mty", &dctd->Mty_exp, &dctd->p);
-  setup_status += extract_json_double_array(test_data_json, "Ex", &dctd->Rx_exp, &dctd->n);
-  setup_status += extract_json_double_array(test_data_json, "Ety", &dctd->Rty_exp, &dctd->mtot);
+  setup_status +=
+      extract_json_double_array(test_data_json, "Mx", &dctd->Mx_exp, &dctd->mtot);
+  setup_status +=
+      extract_json_double_array(test_data_json, "Mty", &dctd->Mty_exp, &dctd->p);
+  setup_status +=
+      extract_json_double_array(test_data_json, "Ex", &dctd->Rx_exp, &dctd->n);
+  setup_status +=
+      extract_json_double_array(test_data_json, "Ety", &dctd->Rty_exp, &dctd->mtot);
 
   setup_status += extract_json_double(test_data_json, "alp_v", &dctd->alp_v);
   setup_status += extract_json_double(test_data_json, "alp_h", &dctd->alp_h);
 
-  setup_status += extract_json_int_array(test_data_json, "pix_idx", &dctd->pix_idx, &dctd->n);
+  setup_status +=
+      extract_json_int_array(test_data_json, "pix_idx", &dctd->pix_idx, &dctd->n);
   setup_status += extract_json_int(test_data_json, "mrow", &dctd->mrow);
   setup_status += extract_json_int(test_data_json, "mcol", &dctd->mcol);
   setup_status += extract_json_int(test_data_json, "p", &dctd->p);
 
   if (setup_status) {
-    fprintf(stderr, "Error Loading json into program data in 'test_MtRty_large()'. Aborting\n");
+    fprintf(stderr,
+            "Error Loading json into program data in 'test_MtRty_large()'. Aborting\n");
     ck_abort();
   }
   ck_assert_int_eq(dctd->mrow * dctd->mcol, dctd->mtot);
@@ -231,21 +242,24 @@ static void check_ax_fun_properties() {
 START_TEST(test_MtRty) {
   ax_funs.Aty(dctd->y_in, dctd->MtRty_act);
 
-  ck_assert_double_array_eq_tol(dctd->mtot, dctd->MtRty_exp, dctd->MtRty_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      dctd->mtot, dctd->MtRty_exp, dctd->MtRty_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 
 START_TEST(test_RMx) {
   ax_funs.Ax(dctd->z_in, dctd->RMx_act);
 
-  ck_assert_double_array_eq_tol(dctd->n, dctd->RMx_exp, dctd->RMx_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      dctd->n, dctd->RMx_exp, dctd->RMx_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 
 START_TEST(test_Mz) {
   ax_funs.Mx(dctd->z_in, dctd->Mx_act);
 
-  ck_assert_double_array_eq_tol(dctd->mtot, dctd->Mx_exp, dctd->Mx_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      dctd->mtot, dctd->Mx_exp, dctd->Mx_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 
@@ -253,7 +267,8 @@ START_TEST(test_Mtx) {
   /* --------- Wt ---------------------*/
   ax_funs.Mty(dctd->x_in, dctd->Mty_act);
 
-  ck_assert_double_array_eq_tol(dctd->p, dctd->Mty_exp, dctd->Mty_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      dctd->p, dctd->Mty_exp, dctd->Mty_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 
@@ -282,7 +297,8 @@ END_TEST
 
 START_TEST(test_Rty) {
   ax_funs.Rty(dctd->y_in, dctd->Rty_act);
-  ck_assert_double_array_eq_tol(dctd->mtot, dctd->Rty_exp, dctd->Rty_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      dctd->mtot, dctd->Rty_exp, dctd->Rty_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 
@@ -290,14 +306,16 @@ END_TEST
 START_TEST(test_Wz_analysis) {
   /* In Analysis mode, this should be the identity.*/
   ax_funs.Wz(dctd->z_in, dctd->Mx_act);
-  ck_assert_double_array_eq_tol(dctd->mtot, dctd->Mx_exp, dctd->Mx_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      dctd->mtot, dctd->Mx_exp, dctd->Mx_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 
 START_TEST(test_Wtx_analysis) {
   /* In Analysis mode, this should be the identity.*/
   ax_funs.Wtx(dctd->x_in, dctd->Mty_act);
-  ck_assert_double_array_eq_tol(dctd->p, dctd->Mty_exp, dctd->Mty_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      dctd->p, dctd->Mty_exp, dctd->Mty_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 
@@ -313,7 +331,8 @@ START_TEST(test_Mty_analysis) {
   /* In Analysis mode, this should be the identity.*/
   ax_funs.Mty(dctd->x_in, dctd->Mty_act);
 
-  ck_assert_double_array_eq_tol(dctd->mtot, dctd->x_in, dctd->Mty_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      dctd->mtot, dctd->x_in, dctd->Mty_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 
@@ -329,7 +348,8 @@ START_TEST(test_Aty_analysis) {
   /* In Analysis mode, this should be the same as Rty.*/
   ax_funs.Rty(dctd->y_in, dctd->Rty_act);
 
-  ck_assert_double_array_eq_tol(dctd->mtot, dctd->Rty_exp, dctd->Rty_act, TOL_DOUBLE_SUPER);
+  ck_assert_double_array_eq_tol(
+      dctd->mtot, dctd->Rty_exp, dctd->Rty_act, TOL_DOUBLE_SUPER);
 }
 END_TEST
 
@@ -343,16 +363,16 @@ START_TEST(test_normW) {
   l1c_int pix_idx[5] = {0, 3, 4, 6, 7};
 
   normW_exp = sqrt(1 + 4 * alp_v * alp_v + 4 * alp_h * alp_h);
-  status =
-      l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
+  status = l1c_setup_dctTV_transforms(
+      n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
   ck_assert_int_eq(status, L1C_SUCCESS);
   ck_assert_double_eq_tol(ax_funs.norm_W, normW_exp, TOL_DOUBLE_SUPER);
   ax_funs.destroy();
 
   alp_h = 0;
   alp_v = 0;
-  status =
-      l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
+  status = l1c_setup_dctTV_transforms(
+      n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
   ck_assert_int_eq(status, L1C_SUCCESS);
   normW_exp = sqrt(1 + 4 * alp_v * alp_v + 4 * alp_h * alp_h);
   ck_assert_double_eq_tol(ax_funs.norm_W, normW_exp, TOL_DOUBLE_SUPER);
@@ -360,8 +380,8 @@ START_TEST(test_normW) {
 
   /*We should always get 1.0 in synthesis mode.*/
   bp_mode = synthesis;
-  status =
-      l1c_setup_dctTV_transforms(n, mrow, mcol, 0.0, 0.0, dct_mode, bp_mode, pix_idx, &ax_funs);
+  status = l1c_setup_dctTV_transforms(
+      n, mrow, mcol, 0.0, 0.0, dct_mode, bp_mode, pix_idx, &ax_funs);
   ck_assert_int_eq(status, L1C_SUCCESS);
   ck_assert_double_eq_tol(ax_funs.norm_W, 1.0, TOL_DOUBLE_SUPER);
   ax_funs.destroy();
@@ -378,30 +398,30 @@ START_TEST(test_input_errors) {
   BpMode bp_mode = analysis;
   /* alp_v < 0 should throw an error. */
   alp_v = -1.0;
-  status =
-      l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
+  status = l1c_setup_dctTV_transforms(
+      n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
 
   ck_assert_int_eq(status, L1C_INVALID_ARGUMENT);
 
   /* alp_h < 0 should throw an error. */
   alp_v = 1.0;
   alp_h = -1.0;
-  status =
-      l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
+  status = l1c_setup_dctTV_transforms(
+      n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
 
   /* alp_v > 0, requires mrow>2, mcol>2   */
   alp_v = 1.0;
   alp_h = 0.0;
   mcol = 10;
   mrow = 1;
-  status =
-      l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
+  status = l1c_setup_dctTV_transforms(
+      n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
   ck_assert_int_eq(status, L1C_INVALID_ARGUMENT);
 
   mrow = 10;
   mcol = 1;
-  status =
-      l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
+  status = l1c_setup_dctTV_transforms(
+      n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
   ck_assert_int_eq(status, L1C_INVALID_ARGUMENT);
 
   /* alp_h > 0, requires mrow>2, mcol>2   */
@@ -409,14 +429,14 @@ START_TEST(test_input_errors) {
   alp_h = 1.0;
   mcol = 10;
   mrow = 1;
-  status =
-      l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
+  status = l1c_setup_dctTV_transforms(
+      n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
   ck_assert_int_eq(status, L1C_INVALID_ARGUMENT);
 
   mrow = 10;
   mcol = 1;
-  status =
-      l1c_setup_dctTV_transforms(n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
+  status = l1c_setup_dctTV_transforms(
+      n, mrow, mcol, alp_v, alp_h, dct_mode, bp_mode, pix_idx, &ax_funs);
   ck_assert_int_eq(status, L1C_INVALID_ARGUMENT);
 }
 END_TEST

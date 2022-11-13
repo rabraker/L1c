@@ -68,8 +68,9 @@ typedef struct l1c_l1qcProb {
   l1c_AxFuns ax_funs;
 } l1c_l1qcProb;
 
-/* These could be static. But that makes them hard to test. They are complicated enough I think
- they should be tested on their own. I.e., I dont want to *just* test l1qc_newton()
+/* These could be static. But that makes them hard to test. They are complicated enough
+ I think they should be tested on their own. I.e., I dont want to *just* test
+ l1qc_newton()
 */
 double _l1c_l1qc_find_max_step(l1c_l1qcProb* Prb);
 

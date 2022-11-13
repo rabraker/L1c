@@ -53,7 +53,8 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
   tol = _mex_get_double_scalar_or_fail(prhs, 2);
   max_iter = (int)_mex_get_double_scalar_or_fail(prhs, 3);
 
-  /* We require that f is aligned on a DALIGN byte boundary. Matlab does not guarantee this.
+  /* We require that f is aligned on a DALIGN byte boundary. Matlab does not guarantee
+   * this.
    */
   f_ours = l1c_malloc_double(N * M);
   uk = l1c_malloc_double(N * M);

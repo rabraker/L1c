@@ -8,7 +8,8 @@
  */
 __attribute__((constructor)) void check_opennblas_pthreads() {
   if (openblas_get_parallel() == OPENBLAS_THREAD) {
-    fprintf(stderr, "***************************************************************\n");
+    fprintf(stderr,
+            "***************************************************************\n");
     fprintf(stderr, "                    WARNING \n");
     fprintf(stderr,
             "Openblas is configured with pthreads, not openmp.\n "

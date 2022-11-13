@@ -25,8 +25,8 @@ int main(void) {
   setup_tests();
 
   /*
-    Whether or not to fork: forkin is wont kill the whole program if a test segfaults etc,
-    but is difficult to debug a failing test.
+    Whether or not to fork: forkin is wont kill the whole program if a test segfaults
+    etc, but is difficult to debug a failing test.
    */
   enum fork_status fstat = CK_NOFORK;
   // enum fork_status fstat = CK_FORK;
@@ -70,8 +70,8 @@ int main(void) {
  */
 void setup_tests(void) {
 
-  /* We cannot free the result of getenv, but if the environmental variable did not exist,
-   we should free the default we set.
+  /* We cannot free the result of getenv, but if the environmental variable did not
+   exist, we should free the default we set.
   */
   char* data_dir;
   data_dir = getenv(_TEST_DATA_DIR);
