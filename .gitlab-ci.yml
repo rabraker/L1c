@@ -5,7 +5,11 @@ main:
   stage: main
   image: registry.gitlab.com/rabraker/l1c
   script:
-    - mkdir build && cd build && conan install .. && cmake -DENABLE_MEX=ON ..
+    - black --check .
+    - isort --check .
+    - tools/format-repo-cpp.sh --check
+    - mkdir build && cd build && conan install ..
+    - cmake -DENABLE_MEX=ON -DUSE_WERROR=ON ..
     - make -j4
     - OMP_NUM_THREADS=4 make test ARGS="-VV"
 

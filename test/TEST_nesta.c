@@ -6,31 +6,29 @@ This is a test suite for the l1qc_newton library.
 
 #define CK_FLOATING_DIG 17
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h> //Constants
 #include <check.h>
 #include <cjson/cJSON.h>
+#include <math.h> //Constants
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "cblas.h"
-#include "l1c.h"
 #include "check_utils.h"
 #include "json_utils.h"
+#include "l1c.h"
 #include "l1c_timing.h"
 
 #include "nesta.h"
 
 /* Tolerances and things */
+#include "l1c_math.h"
 #include "test_constants.h"
-#include  "l1c_math.h"
-
 
 // static cJSON *test_data_json;
 
 /* Defined in test_l1c.c*/
-extern char* fullfile(char *base_path, char *name);
-extern char *test_data_dir;
-
+extern char* fullfile(char* base_path, char* name);
+extern char* test_data_dir;
 
 /* Initialize l1c_L1qcOpts struct. Even though for some tests
    we dont need all of them set, we should set them to clean up the ouput
@@ -47,28 +45,26 @@ typedef struct NestaTestData {
   double tol;
   double fx_exp;
 
-  l1c_int *pix_idx;
-  double *xk;
-  double *b;
-  double *g;
+  l1c_int* pix_idx;
+  double* xk;
+  double* b;
+  double* g;
   // double *yk;
-  double *yk_exp;
-  double *gradf_exp;
+  double* yk_exp;
+  double* gradf_exp;
 
   //
   int n_continue;
   double beta_mu;
   double beta_tol;
 
-  l1c_NestaProb *NP;
+  l1c_NestaProb* NP;
 
-}NestaTestData;
+} NestaTestData;
 
-static void free_generic_data(NestaTestData *Tdat);
+static void free_generic_data(NestaTestData* Tdat);
 
-
-
-static void init_generic_data(NestaTestData *dat){
+static void init_generic_data(NestaTestData* dat) {
 
   /* !!!!!!!!!!!!!!!! LOAD THIS FROM JSON LATER !!!!!!!!!!!!!!!!!!!*/
   dat->n_continue = 5;
@@ -76,29 +72,28 @@ static void init_generic_data(NestaTestData *dat){
   dat->beta_mu = 0;
   dat->beta_tol = 0;
 
-  char *fpath_generic = fullfile(test_data_dir, "nesta_data.json");
-  cJSON *json_data;
+  char* fpath_generic = fullfile(test_data_dir, "nesta_data.json");
+  cJSON* json_data;
 
-
-  int m=0, n=0, status=0;
+  int m = 0, n = 0, status = 0;
   l1c_AxFuns ax_funs;
 
-  if (load_file_to_json(fpath_generic, &json_data)){
+  if (load_file_to_json(fpath_generic, &json_data)) {
     fprintf(stderr, "Error loading data in %s of %s\n", __func__, __FILE__);
     ck_abort();
   }
-  status +=extract_json_double_array(json_data, "xk", &dat->xk, &m);
-  status +=extract_json_double_array(json_data, "b", &dat->b, &n);
-  status +=extract_json_double_array(json_data, "g", &dat->g, &m);
-  status +=extract_json_double_array(json_data, "yk_exp", &dat->yk_exp, &m);
-  status +=extract_json_double_array(json_data, "gradf_exp", &dat->gradf_exp, &m);
-  status +=extract_json_int_array(json_data, "pix_idx", &dat->pix_idx, &n);
-  status +=extract_json_double(json_data, "fx_exp", &dat->fx_exp);
-  status +=extract_json_double(json_data, "mu", &dat->mu);
-  status +=extract_json_double(json_data, "L", &dat->L);
-  status +=extract_json_double(json_data, "sigma", &dat->sigma);
+  status += extract_json_double_array(json_data, "xk", &dat->xk, &m);
+  status += extract_json_double_array(json_data, "b", &dat->b, &n);
+  status += extract_json_double_array(json_data, "g", &dat->g, &m);
+  status += extract_json_double_array(json_data, "yk_exp", &dat->yk_exp, &m);
+  status += extract_json_double_array(json_data, "gradf_exp", &dat->gradf_exp, &m);
+  status += extract_json_int_array(json_data, "pix_idx", &dat->pix_idx, &n);
+  status += extract_json_double(json_data, "fx_exp", &dat->fx_exp);
+  status += extract_json_double(json_data, "mu", &dat->mu);
+  status += extract_json_double(json_data, "L", &dat->L);
+  status += extract_json_double(json_data, "sigma", &dat->sigma);
 
-  if (status){
+  if (status) {
     fprintf(stderr, "Failed to load json data in %s\n", __func__);
     goto exit;
   }
@@ -107,8 +102,8 @@ static void init_generic_data(NestaTestData *dat){
   dat->m = m;
   BpMode bp_mode = analysis;
   DctMode dct_mode = dct1;
-  if(l1c_setup_dctTV_transforms(dat->n, dat->m, 1, 0.0, 0.0, dct_mode,
-                                bp_mode, dat->pix_idx, &ax_funs) ){
+  if (l1c_setup_dctTV_transforms(
+          dat->n, dat->m, 1, 0.0, 0.0, dct_mode, bp_mode, dat->pix_idx, &ax_funs)) {
     fprintf(stderr, "Failed to initialize DCT in %s\n", __func__);
     status += 1;
     goto exit;
@@ -118,7 +113,7 @@ static void init_generic_data(NestaTestData *dat){
 
   dat->NP = _l1c_NestaProb_new(ax_funs);
 
-  if (!dat->NP){
+  if (!dat->NP) {
     fprintf(stderr, "Failed to initialize Nesta Problem (in %s)\n", __func__);
     status += 1;
     goto exit;
@@ -128,10 +123,9 @@ static void init_generic_data(NestaTestData *dat){
                         .sigma = dat->sigma,
                         .mu = dat->mu,
                         .tol = dat->tol,
-                        .verbose=0};
+                        .verbose = 0};
 
-  if (l1c_nesta_setup(dat->NP, &dat->beta_mu, &dat->beta_tol, dat->b, ax_funs,
-                        &opts)) {
+  if (l1c_nesta_setup(dat->NP, &dat->beta_mu, &dat->beta_tol, dat->b, ax_funs, &opts)) {
     status++;
     goto exit;
   }
@@ -140,20 +134,18 @@ static void init_generic_data(NestaTestData *dat){
   cblas_dcopy(m, dat->xk, 1, dat->NP->xk, 1);
   cblas_dcopy(n, dat->b, 1, dat->NP->b, 1);
 
- exit:
+exit:
   free(fpath_generic);
   cJSON_Delete(json_data);
 
-  if (status){
+  if (status) {
     fprintf(stderr, "Error initializing data in %s\n", __func__);
     free_generic_data(dat);
     ck_abort();
   }
-
 }
 
-
-static void free_generic_data(NestaTestData *Tdat){
+static void free_generic_data(NestaTestData* Tdat) {
 
   l1c_free_double(Tdat->xk);
   l1c_free_double(Tdat->b);
@@ -163,71 +155,63 @@ static void free_generic_data(NestaTestData *Tdat){
 
   free(Tdat->pix_idx);
 
-  if (Tdat->NP){
+  if (Tdat->NP) {
     Tdat->NP->ax_funs.destroy();
   }
 
   l1c_free_nesta_problem(Tdat->NP);
-
 }
 
+START_TEST(test_l1c_nesta) {
+  char* fpath_1iter = fullfile(test_data_dir, "lb_test_data_AX.json");
+  cJSON* json_data;
 
-
-START_TEST (test_l1c_nesta)
-{
-  char *fpath_1iter = fullfile(test_data_dir, "lb_test_data_AX.json");
-  cJSON *json_data;
-
-  double *x0=NULL, *b=NULL;
-  double *x_exp=NULL, *A=NULL;
+  double *x0 = NULL, *b = NULL;
+  double *x_exp = NULL, *A = NULL;
   double enrm1, epsilon;
 
-  l1c_int m=0, n=0, mn=0,  status=0;
-  l1c_int T=0, TC=0;
-  l1c_int *T_idx=NULL, *TC_idx=NULL;
+  l1c_int m = 0, n = 0, mn = 0, status = 0;
+  l1c_int T = 0, TC = 0;
+  l1c_int *T_idx = NULL, *TC_idx = NULL;
 
   l1c_AxFuns ax_funs;
 
-
-  if (load_file_to_json(fpath_1iter, &json_data)){
+  if (load_file_to_json(fpath_1iter, &json_data)) {
     fprintf(stderr, "Error loading data in %s\n", __func__);
     free(fpath_1iter);
     ck_abort();
   }
   free(fpath_1iter);
 
-  status +=extract_json_double_array(json_data, "x0", &x0, &m);
-  status +=extract_json_double_array(json_data, "x_act", &x_exp, &m);
-  status +=extract_json_double_array(json_data, "b", &b, &n);
+  status += extract_json_double_array(json_data, "x0", &x0, &m);
+  status += extract_json_double_array(json_data, "x_act", &x_exp, &m);
+  status += extract_json_double_array(json_data, "b", &b, &n);
 
-  status +=extract_json_double(json_data, "epsilon", &epsilon);
-  status +=extract_json_double(json_data, "enrm1", &enrm1);
+  status += extract_json_double(json_data, "epsilon", &epsilon);
+  status += extract_json_double(json_data, "enrm1", &enrm1);
 
-  status +=extract_json_int_array(json_data, "T_idx", &T_idx, &T);
-  status +=extract_json_int_array(json_data, "TC_idx", &TC_idx, &TC);
-  status +=extract_json_double_array(json_data, "A", &A, &mn);
+  status += extract_json_int_array(json_data, "T_idx", &T_idx, &T);
+  status += extract_json_int_array(json_data, "TC_idx", &TC_idx, &TC);
+  status += extract_json_double_array(json_data, "A", &A, &mn);
 
-  ck_assert_int_eq(mn, n*m);
+  ck_assert_int_eq(mn, n * m);
 
-  double *tmp1 = l1c_calloc_double(m);
-  double *tmp2 = l1c_calloc_double(m);
+  double* tmp1 = l1c_calloc_double(m);
+  double* tmp2 = l1c_calloc_double(m);
 
-  if (status || !TC_idx || !T_idx || !A || !x0 || !x_exp || !b || !tmp1 || !tmp2){
+  if (status || !TC_idx || !T_idx || !A || !x0 || !x_exp || !b || !tmp1 || !tmp2) {
     status += 1;
     goto exit1;
   }
 
-  if(l1c_setup_matrix_transforms(n, m, A, &ax_funs)){
+  if (l1c_setup_matrix_transforms(n, m, A, &ax_funs)) {
     goto exit0;
   }
 
   // matrix_transforms doesnt set normW yet. Would be better to compute in python.
   ax_funs.norm_W = 1;
-  l1c_NestaOpts opts = {.mu=1e-5,
-                        .sigma=epsilon,
-                        .tol=1e-5,
-                        .n_continue=5,
-                        .verbose=0};
+  l1c_NestaOpts opts = {
+      .mu = 1e-5, .sigma = epsilon, .tol = 1e-5, .n_continue = 5, .verbose = 0};
   /* ------------------------------------------------------- */
   int nesta_status = l1c_nesta(m, x0, n, b, ax_funs, opts);
 
@@ -249,10 +233,9 @@ START_TEST (test_l1c_nesta)
           experiment, even with their software. It seems that C~=3.5
    */
 
-
   /* a. ---------------------
      Check property (a).*/
-  double dnrm1_x1exp= l1c_dnorm1(m, x_exp);
+  double dnrm1_x1exp = l1c_dnorm1(m, x_exp);
   double dnrm1_xp = l1c_dnorm1(m, x0);
   ck_assert_double_le(dnrm1_xp, dnrm1_x1exp);
 
@@ -261,22 +244,22 @@ START_TEST (test_l1c_nesta)
   ax_funs.Ax(x_exp, tmp1);
   ax_funs.Ax(x0, tmp2);
   double dnrm2_yerr = 0, yerr_k = 0;
-  for(int i=0; i<m; i++){
+  for (int i = 0; i < m; i++) {
     yerr_k = tmp1[i] - tmp2[i];
     dnrm2_yerr += yerr_k * yerr_k;
   }
   dnrm2_yerr = sqrt(dnrm2_yerr);
 
-  ck_assert_double_le(dnrm2_yerr, epsilon*2);
+  ck_assert_double_le(dnrm2_yerr, epsilon * 2);
 
   /* c. ------------------
      Check property (c) */
-  l1c_daxpy_z(m, -1, x0, x_exp, tmp1); //h = x0 - x
-  double h_T_nrm1=0, h_TC_nrm1=0;
-  for(int i=0; i<T; i++){
+  l1c_daxpy_z(m, -1, x0, x_exp, tmp1); // h = x0 - x
+  double h_T_nrm1 = 0, h_TC_nrm1 = 0;
+  for (int i = 0; i < T; i++) {
     h_T_nrm1 += fabs(tmp1[T_idx[i]]);
   }
-  for(int i=0; i<TC; i++){
+  for (int i = 0; i < TC; i++) {
     h_TC_nrm1 += fabs(tmp1[TC_idx[i]]);
   }
   ck_assert_double_le(h_TC_nrm1, h_T_nrm1);
@@ -286,9 +269,9 @@ START_TEST (test_l1c_nesta)
   /* e. We should exit cleanly for this problem.*/
   ck_assert_int_eq(0, nesta_status);
 
- exit0:
+exit0:
   ax_funs.destroy();
- exit1:
+exit1:
   l1c_free_double(x0);
   l1c_free_double(x_exp);
   l1c_free_double(b);
@@ -299,25 +282,21 @@ START_TEST (test_l1c_nesta)
   free(TC_idx);
   cJSON_Delete(json_data);
 
-
-  if (status){
+  if (status) {
     fprintf(stderr, "Error Loading json data in %s. Aborting\n", __func__);
     ck_abort();
   }
-
 }
 END_TEST
 
-
-START_TEST (test_nesta_project)
-{
+START_TEST(test_nesta_project) {
   int status = 0;
-  double *yk=NULL;
+  double* yk = NULL;
   NestaTestData Tdat;
   init_generic_data(&Tdat);
 
   yk = l1c_calloc_double(Tdat.m);
-  if(!yk){
+  if (!yk) {
     status = L1C_OUT_OF_MEMORY;
     fprintf(stderr, "Error allocating memory in %s\n", __func__);
     goto exit;
@@ -328,17 +307,16 @@ START_TEST (test_nesta_project)
 
   ck_assert_double_array_eq_tol(Tdat.m, yk, Tdat.yk_exp, TOL_DOUBLE);
 
- exit:
+exit:
   free_generic_data(&Tdat);
   l1c_free_double(yk);
 
-  if (status) ck_abort();
+  if (status)
+    ck_abort();
+}
+END_TEST
 
-}END_TEST
-
-
-START_TEST (test_nesta_feval)
-{
+START_TEST(test_nesta_feval) {
 
   NestaTestData Tdat;
   init_generic_data(&Tdat);
@@ -349,32 +327,32 @@ START_TEST (test_nesta_feval)
   ck_assert_double_array_eq_tol(Tdat.m, Tdat.gradf_exp, Tdat.NP->gradf, TOL_DOUBLE);
 
   free_generic_data(&Tdat);
+}
+END_TEST
 
-}END_TEST
-
-START_TEST (test_l1c_new_fmean_fifo)
-{
-  int status=0;
+START_TEST(test_l1c_new_fmean_fifo) {
+  int status = 0;
   struct l1c_fmean_fifo fifo = _l1c_new_fmean_fifo();
-  if (!fifo.f_vals){
+  if (!fifo.f_vals) {
     status = L1C_OUT_OF_MEMORY;
     fprintf(stderr, "Error allocating memory in %s\n", __func__);
     goto exit;
   }
 
-    /*Just make sure this doesnt segfault.*/
-    fifo.f_vals[L1C_NESTA_NMEAN - 1] = 1;
+  /*Just make sure this doesnt segfault.*/
+  fifo.f_vals[L1C_NESTA_NMEAN - 1] = 1;
 
-    ck_assert_ptr_eq(fifo.f_vals, fifo.next);
+  ck_assert_ptr_eq(fifo.f_vals, fifo.next);
 
- exit:
-    free(fifo.f_vals);
-    if (status) ck_abort();
-}END_TEST
+exit:
+  free(fifo.f_vals);
+  if (status)
+    ck_abort();
+}
+END_TEST
 
-START_TEST (test_l1c_push_fmeans_fifo)
-{
-  int i=0, status=0;
+START_TEST(test_l1c_push_fmeans_fifo) {
+  int i = 0, status = 0;
   double val;
   struct l1c_fmean_fifo fifo = _l1c_new_fmean_fifo();
 
@@ -384,7 +362,7 @@ START_TEST (test_l1c_push_fmeans_fifo)
     goto exit;
   }
 
-  for (i=0; i<L1C_NESTA_NMEAN+1; i++){
+  for (i = 0; i < L1C_NESTA_NMEAN + 1; i++) {
     val = (double)i;
     _l1c_push_fmeans_fifo(&fifo, val);
   }
@@ -393,17 +371,17 @@ START_TEST (test_l1c_push_fmeans_fifo)
 
   ck_assert_double_eq(fifo.f_vals[0], val);
 
- exit:
+exit:
   free(fifo.f_vals);
-  if (status) ck_abort();
-}END_TEST
+  if (status)
+    ck_abort();
+}
+END_TEST
 
-
-START_TEST (test_l1c_mean_fmean_fifo)
-{
-  int i=0, status=0;
+START_TEST(test_l1c_mean_fmean_fifo) {
+  int i = 0, status = 0;
   double val;
-  double fbar_exp = 0, fbar=0;
+  double fbar_exp = 0, fbar = 0;
   struct l1c_fmean_fifo fifo = _l1c_new_fmean_fifo();
   if (!fifo.f_vals) {
     status = L1C_OUT_OF_MEMORY;
@@ -412,7 +390,7 @@ START_TEST (test_l1c_mean_fmean_fifo)
   }
 
   /* Ensure this works right for n_total < L1C_NESTA_NMEAN*/
-  for (i=0; i<4; i++){
+  for (i = 0; i < 4; i++) {
     val = (double)i;
     _l1c_push_fmeans_fifo(&fifo, val);
   }
@@ -421,14 +399,13 @@ START_TEST (test_l1c_mean_fmean_fifo)
   fbar_exp = 1.5;
   ck_assert_double_eq_tol(fbar, fbar_exp, TOL_DOUBLE);
 
-
   /* ----------------------------------------------------
     Ensure this works right for n_total = L1C_NESTA_NMEAN
   */
   l1c_init_vec(L1C_NESTA_NMEAN, fifo.f_vals, 0);
   fifo.next = fifo.f_vals;
 
-  for (i=0; i<L1C_NESTA_NMEAN; i++){
+  for (i = 0; i < L1C_NESTA_NMEAN; i++) {
     val = (double)i;
     _l1c_push_fmeans_fifo(&fifo, val);
   }
@@ -444,7 +421,7 @@ START_TEST (test_l1c_mean_fmean_fifo)
   l1c_init_vec(L1C_NESTA_NMEAN, fifo.f_vals, 0);
   fifo.next = fifo.f_vals;
 
-  for (i=0; i<L1C_NESTA_NMEAN+2; i++){
+  for (i = 0; i < L1C_NESTA_NMEAN + 2; i++) {
     val = (double)i;
     _l1c_push_fmeans_fifo(&fifo, val);
   }
@@ -453,32 +430,32 @@ START_TEST (test_l1c_mean_fmean_fifo)
   fbar_exp = 6.5;
   ck_assert_double_eq_tol(fbar, fbar_exp, TOL_DOUBLE);
 
- exit:
+exit:
   free(fifo.f_vals);
-  if (status) ck_abort();
-}END_TEST
+  if (status)
+    ck_abort();
+}
+END_TEST
 
-
-START_TEST (test_l1c_nesta_setup)
-{
-  int test_status=0;
+START_TEST(test_l1c_nesta_setup) {
+  int test_status = 0;
   l1c_int n = 5;
   l1c_int m = 10;
 
-  double beta_mu=0, beta_tol=0;
+  double beta_mu = 0, beta_tol = 0;
   double sigma = 1e-3, mu = 1e-5;
   double tol = 1e-3;
 
   int n_continue = 5;
   DctMode dct_mode = dct1;
   l1c_AxFuns ax_funs;
-  l1c_NestaProb *NP = NULL;
-  l1c_NestaOpts opts = {.n_continue = 5, .sigma = sigma,
-                        .mu = mu, .tol = tol, .verbose = 0};
+  l1c_NestaProb* NP = NULL;
+  l1c_NestaOpts opts = {
+      .n_continue = 5, .sigma = sigma, .mu = mu, .tol = tol, .verbose = 0};
 
-  double *b = l1c_calloc_double(n);
-  double *A = l1c_calloc_double(n*m);
-  if (!b||!A){
+  double* b = l1c_calloc_double(n);
+  double* A = l1c_calloc_double(n * m);
+  if (!b || !A) {
     test_status = L1C_OUT_OF_MEMORY;
     fprintf(stderr, "Memory allocation failed in %s\n", __func__);
     goto exit;
@@ -497,13 +474,12 @@ START_TEST (test_l1c_nesta_setup)
     goto exit;
   }
 
-  for (int i=0; i<n; i++){
-    b[i] = ((double)rand())/(double)RAND_MAX;
+  for (int i = 0; i < n; i++) {
+    b[i] = ((double)rand()) / (double)RAND_MAX;
   }
-  for (int i=0; i<n*m; i++){
-      A[i] = ((double)rand())/(double)RAND_MAX;
+  for (int i = 0; i < n * m; i++) {
+    A[i] = ((double)rand()) / (double)RAND_MAX;
   }
-
 
   // We are checking that setup will fail for ax_funs without analysis opertator.
   ax_funs.Wz = NULL;
@@ -514,12 +490,11 @@ START_TEST (test_l1c_nesta_setup)
   ax_funs.destroy();
 
   int pix_idx[5] = {1, 3, 4, 6, 8};
-  if (l1c_setup_dct_transforms(n, m, 1, dct_mode, pix_idx, &ax_funs)){
+  if (l1c_setup_dct_transforms(n, m, 1, dct_mode, pix_idx, &ax_funs)) {
     test_status = L1C_OUT_OF_MEMORY;
     fprintf(stderr, "Memory allocation failed in %s\n", __func__);
     goto exit;
   }
-
 
   status = l1c_nesta_setup(NP, &beta_mu, &beta_tol, b, ax_funs, &opts);
 
@@ -530,17 +505,17 @@ START_TEST (test_l1c_nesta_setup)
   ck_assert_double_eq(NP->mu, mu);
   ck_assert_double_eq(NP->tol, tol);
 
-  double mu_j=NP->mu_j, tol_j=NP->tol_j;
+  double mu_j = NP->mu_j, tol_j = NP->tol_j;
 
-  for (int i=0; i < n_continue; i ++){
-    mu_j *=  beta_mu;
-    tol_j *=  beta_tol;
+  for (int i = 0; i < n_continue; i++) {
+    mu_j *= beta_mu;
+    tol_j *= beta_tol;
   }
 
   ck_assert_double_eq_tol(mu_j, mu, TOL_DOUBLE);
   ck_assert_double_eq_tol(tol_j, tol, TOL_DOUBLE);
 
- exit:
+exit:
   l1c_free_nesta_problem(NP);
   ax_funs.destroy();
   l1c_free_double(b);
@@ -548,11 +523,11 @@ START_TEST (test_l1c_nesta_setup)
 
   if (test_status)
     ck_abort();
-} END_TEST
+}
+END_TEST
 
-Suite *l1c_nesta_suite(void)
-{
-  Suite *s;
+Suite* l1c_nesta_suite(void) {
+  Suite* s;
 
   TCase *tc_nesta, *tc_fifo;
 
@@ -575,5 +550,4 @@ Suite *l1c_nesta_suite(void)
   suite_add_tcase(s, tc_fifo);
 
   return s;
-
 }

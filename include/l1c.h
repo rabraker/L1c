@@ -6,18 +6,16 @@
  * The public API for l1c.
  */
 
-
 /**
  * Integer type for libl1c. For now, this is int, but in the future
  * it may be convienent to change it.
  */
 typedef int l1c_int;
 
-
 /**
- * \defgroup memory Functions for dealing with memory allocation that are general to all of l1c.
- * Functions for managing memory, and in particular, aligned allocation
- * needed for vectorized math.
+ * \defgroup memory Functions for dealing with memory allocation that are general to all
+ * of l1c. Functions for managing memory, and in particular, aligned allocation needed
+ * for vectorized math.
  * @{
  */
 
@@ -26,7 +24,7 @@ typedef int l1c_int;
     and AVX2, you could redifine this 32.
  */
 #ifndef DALIGN
-#define DALIGN  64
+#define DALIGN 64
 #endif
 
 /**
@@ -38,7 +36,7 @@ typedef int l1c_int;
  * @return pointer to an array of doubles of length N.
  *
  * @see{l1c_calloc_double()}
-*/
+ */
 double* l1c_malloc_double(int N);
 
 double* l1c_calloc_double(int N);
@@ -47,17 +45,15 @@ double** l1c_calloc_double_2D(l1c_int nrow, l1c_int ncol);
 
 double** l1c_malloc_double_2D(l1c_int nrow, l1c_int ncol);
 
-
 /**
  * Free an array allocated by l1c_malloc_double.
  *
  * @param[in] dptr The pointer to be freed.
  */
-void l1c_free_double(double *dptr);
+void l1c_free_double(double* dptr);
 
-void l1c_free_double_2D(int nrow, double **ddptr);
+void l1c_free_double_2D(int nrow, double** ddptr);
 /**@}*/
-
 
 /** @ingroup nesta
  * Instructs optimization to operate in synthesis mode, e.g.,
@@ -66,21 +62,14 @@ void l1c_free_double_2D(int nrow, double **ddptr);
  * Instructs optimization to operate in analysis mode, e.g.,
  *  \f$\min_x ||W^Tx|| \text{ s.t. } ||Rx-b||<\sigma\f$
  */
-typedef enum BpMode {
-  analysis = (1U << 0),
-  synthesis=(1U<<1)
-} BpMode;
-
+typedef enum BpMode { analysis = (1U << 0), synthesis = (1U << 1) } BpMode;
 
 /**
  * @defgroup transforms Functions for linear transformations.
  * @{
  */
 
-typedef enum DctMode {
-  dct1 = 1,
-  dct2 = 2
-}DctMode;
+typedef enum DctMode { dct1 = 1, dct2 = 2 } DctMode;
 
 typedef struct _l1c_AxFuns l1c_AxFuns;
 
@@ -138,52 +127,50 @@ struct _l1c_AxFuns {
   double norm_W;
 
   /** Compute y=Ax */
-  void(*Ax)(double *x, double *y);
+  void (*Ax)(double* x, double* y);
 
   /** Compute x=Aty */
-  void(*Aty)(double *y, double *x);
+  void (*Aty)(double* y, double* x);
 
   /** Compute z=AtAx */
-  void(*AtAx)(double *x, double *z);
+  void (*AtAx)(double* x, double* z);
 
   /** Compute x=Mx */
-  void(*Mx)(double *x, double *y);
+  void (*Mx)(double* x, double* y);
 
   /** Compute z=M^Tx */
-  void(*Mty)(double *x, double *z);
+  void (*Mty)(double* x, double* z);
 
   /** Compute x=Mx */
-  void (*Wz)(double *z, double *x);
+  void (*Wz)(double* z, double* x);
 
   /** Compute z=M^Tx */
-  void (*Wtx)(double *x, double *z);
+  void (*Wtx)(double* x, double* z);
 
   /** Computes y = R * x */
-  void(*Rx)(double *x, double *y);
+  void (*Rx)(double* x, double* y);
 
   /** Computes x = R^T * x. x should already be
       initialized. */
-  void(*Rty)(double *y, double *x);
+  void (*Rty)(double* y, double* x);
 
   /**Release data allocated by the associated setup function.
      All implementations must define .`destroy`. */
-  void(*destroy)(void);
+  void (*destroy)(void);
 
   /** Reserved for future use. Hopefully, will be used
    * to make the optimizations re-entrant, rather than
    * file-global variables (as is currently done).*/
-  void *data;
+  void* data;
 };
 
 /** @}*/
-
-
 
 /**
  * @defgroup lin_solve Routines for solving systems of linear equations.
  * @{*/
 /** Struct containing artifacts of the cgsolve routine. */
-typedef struct _l1c_CgResults{
+typedef struct _l1c_CgResults {
   /** Residual */
   double cgres;
   /** Number of completed conjugate gradient iterations. */
@@ -191,11 +178,10 @@ typedef struct _l1c_CgResults{
 
 } l1c_CgResults;
 
-
 /**
  * Parameters for the conjugate gradient solver.
  */
-typedef struct _l1c_CgParams{
+typedef struct _l1c_CgParams {
   /** If 0, print nothing, if >0, print status every verbose-th iteration. */
   l1c_int verbose;
   /** Maximum number of solver iterations.*/
@@ -206,37 +192,32 @@ typedef struct _l1c_CgParams{
 
 /** @}*/
 
-
-
 /**
  * @defgroup l1qc_lb l1-minimization with quadratic constraint.
  * @{*/
-
 
 typedef struct _l1c_LBResult l1c_LBResult;
 /**
  * Contains the results of an l1qc_newton() optimizations.
  */
-struct _l1c_LBResult{
+struct _l1c_LBResult {
   /** Value of the objective function.*/
   double l1;
   /** Total number of newton interations, across all log-barrier iterations.*/
-  int    total_newton_iter;
+  int total_newton_iter;
   /** Total number of conjugate gradient interations, across all log-barrier
       and all Newton iterations.*/
-  int    total_cg_iter;
+  int total_cg_iter;
   /** Return status. 0 if the optimizations completed succesfully. Otherwise,
       see \ref l1c_errors */
-  int    status;
-
+  int status;
 };
-
 
 typedef struct _l1c_L1qcOpts l1c_L1qcOpts;
 /**
  * Options which control the l1qc_dct() optimization.
  */
-struct _l1c_L1qcOpts{
+struct _l1c_L1qcOpts {
   /** The epsilon in \f$||Ax-b||_2 < \epsilon\f$  */
   double epsilon;
   /** log-barier parameter. */
@@ -250,9 +231,10 @@ struct _l1c_L1qcOpts{
   /** This should be removed. */
   int lbiter;
   /** The newton iterations stop if
-   * \f$ 0.5(\nabla f)^T \begin{bmatrix}d_x \\d_u\end{bmatrix} < \texttt{newton}\_\texttt{tol} \f$
-   * and the optimization continues into the next log-barrier iteration.
-  */
+   * \f$ 0.5(\nabla f)^T \begin{bmatrix}d_x \\d_u\end{bmatrix} <
+   * \texttt{newton}\_\texttt{tol} \f$ and the optimization continues into the next
+   * log-barrier iteration.
+   */
   double newton_tol;
   /** Maximum number of Newton iterations.*/
   int newton_max_iter;
@@ -261,7 +243,7 @@ struct _l1c_L1qcOpts{
   /** Stop Newton iterations when the relative difference in l1-norms
    * between iterations falls below l1_tol. The optimization will continue
    * into the next log-barrier iteration.
-  */
+   */
   double l1_tol;
   /** See l1c_CgParams */
   double cg_tol;
@@ -300,44 +282,83 @@ struct _l1c_NestaOpts {
 
 typedef struct _l1c_NestaOpts l1c_NestaOpts;
 
-int l1c_nesta(l1c_int m, double *xk, l1c_int n, double *b,
-              l1c_AxFuns ax_funs, l1c_NestaOpts opts);
+int l1c_nesta(l1c_int m,
+              double* xk,
+              l1c_int n,
+              double* b,
+              l1c_AxFuns ax_funs,
+              l1c_NestaOpts opts);
 
 /** @} */
 
-int l1c_cgsolve(l1c_int N, double *x, double *b, double **Dwork,
-                void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data),
-                void *AX_data, l1c_CgResults *cg_result, l1c_CgParams cg_params);
+int l1c_cgsolve(l1c_int N,
+                double* x,
+                double* b,
+                double** Dwork,
+                void (*AX_func)(l1c_int n, double* x, double* b, void* AX_data),
+                void* AX_data,
+                l1c_CgResults* cg_result,
+                l1c_CgParams cg_params);
 
-int l1c_cgsolve_diag_precond(l1c_int N, double *x, double *b, double *M_inv_diag, double **Dwork,
-                             void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
-                             l1c_CgResults *cg_result, l1c_CgParams cg_params);
+int l1c_cgsolve_diag_precond(
+    l1c_int N,
+    double* x,
+    double* b,
+    double* M_inv_diag,
+    double** Dwork,
+    void (*AX_func)(l1c_int n, double* x, double* b, void* AX_data),
+    void* AX_data,
+    l1c_CgResults* cg_result,
+    l1c_CgParams cg_params);
 
-l1c_LBResult l1c_l1qc_newton(l1c_int m, double *x, l1c_int n, double *b,
-                             l1c_L1qcOpts params, l1c_AxFuns Ax_funs);
+l1c_LBResult l1c_l1qc_newton(l1c_int m,
+                             double* x,
+                             l1c_int n,
+                             double* b,
+                             l1c_L1qcOpts params,
+                             l1c_AxFuns Ax_funs);
 
-int l1qc_dct(int mrow, int mcol, double *x_out, int n, double *b, l1c_int *pix_idx,
-             l1c_L1qcOpts opts, l1c_LBResult *lb_res);
+int l1qc_dct(int mrow,
+             int mcol,
+             double* x_out,
+             int n,
+             double* b,
+             l1c_int* pix_idx,
+             l1c_L1qcOpts opts,
+             l1c_LBResult* lb_res);
 
-int l1c_breg_anistropic_TV(l1c_int n, l1c_int m, double *uk, double *f,
-                       double mu, double tol, int max_iter, int max_jac_iter);
+int l1c_breg_anistropic_TV(l1c_int n,
+                           l1c_int m,
+                           double* uk,
+                           double* f,
+                           double mu,
+                           double tol,
+                           int max_iter,
+                           int max_jac_iter);
 
+int l1c_dct2_setup(
+    l1c_int n, l1c_int mrow, l1c_int mcol, l1c_int* pix_mask_idx, l1c_AxFuns* ax_funs);
 
-int l1c_dct2_setup(l1c_int n, l1c_int mrow, l1c_int mcol, l1c_int *pix_mask_idx,  l1c_AxFuns *ax_funs);
+int l1c_dct1_setup(l1c_int n, l1c_int m, l1c_int* pix_mask_idx, l1c_AxFuns* ax_funs);
 
-int l1c_dct1_setup(l1c_int n, l1c_int m, l1c_int *pix_mask_idx, l1c_AxFuns *ax_funs);
+int l1c_setup_dct_transforms(l1c_int n,
+                             l1c_int mrow,
+                             l1c_int mcol,
+                             DctMode dct_mode,
+                             l1c_int* pix_idx,
+                             l1c_AxFuns* ax_funs);
 
+int l1c_setup_dctTV_transforms(l1c_int n,
+                               l1c_int mrow,
+                               l1c_int mcol,
+                               double alp_v,
+                               double alp_h,
+                               DctMode dct_mode,
+                               BpMode bp_mode,
+                               l1c_int* pix_idx,
+                               l1c_AxFuns* ax_funs);
 
-int l1c_setup_dct_transforms(l1c_int n, l1c_int mrow, l1c_int mcol, DctMode dct_mode,
-                             l1c_int *pix_idx, l1c_AxFuns *ax_funs);
-
-int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
-                               double alp_v, double alp_h, DctMode dct_mode,
-                               BpMode bp_mode, l1c_int *pix_idx,
-                               l1c_AxFuns *ax_funs);
-
-int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_funs);
-
+int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double* A, l1c_AxFuns* ax_funs);
 
 /**
  * @defgroup l1c_errors Error codes returned.
@@ -346,25 +367,25 @@ int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A, l1c_AxFuns *ax_
 #define L1C_SUCCESS 0
 
 /** Initial guess was infeasible. */
-#define L1C_INFEASIBLE_START  (1U << 1)
+#define L1C_INFEASIBLE_START (1U << 1)
 
 /** Call to malloc failed.*/
-#define L1C_OUT_OF_MEMORY     (1U << 3)
+#define L1C_OUT_OF_MEMORY (1U << 3)
 
 /** FFTW returned a null handle.*/
-#define L1C_DCT_INIT_FAILURE  (1U << 5)
+#define L1C_DCT_INIT_FAILURE (1U << 5)
 
 /** Could not read file.*/
 #define L1C_FILE_READ_FAILURE (1U << 7)
 
 /** Conjugate gradient solver failed.*/
-#define L1C_CGSOLVE_FAILURE   (1U << 9)
+#define L1C_CGSOLVE_FAILURE (1U << 9)
 
 /** E.g., N<0.*/
-#define L1C_INVALID_ARGUMENT  (1U << 11)
+#define L1C_INVALID_ARGUMENT (1U << 11)
 
 /** E.g., asking for analysis, but ax_funs.U==NULL*/
-#define L1C_INCONSISTENT_ARGUMENTS (1U<< 13)
+#define L1C_INCONSISTENT_ARGUMENTS (1U << 13)
 
 /** @}*/
 

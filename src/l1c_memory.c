@@ -6,40 +6,34 @@
 // #define _POSIX_C_SOURCE  200112L
 #include <stdlib.h>
 
-double* l1c_malloc_double(int N){
-  void *dptr;
+double* l1c_malloc_double(int N) {
+  void* dptr;
   /*DALIGN must be multiple of sizeof(double) and power of two.
     This is satisfired for DALIGN=64 and sizeof(double)=8.
   */
-  if(posix_memalign(&dptr, DALIGN, (size_t)(N) * sizeof(double))){
+  if (posix_memalign(&dptr, DALIGN, (size_t)(N) * sizeof(double))) {
     return NULL; // We could check the value,
                  // it's different for out of Mem, vs unacceptable DALIGN.
-  }else{
-    return (double*) dptr;
+  } else {
+    return (double*)dptr;
   }
 }
 
-void l1c_free_double(double *x){
-  free(x);
-}
-
+void l1c_free_double(double* x) { free(x); }
 
 #elif defined(_HAVE_MM_MALLOC_)
 #include <xmmintrin.h>
 
-double* l1c_malloc_double(int N){
-  double *dptr;
+double* l1c_malloc_double(int N) {
+  double* dptr;
   dptr = _mm_malloc((size_t)(N) * sizeof(double), DALIGN);
   return dptr;
 }
 
-void l1c_free_double(double *x){
-  _mm_free(x);
-}
+void l1c_free_double(double* x) { _mm_free(x); }
 #else
 #error You must have either POSIX_MEMALIGN or MM_MALLOC
 #endif //_HAVE_POSIX_MEMALIGN_
-
 
 /**
  * Allocate a **zeroed** array of doubles aligned to a DALGIN byte boundary.
@@ -51,10 +45,10 @@ void l1c_free_double(double *x){
  * @see l1c_malloc_double()
  * @see l1c_malloc_double()
  */
-double* l1c_calloc_double(int N){
-  double *dptr;
+double* l1c_calloc_double(int N) {
+  double* dptr;
   dptr = l1c_malloc_double(N);
-  if (dptr){
+  if (dptr) {
     l1c_init_vec(N, dptr, 0);
   }
   return dptr;
@@ -71,10 +65,10 @@ double* l1c_calloc_double(int N){
  * @see l1c_malloc_double_2D()
  * @see l1c_free_double_2D()
  */
-double** l1c_calloc_double_2D(l1c_int nrow, l1c_int ncol){
-  double **dptr = l1c_malloc_double_2D(nrow, ncol);
-  if (dptr){
-    for(int i=0; i<nrow; i++){
+double** l1c_calloc_double_2D(l1c_int nrow, l1c_int ncol) {
+  double** dptr = l1c_malloc_double_2D(nrow, ncol);
+  if (dptr) {
+    for (int i = 0; i < nrow; i++) {
       l1c_init_vec(ncol, dptr[i], 0);
     }
   }
@@ -93,35 +87,34 @@ double** l1c_calloc_double_2D(l1c_int nrow, l1c_int ncol){
  * @see l1c_calloc_double_2D()
  * @see l1c_free_double_2D()
  */
-double** l1c_malloc_double_2D(l1c_int nrow, l1c_int ncol){
+double** l1c_malloc_double_2D(l1c_int nrow, l1c_int ncol) {
   int k;
-  double **dwork = malloc(nrow*sizeof(double*));
-  if (!dwork){
+  double** dwork = malloc(nrow * sizeof(double*));
+  if (!dwork) {
     goto fail1;
   }
 
-  for (k=0; k<nrow; k++){
+  for (k = 0; k < nrow; k++) {
     dwork[k] = NULL;
   }
 
-  for (k=0; k<nrow; k++){
+  for (k = 0; k < nrow; k++) {
     dwork[k] = l1c_malloc_double(ncol);
-    if (!dwork[k]){
+    if (!dwork[k]) {
       goto fail2;
     }
   }
 
   return dwork;
 
- fail2:
-  for (k=0; k<nrow; k++){
+fail2:
+  for (k = 0; k < nrow; k++) {
     l1c_free_double(dwork[k]);
   }
- fail1:
+fail1:
   free(dwork);
 
   return NULL;
-
 }
 
 /**
@@ -131,11 +124,11 @@ double** l1c_malloc_double_2D(l1c_int nrow, l1c_int ncol){
  * @param[in] nrow Number of rows in the 2D array to be freed.
  * @param[in] ddptr An array (of size nrow) of pointers.
  */
-void l1c_free_double_2D(int nrow, double **ddptr){
+void l1c_free_double_2D(int nrow, double** ddptr) {
 
   /* If ddptr is NULL, we cant free the inner arrays.*/
-  if (ddptr){
-    for (int k=0; k<nrow; k++){
+  if (ddptr) {
+    for (int k = 0; k < nrow; k++) {
       l1c_free_double(ddptr[k]);
     }
   }

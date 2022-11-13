@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
+import build_TV_data as TV
+import L1cTestDataUtils as TDU
 import numpy as np
 import numpy.testing as npt
-import L1cTestDataUtils as TDU
-import build_TV_data as TV
 
 
 def shrink1(x, gamma):
@@ -17,17 +17,17 @@ def norm2_err(x, y):
     y_nrm = y.T.dot(y)
     err = x - y
     err_nrm = err.T.dot(err)
-    return np.sqrt(err_nrm/y_nrm)
+    return np.sqrt(err_nrm / y_nrm)
 
 
 def breg_rhs(n, m, lam, mu, f, dx, bx, dy, by):
     DxMat = TV.DxMatRep(n, m)
     DyMat = TV.DyMatRep(n, m)
 
-    dxx = lam * DxMat.T.dot(dx-bx)
-    dyy = lam * DyMat.T.dot(dy-by)
+    dxx = lam * DxMat.T.dot(dx - bx)
+    dyy = lam * DyMat.T.dot(dy - by)
 
-    return mu*f + dxx + dyy
+    return mu * f + dxx + dyy
 
 
 def breg_hess_eval(n, m, mu, lam, x):
@@ -37,7 +37,7 @@ def breg_hess_eval(n, m, mu, lam, x):
     dxx = DxMat.T.dot(DxMat).dot(x)
     dyy = DyMat.T.dot(DyMat).dot(x)
 
-    return mu*x + lam*(dxx + dyy)
+    return mu * x + lam * (dxx + dyy)
 
 
 def breg_hess_solve(n, m, mu, lam, b):
@@ -46,22 +46,23 @@ def breg_hess_solve(n, m, mu, lam, b):
 
     Dxx = DxMat.T.dot(DxMat)
     Dyy = DyMat.T.dot(DyMat)
-    I = np.eye(n*m)
+    I = np.eye(n * m)
 
-    H = mu*I + lam*(Dxx + Dyy)
+    H = mu * I + lam * (Dxx + Dyy)
     return np.linalg.solve(H, b)
 
 
 def Hess_diag(N, M, mu, lam):
     import build_TV_data
+
     DyMat = build_TV_data.DyMatRep(N, M)
     DxMat = build_TV_data.DxMatRep(N, M)
 
     H = DyMat.T.dot(DyMat) + DxMat.T.dot(DxMat)
-    I = np.eye(N*M)
-    H = mu*I + lam*H
+    I = np.eye(N * M)
+    H = mu * I + lam * H
     H = np.diag(H)
-    H = 1/H
+    H = 1 / H
     return H
 
 
@@ -69,12 +70,11 @@ def build_data(fname):
     np.random.seed(0)
     n = 16
     m = 16
-    N = n*m
+    N = n * m
 
-
-    gamma = .53
+    gamma = 0.53
     mu = 10
-    lam = 2*mu
+    lam = 2 * mu
 
     hdiag = Hess_diag(n, m, mu, lam)
 
@@ -98,27 +98,29 @@ def build_data(fname):
 
     nrm2 = norm2_err(x, y)
 
-    data = {'N': N,
-            'n': n,
-            'm': m,
-            'gamma': gamma,
-            'x': x,
-            'y': y,
-            'z': z,
-            'dx': dx,
-            'bx': bx,
-            'dy': dy,
-            'by': by,
-            'f': f,
-            'lam': lam,
-            'mu': mu,
-            'rhs': rhs,
-            'b': b,
-            'Hsolveb': Hsolve_b,
-            'Hessx': Hess_x,
-            'H_diag': hdiag,
-            'x_shrunk': x_shrunk,
-            'nrm2': nrm2}
+    data = {
+        "N": N,
+        "n": n,
+        "m": m,
+        "gamma": gamma,
+        "x": x,
+        "y": y,
+        "z": z,
+        "dx": dx,
+        "bx": bx,
+        "dy": dy,
+        "by": by,
+        "f": f,
+        "lam": lam,
+        "mu": mu,
+        "rhs": rhs,
+        "b": b,
+        "Hsolveb": Hsolve_b,
+        "Hessx": Hess_x,
+        "H_diag": hdiag,
+        "x_shrunk": x_shrunk,
+        "nrm2": nrm2,
+    }
 
     data = TDU.jsonify(data)
 
@@ -127,28 +129,26 @@ def build_data(fname):
 
 def build_breg_img_data(fname):
     import build_CS20NG_example_data as CS20
+
     n = 256
     m = n
     img = CS20.make_CS20NG(n)
 
-    img_vec = img.flatten() + np.random.rand(n*m)
+    img_vec = img.flatten() + np.random.rand(n * m)
 
-    data = {'img_vec': img_vec,
-            'n': n,
-            'm': m,
-            'mu': 5}
+    data = {"img_vec": img_vec, "n": n, "m": m, "mu": 5}
 
     data = TDU.jsonify(data)
 
     TDU.save_json(data, fname)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     data_dir = TDU.data_dir()
 
-    fname = data_dir+"/bregman.json"
+    fname = data_dir + "/bregman.json"
 
     build_data(fname)
 
-    build_breg_img_data(data_dir+"/bregman_img.json")
+    build_breg_img_data(data_dir + "/bregman_img.json")

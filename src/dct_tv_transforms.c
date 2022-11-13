@@ -1,26 +1,24 @@
+#include "TV.h"
 #include "config.h"
+#include "l1c.h"
 #include <cblas.h>
+#include <math.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <math.h>
-#include "l1c.h"
-#include "TV.h"
-
 
 #define _JOB_TV_V (1u << 1)
 #define _JOB_TV_H (1u << 3)
 
-
 /* Local functions */
-static int check_pix_idx(l1c_int n, l1c_int *pix_idx, l1c_int max_idx);
+static int check_pix_idx(l1c_int n, l1c_int* pix_idx, l1c_int max_idx);
 static void destroy();
-static void Wv (double *v, double *y);
-static void Wtx (double *x, double *v);
-static void Rx(double *x, double *y);
-static void Rty(double *y, double *x);
-static void Av(double *v, double *y);
-static void Aty(double *y, double *v);
-static void Identity(double *x, double *z);
+static void Wv(double* v, double* y);
+static void Wtx(double* x, double* v);
+static void Rx(double* x, double* y);
+static void Rty(double* y, double* x);
+static void Av(double* v, double* y);
+static void Aty(double* y, double* v);
+static void Identity(double* x, double* z);
 
 /* Local variables */
 static l1c_int _m;
@@ -32,7 +30,7 @@ static double _alp_h;
 static double _alp_v;
 
 static l1c_AxFuns ax_funs_local;
-static double *u;
+static double* u;
 static l1c_int _inc_TVH, _inc_TVV;
 static unsigned jobs;
 
@@ -62,9 +60,15 @@ static unsigned jobs;
 
 */
 
-int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
-                               double alp_v, double alp_h, DctMode dct_mode,
-                               BpMode bp_mode, l1c_int *pix_idx, l1c_AxFuns *ax_funs) {
+int l1c_setup_dctTV_transforms(l1c_int n,
+                               l1c_int mrow,
+                               l1c_int mcol,
+                               double alp_v,
+                               double alp_h,
+                               DctMode dct_mode,
+                               BpMode bp_mode,
+                               l1c_int* pix_idx,
+                               l1c_AxFuns* ax_funs) {
   jobs = 0;
   int status = L1C_SUCCESS;
   _mrow = mrow;
@@ -76,15 +80,15 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
   _inc_TVV = 0;
   _inc_TVH = 0;
 
-  if (n <=0 || mrow <=0 || mcol <=0 || alp_v < 0 || alp_h < 0){
+  if (n <= 0 || mrow <= 0 || mcol <= 0 || alp_v < 0 || alp_h < 0) {
     return L1C_INVALID_ARGUMENT;
   }
 
-  if ( (alp_h > 0 || alp_v > 0) && (mrow <= 2 || mcol <= 2)) {
+  if ((alp_h > 0 || alp_v > 0) && (mrow <= 2 || mcol <= 2)) {
     return L1C_INVALID_ARGUMENT;
   }
 
-  if (check_pix_idx(n, pix_idx, mrow*mcol-1)){
+  if (check_pix_idx(n, pix_idx, mrow * mcol - 1)) {
     return L1C_INVALID_ARGUMENT;
   }
 
@@ -93,9 +97,9 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
     ||A|| <= \sqrt{ ||M_1||^2 + ||M_2||^2 }
     Here, ||M=dct||=1, and  evidently, ||alp_h*D_h||~=alp_h*2 and ||alp_v*D_v||~=alp_h*2
    */
-  if (bp_mode == analysis){
-    ax_funs->norm_W = sqrt(1 + 4*alp_v*alp_v + 4*alp_h*alp_h);
-  }else{
+  if (bp_mode == analysis) {
+    ax_funs->norm_W = sqrt(1 + 4 * alp_v * alp_v + 4 * alp_h * alp_h);
+  } else {
     ax_funs->norm_W = 1;
   }
 
@@ -116,14 +120,13 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
     _p += _m;
   }
 
-
   ax_funs->n = n;
   ax_funs->q = _m;
 
-  if (bp_mode == synthesis){
+  if (bp_mode == synthesis) {
     ax_funs->p = _m;
     ax_funs->m = _p;
-  }else{ //analysis
+  } else { // analysis
     ax_funs->p = _p;
     ax_funs->m = _m;
   }
@@ -134,8 +137,7 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
     return L1C_OUT_OF_MEMORY;
   }
 
-  status = l1c_setup_dct_transforms(n, mrow, mcol, dct_mode,
-                                    pix_idx, &ax_funs_local);
+  status = l1c_setup_dct_transforms(n, mrow, mcol, dct_mode, pix_idx, &ax_funs_local);
   if (status) {
     goto fail;
   }
@@ -163,7 +165,7 @@ int l1c_setup_dctTV_transforms(l1c_int n, l1c_int mrow, l1c_int mcol,
 
   return status;
 
- fail:
+fail:
   l1c_free_double(u);
   return status;
 }
@@ -173,9 +175,7 @@ static void destroy() {
   l1c_free_double(u);
 }
 
-static void Identity(double *x, double *z) {
-  cblas_dcopy(_m, x, 1, z, 1);
-}
+static void Identity(double* x, double* z) { cblas_dcopy(_m, x, 1, z, 1); }
 
 /*
   Implements W * v = [M, Dh, Dv] * [v0;
@@ -183,10 +183,10 @@ static void Identity(double *x, double *z) {
   v2]
   x \in \mathbb{R}^p, p=3*m
 */
-static void Wv(double *v, double *y) {
+static void Wv(double* v, double* y) {
 
-  double *u_TVV = u + _inc_TVV;
-  double *u_TVH = u + _inc_TVH;
+  double* u_TVV = u + _inc_TVV;
+  double* u_TVH = u + _inc_TVH;
   ax_funs_local.Mx(v, u);
   cblas_dcopy(_m, u, 1, y, 1);
 
@@ -208,10 +208,10 @@ static void Wv(double *v, double *y) {
 
   x \in \mathbb{R}^p, p=3*m
 */
-static void Wtx(double *x, double *v) {
-  double *v0 = v;
-  double *v_dxv = v + _inc_TVV;
-  double *v_dxh = v + _inc_TVH;
+static void Wtx(double* x, double* v) {
+  double* v0 = v;
+  double* v_dxv = v + _inc_TVV;
+  double* v_dxh = v + _inc_TVH;
 
   ax_funs_local.Mty(x, v0);
 
@@ -223,22 +223,22 @@ static void Wtx(double *x, double *v) {
   }
 }
 
-static void Rx(double *x, double *y) { ax_funs_local.Rx(x, y); }
+static void Rx(double* x, double* y) { ax_funs_local.Rx(x, y); }
 
-static void Rty(double *y, double *x) { ax_funs_local.Rty(y, x); }
+static void Rty(double* y, double* x) { ax_funs_local.Rty(y, x); }
 
-static void Av(double *v, double *y) {
+static void Av(double* v, double* y) {
   Wv(v, u);
   ax_funs_local.Rx(u, y);
 }
 
-static void Aty(double *y, double *v) {
+static void Aty(double* y, double* v) {
 
   ax_funs_local.Rty(y, u);
   Wtx(u, v);
 }
 
-static int check_pix_idx(l1c_int n, l1c_int *pix_idx, l1c_int max_idx) {
+static int check_pix_idx(l1c_int n, l1c_int* pix_idx, l1c_int max_idx) {
   l1c_int idx = 0;
   for (int i = 0; i < n; i++) {
     idx = pix_idx[i];

@@ -3,30 +3,26 @@
  */
 #include "config.h"
 
-
 #define CK_FLOATING_DIG 20
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h> //Constants
 #include <check.h>
+#include <math.h> //Constants
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "l1c.h"
 
-#include <cjson/cJSON.h>
 #include "json_utils.h"
 #include "vcl_math.h"
+#include <cjson/cJSON.h>
 
 /* Tolerances and things */
-#include "test_constants.h"
 #include "check_utils.h"
+#include "test_constants.h"
 
-
-
-START_TEST(test_vcl_sum)
-{
+START_TEST(test_vcl_sum) {
   double x_[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
-  double *x = l1c_malloc_double(12);
-  for (int i =0; i<12; i++){
+  double* x = l1c_malloc_double(12);
+  for (int i = 0; i < 12; i++) {
     x[i] = x_[i];
   }
 
@@ -60,12 +56,10 @@ START_TEST(test_vcl_sum)
 }
 END_TEST
 
-
-START_TEST(test_vcl_logsum)
-{
+START_TEST(test_vcl_logsum) {
   double x_[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
-  double *x = l1c_malloc_double(12);
-  for (int i =0; i<12; i++){
+  double* x = l1c_malloc_double(12);
+  for (int i = 0; i < 12; i++) {
     x[i] = x_[i];
   }
   double logsum_exp0 = 5.087596335232384;
@@ -101,16 +95,11 @@ START_TEST(test_vcl_logsum)
 }
 END_TEST
 
+Suite* vcl_math_suite(void) {
+  Suite* s;
 
-
-
-Suite *vcl_math_suite(void)
-{
-  Suite *s;
-
-  TCase  *tc_mathfuns;
+  TCase* tc_mathfuns;
   s = suite_create("vcl_suite");
-
 
   tc_mathfuns = tcase_create("vcl_math");
   tcase_add_test(tc_mathfuns, test_vcl_sum);
@@ -120,5 +109,4 @@ Suite *vcl_math_suite(void)
   suite_add_tcase(s, tc_mathfuns);
 
   return s;
-
 }

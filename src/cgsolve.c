@@ -1,22 +1,25 @@
 /**  @file
-This contains the conjugate gradient solver, cgsolve. The two small routines Ax and Ax_sym illustrate how the user function AX_func can parse the input void *AX_data.
+This contains the conjugate gradient solver, cgsolve. The two small routines Ax and
+Ax_sym illustrate how the user function AX_func can parse the input void *AX_data.
 
 */
 #include "config.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
 #include "cblas.h"
 #include "l1c.h"
-#include "l1c_math.h"
 #include "l1c_logging.h"
+#include "l1c_math.h"
 
-static void
-cg_report(int iter, double best_rel_res, double rel_res,
-          double alpha, double beta, double delta);
-
+static void cg_report(int iter,
+                      double best_rel_res,
+                      double rel_res,
+                      double alpha,
+                      double beta,
+                      double delta);
 
 /**
  * @ingroup lin_solve
@@ -51,20 +54,26 @@ cg_report(int iter, double best_rel_res, double rel_res,
  * you could do
  * AX_func((int n, double *x, double *b, void *AX_data){
  * double *A = (double *) AX_data;
- * @param[out] cg_result Pointer to a struct containing relevent results from the computation.
- * @param[in] cg_params Struct containing parameters (tolerance and verbosity) for the computation.
-*
-*/
-int l1c_cgsolve(l1c_int N, double *x, double *b, double **Dwork,
-                void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
-                l1c_CgResults *cg_result, l1c_CgParams cg_params){
-
+ * @param[out] cg_result Pointer to a struct containing relevent results from the
+ * computation.
+ * @param[in] cg_params Struct containing parameters (tolerance and verbosity) for the
+ * computation.
+ *
+ */
+int l1c_cgsolve(l1c_int N,
+                double* x,
+                double* b,
+                double** Dwork,
+                void (*AX_func)(l1c_int n, double* x, double* b, void* AX_data),
+                void* AX_data,
+                l1c_CgResults* cg_result,
+                l1c_CgParams cg_params) {
 
   int iter;
   l1c_int i = 0;
 
   double delta = 0.0;
-  double delta_0= 0.0;
+  double delta_0 = 0.0;
   double delta_old = 0.0;
   double rel_res = 0.0;
   double best_rel_res = 0.0;
@@ -89,31 +98,28 @@ int l1c_cgsolve(l1c_int N, double *x, double *b, double **Dwork,
   bestres = sqrt(delta/delta_0);
   */
 
-  for (i=0; i<N; i++){
+  for (i = 0; i < N; i++) {
     bestx[i] = x[i];
   }
 
-
-  //OLD: cblas_dcopy((int)N, b, 1, r, 1);       /*r=b: copy b (ie, z_i_1) to r */
+  // OLD: cblas_dcopy((int)N, b, 1, r, 1);       /*r=b: copy b (ie, z_i_1) to r */
   /*Using warmstart: set r = b - A*x  */
-  AX_func(N, x, r, AX_data);                    /* r = A * x                   */
-  l1c_daxpby(N, 1.0, b, -1.0, r);       /* r = 1*b + (-1)*Ax           */
+  AX_func(N, x, r, AX_data);      /* r = A * x                   */
+  l1c_daxpby(N, 1.0, b, -1.0, r); /* r = 1*b + (-1)*Ax           */
 
+  cblas_dcopy((int)N, r, 1, p, 1);   /*p=r:                          */
+  delta = cblas_ddot(N, r, 1, r, 1); /*delta = r'*r                  */
 
-  cblas_dcopy((int)N, r, 1, p, 1);             /*p=r:                          */
-  delta = cblas_ddot(N, r, 1, r, 1);           /*delta = r'*r                  */
+  delta_0 = cblas_ddot(N, b, 1, b, 1); /*delta_0 = b'*b                */
+  best_rel_res = sqrt(delta / delta_0);
 
-  delta_0 = cblas_ddot(N, b, 1, b, 1);         /*delta_0 = b'*b                */
-  best_rel_res = sqrt(delta/delta_0);
+  for (iter = 1; iter <= cg_params.max_iter; iter++) {
 
+    AX_func(N, p, q, AX_data); /* q = A * p */
 
-  for (iter=1; iter<=cg_params.max_iter; iter++){
+    alpha = delta / cblas_ddot(N, p, 1, q, 1); /* alpha delta/(d'*q) */
 
-    AX_func(N, p, q, AX_data);                    /* q = A * p */
-
-    alpha = delta / cblas_ddot(N, p, 1, q, 1);    /* alpha delta/(d'*q) */
-
-    cblas_daxpy(N, alpha, p, 1, x, 1);            /* x = alpha*d + x    */
+    cblas_daxpy(N, alpha, p, 1, x, 1); /* x = alpha*d + x    */
     // if ( (iter+1 %50 ) == 0){
     //   AX_func(N, x, r, AX_data);               /* r = b - A(x);      */
     //   cblas_daxpby(N, 1.0, b, 1, -1.0, r, 1);  /* r = b - A*x        */
@@ -122,42 +128,37 @@ int l1c_cgsolve(l1c_int N, double *x, double *b, double **Dwork,
     //   continue;
     // }
 
-    cblas_daxpy(N, -alpha, q, 1, r, 1);          /* r = - alpha*q + r; */
+    cblas_daxpy(N, -alpha, q, 1, r, 1); /* r = - alpha*q + r; */
     delta_old = delta;
-    delta = cblas_ddot(N, r, 1, r, 1);           /* delta = r'*r;      */
+    delta = cblas_ddot(N, r, 1, r, 1); /* delta = r'*r;      */
 
-    beta = delta/delta_old;
-    l1c_daxpby(N, 1.0, r, beta, p);      /* d = r + beta*p;    */
+    beta = delta / delta_old;
+    l1c_daxpby(N, 1.0, r, beta, p); /* d = r + beta*p;    */
 
-    rel_res = sqrt(delta/delta_0);
+    rel_res = sqrt(delta / delta_0);
     if (rel_res < best_rel_res) {
-      //bestx = x;
-      cblas_dcopy( (int)N, x, 1, bestx, 1);
+      // bestx = x;
+      cblas_dcopy((int)N, x, 1, bestx, 1);
       best_rel_res = rel_res;
     }
 
     // modulo 0 is a floating point exception.
-    if ( cg_params.verbose >0 && (iter % cg_params.verbose)==0){
+    if (cg_params.verbose > 0 && (iter % cg_params.verbose) == 0) {
       cg_report(iter, best_rel_res, rel_res, alpha, beta, delta);
     }
 
-    if (rel_res < cg_params.tol){
+    if (rel_res < cg_params.tol) {
       break;
     }
-
   }
 
-
   // x = bestx;
-  cblas_dcopy( (int)N, bestx, 1, x, 1);
+  cblas_dcopy((int)N, bestx, 1, x, 1);
   cg_result->cgres = best_rel_res;
-  cg_result->cgiter = min(iter, cg_params.max_iter); //Loops increment before exiting.
-
+  cg_result->cgiter = min(iter, cg_params.max_iter); // Loops increment before exiting.
 
   return 0;
-
 }
-
 
 /**
  * @ingroup lin_solve
@@ -196,14 +197,22 @@ int l1c_cgsolve(l1c_int N, double *x, double *b, double **Dwork,
  * you could do
  * AX_func((int n, double *x, double *b, void *AX_data){
  * double *A = (double *) AX_data;
- * @param[out] cg_result Pointer to a struct containing relevent results from the computation.
- * @param[in] cg_params Struct containing parameters (tolerance and verbosity) for the computation.
+ * @param[out] cg_result Pointer to a struct containing relevent results from the
+ * computation.
+ * @param[in] cg_params Struct containing parameters (tolerance and verbosity) for the
+ * computation.
  *
-*/
-int l1c_cgsolve_diag_precond(l1c_int N, double *x, double *b, double *M_inv_diag, double **Dwork,
-                             void(*AX_func)(l1c_int n, double *x, double *b, void *AX_data), void *AX_data,
-                             l1c_CgResults *cg_result, l1c_CgParams cg_params){
-
+ */
+int l1c_cgsolve_diag_precond(
+    l1c_int N,
+    double* x,
+    double* b,
+    double* M_inv_diag,
+    double** Dwork,
+    void (*AX_func)(l1c_int n, double* x, double* b, void* AX_data),
+    void* AX_data,
+    l1c_CgResults* cg_result,
+    l1c_CgParams cg_params) {
 
   int iter;
   l1c_int i = 0;
@@ -236,90 +245,88 @@ int l1c_cgsolve_diag_precond(l1c_int N, double *x, double *b, double *M_inv_diag
   bestres = sqrt(delta/nrm_b_sqrd);
   */
 
-  for (i=0; i<N; i++){
+  for (i = 0; i < N; i++) {
     bestx[i] = x[i];
   }
 
-
-  //OLD: cblas_dcopy((int)N, b, 1, r, 1);       /*r=b: copy b (ie, z_i_1) to r */
+  // OLD: cblas_dcopy((int)N, b, 1, r, 1);       /*r=b: copy b (ie, z_i_1) to r */
   /*Using warmstart: set r = b - A*x  */
-  AX_func(N, x, r, AX_data);                    /* r = A * x                   */
-  l1c_daxpby(N, 1.0, b, -1.0, r);       /* r = 1*b + (-1)*Ax           */
+  AX_func(N, x, r, AX_data);      /* r = A * x                   */
+  l1c_daxpby(N, 1.0, b, -1.0, r); /* r = 1*b + (-1)*Ax           */
 
   // z0 = M^-1 * r0
   l1c_dxmuly_z(N, r, M_inv_diag, z);
 
   // p0 = z0
-  cblas_dcopy((int)N, z, 1, p, 1);             /*p=r:                          */
-  delta = cblas_ddot(N, r, 1, z, 1);           /*delta = r'*z                  */
+  cblas_dcopy((int)N, z, 1, p, 1);   /*p=r:                          */
+  delta = cblas_ddot(N, r, 1, z, 1); /*delta = r'*z                  */
 
-  nrm_b_sqrd = cblas_ddot(N, b, 1, b, 1);         /*nrm_b_sqrd = b'*b                */
-  best_rel_res = sqrt(delta/nrm_b_sqrd);
+  nrm_b_sqrd = cblas_ddot(N, b, 1, b, 1); /*nrm_b_sqrd = b'*b                */
+  best_rel_res = sqrt(delta / nrm_b_sqrd);
 
+  for (iter = 1; iter <= cg_params.max_iter; iter++) {
 
-  for (iter=1; iter<=cg_params.max_iter; iter++){
+    AX_func(N, p, q, AX_data); /* q = A * p */
 
-    AX_func(N, p, q, AX_data);                    /* q = A * p */
+    alpha = delta / cblas_ddot(N, p, 1, q, 1); /* alpha delta/(d'*q) */
 
-    alpha = delta / cblas_ddot(N, p, 1, q, 1);    /* alpha delta/(d'*q) */
+    cblas_daxpy(N, alpha, p, 1, x, 1); /* x = alpha*p + x    */
 
-    cblas_daxpy(N, alpha, p, 1, x, 1);            /* x = alpha*p + x    */
+    cblas_daxpy(N, -alpha, q, 1, r, 1); /* r = - alpha*q + r; */
 
-    cblas_daxpy(N, -alpha, q, 1, r, 1);           /* r = - alpha*q + r; */
-
-    l1c_dxmuly_z(N, r, M_inv_diag, z);            /* z = M^-1 * r */
-
+    l1c_dxmuly_z(N, r, M_inv_diag, z); /* z = M^-1 * r */
 
     delta_old = delta;
-    delta = cblas_ddot(N, r, 1, z, 1);           /* delta = r'*z;      */
+    delta = cblas_ddot(N, r, 1, z, 1); /* delta = r'*z;      */
 
-    beta = delta/delta_old;
-    l1c_daxpby(N, 1.0, z, beta, p);      /* p = z + beta*p;    */
+    beta = delta / delta_old;
+    l1c_daxpby(N, 1.0, z, beta, p); /* p = z + beta*p;    */
 
     nrm_r_sqrd = cblas_ddot(N, r, 1, r, 1);
-    rel_res = sqrt(nrm_r_sqrd/nrm_b_sqrd);
+    rel_res = sqrt(nrm_r_sqrd / nrm_b_sqrd);
 
     if (rel_res < best_rel_res) {
-      //bestx = x;
-      cblas_dcopy( (int)N, x, 1, bestx, 1);
+      // bestx = x;
+      cblas_dcopy((int)N, x, 1, bestx, 1);
       best_rel_res = rel_res;
     }
 
     // modulo 0 is a floating point exception.
-    if ( cg_params.verbose >0 && (iter % cg_params.verbose)==0){
+    if (cg_params.verbose > 0 && (iter % cg_params.verbose) == 0) {
       cg_report(iter, best_rel_res, rel_res, alpha, beta, delta);
     }
 
-    if (rel_res < cg_params.tol){
+    if (rel_res < cg_params.tol) {
       break;
     }
-
   }
 
-
   // x = bestx;
-  cblas_dcopy( (int)N, bestx, 1, x, 1);
+  cblas_dcopy((int)N, bestx, 1, x, 1);
   cg_result->cgres = best_rel_res;
-  cg_result->cgiter = min(iter, cg_params.max_iter); //Loops increment before exiting.
-
+  cg_result->cgiter = min(iter, cg_params.max_iter); // Loops increment before exiting.
 
   return 0;
-
 }
 
 /*
   Report progress of cgsolve.
  */
-static void
-cg_report(int iter, double best_rel_res, double rel_res,
-          double alpha, double beta, double delta){
+static void cg_report(int iter,
+                      double best_rel_res,
+                      double rel_res,
+                      double alpha,
+                      double beta,
+                      double delta) {
 
-  if (iter==1){
+  if (iter == 1) {
     l1c_printf("cg: |Iter| Best resid | Current resid| alpha | beta   |   delta  |\n");
   }
   l1c_printf("  %d,   %.16e, %.16e, %.16e, %.16e, %.16e  \n",
-             iter, best_rel_res, rel_res, alpha, beta, delta);
-
+             iter,
+             best_rel_res,
+             rel_res,
+             alpha,
+             beta,
+             delta);
 }
-
-

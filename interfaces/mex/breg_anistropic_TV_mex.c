@@ -6,16 +6,16 @@
 #ifdef L1C_MEX_MATLAB
 #include "matrix.h"
 #endif
-#include <string.h>
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "cblas.h"
 #include "l1c.h"
-#include "l1c_mex_utils.h"
 #include "l1c_logging.h"
+#include "l1c_mex_utils.h"
 
-#define NUMBER_OF_FIELDS(ST) (sizeof(ST)/sizeof(*ST))
+#define NUMBER_OF_FIELDS(ST) (sizeof(ST) / sizeof(*ST))
 
 /**
 
@@ -24,15 +24,14 @@
  where
  f an n by m matrix, n>2, m>2, mu and tol are scarlar doubles.
  */
-void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] ){
+void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
   /* Replace printf with mexPrintf */
   l1c_replace_printf(mexPrintf);
 
+  double *f = NULL, *f_ours = NULL, *f_out = NULL, *uk = NULL;
 
-  double *f=NULL, *f_ours=NULL, *f_out=NULL, *uk=NULL;
-
-  double tol=0, mu=0;
-  l1c_int i=0, N=0, M=0;
+  double tol = 0, mu = 0;
+  l1c_int i = 0, N = 0, M = 0;
   /*--- Defaults --- */
   int max_iter = 1000, max_jac_iter = 1;
 
@@ -45,8 +44,8 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] ){
   _mex_assert_2Darray_with_size(prhs, 0, 3, 3);
 
   /*Matlab give us column major order.*/
-  M = (l1c_int) mxGetN(prhs[0]);
-  N = (l1c_int) mxGetM(prhs[0]);
+  M = (l1c_int)mxGetN(prhs[0]);
+  N = (l1c_int)mxGetM(prhs[0]);
   f = mxGetPr(prhs[0]);
 
   /* -------- Check mu, tol, max_iter -------------*/
@@ -54,31 +53,31 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] ){
   tol = _mex_get_double_scalar_or_fail(prhs, 2);
   max_iter = (int)_mex_get_double_scalar_or_fail(prhs, 3);
 
-  /* We require that f is aligned on a DALIGN byte boundary. Matlab does not guarantee this.
-  */
-  f_ours = l1c_malloc_double(N*M);
-  uk = l1c_malloc_double(N*M);
-  if (!f_ours || !uk){
-    mexErrMsgIdAndTxt("l1c:l1qc_dct:outofmemory",
-                      "Error Allocating memory.");
+  /* We require that f is aligned on a DALIGN byte boundary. Matlab does not guarantee
+   * this.
+   */
+  f_ours = l1c_malloc_double(N * M);
+  uk = l1c_malloc_double(N * M);
+  if (!f_ours || !uk) {
+    mexErrMsgIdAndTxt("l1c:l1qc_dct:outofmemory", "Error Allocating memory.");
     goto exit;
   }
-  cblas_dcopy(N*M, f, 1, f_ours, 1);
+  cblas_dcopy(N * M, f, 1, f_ours, 1);
   int stat = l1c_breg_anistropic_TV(N, M, uk, f_ours, mu, tol, max_iter, max_jac_iter);
-  if (stat){
+  if (stat) {
     plhs[0] = NULL;
     goto exit;
   }
   /* Prepare output data. */
-  plhs[0] = mxCreateDoubleMatrix((mwSize)M,  (mwSize)N, mxREAL);
+  plhs[0] = mxCreateDoubleMatrix((mwSize)M, (mwSize)N, mxREAL);
 
-  f_out =  mxGetPr(plhs[0]);
+  f_out = mxGetPr(plhs[0]);
 
-  for (i=0; i<N*M; i++){
+  for (i = 0; i < N * M; i++) {
     f_out[i] = uk[i];
   }
 
- exit:
+exit:
   l1c_free_double(f_ours);
   l1c_free_double(uk);
 
