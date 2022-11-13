@@ -163,7 +163,7 @@ function check_breg_TV_mex(fpath)
   mu = 5;
   tol = 0.001;
 
-  Xopt = breg_anistropic_tv(img, mu, tol, 1000);
+  Xopt = breg_anistropic_TV(img, mu, tol, 1000);
 
   L1cMexTesting.assert_eq(size(Xopt, 1), n);
   L1cMexTesting.assert_eq(size(Xopt, 2), m);

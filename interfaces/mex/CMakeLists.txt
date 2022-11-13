@@ -8,17 +8,17 @@ add_library(nesta_dctTV MODULE l1c_mex_utils.c nesta_dctTV_mex.c)
 target_link_libraries(nesta_dctTV Octave::Octave l1c::l1c)
 set_target_properties(nesta_dctTV PROPERTIES PREFIX "" SUFFIX ".mex")
 
-add_library(breg_anistropic_tv MODULE l1c_mex_utils.c breg_anistropic_TV_mex.c)
-target_link_libraries(breg_anistropic_tv Octave::Octave l1c::l1c)
-set_target_properties(breg_anistropic_tv PROPERTIES PREFIX "" SUFFIX ".mex")
+add_library(breg_anistropic_TV MODULE l1c_mex_utils.c breg_anistropic_TV_mex.c)
+target_link_libraries(breg_anistropic_TV Octave::Octave l1c::l1c)
+set_target_properties(breg_anistropic_TV PROPERTIES PREFIX "" SUFFIX ".mex")
 
+set(MEX_ROOT ${CMAKE_CURRENT_BINARY_DIR})
 set(_m_files
     breg_anistropic_TV.m
     l1qc_dct.m
     l1qc_dct_opts.m
     nesta_opts.m
     examples/cs20ng_grating.m
-    examples/l1c_mex_init_paths.m.in
     examples/mu_path_mask.m
     examples/nesta_example.m
     examples/play_l1qc_lb_and_TV_example.m)
@@ -27,6 +27,8 @@ foreach(_file IN ITEMS ${_m_files})
   message(${_file})
   configure_file(${_file} ${CMAKE_CURRENT_BINARY_DIR}/${_file} COPYONLY)
 endforeach()
+configure_file(examples/l1c_mex_init_paths.m.in
+  ${CMAKE_CURRENT_BINARY_DIR}/examples/l1c_mex_init_paths.m)
 
 set(_mex_test_srcs
     TMU_mex_assert_2Darray_with_size.c

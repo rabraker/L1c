@@ -73,7 +73,11 @@ add_subdirectory(src)
 add_subdirectory(examples/c)
 add_subdirectory(test)
 add_subdirectory(interfaces/python)
-add_subdirectory(interfaces/mex)
+
+option(ENABLE_MEX "Allow building the octave interface.")
+if(ENABLE_MEX)
+  add_subdirectory(interfaces/mex)
+endif()
 
 
 configure_file(
