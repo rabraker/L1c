@@ -1,14 +1,9 @@
 % This script creates an image that is a simulation representation of a CS20NG
 % calibration grating, (used in Atomic force microscopy). We then create a 
 % mu-path mask and sample the original image. We then demonstrate using the
-% l1qc_newton() optimization to reconstruct the image with basis pursuit.
-% Finally, we demonstrate the anistrpic TV denoising, to remove some noise from
-% the BP reconstruction.
+% nesta_dctTV() optimization to reconstruct the image with basis pursuit.
 
 clear
-
-% This needs to point to the current build directory, ie whereever the mex files
-% ended up.
 l1c_mex_init_paths();
 
 sampling_ratio = 0.1; % take 10% of the pixels
@@ -16,8 +11,12 @@ mu_path_len = 25;     % mu-path length in pixels.
 N = 256;              % (pixels) Size of square image
 
 % Create the test image.
+try
+    rng(1);       % Always get the same mask.
+catch ME
+    fprintf("CANNOT SET RNG SEED IN OCTAVE\n");
+end
 
-rng(1);       % Always get the same mask.
 X_img_orig = cs20ng_grating(13,13,N);
 
 % Create the sampling mask. pix_idx is a vector of sampled pixel indeces (which
@@ -29,37 +28,30 @@ X_img_orig = cs20ng_grating(13,13,N);
 % sub samble the original image.
 b = X_img_orig(pix_idx);
 
-opts = l1qc_dct_opts('verbose', 2, 'l1_tol', 1e-5);
+alpv = .5;
+alph = .1;
+opts = nesta_opts('alpha_v', alpv,...    % Weight on vertical variation.
+                  'alpha_h', alph,...    % Weight on horizontal variation.
+                  'verbose', 5,...       % print every 5th iteration.
+                  'dct_mode', 1, ...     % use 1d dct
+                  'bp_mode', 'analysis',... %Can also select synthesis mode.
+                  'tol', 1e-5,...        % Read the paper...
+                  'mu', 1e-5);           % Read the paper...
 
-[x_est, LBRes]= l1qc_dct(N*N, 1, b, pix_idx, opts);
+[x_est, status] = nesta_dctTV(N, N, b, pix_idx, opts);
 
-X_bp = reshape(x_est, N, N)';
-
-figure(1)
-subplot(2, 2, 1)
+figure(1, 'Position', [0, 0 1400, 450])
+subplot(1,3,1)
 imagesc(X_img_orig)
 colormap('gray')
-title('original')
+title('Original')
 
-subplot(2, 2, 2)
+subplot(1,3,2)
 imagesc(pix_mask_mat)
 colormap('gray')
-title('Sampling mask')
+title('Original')
 
-subplot(2, 2, 3)
-imagesc(X_bp)
+subplot(1,3,3)
+imagesc(x_est)
 colormap('gray')
-title('BP reconstruction')
-
-% We can help with noise in the BP reconstruction with TV denoising.
-mu = 5;
-max_iter = 1000;
-tol = 0.001;
-X_tv = breg_anistropic_TV(X_bp, mu, tol, max_iter);
-
-subplot(2, 2, 4)
-imagesc(X_tv)
-colormap('gray')
-title('BP reconstruction + TV denoising')
-
-
+title('Reconstruction')

@@ -3,7 +3,9 @@
  so that, for this function, we get matlabs definition of fprintf
 */
 #include "mex.h"
+#ifdef L1C_MEX_MATLAB
 #include "matrix.h"
+#endif
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>

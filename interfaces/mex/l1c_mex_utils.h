@@ -1,8 +1,9 @@
-#ifndef __L1C_MEX_UTILS__
-#define __L1C_MEX_UTILS__
+#pragma once
 
 #include "mex.h"
+#ifdef L1C_MEX_MATLAB
 #include "matrix.h"
+#endif
 #include "l1c.h"
 
 #define NUMBER_OF_FIELDS(ST) (sizeof(ST)/sizeof(*ST))
@@ -47,4 +48,3 @@ _mex_assert_1darray(const mxArray **mxa, size_t idx);
 void
 _mex_assert_2Darray_with_size(const mxArray **mxa, size_t idx, l1c_int n,
                                    l1c_int m);
-#endif

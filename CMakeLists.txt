@@ -74,6 +74,11 @@ add_subdirectory(examples/c)
 add_subdirectory(test)
 add_subdirectory(interfaces/python)
 
+option(ENABLE_MEX "Allow building the octave interface.")
+if(ENABLE_MEX)
+  add_subdirectory(interfaces/mex)
+endif()
+
 
 configure_file(
   "${PROJECT_SOURCE_DIR}/l1c_config.h.in"

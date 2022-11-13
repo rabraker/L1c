@@ -1,10 +1,13 @@
 #include "config.h"
 #include <math.h>
+
 #include <stdlib.h>
 #include <string.h>
 
 #include "cblas.h"
+#ifdef L1C_MEX_MATLAB
 #include "matrix.h"
+#endif
 #include "mex.h"
 
 #include "l1c.h"
@@ -25,8 +28,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] ){
                         .tol = 1e-3,
                         .n_continue = 5};
 
-  double *z_out = NULL,
-                *b = NULL;
+  double *z_out = NULL, *b = NULL, * b_ours = NULL;
   double *pix_idx_double=NULL, *x0=NULL;
   double alp_v = 0, alp_h = 0;
 
@@ -102,10 +104,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] ){
      dont change data in Matlabs workspace.
   */
   pix_idx = calloc(n, sizeof(l1c_int));
-  if (!pix_idx){
-    status = L1C_OUT_OF_MEMORY;
-    goto exit1;
-  }
+
   /*
     pix_idx will naturally be a double we supplied from matlab
     and will have 1-based indexing. Convert to integers and
@@ -124,9 +123,17 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] ){
   if (status){
     goto exit1;
   }
-  x0 = l1c_malloc_double(ax_funs.m);
 
-  status |= l1c_nesta(mtot, x0, n, b, ax_funs, opts);
+  x0 = l1c_malloc_double(ax_funs.m);
+  b_ours = l1c_malloc_double(n);
+  if (NULL == pix_idx || NULL == b_ours || NULL == x0) {
+    status = L1C_OUT_OF_MEMORY;
+    goto exit1;
+  }
+
+  cblas_dcopy(n, b, 1, b_ours, 1);
+
+  status |= l1c_nesta(mtot, x0, n, b_ours, ax_funs, opts);
 
 
   /* Prepare output data.
@@ -144,6 +151,7 @@ void  mexFunction( int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[] ){
  exit1:
   free(pix_idx);
   l1c_free_double(x0);
+  l1c_free_double(b_ours);
 
   switch (status){
   case L1C_OUT_OF_MEMORY:

@@ -5,7 +5,7 @@ main:
   stage: main
   image: registry.gitlab.com/rabraker/l1c
   script:
-    - mkdir build && cd build && conan install .. && cmake ..
+    - mkdir build && cd build && conan install .. && cmake -DENABLE_MEX=ON ..
     - make -j4
     - OMP_NUM_THREADS=4 make test ARGS="-VV"
 
