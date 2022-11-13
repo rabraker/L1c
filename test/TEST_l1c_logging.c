@@ -1,16 +1,16 @@
 #include "config.h"
+#include "json_utils.h"
+#include "l1c_logging.h"
+#include <check.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include <check.h>
-#include "l1c_logging.h"
-#include "json_utils.h"
 
 static char fname_tmp[] = "test_scratch.txt";
 
-int l1c_printf_new(const char *format, ...) {
-  FILE *fid = fopen(fname_tmp, "w+");
-  if (!fid){
+int l1c_printf_new(const char* format, ...) {
+  FILE* fid = fopen(fname_tmp, "w+");
+  if (!fid) {
     return -1;
   }
   fprintf(fid, "NEW:");
@@ -24,13 +24,11 @@ int l1c_printf_new(const char *format, ...) {
   return status;
 }
 
-
-
- /* Check that we can reset the old printf */
+/* Check that we can reset the old printf */
 START_TEST(test_l1c_replace_printf) {
   char str_expected[] = "NEW:test format: 5, 3.14";
-  char *str_actual;
-  l1c_printf_t *old_printf = l1c_replace_printf(l1c_printf_new);
+  char* str_actual;
+  l1c_printf_t* old_printf = l1c_replace_printf(l1c_printf_new);
 
   l1c_printf("test format: %d, %.2f", 5, 3.14);
   load_file_as_text(fname_tmp, &str_actual);
@@ -39,7 +37,7 @@ START_TEST(test_l1c_replace_printf) {
 
   /*Now, we re-open the file, write a single character,
     (which will erase the old contents) */
-  FILE *fid = fopen(fname_tmp, "w+");
+  FILE* fid = fopen(fname_tmp, "w+");
   if (!fid) {
     ck_abort_msg("Failed to open file in %s.\n", __func__);
   }
@@ -59,10 +57,10 @@ START_TEST(test_l1c_replace_printf) {
 }
 END_TEST
 
-Suite *l1c_logging_suite(void) {
-  Suite *s;
+Suite* l1c_logging_suite(void) {
+  Suite* s;
 
-  TCase *tc_logging;
+  TCase* tc_logging;
   s = suite_create("logging_suite");
 
   tc_logging = tcase_create("logging");

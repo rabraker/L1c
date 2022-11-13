@@ -1,5 +1,5 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def grad_est(x0, h, fun):
@@ -13,9 +13,9 @@ def grad_est(x0, h, fun):
     ek = np.zeros(N)
     fx0 = fun(x0)
     for k in range(0, N):
-        ek = ek*0
+        ek = ek * 0
         ek[k] = 1
-        dx[k] = (fun(x0 + ek*h) - fx0) / h
+        dx[k] = (fun(x0 + ek * h) - fx0) / h
 
     return dx
 
@@ -32,8 +32,7 @@ def l1c_fun(x, u, r, tau, epsilon):
     fu2 = -x - u
     fe = 0.5 * (r.dot(r) - epsilon**2)
 
-    f = np.sum(u) - (1/tau) * (sum(np.log(-fu1)) +
-                               sum(np.log(-fu2)) + np.log(-fe))
+    f = np.sum(u) - (1 / tau) * (sum(np.log(-fu1)) + sum(np.log(-fu2)) + np.log(-fe))
 
     return fu1, fu2, fe, f
 
@@ -43,9 +42,9 @@ np.random.rng(1)
 N = 10  # problem size
 
 x = np.random.randn(N)
-u = (0.95)*np.abs(x) + 0.1*np.max(np.abs(x))
+u = (0.95) * np.abs(x) + 0.1 * np.max(np.abs(x))
 
-r = np.random.randn(N)*0.001
+r = np.random.randn(N) * 0.001
 
 
 h = 0.1

@@ -4,16 +4,16 @@
 #include "l1c.h"
 
 /* Forward Declarations */
-static void Ax(double *x, double *y);
-static void Aty(double *y, double *x);
-static void AtAx(double *x_in, double *x_out);
+static void Ax(double* x, double* y);
+static void Aty(double* y, double* x);
+static void AtAx(double* x_in, double* x_out);
 static void destroy_matrix_transforms(void);
-static void Identity(double *x, double *z);
+static void Identity(double* x, double* z);
 
-double *xfm_A = NULL;
+double* xfm_A = NULL;
 l1c_int xfm_N = 0;
 l1c_int xfm_M = 0;
-double *xfm_dwork = NULL;
+double* xfm_dwork = NULL;
 
 /**
  * @ingroup transforms
@@ -34,10 +34,9 @@ double *xfm_dwork = NULL;
  * @note the ax_funs fields .Mx, .Mty, .Ex, .Ety and .data will be NULL on
  * exit. Additionally, .norm_M=0, and .n=n, .m=.p=m
  */
-int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double *A,
-                                l1c_AxFuns *ax_funs) {
+int l1c_setup_matrix_transforms(l1c_int n, l1c_int m, double* A, l1c_AxFuns* ax_funs) {
 
-  if (n <=0 || m <=0){
+  if (n <= 0 || m <= 0) {
     return L1C_INVALID_ARGUMENT;
   }
 
@@ -86,7 +85,7 @@ static void destroy_matrix_transforms(void) { l1c_free_double(xfm_dwork); }
    This is a wrapper for cblas_dgemv.
 
 */
-static void Ax(double *x, double *y) {
+static void Ax(double* x, double* y) {
   const double alp = 1.0;
   const double beta = 0.0;
   const l1c_int inc = 1;
@@ -95,8 +94,7 @@ static void Ax(double *x, double *y) {
     y := alpha*A*x + beta*y
 
   */
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, xfm_N, xfm_M, alp, xfm_A, xfm_M, x,
-              inc, beta, y, inc);
+  cblas_dgemv(CblasRowMajor, CblasNoTrans, xfm_N, xfm_M, alp, xfm_A, xfm_M, x, inc, beta, y, inc);
 }
 
 /**
@@ -105,7 +103,7 @@ static void Ax(double *x, double *y) {
    This is a wrapper for cblas_dgemv.
 
 */
-static void Aty(double *y, double *x) {
+static void Aty(double* y, double* x) {
   const double alp = 1.0;
   const double beta = 0.0;
   const l1c_int inc = 1;
@@ -113,13 +111,12 @@ static void Aty(double *y, double *x) {
      x = alpha*A^T*y + beta*x, with CblasTrans
   */
   // For Layout = CblasRowMajor, the value of lda must be at least max(1, m).
-  cblas_dgemv(CblasRowMajor, CblasTrans, xfm_N, xfm_M, alp, xfm_A, xfm_M, y,
-              inc, beta, x, inc);
+  cblas_dgemv(CblasRowMajor, CblasTrans, xfm_N, xfm_M, alp, xfm_A, xfm_M, y, inc, beta, x, inc);
 }
 
-static void AtAx(double *x_in, double *x_out) {
+static void AtAx(double* x_in, double* x_out) {
   Ax(x_in, xfm_dwork);
   Aty(xfm_dwork, x_out);
 }
 
-static void Identity(double *x, double *z) { cblas_dcopy(xfm_M, x, 1, z, 1); }
+static void Identity(double* x, double* z) { cblas_dcopy(xfm_M, x, 1, z, 1); }

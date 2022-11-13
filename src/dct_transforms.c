@@ -2,7 +2,7 @@
 #include "l1c.h"
 
 /* Helper Routines*/
-static int check_pix_idx(l1c_int n, l1c_int *pix_idx, l1c_int max_idx);
+static int check_pix_idx(l1c_int n, l1c_int* pix_idx, l1c_int max_idx);
 
 /** @file
    The high level interface to the DCT based transforms, suitible
@@ -38,34 +38,37 @@ static int check_pix_idx(l1c_int n, l1c_int *pix_idx, l1c_int max_idx);
  * @return      0 if succesfull. If unsuccesfull, returns L1C_DCT_INIT_FAILURE
  *              or L1C_OUT_OF_MEMORY.
  *
-*/
-int l1c_setup_dct_transforms( l1c_int n, l1c_int mrow, l1c_int mcol, DctMode dct_mode,
-                             l1c_int *pix_idx, l1c_AxFuns *ax_funs){
+ */
+int l1c_setup_dct_transforms(l1c_int n,
+                             l1c_int mrow,
+                             l1c_int mcol,
+                             DctMode dct_mode,
+                             l1c_int* pix_idx,
+                             l1c_AxFuns* ax_funs) {
 
-  if (n <=0 || mrow <=0 || mcol <=0){
+  if (n <= 0 || mrow <= 0 || mcol <= 0) {
     return L1C_INVALID_ARGUMENT;
   }
 
-  if (check_pix_idx(n, pix_idx, mrow*mcol - 1)){
+  if (check_pix_idx(n, pix_idx, mrow * mcol - 1)) {
     return L1C_INVALID_ARGUMENT;
   }
 
-  if ((mcol == 1) || (mrow == 1) || dct_mode == dct1){
-    //call setup_dct1
-    return l1c_dct1_setup(n, mrow*mcol, pix_idx, ax_funs);
-  }else if ((mcol>1 && mrow > 1) || dct_mode == dct2){
-    if (mcol ==1 || mrow == 1){
+  if ((mcol == 1) || (mrow == 1) || dct_mode == dct1) {
+    // call setup_dct1
+    return l1c_dct1_setup(n, mrow * mcol, pix_idx, ax_funs);
+  } else if ((mcol > 1 && mrow > 1) || dct_mode == dct2) {
+    if (mcol == 1 || mrow == 1) {
       return L1C_INCONSISTENT_ARGUMENTS;
     }
     // Call setup_dct2
     return l1c_dct2_setup(n, mrow, mcol, pix_idx, ax_funs);
-  }else{
+  } else {
     return L1C_INCONSISTENT_ARGUMENTS;
   }
-
 }
 
-static int check_pix_idx(l1c_int n, l1c_int *pix_idx, l1c_int max_idx) {
+static int check_pix_idx(l1c_int n, l1c_int* pix_idx, l1c_int max_idx) {
   l1c_int idx = 0;
   for (int i = 0; i < n; i++) {
     idx = pix_idx[i];

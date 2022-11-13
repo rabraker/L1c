@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-import numpy as np
-import json
 import codecs
+import json
 import os
-from numpy.random import seed, rand
-from scipy.fftpack import dct
 
-import L1cTestDataUtils as TDU
 import build_dct2_data as dct2
-# import build_dct_data as dct1
 import build_TV_data as TV
+import L1cTestDataUtils as TDU
+import numpy as np
+from numpy.random import rand, seed
+from scipy.fftpack import dct
 
 
 def Wz_factory(mrow, mcol, alp_v, alp_h):
@@ -25,13 +24,13 @@ def Wz_factory(mrow, mcol, alp_v, alp_h):
 
         x = dct2.Mx_fun(u0, mrow, mcol).flatten()
         if alp_v > 0:
-            u1 = z[m:2*m]
+            u1 = z[m : 2 * m]
             x = x + alp_v * Dy_mat.dot(u1).flatten()
         if alp_h > 0:
             if alp_v > 0:
-                u2 = z[2*m:3*m]
+                u2 = z[2 * m : 3 * m]
             else:
-                u2 = z[m:2*m]
+                u2 = z[m : 2 * m]
             x = x + alp_h * Dx_mat.dot(u2).flatten()
 
         return x
@@ -103,21 +102,21 @@ def build_dct2_TV_vh(fname, pix_idx, mrow, mcol, alp_v, alp_h):
 
     n = len(pix_idx)
 
-    m = mrow*mcol
+    m = mrow * mcol
     p = m
     if alp_v > 0:
         p = p + m
     if alp_h > 0:
         p = p + m
 
-    x_vec = rand(mrow*mcol)
+    x_vec = rand(mrow * mcol)
     z_vec = rand(p)
 
     Wz_fun = Wz_factory(mrow, mcol, alp_v, alp_h)
     Wtx_fun = Wtx_factory(mrow, mcol, alp_v, alp_h)
 
     A = Az_factory(pix_idx, Wz_fun)
-    At = Aty_factory(pix_idx, Wtx_fun, mrow*mcol)
+    At = Aty_factory(pix_idx, Wtx_fun, mrow * mcol)
 
     # Another small example with randomly generated data.
 
@@ -133,22 +132,24 @@ def build_dct2_TV_vh(fname, pix_idx, mrow, mcol, alp_v, alp_h):
     MtEty = At(y_vec)
     MtEt_EMx = At(A(z_vec))
 
-    data = {'x_in': x_vec,
-            'y_in': y_vec,
-            'z_in': z_vec,
-            'EMx': EMx,
-            'Mx': Mx,
-            'Mty': Mty,
-            'Ex': Ex,
-            'Ety': Ety,
-            'pix_idx': pix_idx,
-            'MtEty': MtEty,
-            'MtEt_EMx': MtEt_EMx,
-            'alp_v': alp_v,
-            'alp_h': alp_h,
-            'mrow': mrow,
-            'mcol': mcol,
-            'p': p}
+    data = {
+        "x_in": x_vec,
+        "y_in": y_vec,
+        "z_in": z_vec,
+        "EMx": EMx,
+        "Mx": Mx,
+        "Mty": Mty,
+        "Ex": Ex,
+        "Ety": Ety,
+        "pix_idx": pix_idx,
+        "MtEty": MtEty,
+        "MtEt_EMx": MtEt_EMx,
+        "alp_v": alp_v,
+        "alp_h": alp_h,
+        "mrow": mrow,
+        "mcol": mcol,
+        "p": p,
+    }
 
     data = TDU.jsonify(data)
     TDU.save_json(data, fname)
@@ -158,7 +159,7 @@ if __name__ == "__main__":
     data_dir = TDU.data_dir()
 
     # -------------------------------------------------------- #
-    fname = data_dir+"/dct2_tv_square.json"
+    fname = data_dir + "/dct2_tv_square.json"
     mrow = 16
     mcol = 16
 
@@ -168,19 +169,19 @@ if __name__ == "__main__":
     build_dct2_TV_vh(fname, pix_idx, mrow, mcol, alp_v, alp_h)
 
     # -------------------------------------------------------- #
-    fname = data_dir+"/dct2_tv_vh_square.json"
+    fname = data_dir + "/dct2_tv_vh_square.json"
     alp_v = 1.5
     alp_h = 2.0
     build_dct2_TV_vh(fname, pix_idx, mrow, mcol, alp_v, alp_h)
 
     # -------------------------------------------------------- #
-    fname = data_dir+"/dct2_tv_v_square.json"
+    fname = data_dir + "/dct2_tv_v_square.json"
     alp_v = 1.5
     alp_h = 0.0
     build_dct2_TV_vh(fname, pix_idx, mrow, mcol, alp_v, alp_h)
 
     # -------------------------------------------------------- #
-    fname = data_dir+"/dct2_tv_h_square.json"
+    fname = data_dir + "/dct2_tv_h_square.json"
     alp_v = 0.0
     alp_h = 2.0
     build_dct2_TV_vh(fname, pix_idx, mrow, mcol, alp_v, alp_h)

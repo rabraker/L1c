@@ -16,17 +16,17 @@
  */
 /* Forward declarations */
 
-void l1c_Dx(l1c_int n, l1c_int m, double alpha, double *X, double *Dx);
+void l1c_Dx(l1c_int n, l1c_int m, double alpha, double* X, double* Dx);
 
-void l1c_DxT(l1c_int n, l1c_int m, double alpha, double *A, double *dxt);
+void l1c_DxT(l1c_int n, l1c_int m, double alpha, double* A, double* dxt);
 
-void l1c_DxTDx(l1c_int n, l1c_int m, double alpha, double *A, double *dxtdx);
+void l1c_DxTDx(l1c_int n, l1c_int m, double alpha, double* A, double* dxtdx);
 
-void l1c_DyT(l1c_int n, l1c_int m, double alpha, double *A, double *dyt);
+void l1c_DyT(l1c_int n, l1c_int m, double alpha, double* A, double* dyt);
 
-void l1c_DyTDy(l1c_int n, l1c_int m, double alpha, double *A, double *dytdy);
+void l1c_DyTDy(l1c_int n, l1c_int m, double alpha, double* A, double* dytdy);
 
-void l1c_Dy(l1c_int n, l1c_int m, double alpha, double *X, double *Dy);
+void l1c_Dy(l1c_int n, l1c_int m, double alpha, double* X, double* Dy);
 
 /*
   I've changed this up from the initial implementation
@@ -46,13 +46,12 @@ void l1c_Dy(l1c_int n, l1c_int m, double alpha, double *X, double *Dy);
    [ 0.  0   0. -1  1]
    [ 0   0   0   0  0]
 */
-static inline void ddiff_z(l1c_int n, double alpha, double *x, double *dx){
-  for (int i=1; i<n; i++){
-    dx[i-1] = alpha * (x[i] - x[i-1]);
+static inline void ddiff_z(l1c_int n, double alpha, double* x, double* dx) {
+  for (int i = 1; i < n; i++) {
+    dx[i - 1] = alpha * (x[i] - x[i - 1]);
   }
-  dx[n-1] = 0;
+  dx[n - 1] = 0;
 }
-
 
 /*
   Transpose of the operator defined by ddif_z
@@ -64,12 +63,12 @@ static inline void ddiff_z(l1c_int n, double alpha, double *x, double *dx){
   dx[0] = -x[0]
   dx[1] = dx[0] - dx[1]
 */
-static inline void ddiffT_z(l1c_int n, double alpha, double *x, double *dx){
+static inline void ddiffT_z(l1c_int n, double alpha, double* x, double* dx) {
   dx[0] = -alpha * x[0];
-  for (int i=1; i<n; i++){
-    dx[i] = alpha * (x[i-1] - x[i]);
+  for (int i = 1; i < n; i++) {
+    dx[i] = alpha * (x[i - 1] - x[i]);
   }
-  dx[n-1] = alpha * x[n-2];
+  dx[n - 1] = alpha * x[n - 2];
 }
 
 /*
@@ -79,13 +78,13 @@ static inline void ddiffT_z(l1c_int n, double alpha, double *x, double *dx){
   [ 0  -1   2  -1]
   [ 0.  0   -1  1]
 */
-static inline void ddiff2_z(l1c_int n, double alpha, double *x, double *dx){
+static inline void ddiff2_z(l1c_int n, double alpha, double* x, double* dx) {
   double alp2 = alpha * alpha;
   dx[0] = alp2 * (x[0] - x[1]);
-  for (int i=1; i<n-1; i++){
-    dx[i] = alp2 * (-x[i-1] + 2 * x[i] - x[i+1]);
+  for (int i = 1; i < n - 1; i++) {
+    dx[i] = alp2 * (-x[i - 1] + 2 * x[i] - x[i + 1]);
   }
-  dx[n-1] = alp2 * (x[n-1] - x[n-2]);
+  dx[n - 1] = alp2 * (x[n - 1] - x[n - 2]);
 }
 
 /*
@@ -106,20 +105,19 @@ static inline void ddiff2_z(l1c_int n, double alpha, double *x, double *dx){
   [ 0. -0.  0.  0. -0.  0.  0. -0.  0.  0. -1.  1.]
   [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]]
  */
-void l1c_Dx(l1c_int n, l1c_int m, double alpha, double * restrict X, double * restrict Dx){
+void l1c_Dx(l1c_int n, l1c_int m, double alpha, double* restrict X, double* restrict Dx) {
   /*
     We go down the rows of the matrix X, and compute the difference
     Dx = X[i,j+1] - X[i,j]
   */
-  double *X_row=NULL, *Dx_row=NULL;
+  double *X_row = NULL, *Dx_row = NULL;
 #pragma omp parallel for private(X_row, Dx_row)
-  for (int i_row=0; i_row<n; i_row++){
-    X_row = X + i_row*m;
-    Dx_row = Dx + i_row*m;
+  for (int i_row = 0; i_row < n; i_row++) {
+    X_row = X + i_row * m;
+    Dx_row = Dx + i_row * m;
     ddiff_z(m, alpha, X_row, Dx_row);
   }
 }
-
 
 /*
   4 by 3 case:
@@ -136,19 +134,15 @@ void l1c_Dx(l1c_int n, l1c_int m, double alpha, double * restrict X, double * re
   [ 0. -0.  0.  0. -0.  0.  0. -0.  0.  1. -1.  0.]
   [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  1.  0.]]
  */
-void l1c_DxT(l1c_int n, l1c_int m, double alpha,
-             double * restrict X, double * restrict DxT){
-  double *X_row=NULL, *Dxt_row=NULL;
+void l1c_DxT(l1c_int n, l1c_int m, double alpha, double* restrict X, double* restrict DxT) {
+  double *X_row = NULL, *Dxt_row = NULL;
 #pragma omp parallel for private(X_row, Dxt_row)
-  for (int i_row=0; i_row < n; i_row++){
-    X_row = X + i_row*m;
-    Dxt_row = DxT + i_row*m;
+  for (int i_row = 0; i_row < n; i_row++) {
+    X_row = X + i_row * m;
+    Dxt_row = DxT + i_row * m;
     ddiffT_z(m, alpha, X_row, Dxt_row);
   }
-
 }
-
-
 
 /*
 4 by 3:
@@ -165,18 +159,16 @@ void l1c_DxT(l1c_int n, l1c_int m, double alpha,
 [ 0.  0.  0.  0.  0.  0.  0.  0.  0. -1.  2. -1.]
 [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0. -1.  1.]]
  */
-void l1c_DxTDx(l1c_int n, l1c_int m, double alpha,
-               double * restrict X, double * restrict DxTDx){
+void l1c_DxTDx(l1c_int n, l1c_int m, double alpha, double* restrict X, double* restrict DxTDx) {
 
-  double *X_row=NULL, *DxTDx_row=NULL;
+  double *X_row = NULL, *DxTDx_row = NULL;
 #pragma omp parallel for private(X_row, DxTDx_row)
-  for (int i_row=0; i_row<n; i_row++){
-    X_row = X + i_row*m;
-    DxTDx_row = DxTDx + i_row*m;
+  for (int i_row = 0; i_row < n; i_row++) {
+    X_row = X + i_row * m;
+    DxTDx_row = DxTDx + i_row * m;
     ddiff2_z(m, alpha, X_row, DxTDx_row);
   }
- }
-
+}
 
 /*
   ---------- PERFORMANCE NOTE ----------------------
@@ -188,7 +180,6 @@ void l1c_DxTDx(l1c_int n, l1c_int m, double alpha,
   with something like cblas_daxpy(), but we dont want to overwrite
   our vector.
  */
-
 
 /*
   [[-1. -0. -0.  1.  0.  0.  0.  0.  0.  0.  0.  0.]
@@ -204,24 +195,22 @@ void l1c_DxTDx(l1c_int n, l1c_int m, double alpha,
   [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
   [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]]
  */
-void l1c_Dy(l1c_int n, l1c_int m, double alpha, double * restrict X, double * restrict Dy){
-  int row=0, col=0;
+void l1c_Dy(l1c_int n, l1c_int m, double alpha, double* restrict X, double* restrict Dy) {
+  int row = 0, col = 0;
 
 #pragma omp parallel for private(col)
-  for (row=0; row<n-1; row++){
-    for(col = row * m; col < (row+1) * m; col++){
-      Dy[col] = alpha * (X[col+m] - X[col]);
+  for (row = 0; row < n - 1; row++) {
+    for (col = row * m; col < (row + 1) * m; col++) {
+      Dy[col] = alpha * (X[col + m] - X[col]);
     }
   }
 
 #pragma omp parallel for
   // Ensure the last m items are zero.
-  for (int i=(n-1)*m; i<n*m; i++){
+  for (int i = (n - 1) * m; i < n * m; i++) {
     Dy[i] = 0;
   }
-
 }
-
 
 /*
   Given an m by n matrix A, computes lambda*Del_y^T*A. We assume A is stored
@@ -242,15 +231,14 @@ void l1c_Dy(l1c_int n, l1c_int m, double alpha, double * restrict X, double * re
   0     0     0     0     0     0     0     0     1     0     0     0
 
  */
-void l1c_DyT(l1c_int n, l1c_int m, double alpha,
-             double *restrict A, double * restrict dyt){
+void l1c_DyT(l1c_int n, l1c_int m, double alpha, double* restrict A, double* restrict dyt) {
   double Ai = 0, Ai_min_m = 0;
-  int i=0, Len=n*m;
+  int i = 0, Len = n * m;
 
 #pragma omp parallel for private(Ai, Ai_min_m, i)
-  for (i=0; i<Len; i++){
-    Ai = i<(n-1)*m ? A[i] : 0;
-    Ai_min_m = i < m ? 0 : A[i-m];
+  for (i = 0; i < Len; i++) {
+    Ai = i < (n - 1) * m ? A[i] : 0;
+    Ai_min_m = i < m ? 0 : A[i - m];
     dyt[i] = alpha * (Ai_min_m - Ai);
   }
 }
@@ -273,19 +261,17 @@ void l1c_DyT(l1c_int n, l1c_int m, double alpha,
   0     0     0     0     0     0     0    -1     0     0     1     0
   0     0     0     0     0     0     0     0    -1     0     0     1
  */
-void l1c_DyTDy(l1c_int n, l1c_int m, double alpha,
-               double * restrict A, double * restrict dytdy){
+void l1c_DyTDy(l1c_int n, l1c_int m, double alpha, double* restrict A, double* restrict dytdy) {
   double alp2 = alpha * alpha;
-  double Ai_min_m=0, D_ii_Ai = 0, Ai_p_m=0;
-  int i=0, Len=n*m;
+  double Ai_min_m = 0, D_ii_Ai = 0, Ai_p_m = 0;
+  int i = 0, Len = n * m;
 
 #pragma omp parallel for private(D_ii_Ai, Ai_min_m, Ai_p_m, i)
-  for (i=0; i<Len; i++){
-    Ai_min_m = i<m ? 0 : A[i-m];
-    D_ii_Ai = (i<m || i > m*(n-1)-1) ? A[i] : 2 * A[i];
-    Ai_p_m = i < Len-m ? A[i+m] : 0;
+  for (i = 0; i < Len; i++) {
+    Ai_min_m = i < m ? 0 : A[i - m];
+    D_ii_Ai = (i < m || i > m * (n - 1) - 1) ? A[i] : 2 * A[i];
+    Ai_p_m = i < Len - m ? A[i + m] : 0;
 
     dytdy[i] = alp2 * (-Ai_min_m + D_ii_Ai - Ai_p_m);
   }
-
 }

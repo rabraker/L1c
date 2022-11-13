@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-import numpy as np
-import json
 import codecs
+import json
+
+import numpy as np
 
 
 def jsonify(data):
@@ -18,8 +19,8 @@ def jsonify(data):
 
 def save_json(data, file_path):
 
-    with codecs.open(file_path, 'w') as fid:
-        json.dump(data, fid,  separators=(',', ':'), sort_keys=True, indent=4)
+    with codecs.open(file_path, "w") as fid:
+        json.dump(data, fid, separators=(",", ":"), sort_keys=True, indent=4)
 
     # json.dump(data, codecs.open(file_path, 'w'),
     #           separators=(',', ':'), sort_keys=True, indent=4)

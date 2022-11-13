@@ -1,0 +1,18 @@
+BasedOnStyle: LLVM
+Standard: Cpp11
+
+IndentWidth: 2
+UseTab: Never
+ColumnLimit: 100
+
+ReflowComments: true
+SortIncludes: true
+FixNamespaceComments: true
+
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+BinPackArguments: false
+BinPackParameters: false
