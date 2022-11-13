@@ -42,23 +42,26 @@ static char breg_anistropic_TV_docstring[] =
     "\"The Split Bregman Method for L1-Regularized Problems,\" by Tom Goldstein and Stanley "
     "Osher. ";
 
+// To avoid warnings about incompatible function pointers,
+// first cast to a function with no prototype, the cast to PyCFunction.
+// https://bugs.python.org/issue33012
+#define CastToPyCFunctionAsKwargs(func) \
+  (PyCFunction)(void (*)(void))(PyCFunctionWithKeywords)(func)
+
 /* Specify members of the module */
 static PyMethodDef _l1cPy_module_methods[] = {
-    // To avoid warnings about incompatible function pointers,
-    // first cast to a function with no prototype, the cast to PyCFunction.
-    // https://bugs.python.org/issue33012
     {.ml_name = "l1qc_dct",
-     .ml_meth = (PyCFunction)(PyObject * (*)()) _l1qc_dct,
+     .ml_meth = CastToPyCFunctionAsKwargs(_l1qc_dct),
      .ml_flags = METH_KEYWORDS | METH_VARARGS,
      .ml_doc = l1qc_dct_docstring},
 
     {.ml_name = "breg_anistropic_TV",
-     .ml_meth = (PyCFunction)(PyObject * (*)()) _breg_anistropic_TV,
+     .ml_meth = CastToPyCFunctionAsKwargs(_breg_anistropic_TV),
      .ml_flags = METH_KEYWORDS | METH_VARARGS,
      .ml_doc = breg_anistropic_TV_docstring},
 
     {.ml_name = "nesta_dctTV",
-     .ml_meth = (PyCFunction)(PyObject * (*)()) _nesta_dctTV,
+     .ml_meth = CastToPyCFunctionAsKwargs(_nesta_dctTV),
      .ml_flags = METH_KEYWORDS | METH_VARARGS,
      .ml_doc = nesta_dctTV_docstring},
 
