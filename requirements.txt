@@ -2,5 +2,5 @@ black==22.10.0
 conan==1.53.0
 isort==5.10.1
 numpy==1.23
-scipy==1.9.3
+scipy==1.10.0
 matplotlib==3.6.2
